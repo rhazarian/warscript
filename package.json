@@ -1,11 +1,14 @@
 {
+    "$schema": "https://json.schemastore.org/package",
     "name": "warscript",
     "version": "0.0.1",
     "description": "A typescript library for Warcraft III using Warpack.",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/rhazarian/warscript.git"
-    },
+    "keywords": [
+        "warcraft",
+        "warscript"
+    ],
+    "license": "MIT",
+    "author": "rhazarian",
     "scripts": {
         "clean": "rm -rf dist wsdist",
         "preparedist": "copyfiles package.json init.d.ts init.lua dist && copyfiles -u 1 \\\"warscript/**/*.d.ts\\\" \\\"warscript/**/*.lua\\\" dist && copyfiles -u 1 \\\"decl/**/*.d.ts\\\" dist/decl && copyfiles -u 1 \\\"pure/**/*.*\\\" \\\"dist\\\"",
@@ -15,6 +18,11 @@
         "publish": "npm run build && npm publish ./dist --ignore-scripts",
         "watch": "node watch.js",
         "lint": "eslint . --ext .ts,.tsx,.js,.jsx"
+    },
+    "dependencies": {
+        "@warscript/language-extensions": "^0.0.1",
+        "warpack-types": "^0.0.1",
+        "lua-types": "^2.13.0"
     },
     "devDependencies": {
         "@warscript/tstl-plugin": "^0.0.1",
@@ -31,11 +39,12 @@
         "typescript": "~5.3.3",
         "typescript-to-lua": "~1.24.0"
     },
-    "author": "",
-    "license": "MIT",
-    "dependencies": {
-        "@warscript/language-extensions": "^0.0.1",
-        "ceres-decl": "^2.0.7",
-        "lua-types": "^2.13.0"
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/rhazarian/warscript.git"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
     }
 }
