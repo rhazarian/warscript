@@ -16,7 +16,6 @@
         "build": "npm run preparedist && tstl && npm run copyws",
         "prepublishOnly": "echo You should run 'npm run publish' instead. && return 1",
         "publish": "npm run build && npm publish ./dist --ignore-scripts",
-        "watch": "node watch.js",
         "lint": "eslint . --ext .ts,.tsx,.js,.jsx"
     },
     "dependencies": {
