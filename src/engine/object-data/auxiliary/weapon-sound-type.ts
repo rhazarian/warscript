@@ -1,0 +1,16 @@
+export const enum WeaponSoundType {
+    NONE = "",
+    AXE_MEDIUM_CHOP = "AxeMediumChop",
+    METAL_HEAVY_BASH = "MetalHeavyBash",
+    METAL_HEAVY_CHOP = "MetalHeavyChop",
+    METAL_HEAVY_SLICE = "MetalHeavySlice",
+    METAL_LIGHT_CHOP = "MetalLightChop",
+    METAL_LIGHT_SLICE = "MetalLightSlice",
+    METAL_MEDIUM_BASH = "MetalMediumBash",
+    METAL_MEDIUM_CHOP = "MetalMediumChop",
+    METAL_MEDIUM_SLICE = "MetalMediumSlice",
+    ROCK_HEAVY_BASH = "RockHeavyBash",
+    WOOD_HEAVY_BASH = "WoodHeavyBash",
+    WOOD_LIGHT_BASH = "WoodLightBash",
+    WOOD_MEDIUM_BASH = "WoodMediumBash",
+}

@@ -1,0 +1,6 @@
+node_modules
+dist
+wsdist
+decl/native.d.ts
+index.d.ts
+.eslintrc.cjs

@@ -1,0 +1,13 @@
+/*
+!.github
+!language-extensions
+!src
+!tstl-plugin
+!.eslintignore
+!.eslintrc.cjs
+!.gitignore
+!.prettierrc
+!LICENSE
+!package.json
+!package-lock.json
+!tsconfig.json

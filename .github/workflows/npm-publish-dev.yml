@@ -1,0 +1,22 @@
+name: Publish dev package to NPM
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - run: npm ci
+      - run: npm version --no-git-tag-version $(npm pkg get version --workspaces=false | tr -d \")-dev.$(git rev-parse --short HEAD)
+        shell: bash
+      - run: npm run publish -- --tag dev
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}

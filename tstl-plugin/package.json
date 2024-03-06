@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/package",
+  "name": "@warscript/tstl-plugin",
+  "version": "0.0.1",
+  "description": "The Warscript plugin for TSTL. The plugin is required to correctly compile and use Warscript.",
+  "keywords": [
+    "typescript",
+    "lua",
+    "tstl",
+    "transpiler",
+    "language extensions",
+    "warcraft",
+    "warscript"
+  ],
+  "license": "MIT",
+  "author": "rhazarian",
+  "type": "commonjs",
+  "scripts": {
+    "build": "npx tsc",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "typescript": "~5.3.3",
+    "typescript-to-lua": "~1.23.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rhazarian/warscript.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

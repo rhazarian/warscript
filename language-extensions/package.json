@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.schemastore.org/package",
+  "name": "@warscript/language-extensions",
+  "version": "0.0.1",
+  "description": "Language extensions for TypeScriptToLua used by Warscript.",
+  "keywords": [
+    "typescript",
+    "lua",
+    "tstl",
+    "transpiler",
+    "language extensions",
+    "warcraft",
+    "warscript"
+  ],
+  "license": "MIT",
+  "author": "rhazarian",
+  "files": [
+    "**.d.ts"
+  ],
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rhazarian/warscript.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
