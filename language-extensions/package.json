@@ -1,0 +1,24 @@
+{
+  "name": "@warscript/language-extensions",
+  "version": "0.0.1",
+  "description": "Language extensions for TypeScriptToLua used by Warscript.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rhazarian/warscript.git"
+  },
+  "license": "MIT",
+  "author": "rhazarian",
+  "keywords": [
+    "typescript",
+    "lua",
+    "tstl",
+    "transpiler",
+    "language extensions",
+    "warcraft",
+    "warscript"
+  ],
+  "files": [
+    "**.d.ts"
+  ],
+  "types": "index.d.ts"
+}

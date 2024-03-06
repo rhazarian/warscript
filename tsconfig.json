@@ -1,0 +1,33 @@
+{
+    "$schema": "https://raw.githubusercontent.com/TypeScriptToLua/TypeScriptToLua/master/tsconfig-schema.json",
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "target": "esnext",
+        "lib": ["esnext"],
+        "types": ["@typescript-to-lua/language-extensions", "@warscript/language-extensions"],
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "noImplicitReturns": true,
+        "alwaysStrict": true,
+        "strictNullChecks": true,
+        "stripInternal": true,
+        "moduleResolution": "node",
+        "outDir": "cerriedist",
+        "rootDir": "./",
+        "declaration": true
+    },
+    "include": [
+        "decl/index.d.ts",
+        "warscript/"
+    ],
+    "tstl": {
+        "luaTarget": "5.3",
+        "noHeader": true,
+        "luaLibImport": "require",
+        "noImplicitSelf": true,
+        "luaPlugins": [
+            { "name": "@warscript/tstl-plugin" }
+        ]
+    }
+}

@@ -1,0 +1,41 @@
+{
+    "name": "warscript",
+    "version": "0.0.1",
+    "description": "A typescript library for Warcraft III using Warpack.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/rhazarian/warscript.git"
+    },
+    "scripts": {
+        "clean": "rm -rf dist wsdist",
+        "preparedist": "copyfiles package.json init.d.ts init.lua dist && copyfiles -u 1 \\\"warscript/**/*.d.ts\\\" \\\"warscript/**/*.lua\\\" dist && copyfiles -u 1 \\\"decl/**/*.d.ts\\\" dist/decl && copyfiles -u 1 \\\"pure/**/*.*\\\" \\\"dist\\\"",
+        "copyws": "copyfiles -u 2 -a \"wsdist/warscript/**/*.*\" dist",
+        "build": "npm run preparedist && tstl && npm run copyws",
+        "prepublishOnly": "echo You should run 'npm run publish' instead. && return 1",
+        "publish": "npm run build && npm publish ./dist --ignore-scripts",
+        "watch": "node watch.js",
+        "lint": "eslint . --ext .ts,.tsx,.js,.jsx"
+    },
+    "devDependencies": {
+        "@warscript/tstl-plugin": "^0.0.1",
+        "@typescript-eslint/eslint-plugin": "^5.59.11",
+        "@typescript-eslint/parser": "^5.59.11",
+        "async": "^3.2.0",
+        "copyfiles": "^2.4.1",
+        "eslint": "^8.42.0",
+        "eslint-config-prettier": "^8.8.0",
+        "eslint-plugin-prettier": "^3.4.0",
+        "prettier": "^2.8.8",
+        "ts-node": "^10.9.1",
+        "tsc-watch": "^4.2.9",
+        "typescript": "~5.3.3",
+        "typescript-to-lua": "~1.24.0"
+    },
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "@warscript/language-extensions": "^0.0.1",
+        "ceres-decl": "^2.0.7",
+        "lua-types": "^2.13.0"
+    }
+}

@@ -1,0 +1,5 @@
+require("cerrie.global.math")
+require("cerrie.global.quaternion")
+require("cerrie.global.vec2")
+require("cerrie.global.vec3")
+require("cerrie.global.oskey")

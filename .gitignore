@@ -1,0 +1,16 @@
+/*
+!decl
+!language-extensions
+!pure
+!tstl-plugin
+!warscript
+!.eslintignore
+!.eslintrc.cjs
+!.gitignore
+!.prettierrc
+!init.d.ts
+!init.lua
+!LICENSE
+!package.json
+!package-lock.json
+!tsconfig.json
