@@ -7,7 +7,11 @@ const select = _G.select
 const tableConcat = table.concat
 const tableSort = table.sort
 
-export const EMPTY_ARRAY: readonly any[] = []
+const EMPTY_ARRAY: readonly any[] = []
+
+export const emptyArray = <T>(): readonly T[] => {
+    return EMPTY_ARRAY
+}
 
 export const joinToString = <T>(
     array: readonly T[],

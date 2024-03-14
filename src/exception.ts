@@ -52,3 +52,5 @@ export class IllegalArgumentException extends Exception {}
 export class IllegalStateException extends Exception {}
 
 export class CancellationException extends Exception {}
+
+export class UnsupportedOperationException extends Exception {}

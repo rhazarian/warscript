@@ -1,7 +1,7 @@
 import { AbilityType, AbilityTypeId } from "../ability-type"
 import { ObjectDataEntryLevelFieldValueSupplier } from "../../entry"
 import { TupleOf } from "../../../../utility/types"
-import { EMPTY_ARRAY, map } from "../../../../utility/arrays"
+import { emptyArray, map } from "../../../../utility/arrays"
 import { BuffType } from "../buff-type"
 import { checkNotNull } from "../../../../utility/preconditions"
 
@@ -69,7 +69,7 @@ export class EngineeringUpgradeAbilityType extends AbilityType {
                               return levelAbilityUpgrades[i]
                           }
                       )
-                    : abilityUpgrades[i] ?? EMPTY_ARRAY
+                    : abilityUpgrades[i] ?? emptyArray()
             )
         }
     }
