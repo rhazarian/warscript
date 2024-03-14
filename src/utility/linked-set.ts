@@ -11,10 +11,27 @@ const linkedSetNext = <T extends AnyNotNil>(state: IteratorState<T>): T | undefi
     return n
 }
 
-export interface LinkedSet<T> extends LuaPairsKeyIterable<T> {
-    readonly __linkedHashSet: unique symbol
+type OneSidedTypeGuard = {
+    readonly __oneSidedTypeGuard: unique symbol
 }
-export class LinkedSet<T extends AnyNotNil> {
+
+export interface ReadonlyLinkedSet<T extends AnyNotNil> extends LuaPairsKeyIterable<T> {
+    copyOf(): LinkedSet<T>
+    first(): T | undefined
+    last(): T | undefined
+    next(key: T): T | undefined
+    previous(key: T): T | undefined
+    contains(key: AnyNotNil): key is T & OneSidedTypeGuard
+    size: number
+    forEach<Args extends any[]>(action: (value: T, ...args: Args) => void, ...args: Args): void
+    toArray(): T[]
+    sumOf(selector: ((value: T) => number) | KeysOfType<T, number>): number
+}
+
+export interface LinkedSet<T extends AnyNotNil> extends LuaPairsKeyIterable<T> {
+    readonly __linkedSet: unique symbol
+}
+export class LinkedSet<T extends AnyNotNil> implements ReadonlyLinkedSet<T> {
     private n = new LuaMap<T, T>()
     private p = new LuaMap<T, T>()
     private f?: T
@@ -100,9 +117,7 @@ export class LinkedSet<T extends AnyNotNil> {
         return true
     }
 
-    public contains(key: AnyNotNil): key is T & {
-        readonly __oneSidedTypeGuard: unique symbol
-    } {
+    public contains(key: AnyNotNil): key is T & OneSidedTypeGuard {
         return this.n.has(key as any) || this.l === key
     }
 
