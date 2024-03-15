@@ -107,7 +107,7 @@ export type ObjectFieldValueChangeEvent<
 
 export type ReadonlyObjectFieldType<T extends ObjectField<any, any, any, any>> = Omit<
     T,
-    "setValue" | "removeValue"
+    "setValue" | "removeValue" | "trySetValue"
 >
 
 type ReadonlyObjectFieldConstructor<T extends ObjectField> = OmitConstructor<typeof ObjectField> &
@@ -125,10 +125,6 @@ export abstract class ObjectField<
     NativeFieldType = unknown
 > extends ObjectFieldBase<ObjectDataEntryType, InstanceType, ValueType, NativeFieldType> {
     protected abstract readonly defaultValue: ValueType
-
-    public accepts(value: unknown): value is ValueType {
-        return typeof value == typeof this.defaultValue
-    }
 
     protected abstract getNativeFieldValue(instance: InstanceType): ValueType
 
@@ -225,6 +221,13 @@ export abstract class ObjectField<
         return false
     }
 
+    public trySetValue(entry: ObjectDataEntryType | InstanceType, value: unknown): boolean {
+        if (typeof value != typeof this.defaultValue) {
+            return false
+        }
+        return this.setValue(entry, value as ValueType)
+    }
+
     private invokeValueChangeEvent(
         ...args: [
             instance: InstanceType,
@@ -281,7 +284,7 @@ export abstract class ObjectField<
 
 export type ReadonlyObjectLevelFieldType<T extends ObjectLevelField<any, any, any, any>> = Omit<
     T,
-    "setValue"
+    "setValue" | "trySetValue"
 >
 
 export type ObjectLevelFieldValueChangeEvent<
@@ -410,10 +413,6 @@ export abstract class ObjectLevelField<
     NativeFieldType = unknown
 > extends ObjectFieldBase<ObjectDataEntryType, InstanceType, ValueType[], NativeFieldType> {
     protected abstract readonly defaultValue: ValueType
-
-    public accepts(value: unknown): value is ValueType {
-        return typeof value == typeof this.defaultValue
-    }
 
     protected abstract getNativeFieldValue(instance: InstanceType, level: number): ValueType
 
@@ -569,6 +568,27 @@ export abstract class ObjectLevelField<
             }
         }
         return true
+    }
+
+    public trySetValue(
+        entry: ObjectDataEntryType | InstanceType,
+        levelOrValue: number | unknown,
+        value?: unknown
+    ): boolean {
+        if (value != undefined) {
+            if (typeof value != typeof this.defaultValue) {
+                return false
+            }
+            if (typeof levelOrValue != "number") {
+                return false
+            }
+            return this.setValue(entry, levelOrValue, value as InputValueType)
+        }
+
+        if (typeof levelOrValue != typeof this.defaultValue) {
+            return false
+        }
+        return this.setValue(entry, levelOrValue as InputValueType)
     }
 
     private invokeValueChangeEvent(
