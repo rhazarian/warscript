@@ -411,6 +411,10 @@ export abstract class ObjectLevelField<
 > extends ObjectFieldBase<ObjectDataEntryType, InstanceType, ValueType[], NativeFieldType> {
     protected abstract readonly defaultValue: ValueType
 
+    public accepts(value: unknown): value is ValueType {
+        return typeof value == typeof this.defaultValue
+    }
+
     protected abstract getNativeFieldValue(instance: InstanceType, level: number): ValueType
 
     protected abstract setNativeFieldValue(
