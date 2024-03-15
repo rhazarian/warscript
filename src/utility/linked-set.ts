@@ -1,4 +1,5 @@
 import { sortBy } from "./arrays"
+import { UnsupportedOperationException } from "../exception"
 
 type IteratorState<T extends AnyNotNil> = {
     t: LuaMap<T, T>
@@ -202,6 +203,18 @@ export class LinkedSet<T extends AnyNotNil> implements ReadonlyLinkedSet<T> {
             undefined
         )
     }
+}
+
+class EmptyLinkedSet extends LinkedSet<never> {
+    override add(): boolean {
+        throw new UnsupportedOperationException()
+    }
+}
+
+const EMPTY_LINKED_SET = new EmptyLinkedSet()
+
+export const emptyLinkedSet = <T extends AnyNotNil>(): ReadonlyLinkedSet<T> => {
+    return EMPTY_LINKED_SET as any
 }
 
 export const linkedSetOf = <T extends AnyNotNil>(...elements: readonly T[]): LinkedSet<T> => {
