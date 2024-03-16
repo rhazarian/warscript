@@ -41,6 +41,7 @@ abstract class ObjectFieldBase<
     ValueType,
     NativeFieldType
 > {
+    /** @internal */
     protected readonly valueByInstance = setmetatable(new LuaMap<InstanceType, ValueType>(), {
         __mode: "k",
     })

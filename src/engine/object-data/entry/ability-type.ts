@@ -1,4 +1,5 @@
 import { Unit } from "../../internal/unit"
+import "../../internal/unit/ability"
 import { EventListenerPriority } from "../../../event"
 import { Timer } from "../../../core/types/timer"
 import { Effect } from "../../../core/types/effect"
