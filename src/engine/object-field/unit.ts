@@ -24,6 +24,11 @@ export class UnitStringField extends UnitField<string, junitstringfield> {
         return ConvertUnitStringField(id)
     }
 
+    protected override hasNativeFieldValue(): boolean {
+        // TODO
+        return true
+    }
+
     protected override getNativeFieldValue(instance: Unit): string {
         return instance.getField(this.nativeField)
     }

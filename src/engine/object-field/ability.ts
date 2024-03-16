@@ -1,4 +1,4 @@
-import { Ability } from "../internal/ability"
+import { Ability, jabilityfield } from "../internal/ability"
 import {
     ObjectArrayField,
     ObjectField,
@@ -25,7 +25,7 @@ const convertAbilityStringLevelField = _G.ConvertAbilityStringLevelField
 
 export abstract class AbilityField<
     ValueType extends number | string | boolean = number | string | boolean,
-    NativeFieldType = unknown
+    NativeFieldType extends jabilityfield = jabilityfield
 > extends ObjectField<AbilityType, Ability, ValueType, NativeFieldType> {
     protected override get instanceClass(): typeof Ability {
         return Ability
@@ -33,6 +33,10 @@ export abstract class AbilityField<
 
     protected override getObjectDataEntryId(instance: Ability): AbilityTypeId {
         return instance.typeId
+    }
+
+    protected override hasNativeFieldValue(instance: Ability): boolean {
+        return instance.hasField(this.nativeField)
     }
 
     public static get valueChangeEvent(): ObjectFieldValueChangeEvent<
@@ -64,10 +68,9 @@ export class AbilityBooleanField extends AbilityField<boolean, jabilitybooleanfi
     }
 }
 
-export abstract class AbilityNumberField<NativeFieldType = unknown> extends AbilityField<
-    number,
-    NativeFieldType
-> {
+export abstract class AbilityNumberField<
+    NativeFieldType extends jabilityfield = jabilityfield
+> extends AbilityField<number, NativeFieldType> {
     protected override get defaultValue(): number {
         return 0
     }
@@ -235,7 +238,7 @@ export class AbilityLightningTypeIdArrayField extends AbilityObjectDataEntryIdAr
 export abstract class AbilityLevelField<
     ValueType extends number | string | boolean = number | string | boolean,
     InputValueType extends ValueType = never,
-    NativeFieldType = unknown
+    NativeFieldType extends jabilityfield = jabilityfield
 > extends ObjectLevelField<AbilityType, Ability, ValueType, InputValueType, NativeFieldType> {
     protected override get instanceClass(): typeof Ability {
         return Ability
@@ -247,6 +250,10 @@ export abstract class AbilityLevelField<
 
     protected getObjectDataEntryId(instance: Ability): AbilityTypeId {
         return instance.typeId
+    }
+
+    protected override hasNativeFieldValue(instance: Ability): boolean {
+        return instance.hasField(this.nativeField)
     }
 
     public static get valueChangeEvent(): ObjectLevelFieldValueChangeEvent<
@@ -282,11 +289,9 @@ export class AbilityBooleanLevelField extends AbilityLevelField<
     }
 }
 
-export abstract class AbilityNumberLevelField<NativeFieldType = unknown> extends AbilityLevelField<
-    number,
-    number,
-    NativeFieldType
-> {
+export abstract class AbilityNumberLevelField<
+    NativeFieldType extends jabilityfield = jabilityfield
+> extends AbilityLevelField<number, number, NativeFieldType> {
     protected override get defaultValue(): number {
         return 0
     }

@@ -220,7 +220,7 @@ const levelMetatable: LuaMetatable<
     },
 }
 
-type jabilityfield =
+export type jabilityfield =
     | jabilityintegerfield
     | jabilityrealfield
     | jabilitybooleanfield
