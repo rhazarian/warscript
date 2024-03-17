@@ -15,6 +15,7 @@ local abs = math.abs
 
 local location = Location and Location(0, 0)
 local moveLocation = MoveLocation
+local getLocationZ = GetLocationZ
 
 local vec2 = {}
 
