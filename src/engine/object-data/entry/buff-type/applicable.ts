@@ -29,6 +29,7 @@ import { UnitType } from "../unit-type"
 import { TupleOf } from "../../../../utility/types"
 import { EventListenerPriority } from "../../../../event"
 import { PermanentImmolationAbilityType } from "../ability-type/permanent-immolation"
+import { castAbility } from "../../../internal/mechanics/cast-ability"
 
 const createItem = CreateItem
 const getAbilityId = BlzGetAbilityId
@@ -359,79 +360,27 @@ export const internalApplyBuff = (
     }
 
     if (applicatorType == ApplicatorType.PHYSICAL_POSITIVE) {
-        let success: boolean
-        const nativeUnit = unit.handle
-        const nativeItem = createItem(DUMMY_ITEM_ID, 0, 0)
-        unitAddItem(INVENTORY_DUMMY_NATIVE_UNIT, nativeItem)
-        itemAddAbility(nativeItem, applicatorAbilityTypeId)
-        const applicatorAbility = checkNotNull(getItemAbility(nativeItem, applicatorAbilityTypeId))
-        if (level == undefined) {
-            level = 0
-            setAbilityIntegerField(applicatorAbility, ABILITY_IF_LEVELS, 1)
+        const nativePlayer = unit.owner.handle
+        if (level != undefined && level > 0) {
+            const upgradeId =
+                applicatorUpgradeIdByApplicatorAbilityTypeId.get(applicatorAbilityTypeId)
+            if (upgradeId != undefined) {
+                setPlayerTechResearched(nativePlayer, upgradeId, level)
+            }
         }
-        setAbilityRealLevelField(
-            applicatorAbility,
-            ABILITY_RLF_DURATION_NORMAL,
+        const success = castAbility(
+            unit.handle,
+            applicatorAbilityTypeId,
+            preparePhysicalPositiveApplicatorAbility,
             level,
-            duration ?? 0
+            duration ?? 0,
+            movementSpeedIncreaseFactor
         )
-        setAbilityRealLevelField(applicatorAbility, ABILITY_RLF_DURATION_HERO, level, duration ?? 0)
-        if (movementSpeedIncreaseFactor != undefined) {
-            setAbilityRealLevelField(
-                applicatorAbility,
-                ABILITY_RLF_MOVEMENT_SPEED_INCREASE_BSK1,
-                level,
-                movementSpeedIncreaseFactor
-            )
-        }
-        setItemBooleanField(nativeItem, ITEM_BF_ACTIVELY_USED, true)
-        setItemBooleanField(nativeItem, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
-        if (level > 0) {
+        if (level != undefined && level > 0) {
             const upgradeId =
                 applicatorUpgradeIdByApplicatorAbilityTypeId.get(applicatorAbilityTypeId)
             if (upgradeId != undefined) {
-                setPlayerTechResearched(getOwningPlayer(nativeUnit), upgradeId, level)
-            }
-        }
-        if (!unitAddItem(nativeUnit, nativeItem)) {
-            let latestInventoryAbilityTypeId = 0
-            const nativeItemBySlot = new LuaMap<number, jitem>()
-            const inventorySize = unitInventorySize(nativeUnit)
-            if (inventorySize != 0) {
-                for (const slot of $range(0, inventorySize - 1)) {
-                    nativeItemBySlot.set(slot, UnitRemoveItemFromSlot(nativeUnit, slot))
-                }
-                let unitNativeAbility = getUnitAbilityByIndex(nativeUnit, 0)
-                let i = 1
-                while (unitNativeAbility != undefined) {
-                    const abilityTypeId = getAbilityId(unitNativeAbility) as AbilityTypeId
-                    if (INVENTORY_ABILITY_TYPE_IDS.has(abilityTypeId)) {
-                        latestInventoryAbilityTypeId = abilityTypeId
-                    }
-                    unitNativeAbility = getUnitAbilityByIndex(nativeUnit, i)
-                    ++i
-                }
-                unitRemoveAbility(nativeUnit, latestInventoryAbilityTypeId)
-            }
-            unitAddAbility(nativeUnit, INVENTORY_ABILITY_TYPE_ID)
-            success = unitAddItem(nativeUnit, nativeItem)
-            unitRemoveAbility(nativeUnit, INVENTORY_ABILITY_TYPE_ID)
-            if (latestInventoryAbilityTypeId != 0) {
-                unitAddAbility(nativeUnit, latestInventoryAbilityTypeId)
-                for (const [slot, nativeItem] of nativeItemBySlot) {
-                    unitAddItem(nativeUnit, nativeItem)
-                    unitDropItemSlot(nativeUnit, nativeItem, slot)
-                }
-            }
-        } else {
-            success = true
-        }
-        removeItem(nativeItem)
-        if (level != undefined && level > 1) {
-            const upgradeId =
-                applicatorUpgradeIdByApplicatorAbilityTypeId.get(applicatorAbilityTypeId)
-            if (upgradeId != undefined) {
-                setPlayerTechResearched(getOwningPlayer(nativeUnit), upgradeId, 0)
+                setPlayerTechResearched(nativePlayer, upgradeId, 0)
             }
         }
         return success
@@ -468,6 +417,28 @@ export const internalApplyBuff = (
     }
 
     return success
+}
+
+const preparePhysicalPositiveApplicatorAbility = (
+    ability: jability,
+    level: number | undefined,
+    duration: number,
+    movementSpeedIncreaseFactor?: number
+): void => {
+    if (level == undefined) {
+        setAbilityIntegerField(ability, ABILITY_IF_LEVELS, 1)
+        level = 1
+    }
+    setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_NORMAL, level, duration)
+    setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_HERO, level, duration)
+    if (movementSpeedIncreaseFactor != undefined) {
+        setAbilityRealLevelField(
+            ability,
+            ABILITY_RLF_MOVEMENT_SPEED_INCREASE_BSK1,
+            level,
+            movementSpeedIncreaseFactor
+        )
+    }
 }
 
 /** @internal For use by internal systems only. */
