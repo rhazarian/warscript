@@ -23,6 +23,7 @@ import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-gene
 import type { AbilityTypeId } from "./ability-type"
 import type { UpgradeId } from "./upgrade"
 import { AnimationQualifier } from "../auxiliary/animation-qualifier"
+import { AttackType } from "../auxiliary/attack-type"
 
 export type UnitTypeId = ObjectDataEntryId & { readonly __unitTypeId: unique symbol }
 
@@ -32,6 +33,14 @@ let getOrCreateUnitTypeWeapons: (unitType: UnitType) => TupleOf<UnitTypeWeapon, 
 
 export class UnitTypeWeapon {
     private constructor(private readonly unitType: UnitType, private readonly index: 1 | 2) {}
+
+    public get attackType(): AttackType {
+        return this.unitType["getStringField"](`ua${this.index}t`) as AttackType
+    }
+
+    public set attackType(attackType: AttackType) {
+        this.unitType["setStringField"](`ua${this.index}t`, attackType)
+    }
 
     public get backSwingDuration(): number {
         return this.unitType["getNumberField"](`ubs${this.index}`)
@@ -55,6 +64,14 @@ export class UnitTypeWeapon {
 
     public set missileModelPath(missileModelPath: string) {
         this.unitType["setStringField"](`ua${this.index}m`, missileModelPath)
+    }
+
+    public get range(): number {
+        return this.unitType["getNumberField"](`ua${this.index}r`)
+    }
+
+    public set range(range: number) {
+        this.unitType["setNumberField"](`ua${this.index}r`, range)
     }
 
     public get soundType(): WeaponSoundType {
