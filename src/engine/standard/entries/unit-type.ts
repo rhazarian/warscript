@@ -96,6 +96,18 @@ export const GHOUL_UNIT_TYPE_ID = fourCC("ugho") as StandardUnitTypeId
 
 export const DEATH_KNIGHT_HERO_UNIT_TYPE_ID = fourCC("Udea") as StandardHeroUnitTypeId
 
+// ==== Campaign
+
+// ======== Units
+
+export const ZOMBIE_UNIT_TYPE_ID = fourCC("nzom") as StandardUnitTypeId
+
+export const ZOMBIE_FEMALE_UNIT_TYPE_ID = fourCC("nzof") as StandardUnitTypeId
+
+// ======== Heroes
+
+export const ARTHAS_EVIL_HERO_UNIT_TYPE_ID = fourCC("Uear") as StandardHeroUnitTypeId
+
 // Neutral Hostile
 
 // ==== Melee
