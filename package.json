@@ -22,7 +22,7 @@
     },
     "peerDependencies": {
         "@warscript/language-extensions": "^0.0.1",
-        "@warscript/tstl-plugin": "^0.0.1",
+        "@warscript/tstl-plugin": "^0.0.2",
         "typescript-to-lua": "^1.24.1",
         "lua-types": "^2.13.1",
         "warpack": "0.0.1-dev.5bdabe5"

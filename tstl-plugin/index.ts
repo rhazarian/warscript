@@ -65,7 +65,7 @@ function getExtensionKindForType(
 export const methodExtensionKinds: ReadonlySet<WarscriptExtensionKind> = new Set<WarscriptExtensionKind>([
     WarscriptExtensionKind.BitwiseAndNotZeroOperatorMethodType,
     WarscriptExtensionKind.BitwiseAndEqualsRightMethodType,
-    WarscriptExtensionKind.BitwiseAndEqualsRightMethodType,
+    WarscriptExtensionKind.BitwiseAndNotMethodType,
     WarscriptExtensionKind.PlusPointZeroMethodType,
 ])
 
