@@ -433,6 +433,30 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setStringField("umdl:hd", modelPathHD)
     }
 
+    public get runSpeed(): number {
+        return this.getNumberField("urun")
+    }
+
+    public set runSpeed(runSpeed: number) {
+        this.setNumberField("urun", runSpeed)
+    }
+
+    public get runSpeedSD(): number {
+        return this.getNumberField("urun:sd")
+    }
+
+    public set runSpeedSD(runSpeedSD: number) {
+        this.setNumberField("urun:sd", runSpeedSD)
+    }
+
+    public get runSpeedHD(): number {
+        return this.getNumberField("urun:hd")
+    }
+
+    public set runSpeedHD(runSpeedHD: number) {
+        this.setNumberField("urun:hd", runSpeedHD)
+    }
+
     public get selectionCircleScale(): number {
         return this.getNumberField("ussc")
     }
@@ -559,6 +583,30 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set shadowImageYOffset(shadowImageYOffset: number) {
         this.setNumberField("ushy", shadowImageYOffset)
+    }
+
+    public get walkSpeed(): number {
+        return this.getNumberField("uwal")
+    }
+
+    public set walkSpeed(walkSpeed: number) {
+        this.setNumberField("uwal", walkSpeed)
+    }
+
+    public get walkSpeedSD(): number {
+        return this.getNumberField("uwal:sd")
+    }
+
+    public set walkSpeedSD(walkSpeedSD: number) {
+        this.setNumberField("uwal:sd", walkSpeedSD)
+    }
+
+    public get walkSpeedHD(): number {
+        return this.getNumberField("uwal:hd")
+    }
+
+    public set walkSpeedHD(walkSpeedHD: number) {
+        this.setNumberField("uwal:hd", walkSpeedHD)
     }
 
     // Combat
