@@ -2,6 +2,7 @@ import { Event } from "../../event"
 import { getClass, getSuperclass } from "../../utility/reflection"
 import { AbstractConstructor } from "../../utility/types"
 import { IllegalStateException } from "../../exception"
+import { AttributesHolder } from "../../attributes"
 
 const getHandleId = GetHandleId
 
@@ -40,6 +41,7 @@ const enum HandlePropertyKey {
 }
 
 export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
+    extends AttributesHolder
     implements Destroyable
 {
     public readonly handle: H
@@ -53,6 +55,8 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
      * The constructor is public solely for type inference purposes.
      */
     public constructor(handle: H) {
+        super()
+
         this[HandlePropertyKey.STATE] = HandleState.BEING_CREATED
 
         const id = getHandleId(handle)
