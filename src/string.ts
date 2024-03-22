@@ -156,4 +156,30 @@ _G.string.isNotBlank = function (string: string): boolean {
     return match(string, "^%s*$")[0] == undefined
 }
 
+declare global {
+    namespace string {
+        /**
+         * Returns the number of characters matching the given predicate.
+         */
+        function count(string: string, predicate: (char: string) => boolean): number
+    }
+
+    interface String {
+        /**
+         * Returns the number of characters matching the given predicate.
+         */
+        count(predicate: (char: string) => boolean): number
+    }
+}
+
+_G.string.count = function (string: string, predicate: (char: string) => boolean): number {
+    let result = 0
+    for (const i of $range(1, string.length)) {
+        if (predicate(sub(string, i, i))) {
+            ++result
+        }
+    }
+    return result
+}
+
 export {}
