@@ -875,6 +875,29 @@ export abstract class HeroUnitType<
     public set heroAbilityTypeIds(heroAbilityTypeIds: AbilityTypeId[]) {
         this.setObjectDataEntryIdsField("uhab", heroAbilityTypeIds)
     }
+
+    // Text
+
+    public get properNames(): string[] {
+        return this.getStringsField("upro")
+    }
+
+    public set properNames(properNames: string | string[]) {
+        if (Array.isArray(properNames)) {
+            this.setStringsField("upro", properNames)
+            this.setNumberField("upru", properNames.length)
+        } else {
+            this.setStringField("upro", properNames)
+        }
+    }
+
+    public get properNamesCount(): number {
+        return this.getNumberField("upru")
+    }
+
+    public set properNamesCount(properNamesCount: number) {
+        this.setNumberField("upru", properNamesCount)
+    }
 }
 implementReadonlyNumberIndexSupplier(HeroUnitType, (id) => {
     return class extends HeroUnitType {
