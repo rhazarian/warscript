@@ -891,12 +891,12 @@ export abstract class HeroUnitType<
         }
     }
 
-    public get properNamesCount(): number {
+    public get properNameCount(): number {
         return this.getNumberField("upru")
     }
 
-    public set properNamesCount(properNamesCount: number) {
-        this.setNumberField("upru", properNamesCount)
+    public set properNameCount(properNameCount: number) {
+        this.setNumberField("upru", properNameCount)
     }
 }
 implementReadonlyNumberIndexSupplier(HeroUnitType, (id) => {
