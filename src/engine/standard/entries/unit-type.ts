@@ -26,9 +26,13 @@ export const SPELLBREAKER_UNIT_TYPE_ID = fourCC("hspt") as StandardUnitTypeId
 
 // ==== Heroes
 
-export const PALADIN_HERO_UNIT_TYPE_ID = fourCC("Hpal") as StandardHeroUnitTypeId
-
 export const ARCHMAGE_HERO_UNIT_TYPE_ID = fourCC("Hamg") as StandardHeroUnitTypeId
+
+export const BLOOD_MAGE_HERO_UNIT_TYPE_ID = fourCC("Hblm") as StandardHeroUnitTypeId
+
+export const MOUNTAIN_KING_HERO_UNIT_TYPE_ID = fourCC("Hmkg") as StandardHeroUnitTypeId
+
+export const PALADIN_HERO_UNIT_TYPE_ID = fourCC("Hpal") as StandardHeroUnitTypeId
 
 // ==== Campaign
 
@@ -38,9 +42,45 @@ export const CAPTAIN_UNIT_TYPE_ID = fourCC("hcth") as StandardUnitTypeId
 
 // ======== Heroes
 
+export const ADMIRAL_PROUDMOORE_HERO_UNIT_TYPE_ID = fourCC("Hapm") as StandardHeroUnitTypeId
+
+export const ANASTERIAN_SUNSTRIDER_HERO_UNIT_TYPE_ID = fourCC("Hssa") as StandardHeroUnitTypeId
+
+export const ANTONIDAS_HERO_UNIT_TYPE_ID = fourCC("Hant") as StandardHeroUnitTypeId
+
+export const ANTONIDAS_GHOST_HERO_UNIT_TYPE_ID = fourCC("Hgam") as StandardHeroUnitTypeId
+
 export const ARTHAS_HERO_UNIT_TYPE_ID = fourCC("Hart") as StandardHeroUnitTypeId
 
 export const ARTHAS_WITH_FROSTMOURNE_HERO_UNIT_TYPE_ID = fourCC("Harf") as StandardHeroUnitTypeId
+
+export const DAGREN_THE_ORCSLAYER_HERO_UNIT_TYPE_ID = fourCC("Hdgo") as StandardHeroUnitTypeId
+
+export const HALAHK_THE_LIFEBRINGER_HERO_UNIT_TYPE_ID = fourCC("Hhkl") as StandardHeroUnitTypeId
+
+export const JAINA_HERO_UNIT_TYPE_ID = fourCC("Hjai") as StandardHeroUnitTypeId
+
+export const JENNALLA_DEEMSPRING_HERO_UNIT_TYPE_ID = fourCC("Hjnd") as StandardHeroUnitTypeId
+
+export const KAEL_HERO_UNIT_TYPE_ID = fourCC("Hkal") as StandardHeroUnitTypeId
+
+export const KELEN_THE_SEEKER_HERO_UNIT_TYPE_ID = fourCC("Haah") as StandardHeroUnitTypeId
+
+export const LORD_GARITHOS_HERO_UNIT_TYPE_ID = fourCC("Hlgr") as StandardHeroUnitTypeId
+
+export const LORD_NICHOLAS_BUZAN_HERO_UNIT_TYPE_ID = fourCC("Hpb1") as StandardHeroUnitTypeId
+
+export const MAGROTH_THE_DEFENDER_HERO_UNIT_TYPE_ID = fourCC("Hmgd") as StandardHeroUnitTypeId
+
+export const MURADIN_BRONZEBEARD_HERO_UNIT_TYPE_ID = fourCC("Hmbr") as StandardHeroUnitTypeId
+
+export const SIR_GREGORY_EDMUNSON_HERO_UNIT_TYPE_ID = fourCC("Hpb2") as StandardHeroUnitTypeId
+
+export const SYLVANAS_WINDRUNNER_HERO_UNIT_TYPE_ID = fourCC("Hvwd") as StandardHeroUnitTypeId
+
+export const THALORIEN_DAWNSEEKER_HERO_UNIT_TYPE_ID = fourCC("Hddt") as StandardHeroUnitTypeId
+
+export const UTHER_HERO_UNIT_TYPE_ID = fourCC("Huth") as StandardHeroUnitTypeId
 
 // Orc
 
