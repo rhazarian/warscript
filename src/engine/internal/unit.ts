@@ -643,13 +643,32 @@ for (const player of Player.all) {
 const enum UnitPropertyKey {
     IS_PAUSED = 100,
     STUN_COUNTER,
+    DELAY_HEALTH_CHECKS_COUNTER,
+    DELAY_HEALTH_CHECKS_HEALTH_BONUS,
     PREVENT_DEATH_HEALTH_BONUS,
     IS_TEAM_GLOW_HIDDEN,
+}
+
+const delayHealthChecksCallback = (unit: Unit): void => {
+    const counter = (unit[UnitPropertyKey.DELAY_HEALTH_CHECKS_COUNTER] ?? 0) - 1
+    if (counter != 0) {
+        unit[UnitPropertyKey.DELAY_HEALTH_CHECKS_COUNTER] = counter
+        return
+    }
+    unit[UnitPropertyKey.DELAY_HEALTH_CHECKS_COUNTER] = undefined
+    const healthBonus = unit[UnitPropertyKey.DELAY_HEALTH_CHECKS_HEALTH_BONUS]
+    if (healthBonus != undefined) {
+        unit[UnitPropertyKey.DELAY_HEALTH_CHECKS_HEALTH_BONUS] = undefined
+        const handle = unit.handle
+        BlzSetUnitMaxHP(handle, BlzGetUnitMaxHP(handle) - healthBonus)
+    }
 }
 
 export class Unit extends Handle<junit> {
     private [UnitPropertyKey.IS_PAUSED]?: true
     private [UnitPropertyKey.STUN_COUNTER]?: number
+    private [UnitPropertyKey.DELAY_HEALTH_CHECKS_COUNTER]?: number
+    private [UnitPropertyKey.DELAY_HEALTH_CHECKS_HEALTH_BONUS]?: number
     private [UnitPropertyKey.PREVENT_DEATH_HEALTH_BONUS]?: number
     private [UnitPropertyKey.IS_TEAM_GLOW_HIDDEN]?: true
 
@@ -1009,13 +1028,29 @@ export class Unit extends Handle<junit> {
         SetUnitAcquireRange(this.handle, v)
     }
 
+    /**
+     * Keeps this unit alive even if its health becomes negative until the current game thread yields.
+     */
+    public delayHealthChecks(): void {
+        this[UnitPropertyKey.DELAY_HEALTH_CHECKS_COUNTER] =
+            (this[UnitPropertyKey.DELAY_HEALTH_CHECKS_COUNTER] ?? 0) + 1
+        Timer.run(delayHealthChecksCallback, this)
+    }
+
     public get maxHealth(): number {
         return (
-            BlzGetUnitMaxHP(this.handle) - (this[UnitPropertyKey.PREVENT_DEATH_HEALTH_BONUS] ?? 0)
+            BlzGetUnitMaxHP(this.handle) -
+            (this[UnitPropertyKey.DELAY_HEALTH_CHECKS_HEALTH_BONUS] ?? 0) -
+            (this[UnitPropertyKey.PREVENT_DEATH_HEALTH_BONUS] ?? 0)
         )
     }
 
     public set maxHealth(maxHealth: number) {
+        if (maxHealth < 1 && this[UnitPropertyKey.DELAY_HEALTH_CHECKS_COUNTER] != undefined) {
+            this[UnitPropertyKey.DELAY_HEALTH_CHECKS_HEALTH_BONUS] =
+                (this[UnitPropertyKey.DELAY_HEALTH_CHECKS_HEALTH_BONUS] ?? 0) + (1 - maxHealth)
+            maxHealth = 1
+        }
         BlzSetUnitMaxHP(
             this.handle,
             maxHealth + (this[UnitPropertyKey.PREVENT_DEATH_HEALTH_BONUS] ?? 0)
