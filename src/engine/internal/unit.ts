@@ -73,6 +73,10 @@ const isUnitInRangeXY = IsUnitInRangeXY
 const isUnitInRange = IsUnitInRange
 const setResourceAmount = SetResourceAmount
 const getResourceAmount = GetResourceAmount
+const getUnitWeaponRealField = BlzGetUnitWeaponRealField
+const setUnitWeaponRealField = BlzSetUnitWeaponRealField
+const getUnitWeaponStringField = BlzGetUnitWeaponStringField
+const setUnitWeaponStringField = BlzSetUnitWeaponStringField
 
 const getUnitAbilityLevel = GetUnitAbilityLevel
 
@@ -492,79 +496,145 @@ const getters = {
     },
 }
 
-interface UnitWeapon {
-    readonly index: 0 | 1
-    cooldown: number
-    projectileArc: number
-    projectileArt: string
-    projectileSpeed: number
-    attackPoint: number
-}
+export class UnitWeapon {
+    public constructor(public readonly unit: Unit, public readonly index: 0 | 1) {}
 
-const weaponGetters = {
-    index(handle: junit, index: 0 | 1): 0 | 1 {
-        return index
-    },
-    cooldown(handle: junit, index: 0 | 1): number {
-        return BlzGetUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_BASE_COOLDOWN, index)
-    },
-    projectileArc(handle: junit, index: 0 | 1): number {
-        return BlzGetUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_PROJECTILE_ARC, index)
-    },
-    projectileArt(handle: junit, index: 0 | 1): string {
-        return BlzGetUnitWeaponStringField(handle, UNIT_WEAPON_SF_ATTACK_PROJECTILE_ART, index)
-    },
-    projectileSpeed(handle: junit, index: 0 | 1): number {
-        return BlzGetUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_PROJECTILE_SPEED, index)
-    },
-    attackPoint(handle: junit, index: 0 | 1): number {
-        return BlzGetUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_DAMAGE_POINT, index)
-    },
-}
+    public get cooldown(): number {
+        return getUnitWeaponRealField(
+            this.unit.handle,
+            UNIT_WEAPON_RF_ATTACK_BASE_COOLDOWN,
+            this.index
+        )
+    }
 
-const weaponSetters = {
-    cooldown(handle: junit, index: 0 | 1, value: number): void {
-        assert(BlzSetUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_BASE_COOLDOWN, index, value))
-    },
-    projectileArc(handle: junit, index: 0 | 1, value: number): void {
-        assert(
-            BlzSetUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_PROJECTILE_ARC, index, value)
+    public set cooldown(cooldown: number) {
+        setUnitWeaponRealField(
+            this.unit.handle,
+            UNIT_WEAPON_RF_ATTACK_BASE_COOLDOWN,
+            this.index,
+            cooldown
         )
-    },
-    projectileArt(handle: junit, index: 0 | 1, value: string): void {
-        assert(
-            BlzSetUnitWeaponStringField(handle, UNIT_WEAPON_SF_ATTACK_PROJECTILE_ART, index, value)
-        )
-    },
-    projectileSpeed(handle: junit, index: 0 | 1, value: number): void {
-        assert(
-            BlzSetUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_PROJECTILE_SPEED, index, value)
-        )
-    },
-    attackPoint(handle: junit, index: 0 | 1, value: number): void {
-        assert(BlzSetUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_DAMAGE_POINT, index, value))
-    },
-}
+    }
 
-const weaponMetatable: LuaMetatable<
-    {
-        h: junit
-        i: 0 | 1
-    } & Partial<UnitWeapon>,
-    (key: keyof typeof weaponGetters) => any
-> = {
-    __index(
-        this: {
-            h: junit
-            i: 0 | 1
-        } & Partial<UnitWeapon>,
-        key: keyof typeof weaponGetters
-    ): any {
-        return weaponGetters[key](this.h, this.i)
-    },
-    __newindex(key: keyof typeof weaponSetters, value: never): void {
-        weaponSetters[key](this.h, this.i, value)
-    },
+    public get damage(): [minimumDamage: number, maximumDamage: number] {
+        const minimumDamage = this.damageBase + this.damageDiceCount
+        const maximumDamage = this.damageBase + this.damageDiceCount * this.damageDiceSideCount
+        return [minimumDamage, maximumDamage]
+    }
+
+    public set damage([minimumDamage, maximumDamage]: [number, number]) {
+        this.damageBase = minimumDamage - 1
+        this.damageDiceCount = 1
+        this.damageDiceSideCount = maximumDamage - minimumDamage + 1
+    }
+
+    public get damageBase(): number {
+        return BlzGetUnitBaseDamage(this.unit.handle, this.index)
+    }
+
+    public set damageBase(damageBase: number) {
+        BlzSetUnitBaseDamage(this.unit.handle, this.index, damageBase)
+    }
+
+    public get damageDiceCount(): number {
+        return BlzGetUnitDiceNumber(this.unit.handle, this.index)
+    }
+
+    public set damageDiceCount(damageDiceCount: number) {
+        BlzSetUnitDiceNumber(this.unit.handle, this.index, damageDiceCount)
+    }
+
+    public get damageDiceSideCount(): number {
+        return BlzGetUnitDiceSides(this.unit.handle, this.index)
+    }
+
+    public set damageDiceSideCount(damageDiceSideCount: number) {
+        BlzSetUnitDiceSides(this.unit.handle, this.index, damageDiceSideCount)
+    }
+
+    public get range(): number {
+        return getUnitWeaponRealField(this.unit.handle, UNIT_WEAPON_RF_ATTACK_RANGE, this.index)
+    }
+
+    public set range(range: number) {
+        const handle = this.unit.handle
+        const index = this.index
+        setUnitWeaponRealField(
+            handle,
+            UNIT_WEAPON_RF_ATTACK_RANGE,
+            index + 1,
+            getUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_RANGE, index + 1) +
+                (range - getUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_RANGE, index))
+        )
+    }
+
+    public get impactDelay(): number {
+        return getUnitWeaponRealField(
+            this.unit.handle,
+            UNIT_WEAPON_RF_ATTACK_DAMAGE_POINT,
+            this.index
+        )
+    }
+
+    public set impactDelay(impactDelay: number) {
+        setUnitWeaponRealField(
+            this.unit.handle,
+            UNIT_WEAPON_RF_ATTACK_DAMAGE_POINT,
+            this.index,
+            impactDelay
+        )
+    }
+
+    public get missileArc(): number {
+        return getUnitWeaponRealField(
+            this.unit.handle,
+            UNIT_WEAPON_RF_ATTACK_PROJECTILE_ARC,
+            this.index
+        )
+    }
+
+    public set missileArc(missileArc: number) {
+        setUnitWeaponRealField(
+            this.unit.handle,
+            UNIT_WEAPON_RF_ATTACK_PROJECTILE_ARC,
+            this.index,
+            missileArc
+        )
+    }
+
+    public get missileModelPath(): string {
+        return getUnitWeaponStringField(
+            this.unit.handle,
+            UNIT_WEAPON_SF_ATTACK_PROJECTILE_ART,
+            this.index
+        )
+    }
+
+    public set missileModelPath(missileModelPath: string) {
+        setUnitWeaponStringField(
+            this.unit.handle,
+            UNIT_WEAPON_SF_ATTACK_PROJECTILE_ART,
+            this.index,
+            missileModelPath
+        )
+    }
+
+    public get missileSpeed(): number {
+        return getUnitWeaponRealField(
+            this.unit.handle,
+            UNIT_WEAPON_RF_ATTACK_PROJECTILE_SPEED,
+            this.index
+        )
+    }
+
+    public set missileSpeed(missileSpeed: number) {
+        setUnitWeaponRealField(
+            this.unit.handle,
+            UNIT_WEAPON_RF_ATTACK_PROJECTILE_SPEED,
+            this.index,
+            missileSpeed
+        )
+    }
 }
 
 const unitInventorySize = UnitInventorySize
@@ -577,8 +647,6 @@ const getAbilityName = GetAbilityName
 const unitAddAbility = UnitAddAbility
 const getUnitGoldCost = GetUnitGoldCost
 const getUnitLumberCost = GetUnitWoodCost
-const unitMakeAbilityPermanent = UnitMakeAbilityPermanent
-const unitAddItem = UnitAddItem
 const unitRemoveAbility = UnitRemoveAbility
 
 function retrieveAbility(unit: junit, ability: jability | undefined, abilityId: number): Ability {
@@ -906,12 +974,19 @@ export class Unit extends Handle<junit> {
     }
 
     public get weapons(): [UnitWeapon, UnitWeapon] {
-        const weapons: [UnitWeapon, UnitWeapon] = [
-            setmetatable({ h: this.handle, i: 0 }, weaponMetatable),
-            setmetatable({ h: this.handle, i: 1 }, weaponMetatable),
-        ]
-        rawset(this, "weapons", weapons)
-        return weapons
+        return [this.firstWeapon, this.secondWeapon]
+    }
+
+    public get firstWeapon(): UnitWeapon {
+        const weapon = new UnitWeapon(this, 0)
+        rawset(this, "firstWeapon", weapon)
+        return weapon
+    }
+
+    public get secondWeapon(): UnitWeapon {
+        const weapon = new UnitWeapon(this, 1)
+        rawset(this, "secondWeapon", weapon)
+        return weapon
     }
 
     public get level(): number {

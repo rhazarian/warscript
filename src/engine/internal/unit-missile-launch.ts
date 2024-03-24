@@ -35,7 +35,7 @@ const timerCallback = (source: Unit, target: Unit): void => {
 
 Unit.autoAttackStartEvent.addListener((source, target) => {
     // TODO: deduce weapon index properly.
-    const attackPoint = source.weapons[0].attackPoint
+    const attackPoint = source.weapons[0].impactDelay
     const timer = Timer.simple(attackPoint, timerCallback, source, target)
     eventTimerByUnit.set(source, timer)
 })
