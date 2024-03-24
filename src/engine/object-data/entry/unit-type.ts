@@ -50,6 +50,50 @@ export class UnitTypeWeapon {
         this.unitType["setNumberField"](`ubs${this.index}`, backSwingDuration)
     }
 
+    public get cooldown(): number {
+        return this.unitType["getNumberField"](`ua${this.index}c`)
+    }
+
+    public set cooldown(cooldown: number) {
+        this.unitType["setNumberField"](`ua${this.index}c`, cooldown)
+    }
+
+    public get damage(): [minimumDamage: number, maximumDamage: number] {
+        const minimumDamage = this.damageBase + this.damageDiceCount
+        const maximumDamage = this.damageBase + this.damageDiceCount * this.damageDiceSideCount
+        return [minimumDamage, maximumDamage]
+    }
+
+    public set damage([minimumDamage, maximumDamage]: [number, number]) {
+        this.damageBase = minimumDamage - 1
+        this.damageDiceCount = 1
+        this.damageDiceSideCount = maximumDamage - minimumDamage + 1
+    }
+
+    public get damageBase(): number {
+        return this.unitType["getNumberField"](`ua${this.index}b`)
+    }
+
+    public set damageBase(damageBase: number) {
+        this.unitType["setNumberField"](`ua${this.index}b`, damageBase)
+    }
+
+    public get damageDiceCount(): number {
+        return this.unitType["getNumberField"](`ua${this.index}d`)
+    }
+
+    public set damageDiceCount(damageDiceNumber: number) {
+        this.unitType["setNumberField"](`ua${this.index}d`, damageDiceNumber)
+    }
+
+    public get damageDiceSideCount(): number {
+        return this.unitType["getNumberField"](`ua${this.index}s`)
+    }
+
+    public set damageDiceSideCount(damageDiceSideCount: number) {
+        this.unitType["setNumberField"](`ua${this.index}s`, damageDiceSideCount)
+    }
+
     public get impactDelay(): number {
         return this.unitType["getNumberField"](`udp${this.index}`)
     }
@@ -651,16 +695,16 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setStringsField("utyp", unitClassificationsToStringArray(unitClassifications))
     }
 
+    public get weapons(): TupleOf<UnitTypeWeapon, 2> {
+        return getOrCreateUnitTypeWeapons(this)
+    }
+
     public get firstWeapon(): UnitTypeWeapon {
         return this.weapons[0]
     }
 
     public get secondWeapon(): UnitTypeWeapon {
         return this.weapons[1]
-    }
-
-    public get weapons(): TupleOf<UnitTypeWeapon, 2> {
-        return getOrCreateUnitTypeWeapons(this)
     }
 
     // Movement
@@ -781,6 +825,46 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set goldCost(goldCost: number) {
         this.setNumberField("ugol", goldCost)
+    }
+
+    public get healthRegenerationRate(): number {
+        return this.getNumberField("uhpr")
+    }
+
+    public set healthRegenerationRate(healthRegenerationRate: number) {
+        this.setNumberField("uhpr", healthRegenerationRate)
+    }
+
+    public get manaRegenerationRate(): number {
+        return this.getNumberField("umpr")
+    }
+
+    public set manaRegenerationRate(manaRegenerationRate: number) {
+        this.setNumberField("umpr", manaRegenerationRate)
+    }
+
+    public get maximumHealth(): number {
+        return this.getNumberField("uhpm")
+    }
+
+    public set maximumHealth(maximumHealth: number) {
+        this.setNumberField("uhpm", maximumHealth)
+    }
+
+    public get maximumMana(): number {
+        return this.getNumberField("umpm")
+    }
+
+    public set maximumMana(maximumMana: number) {
+        this.setNumberField("umpm", maximumMana)
+    }
+
+    public get initialMana(): number {
+        return this.getNumberField("umpi")
+    }
+
+    public set initialMana(initialMana: number) {
+        this.setNumberField("umpi", initialMana)
     }
 
     public get isStructure(): boolean {
