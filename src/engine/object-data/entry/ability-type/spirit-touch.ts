@@ -20,23 +20,23 @@ export class SpiritTouchAbilityType extends AbilityType {
         this.setNumberLevelField("Rpb4", manaRequirement)
     }
 
-    public get maximumTargetCount(): number[] {
-        return this.getNumberLevelField("Rpb5")
-    }
-
-    public set maximumTargetCount(
-        maximumTargetCount: ObjectDataEntryLevelFieldValueSupplier<number>
-    ) {
-        this.setNumberLevelField("Rpb5", maximumTargetCount)
-    }
-
     public get maximumManaCostFactor(): number[] {
-        return this.getNumberLevelField("Rpb6")
+        return this.getNumberLevelField("Rpb5")
     }
 
     public set maximumManaCostFactor(
         maximumManaCostFactor: ObjectDataEntryLevelFieldValueSupplier<number>
     ) {
-        this.setNumberLevelField("Rpb6", maximumManaCostFactor)
+        this.setNumberLevelField("Rpb5", maximumManaCostFactor)
+    }
+
+    public get maximumTargetCount(): number[] {
+        return this.getNumberLevelField("Rpb6")
+    }
+
+    public set maximumTargetCount(
+        maximumTargetCount: ObjectDataEntryLevelFieldValueSupplier<number>
+    ) {
+        this.setNumberLevelField("Rpb6", maximumTargetCount)
     }
 }

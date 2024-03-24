@@ -1501,6 +1501,10 @@ export class Unit extends Handle<junit> {
         BlzUnitHideAbility(this.handle, abilityId, flag)
     }
 
+    public getAbilityRemainingCooldown(abilityId: number): number {
+        return BlzGetUnitAbilityCooldownRemaining(this.handle, abilityId)
+    }
+
     public startAbilityCooldown(abilityId: number, cooldown: number): void {
         BlzStartUnitAbilityCooldown(this.handle, abilityId, cooldown)
     }
