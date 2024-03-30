@@ -38,7 +38,11 @@ export const PALADIN_HERO_UNIT_TYPE_ID = fourCC("Hpal") as StandardHeroUnitTypeI
 
 // ======== Units
 
+export const ARCHER_HIGH_ELF_UNIT_TYPE_ID = fourCC("nhea") as StandardUnitTypeId
+
 export const CAPTAIN_UNIT_TYPE_ID = fourCC("hcth") as StandardUnitTypeId
+
+export const SWORDSMAN_UNIT_TYPE_ID = fourCC("hhes") as StandardUnitTypeId
 
 // ======== Heroes
 
@@ -114,9 +118,41 @@ export const WITCH_DOCTOR_UNIT_TYPE_ID = fourCC("odoc") as StandardUnitTypeId
 
 // ==== Melee
 
+// ======== Units
+
+export const ARCHER_UNIT_TYPE_ID = fourCC("earc") as StandardUnitTypeId
+
+export const CHIMAERA_UNIT_TYPE_ID = fourCC("echm") as StandardUnitTypeId
+
+export const DRUID_OF_THE_CLAW_UNIT_TYPE_ID = fourCC("edoc") as StandardUnitTypeId
+
+export const DRUID_OF_THE_TALON_UNIT_TYPE_ID = fourCC("edot") as StandardUnitTypeId
+
+export const DRYAD_UNIT_TYPE_ID = fourCC("edry") as StandardUnitTypeId
+
+export const FAERIE_DRAGON_UNIT_TYPE_ID = fourCC("efdr") as StandardUnitTypeId
+
+export const GLAIVE_THROWER_UNIT_TYPE_ID = fourCC("ebal") as StandardUnitTypeId
+
+export const HIPPOGRYPH_UNIT_TYPE_ID = fourCC("ehip") as StandardUnitTypeId
+
+export const HIPPOGRYPH_RIDER_UNIT_TYPE_ID = fourCC("ehpr") as StandardUnitTypeId
+
+export const HUNTRESS_UNIT_TYPE_ID = fourCC("esen") as StandardUnitTypeId
+
+export const MOUNTAIN_GIANT_THROWER_UNIT_TYPE_ID = fourCC("emtg") as StandardUnitTypeId
+
+export const WISP_UNIT_TYPE_ID = fourCC("ewsp") as StandardUnitTypeId
+
 // ======== Heroes
 
 export const DEMON_HUNTER_HERO_UNIT_TYPE_ID = fourCC("Edem") as StandardHeroUnitTypeId
+
+export const KEEPER_OF_THE_GROVE_HERO_UNIT_TYPE_ID = fourCC("Ekee") as StandardHeroUnitTypeId
+
+export const MOON_PRIESTESS_HERO_UNIT_TYPE_ID = fourCC("Emoo") as StandardHeroUnitTypeId
+
+export const WARDEN_HERO_UNIT_TYPE_ID = fourCC("Ewar") as StandardHeroUnitTypeId
 
 // ======== Special
 
