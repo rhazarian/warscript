@@ -13,13 +13,13 @@ export class MineAbilityType extends AbilityType {
         this.setNumberLevelField("Min1", activationDelay)
     }
 
-    public get invisibilityDelay(): boolean[] {
-        return this.getBooleanLevelField("Min2")
+    public get invisibilityDelay(): number[] {
+        return this.getNumberLevelField("Min2")
     }
 
     public set invisibilityDelay(
-        invisibilityDelay: ObjectDataEntryLevelFieldValueSupplier<boolean>
+        invisibilityDelay: ObjectDataEntryLevelFieldValueSupplier<number>
     ) {
-        this.setBooleanLevelField("Min2", invisibilityDelay)
+        this.setNumberLevelField("Min2", invisibilityDelay)
     }
 }
