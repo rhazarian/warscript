@@ -59,7 +59,7 @@ export const ITEM_ABILITY_ABILITY_BOOLEAN_FIELD = AbilityBooleanField.create(fou
 
 export const CHECK_DEPENDENCIES_ABILITY_BOOLEAN_FIELD = AbilityBooleanField.create(fourCC("achd"))
 
-export const ARF_MISSILE_ARC_ABILITY_FLOAT_FIELD = AbilityFloatField.create(fourCC("amac"))
+export const MISSILE_ARC_ABILITY_FLOAT_FIELD = AbilityFloatField.create(fourCC("amac"))
 
 export const NAME_ABILITY_STRING_FIELD = AbilityStringField.create(fourCC("anam"))
 

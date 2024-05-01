@@ -10,11 +10,15 @@ import { Effect, EffectParameters } from "../../core/types/effect"
 import {
     AREA_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
     EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+    MISSILE_ARC_ABILITY_FLOAT_FIELD,
+    MISSILE_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+    MISSILE_SPEED_ABILITY_INTEGER_FIELD,
     SPECIAL_EFFECT_ATTACHMENT_POINT_STRING_FIELD,
     SPECIAL_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
 } from "../standard/fields/ability"
 import { AbilityDependentValue, resolveCurrentAbilityDependentValue } from "../object-field/ability"
 import { Timer } from "../../core/types/timer"
+import { Missile } from "../../core/types/missile"
 
 const createBehaviorFunctionsByAbilityTypeId = new LuaMap<
     AbilityTypeId,
@@ -26,9 +30,23 @@ export type AbilityBehaviorConstructor<Args extends any[]> = new (
     ...args: Args
 ) => AbilityBehavior
 
+const invokeOnMissileArrival = <T extends any[]>(
+    _missile: Missile,
+    success: boolean,
+    abilityBehavior: AbilityBehavior<{ periodicActionParameters: T }>,
+    ...parameters: T
+): void => {
+    if (success) {
+        abilityBehavior.onMissileArrival(...parameters)
+    }
+}
+
 export abstract class AbilityBehavior<
-    PeriodicActionParameters extends any[] = any[]
-> extends Behavior<Ability, PeriodicActionParameters> {
+    Parameters extends {
+        periodicActionParameters?: any[]
+        missileParameters?: any[]
+    } = {}
+> extends Behavior<Ability, NonNullable<Parameters["periodicActionParameters"]>> {
     public constructor(ability: Ability) {
         super(ability)
     }
@@ -97,6 +115,51 @@ export abstract class AbilityBehavior<
                 yOrDuration
             )
         }
+    }
+
+    private static MissileLaunchConfig = class {
+        public constructor(private readonly abilityBehavior: AbilityBehavior) {}
+
+        public get art(): string {
+            return MISSILE_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(
+                this.abilityBehavior.ability,
+                0
+            )
+        }
+
+        public get arc(): number {
+            return MISSILE_ARC_ABILITY_FLOAT_FIELD.getValue(this.abilityBehavior.ability)
+        }
+
+        public get speed(): number {
+            return MISSILE_SPEED_ABILITY_INTEGER_FIELD.getValue(this.abilityBehavior.ability)
+        }
+    }
+
+    private get missileLaunchConfig(): InstanceType<typeof AbilityBehavior.MissileLaunchConfig> {
+        const missileLaunchConfig = new AbilityBehavior.MissileLaunchConfig(this)
+        rawset(this as any, "missileLaunchConfig", missileLaunchConfig)
+        return missileLaunchConfig
+    }
+
+    protected launchMissile(
+        source: Unit,
+        target: Unit,
+        ...parameters: NonNullable<Parameters["missileParameters"]>
+    ): void {
+        Missile.launch(
+            this.missileLaunchConfig,
+            source,
+            target,
+            invokeOnMissileArrival,
+            this,
+            ...parameters
+        )
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public onMissileArrival(...parameters: NonNullable<Parameters["missileParameters"]>): void {
+        // no-op
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

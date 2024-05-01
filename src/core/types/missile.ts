@@ -37,7 +37,7 @@ export class Missile implements Destroyable {
         head = this
     }
 
-    public static launch(
+    public static launch<T extends any[]>(
         config: Readonly<{
             art: string
             scale?: number
@@ -51,7 +51,8 @@ export class Missile implements Destroyable {
         }>,
         source: Unit | Vec2,
         target: Unit | Vec2,
-        onArrival: (missile: Missile, success: boolean) => void
+        onArrival: (missile: Missile, success: boolean, ...parameters: T) => void,
+        ...parameters: T
     ): Missile {
         let offsetX = config.sourceOffset?.x ?? 0
         let offsetY = config.sourceOffset?.y ?? 0
@@ -166,7 +167,7 @@ export class Missile implements Destroyable {
                 visualPositionArcY = currentVisualTargetY
                 visualPositionArcZ = currentVisualTargetZ
                 retarget = false
-                safeCall(onArrival, this, true)
+                safeCall(onArrival, this, true, ...parameters)
                 return !retarget
             }
 
