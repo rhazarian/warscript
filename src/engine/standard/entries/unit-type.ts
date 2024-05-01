@@ -246,6 +246,12 @@ export const WILDKIN_UNIT_TYPE_ID = fourCC("nowb") as StandardUnitTypeId
 
 export const WRAITH_UNIT_TYPE_ID = fourCC("ngh2") as StandardUnitTypeId
 
+// ==== Campaign
+
+// ======== Units
+
+export const GOBLIN_LAND_MINE_UNIT_TYPE_ID = fourCC("nglm") as StandardUnitTypeId
+
 // Neutral Passive
 
 // ==== Campaign
