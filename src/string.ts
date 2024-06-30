@@ -1,6 +1,7 @@
 const error = _G.error
 const tonumber = _G.tonumber
 const match = string.match
+const find = string.find
 const sub = string.sub
 
 declare global {
@@ -87,6 +88,29 @@ declare global {
 
 _G.string.toNumber = function (string: string): number {
     return tonumber(string) ?? error(`'${string}' is not a valid representation of a number.`)
+}
+
+declare global {
+    namespace string {
+        /**
+         * Returns the index within the string of the first occurrence of the specified substring, starting from the specified `startIndex`,
+         * or -1 if the string does not contain such substring.
+         */
+        function indexOf(string: string, substring: string, startIndex?: number): number
+    }
+
+    interface String {
+        /**
+         * Returns the index within this string of the first occurrence of the specified substring, starting from the specified `startIndex`,
+         * or -1 if the string does not contain such substring.
+         */
+        indexOf(substring: string, startIndex?: number): number
+    }
+}
+
+_G.string.indexOf = function (string: string, substring: string, startIndex?: number): number {
+    const [index] = find(string, substring, (startIndex ?? 0) + 1, true)
+    return (index ?? 0) - 1
 }
 
 declare global {
