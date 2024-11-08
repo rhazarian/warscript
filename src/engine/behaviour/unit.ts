@@ -44,11 +44,11 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         // no-op
     }
 
-    protected onAbilityGained(ability: Ability): void {
+    public onAbilityGained(ability: Ability): void {
         // no-op
     }
 
-    protected onAbilityLost(ability: Ability): void {
+    public onAbilityLost(ability: Ability): void {
         // no-op
     }
 
@@ -81,6 +81,14 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
                 UnitBehavior.forAll(source, "onDamageDealt", target, event)
             }
             UnitBehavior.forAll(target, "onDamageReceived", source, event)
+        })
+
+        Unit.abilityGainedEvent.addListener((source, target) => {
+            UnitBehavior.forAll(source, "onAbilityGained", target)
+        })
+
+        Unit.abilityLostEvent.addListener((source, target) => {
+            UnitBehavior.forAll(source, "onAbilityLost", target)
         })
 
         Unit.deathEvent.addListener((target, source) => {

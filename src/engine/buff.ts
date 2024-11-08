@@ -1300,25 +1300,24 @@ export class Buff<
     }
 
     static {
+        const destroyBuffIfNeeded = (buff: Buff) => {
+            if (getUnitAbility(buff[BuffPropertyKey.UNIT].handle, buff.typeId) != buff.handle) {
+                buff.destroy()
+            }
+        }
+
         checkBuff = (unit: Unit, buffTypeId: number): void => {
             const buffByTypeId = buffByTypeIdByUnit.get(unit)
             if (buffByTypeId != undefined) {
                 const buff = buffByTypeId.get(buffTypeId)
-                if (buff != undefined && getUnitAbility(unit.handle, buffTypeId) != buff.handle) {
-                    buff.destroy()
+                if (buff != undefined) {
+                    destroyBuffIfNeeded(buff)
                 }
             }
         }
 
         checkBuffs = (unit: Unit): void => {
-            const buffByTypeId = buffByTypeIdByUnit.get(unit)
-            if (buffByTypeId != undefined) {
-                for (const [, buff] of buffByTypeId) {
-                    if (getUnitAbility(unit.handle, buff.typeId) != buff.handle) {
-                        buff.destroy()
-                    }
-                }
-            }
+            Buff.forAll(unit, destroyBuffIfNeeded)
         }
 
         Unit.abilityChannelingStartEvent.addListener(
