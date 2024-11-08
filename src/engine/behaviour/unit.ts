@@ -1,6 +1,7 @@
 import { Behavior } from "../behavior"
 import { Ability } from "../internal/ability"
 import { DamageEvent, DamagingEvent, Unit } from "../internal/unit"
+import "../internal/unit+ability"
 import "../internal/unit-missile-launch"
 
 export type UnitBehaviorConstructor<Args extends any[]> = new (
