@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "@warscript/tstl-plugin",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "The Warscript plugin for TSTL. The plugin is required to correctly compile and use Warscript.",
   "keywords": [
     "typescript",
@@ -20,7 +20,7 @@
     "prepare": "npm run build"
   },
   "peerDependencies": {
-    "typescript-to-lua": "^1.24.1"
+    "typescript-to-lua": "^1.27.1"
   },
   "repository": {
     "type": "git",
@@ -29,5 +29,8 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0"
   }
 }
