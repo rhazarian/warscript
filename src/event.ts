@@ -27,7 +27,7 @@ export class Event<T extends any[] = []> {
 
     public addListener(
         priority: EventListenerPriority | EventListener<T>,
-        listener?: EventListener<T>
+        listener?: EventListener<T>,
     ): void {
         if (listener == undefined) {
             listener = priority as EventListener<T>
@@ -38,7 +38,7 @@ export class Event<T extends any[] = []> {
 
     protected addListenerInternal(
         priority: EventListenerPriority,
-        listener: EventListener<T>
+        listener: EventListener<T>,
     ): boolean {
         const priorityByListener = this.priorityByListener
         const previousPriority = priorityByListener.get(listener)
@@ -92,14 +92,14 @@ export class InitializingEvent<T extends any[] = [], Data = void> extends Event<
 
     public constructor(
         private readonly initialize: (this: void, event: InitializingEvent<T, Data>) => Data,
-        private readonly deinitialize?: (this: void, data: Data) => void
+        private readonly deinitialize?: (this: void, data: Data) => void,
     ) {
         super()
     }
 
     protected override addListenerInternal(
         priority: EventListenerPriority,
-        listener: EventListener<T>
+        listener: EventListener<T>,
     ): boolean {
         if (this.#destroyed) {
             return false
@@ -159,7 +159,7 @@ export class TriggerEvent<T extends any[] = []> extends InitializingEvent<T, jtr
                     trigger,
                     condition(() => {
                         invokeEventIfNotIgnored(event, ...c())
-                    })
+                    }),
                 )
                 r(trigger)
                 return trigger
@@ -169,7 +169,7 @@ export class TriggerEvent<T extends any[] = []> extends InitializingEvent<T, jtr
                     triggerClearConditions(trigger)
                     destroyTrigger(trigger)
                 }
-            }
+            },
         )
     }
 }
@@ -183,7 +183,7 @@ export type EventDispatchTable<EventType extends Event<any>, KeyType extends num
 export type DispatchingEvent<
     P extends any[],
     T extends Event<P> = Event<P>,
-    S extends Event<P> = Event<P>
+    S extends Event<P> = Event<P>,
 > = T & EventDispatchTable<S>
 
 export const createDispatchingEvent: {
@@ -195,7 +195,7 @@ export const createDispatchingEvent: {
 } = <T extends Event<any>, S extends Event<EventParameters<T>>>(
     underlyingEvent: T,
     extractKey: (...args: EventParameters<T>) => number,
-    createEvent?: () => S
+    createEvent?: () => S,
 ): DispatchingEvent<EventParameters<T>, T, S> => {
     const actualCreateEvent = createEvent ?? ((() => new Event()) as () => S)
     let initialized = false
@@ -207,7 +207,7 @@ export const createDispatchingEvent: {
             if (!initialized) {
                 const invoke = Event.invoke
                 underlyingEvent.addListener((...args) => {
-                    const key = extractKey(...args)
+                    const key = extractKey(...(args as EventParameters<T>))
                     const event = rawget(this, key)
                     if (event) {
                         invoke(event, ...args)
@@ -221,7 +221,7 @@ export const createDispatchingEvent: {
                     readonly [id: number]: Event<EventParameters<T>>
                 },
                 id,
-                event
+                event,
             )
             return event
         },
@@ -245,7 +245,7 @@ export class DependentInitializingEvent<T extends any[], R extends any[]> extend
     public constructor(
         underlyingEvent: Event<T>,
         priority: EventListenerPriority,
-        collector: (...args: T) => LuaMultiReturn<[false] | [true, ...R]>
+        collector: (...args: T) => LuaMultiReturn<[false] | [true, ...R]>,
     ) {
         super(
             (event) => {
@@ -257,7 +257,7 @@ export class DependentInitializingEvent<T extends any[], R extends any[]> extend
             },
             (listener) => {
                 underlyingEvent.removeListener(listener)
-            }
+            },
         )
     }
 }
