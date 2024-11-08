@@ -3,6 +3,7 @@
 /// <reference path="./native.d.ts"/>
 /// <reference types="warpack-types/warpack"/>
 /// <reference types="lua-types/5.3"/>
+/// <reference types="@warscript/language-extensions" />
 
 declare function setmetatable<
     T extends object,
