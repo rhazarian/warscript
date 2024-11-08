@@ -59,7 +59,7 @@ const stringValueByBuffTypeIdByFieldId = postcompile(() => {
 
         stringValueByBuffTypeIdByFieldId.set(
             fourCC(rawFieldId) as ObjectFieldId,
-            stringValueByBuffTypeId
+            stringValueByBuffTypeId,
         )
     }
     return stringValueByBuffTypeIdByFieldId
@@ -71,7 +71,7 @@ const buffByTypeIdByUnit = setmetatable(new LuaMap<Unit, LuaMap<number, Buff<any
 
 export type BuffConstructor<
     T extends Buff<any> = Buff<any>,
-    Args extends any[] = any
+    Args extends any[] = any,
 > = OmitConstructor<typeof Buff<any>> & (new (...args: Args) => T)
 
 type NumberParameterValueType = number | AbilityNumberField | AbilityNumberLevelField
@@ -143,7 +143,7 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
 
           uniqueGroup?: BuffUniqueGroup
       }
-    : BuffParameters & (T extends Buff<infer AdditionalParameters> ? AdditionalParameters : {})
+    : BuffParameters & (T extends Buff<infer AdditionalParameters> ? AdditionalParameters : object)
 
 const buffParametersKeys: Record<keyof BuffParameters, true> = {
     spellStealPriority: true,
@@ -191,7 +191,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
 const resolveNumberValue = <T extends number | undefined>(
     ability: Ability | undefined,
     level: number | undefined,
-    value: T | AbilityNumberField | AbilityNumberLevelField
+    value: T | AbilityNumberField | AbilityNumberLevelField,
 ): T | number => {
     if (value == undefined || typeof value == "number") {
         return value
@@ -207,7 +207,7 @@ const resolveNumberValue = <T extends number | undefined>(
 const resolveBooleanValue = <T extends boolean | undefined>(
     ability: Ability | undefined,
     level: number | undefined,
-    value: T | AbilityBooleanField | AbilityBooleanLevelField
+    value: T | AbilityBooleanField | AbilityBooleanLevelField,
 ): T | boolean => {
     if (value == undefined || typeof value == "boolean") {
         return value
@@ -226,7 +226,7 @@ const resolveAndSetNumberValue = <T extends string>(
     ability: Ability | undefined,
     level: number | undefined,
     value: number | AbilityNumberField | AbilityNumberLevelField | undefined,
-    defaultValue: number | AbilityNumberField | AbilityNumberLevelField | undefined
+    defaultValue: number | AbilityNumberField | AbilityNumberLevelField | undefined,
 ): void => {
     const resolvedValue = resolveNumberValue(ability, level, value ?? defaultValue)
     if (resolvedValue != null) {
@@ -310,7 +310,7 @@ export const enum BuffTypeIdSelectionPolicy {
 
 const selectBuffTypeIdWithLeastDuration = (
     buffTypeIds: ApplicableBuffTypeId[],
-    unit: Unit
+    unit: Unit,
 ): ApplicableBuffTypeId => {
     let minimumDuration: number | undefined = undefined
     let minimumDurationBuffTypeId: ApplicableBuffTypeId | undefined
@@ -358,14 +358,14 @@ const expireBuff = (buff: Buff) => {
         if (remainingDamageOverDuration != 0) {
             ;(buff[BuffPropertyKey.SOURCE] ?? buff[BuffPropertyKey.UNIT]).damageTarget(
                 buff[BuffPropertyKey.UNIT],
-                remainingDamageOverDuration
+                remainingDamageOverDuration,
             )
             buff[BuffPropertyKey.REMAINING_DAMAGE_OVER_DURATION] = undefined
         }
         if (remainingHealingOverDuration != 0) {
             ;(buff[BuffPropertyKey.SOURCE] ?? buff[BuffPropertyKey.UNIT]).healTarget(
                 buff[BuffPropertyKey.UNIT],
-                remainingHealingOverDuration
+                remainingHealingOverDuration,
             )
             buff[BuffPropertyKey.REMAINING_HEALING_OVER_DURATION] = undefined
         }
@@ -380,16 +380,16 @@ export type BuffConstructorParameters<AdditionalParameters extends BuffAdditiona
         | [ApplicableBuffTypeId]
         | [
               typeIds: NonEmptyArray<ApplicableBuffTypeId>,
-              typeIdSelectionPolicy: BuffTypeIdSelectionPolicy
+              typeIdSelectionPolicy: BuffTypeIdSelectionPolicy,
           ],
     polarity: BuffPolarity,
     resistanceType: BuffResistanceType,
     ...abilityOrParameters:
         | [
               ability: Ability,
-              parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>
+              parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>,
           ]
-        | [parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>]
+        | [parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>],
 ]
 
 const buffDamageIntervalInitialTimerCallback = (buff: Buff) => {
@@ -453,7 +453,7 @@ const buffHealingIntervalTimerCallback = (buff: Buff) => {
 }
 
 export class Buff<
-    AdditionalParameters extends Prohibit<Record<string, any>, keyof BuffParameters> = {}
+    AdditionalParameters extends Prohibit<Record<string, any>, keyof BuffParameters> = object,
 > extends UnitBehavior {
     protected readonly __additionalParametersBrand?: AdditionalParameters
 
@@ -514,15 +514,15 @@ export class Buff<
     public readonly parameters: IsExactlyAny<AdditionalParameters> extends true
         ? any
         : keyof AdditionalParameters extends never
-        ? undefined
-        : {
-              [K in keyof Omit<
-                  AdditionalParameters,
-                  keyof BuffParameters
-              >]: AdditionalParameters[K] extends AbilityDependentValue<infer T>
-                  ? T
-                  : AdditionalParameters[K]
-          } = undefined!
+          ? undefined
+          : {
+                [K in keyof Omit<
+                    AdditionalParameters,
+                    keyof BuffParameters
+                >]: AdditionalParameters[K] extends AbilityDependentValue<infer T>
+                    ? T
+                    : AdditionalParameters[K]
+            } = undefined!
 
     private readonly handle: jability
 
@@ -552,8 +552,8 @@ export class Buff<
                 this._unit,
                 bonusType,
                 bonusIdByBonusType.get(bonusType),
-                value
-            )
+                value,
+            ),
         )
     }
 
@@ -571,7 +571,7 @@ export class Buff<
         parametersOrAbility?:
             | (BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>)
             | Ability,
-        parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>
+        parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>,
     ) {
         super(_unit)
         this[BuffPropertyKey.UNIT] = _unit
@@ -662,7 +662,7 @@ export class Buff<
                 level,
                 duration,
                 spellStealPriority,
-                learnLevelMinimum
+                learnLevelMinimum,
             )
         ) {
             super.destroy()
@@ -688,12 +688,12 @@ export class Buff<
         this[BuffPropertyKey.EFFECT_MODEL_PATH] = BlzGetAbilityStringLevelField(
             this.handle,
             ABILITY_SLF_EFFECT,
-            0
+            0,
         )
         this[BuffPropertyKey.SPECIAL_EFFECT_MODEL_PATH] = BlzGetAbilityStringLevelField(
             this.handle,
             ABILITY_SLF_SPECIAL,
-            0
+            0,
         )
 
         if (parameters != undefined || next(defaultParameters)[0] != undefined) {
@@ -703,7 +703,7 @@ export class Buff<
                         ability,
                         level,
                         parameters?.[buffBooleanParameter] ??
-                            defaultParameters[buffBooleanParameter]
+                            defaultParameters[buffBooleanParameter],
                     )
                 ) {
                     this[buffBooleanParameter] = true
@@ -717,7 +717,7 @@ export class Buff<
                     ability,
                     level,
                     parameters?.[buffNumberParameter],
-                    defaultParameters[buffNumberParameter]
+                    defaultParameters[buffNumberParameter],
                 )
             }
 
@@ -726,7 +726,7 @@ export class Buff<
                 this[BuffPropertyKey.MAXIMUM_DURATION] = resolveNumberValue(
                     ability,
                     level,
-                    maximumDuration
+                    maximumDuration,
                 )
             }
 
@@ -736,7 +736,7 @@ export class Buff<
                 this[BuffPropertyKey.MAXIMUM_REMAINING_DURATION] = resolveNumberValue(
                     ability,
                     level,
-                    maximumRemainingDuration
+                    maximumRemainingDuration,
                 )
             }
 
@@ -754,10 +754,10 @@ export class Buff<
                         _unit.makeAbilityPermanent(abilityTypeId, true)
                         _unit.setAbilityLevel(
                             abilityTypeId,
-                            1 + (abilityParameters.level ?? ability?.level ?? 0)
+                            1 + (abilityParameters.level ?? ability?.level ?? 0),
                         )
                         for (const [abilityParameterKey, abilityParameterValue] of pairs(
-                            abilityParameters
+                            abilityParameters,
                         )) {
                             if (abilityParameterKey == "isButtonVisible") {
                                 if (
@@ -767,7 +767,7 @@ export class Buff<
                                         abilityParameterValue as
                                             | boolean
                                             | AbilityBooleanField
-                                            | AbilityBooleanLevelField
+                                            | AbilityBooleanLevelField,
                                     )
                                 ) {
                                     _unit.hideAbility(abilityTypeId, true)
@@ -781,8 +781,8 @@ export class Buff<
                                         abilityParameterValue as
                                             | number
                                             | AbilityNumberField
-                                            | AbilityNumberLevelField
-                                    )
+                                            | AbilityNumberLevelField,
+                                    ),
                                 )
                             }
                         }
@@ -808,7 +808,7 @@ export class Buff<
                     if (ability) {
                         additionalParameters[key] = resolveCurrentAbilityDependentValue(
                             ability,
-                            value as any
+                            value as any,
                         )
                     } else {
                         additionalParameters[key] = value
@@ -981,7 +981,7 @@ export class Buff<
     public set receivedDamageFactor(receivedDamageFactor: number) {
         this.addOrUpdateOrRemoveUnitBonus(
             UnitBonusType.RECEIVED_DAMAGE_FACTOR,
-            receivedDamageFactor
+            receivedDamageFactor,
         )
     }
 
@@ -1086,7 +1086,7 @@ export class Buff<
     public set attackSpeedIncreaseFactor(attackSpeedIncreaseFactor: number) {
         this.addOrUpdateOrRemoveUnitBonus(
             UnitBonusType.ATTACK_SPEED_FACTOR,
-            attackSpeedIncreaseFactor
+            attackSpeedIncreaseFactor,
         )
     }
 
@@ -1097,7 +1097,7 @@ export class Buff<
     public set movementSpeedIncreaseFactor(movementSpeedIncreaseFactor: number) {
         this.addOrUpdateOrRemoveUnitBonus(
             UnitBonusType.MOVEMENT_SPEED_FACTOR,
-            movementSpeedIncreaseFactor
+            movementSpeedIncreaseFactor,
         )
     }
 
@@ -1125,7 +1125,7 @@ export class Buff<
                         this._level,
                         remainingDuration,
                         this._spellStealPriority,
-                        this._learnLevelMinimum
+                        this._learnLevelMinimum,
                     )
                 ) {
                     let timer = this._timer
@@ -1149,7 +1149,7 @@ export class Buff<
             stringValueByBuffTypeIdByFieldId
                 .get(fourCC("feft") as ObjectFieldId)!
                 .get(this.typeId) ?? "origin",
-            isWidgetProvided ? duration : widgetOrDuration
+            isWidgetProvided ? duration : widgetOrDuration,
         )
     }
 
@@ -1165,7 +1165,7 @@ export class Buff<
             stringValueByBuffTypeIdByFieldId
                 .get(fourCC("fspt") as ObjectFieldId)!
                 .get(this.typeId) ?? "origin",
-            isWidgetProvided ? duration : widgetOrDuration
+            isWidgetProvided ? duration : widgetOrDuration,
         )
     }
 
@@ -1242,11 +1242,11 @@ export class Buff<
     public static getByTypeId<T extends Buff<any>, Args extends any[]>(
         this: BuffConstructor<T, Args>,
         unit: Unit,
-        typeId: ApplicableBuffTypeId
+        typeId: ApplicableBuffTypeId,
     ): T | undefined {
         const buff = buffByTypeIdByUnit.get(unit)?.get(typeId)
         if (buff instanceof this) {
-            return buff
+            return buff as T
         }
         return undefined
     }
@@ -1265,7 +1265,7 @@ export class Buff<
                 this[BuffPropertyKey.MEDIUM_DAMAGE_UPON_DEATH_RANGE] ?? 0,
                 this[BuffPropertyKey.MEDIUM_DAMAGE_UPON_DEATH] ?? 0,
                 this[BuffPropertyKey.SMALL_DAMAGE_UPON_DEATH_RANGE] ?? 0,
-                this[BuffPropertyKey.SMALL_DAMAGE_UPON_DEATH] ?? 0
+                this[BuffPropertyKey.SMALL_DAMAGE_UPON_DEATH] ?? 0,
             )
         }
     }
@@ -1279,7 +1279,7 @@ export class Buff<
                 if (maximumDuration > 0) {
                     durationIncrease = min(
                         durationIncrease,
-                        max(0, maximumDuration - this[BuffPropertyKey.DURATION])
+                        max(0, maximumDuration - this[BuffPropertyKey.DURATION]),
                     )
                 }
                 let remainingDuration = this.remainingDuration + durationIncrease
@@ -1326,14 +1326,14 @@ export class Buff<
             (caster: Unit) => {
                 checkBuffs(caster)
                 Timer.run(checkBuffs, caster)
-            }
+            },
         )
         Unit.abilityUnitTargetChannelingStartEvent.addListener(
             EventListenerPriority.LOWEST,
             (caster, ability, target) => {
                 checkBuffs(target)
                 Timer.run(checkBuffs, target)
-            }
+            },
         )
         Unit.abilityPointTargetChannelingStartEvent.addListener(
             EventListenerPriority.LOWEST,
@@ -1341,11 +1341,11 @@ export class Buff<
                 const units = Unit.getInCollisionRange(
                     x,
                     y,
-                    ability.getField(ABILITY_RLF_AREA_OF_EFFECT)
+                    ability.getField(ABILITY_RLF_AREA_OF_EFFECT),
                 )
                 forEach(units, checkBuffs)
                 Timer.run(forEach, units, checkBuffs)
-            }
+            },
         )
 
         Unit.onDamage.addListener(EventListenerPriority.LOWEST, (source, target) => {
