@@ -3,12 +3,12 @@ import { Timer } from "../core/types/timer"
 
 const safeCall = warpack.safeCall
 
-const firstBehaviorByObject = new LuaMap<any, Behavior<any> | undefined>()
-const lastBehaviorByObject = new LuaMap<any, Behavior<any> | undefined>()
+const firstBehaviorByObject = new LuaMap<AnyNotNil, Behavior<AnyNotNil> | undefined>()
+const lastBehaviorByObject = new LuaMap<AnyNotNil, Behavior<AnyNotNil> | undefined>()
 
 export type BehaviorConstructor<
-    T extends Behavior<any>,
-    Parameters extends any[] = any[]
+    T extends Behavior<AnyNotNil>,
+    Parameters extends any[] = any[],
 > = OmitConstructor<typeof Behavior<any>> & (abstract new (...parameters: Parameters) => T)
 
 const enum BehaviorPropertyKey {
@@ -22,8 +22,8 @@ const invokeBehaviorOnPeriod = (behavior: Behavior<any>, ...args: any[]): void =
 }
 
 export abstract class Behavior<
-    T,
-    PeriodicActionParameters extends any[] = any[]
+    T extends AnyNotNil,
+    PeriodicActionParameters extends any[] = any[],
 > extends AbstractDestroyable {
     private [BehaviorPropertyKey.PREVIOUS_BEHAVIOR]?: Behavior<T>
     private [BehaviorPropertyKey.NEXT_BEHAVIOR]?: Behavior<T>
@@ -31,7 +31,7 @@ export abstract class Behavior<
 
     protected constructor(protected readonly object: T) {
         super()
-        const lastBehavior = lastBehaviorByObject.get(object)
+        const lastBehavior = lastBehaviorByObject.get(object) as Behavior<T>
         if (lastBehavior == undefined) {
             firstBehaviorByObject.set(object, this)
             lastBehaviorByObject.set(object, this)
@@ -61,6 +61,7 @@ export abstract class Behavior<
         return super.onDestroy()
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     protected onPeriod(...parameters: PeriodicActionParameters): void {
         // no-op
     }
@@ -82,10 +83,10 @@ export abstract class Behavior<
         }
     }
 
-    public static count<T extends Behavior<any>, ConstructorParameters extends any[]>(
+    public static count<T extends Behavior<AnyNotNil>, ConstructorParameters extends any[]>(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
-        limit?: number
+        limit?: number,
     ): number {
         let behaviorsCount = 0
         let behavior = firstBehaviorByObject.get(object)
@@ -99,25 +100,25 @@ export abstract class Behavior<
     }
 
     public static getFirst<
-        T extends Behavior<any>,
+        T extends Behavior<AnyNotNil>,
         ConstructorParameters extends any[],
-        Count extends [number] | []
+        Count extends [number] | [],
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
         ...[count]: Count
     ): Count extends [number] ? T[] : T | undefined
 
-    public static getFirst<T extends Behavior<any>, ConstructorParameters extends any[]>(
+    public static getFirst<T extends Behavior<AnyNotNil>, ConstructorParameters extends any[]>(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
-        count?: number
+        count?: number,
     ): T[] | T | undefined {
         let behavior = firstBehaviorByObject.get(object)
         if (count == undefined) {
             while (behavior != undefined) {
                 if (behavior instanceof this) {
-                    return behavior
+                    return behavior as T
                 }
                 behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
             }
@@ -128,30 +129,30 @@ export abstract class Behavior<
         while (behavior != undefined && behaviorsCount < count) {
             if (behavior instanceof this) {
                 ++behaviorsCount
-                behaviors[behaviorsCount - 1] = behavior
+                behaviors[behaviorsCount - 1] = behavior as T
             }
             behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
         }
         return behaviors
     }
 
-    public static getLast<T extends Behavior<any>, ConstructorParameters extends any[]>(
+    public static getLast<T extends Behavior<AnyNotNil>, ConstructorParameters extends any[]>(
         this: BehaviorConstructor<T, ConstructorParameters>,
-        object: T extends Behavior<infer Object> ? Object : never
+        object: T extends Behavior<infer Object> ? Object : never,
     ): T | undefined {
         let behavior = lastBehaviorByObject.get(object)
         while (behavior != undefined) {
             if (behavior instanceof this) {
-                return behavior
+                return behavior as T
             }
             behavior = behavior[BehaviorPropertyKey.PREVIOUS_BEHAVIOR]
         }
         return undefined
     }
 
-    public static getAll<T extends Behavior<any>, ConstructorParameters extends any[]>(
+    public static getAll<T extends Behavior<AnyNotNil>, ConstructorParameters extends any[]>(
         this: BehaviorConstructor<T, ConstructorParameters>,
-        object: T extends Behavior<infer Object> ? Object : never
+        object: T extends Behavior<infer Object> ? Object : never,
     ): T[] {
         const behaviors: T[] = []
         let behaviorsCount = 0
@@ -159,7 +160,7 @@ export abstract class Behavior<
         while (behavior != undefined) {
             if (behavior instanceof this) {
                 ++behaviorsCount
-                behaviors[behaviorsCount - 1] = behavior
+                behaviors[behaviorsCount - 1] = behavior as T
             }
             behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
         }
@@ -169,7 +170,7 @@ export abstract class Behavior<
     public static forFirst<
         T extends Behavior<any>,
         ConstructorParameters extends any[],
-        ConsumerParameters extends any[]
+        ConsumerParameters extends any[],
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
@@ -181,7 +182,7 @@ export abstract class Behavior<
     public static forFirst<
         T extends Behavior<any>,
         ConstructorParameters extends any[],
-        K extends KeysOfType<T, (...args: any) => any>
+        K extends KeysOfType<T, (...args: any) => any>,
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
@@ -191,9 +192,9 @@ export abstract class Behavior<
     ): number
 
     public static forFirst<
-        T extends Behavior<any>,
+        T extends Behavior<AnyNotNil>,
         ConstructorParameters extends any[],
-        ConsumerParameters extends any[]
+        ConsumerParameters extends any[],
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
@@ -208,7 +209,7 @@ export abstract class Behavior<
         if (typeof consumerOrKey == "function") {
             while (behavior != undefined && behaviorsCount < count) {
                 if (behavior instanceof this) {
-                    safeCall(consumerOrKey, behavior, ...parameters)
+                    safeCall(consumerOrKey, behavior as T, ...parameters)
                     ++behaviorsCount
                 }
                 behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
@@ -217,12 +218,12 @@ export abstract class Behavior<
             while (behavior != undefined && behaviorsCount < count) {
                 if (behavior instanceof this) {
                     safeCall(
-                        behavior[consumerOrKey] as (
+                        (behavior as T)[consumerOrKey] as (
                             this: T,
                             ...parameters: ConsumerParameters
                         ) => unknown,
-                        behavior,
-                        ...parameters
+                        behavior as T,
+                        ...parameters,
                     )
                     ++behaviorsCount
                 }
@@ -235,7 +236,7 @@ export abstract class Behavior<
     public static forAll<
         T extends Behavior<any>,
         ConstructorParameters extends any[],
-        ConsumerParameters extends any[]
+        ConsumerParameters extends any[],
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
@@ -246,7 +247,7 @@ export abstract class Behavior<
     public static forAll<
         T extends Behavior<any>,
         ConstructorParameters extends any[],
-        K extends KeysOfType<T, (...args: any) => any>
+        K extends KeysOfType<T, (...args: any) => any>,
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
@@ -257,7 +258,7 @@ export abstract class Behavior<
     public static forAll<
         T extends Behavior<any>,
         ConstructorParameters extends any[],
-        ConsumerParameters extends any[]
+        ConsumerParameters extends any[],
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
@@ -272,7 +273,7 @@ export abstract class Behavior<
             if (typeof consumerOrKey == "function") {
                 do {
                     if (behavior instanceof this) {
-                        safeCall(consumerOrKey, behavior, ...parameters)
+                        safeCall(consumerOrKey, behavior as T, ...parameters)
                         ++behaviorsCount
                     }
                     behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
@@ -281,12 +282,12 @@ export abstract class Behavior<
                 do {
                     if (behavior instanceof this) {
                         safeCall(
-                            behavior[consumerOrKey] as (
+                            (behavior as T)[consumerOrKey] as (
                                 this: T,
                                 ...parameters: ConsumerParameters
                             ) => unknown,
-                            behavior,
-                            ...parameters
+                            behavior as T,
+                            ...parameters,
                         )
                         ++behaviorsCount
                     }
