@@ -112,21 +112,24 @@ declare global {
         P extends KeysOfType<
             typeof globalThis,
             Exclude<(...args: any[]) => void, Record<string, unknown>>
-        >
+        >,
     >(p: P, hook: (...args: Parameters<(typeof globalThis)[P]>) => void): void
 }
 
 {
     const hooks: {
-        [P in Exclude<KeysOfType<typeof globalThis, (...args: any[]) => any>, "hook">]?: any[]
+        [P in Exclude<
+            KeysOfType<typeof globalThis, (this: void, ...args: any[]) => any>,
+            "hook"
+        >]?: any[]
     } = {}
 
     function hook<
         P extends KeysOfType<
             typeof globalThis,
-            Exclude<(...args: any[]) => void, Record<string, unknown>>
-        >
-    >(p: P, hook: (...args: Parameters<(typeof globalThis)[P]>) => void): void {
+            Exclude<(this: void, ...args: any[]) => void, Record<string, unknown>>
+        >,
+    >(p: P, hook: (this: void, ...args: Parameters<(typeof globalThis)[P]>) => void): void {
         let list = hooks[p]
         if (!list) {
             list = []
@@ -136,10 +139,10 @@ declare global {
         list[list.length] = hook
     }
 
-    function hooked<T extends (...args: any[]) => any>(
+    function hooked<T extends (this: void, ...args: any[]) => any>(
         func: T,
-        hooks: ((...args: Parameters<T>) => void)[]
-    ): (...args: Parameters<T>) => ReturnType<T> {
+        hooks: ((this: void, ...args: Parameters<T>) => void)[],
+    ): (this: void, ...args: Parameters<T>) => ReturnType<T> {
         return (...args: Parameters<T>): ReturnType<T> => {
             const result = func(...args)
             for (const i of $range(1, hooks.length)) {
