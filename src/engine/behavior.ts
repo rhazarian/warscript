@@ -182,7 +182,7 @@ export abstract class Behavior<
     public static forFirst<
         T extends Behavior<any>,
         ConstructorParameters extends any[],
-        K extends KeysOfType<T, (...args: any) => any>,
+        K extends KeysOfType<T, (this: T, ...args: any) => any>,
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
@@ -247,7 +247,7 @@ export abstract class Behavior<
     public static forAll<
         T extends Behavior<any>,
         ConstructorParameters extends any[],
-        K extends KeysOfType<T, (...args: any) => any>,
+        K extends KeysOfType<T, (this: T, ...args: any) => any>,
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
