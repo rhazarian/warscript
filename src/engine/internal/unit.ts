@@ -302,11 +302,10 @@ type EventDispatcher<T extends any[], S extends any[]> = Event<T> & DispatcherTa
 function dispatch<T extends any[], S extends any[]>(
     event: Event<T>,
     idGetter: (this: void, ...args: T) => number,
-    argsGetter: (this: void, ...args: T) => LuaMultiReturn<S>
+    argsGetter: (this: void, ...args: T) => LuaMultiReturn<S>,
 ): EventDispatcher<T, S> {
     let initialized = false
-    const x = {} as DispatcherTable<S>
-    return setmetatable(x, {
+    return setmetatable({} as DispatcherTable<S>, {
         __index(this: DispatcherTable<S>, id: number | keyof typeof event) {
             if (typeof id != "number") {
                 return event[id]
@@ -1387,8 +1386,8 @@ export class Unit extends Handle<junit> {
         killUnit(this.handle)
     }
 
-    revive(pos: Vec2, doEffect: boolean): void {
-        ReviveHero(this.handle, pos.x, pos.y, doEffect)
+    public revive(x: number, y: number, doEffect?: boolean): void {
+        ReviveHero(this.handle, x, y, doEffect ?? false)
     }
 
     public healTarget(target: Widget, amount: number): void {
@@ -1931,8 +1930,12 @@ export class Unit extends Handle<junit> {
 
     public static readonly morphEvent = new InitializingEvent<[Unit]>((event) => {
         Unit.onImmediateOrder[orderId("undefend")].addListener((unit) => {
-            if (getUnitAbilityLevel(unit.handle, morphDetectAbilityId) == 0) {
-                assert(unitAddAbility(unit.handle, morphDetectAbilityId))
+            const handle = unit.handle
+            if (
+                getUnitAbilityLevel(handle, morphDetectAbilityId) == 0 &&
+                getUnitAbilityLevel(handle, leaveDetectAbilityId) != 0
+            ) {
+                assert(unitAddAbility(handle, morphDetectAbilityId))
                 Timer.run(Event.invoke, event, unit)
             }
         })
