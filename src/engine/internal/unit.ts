@@ -311,7 +311,6 @@ function dispatch<T extends any[], S extends any[]>(
                 return event[id]
             }
             if (!initialized) {
-                const invoke = Event.invoke
                 event.addListener((...args) => {
                     const id = idGetter(...args)
                     const dispatched = rawget(this, id)
@@ -356,7 +355,6 @@ function dispatchAbility<T extends any[] = []>(
                 return event[id]
             }
             if (!initialized) {
-                const invoke = Event.invoke
                 event.addListener((unit, ability, ...args) => {
                     const dispatched = rawget(this, ability.typeId)
                     if (dispatched != undefined) {
@@ -1915,7 +1913,6 @@ export class Unit extends Handle<junit> {
     )
 
     public static readonly onResurrect = new InitializingEvent<[Unit]>((event) => {
-        const invoke = Event.invoke
         const dead = setmetatable(new LuaTable<Unit, boolean | undefined>(), { __mode: "k" })
         Unit.deathEvent.addListener((unit) => {
             dead.set(unit, true)
@@ -1929,14 +1926,18 @@ export class Unit extends Handle<junit> {
     })
 
     public static readonly morphEvent = new InitializingEvent<[Unit]>((event) => {
-        Unit.onImmediateOrder[orderId("undefend")].addListener((unit) => {
+        const ifNotLeft = (unit: Unit) => {
             const handle = unit.handle
             if (
-                getUnitAbilityLevel(handle, morphDetectAbilityId) == 0 &&
-                getUnitAbilityLevel(handle, leaveDetectAbilityId) != 0
+                getUnitAbilityLevel(handle, leaveDetectAbilityId) != 0 &&
+                unitAddAbility(handle, morphDetectAbilityId)
             ) {
-                assert(unitAddAbility(handle, morphDetectAbilityId))
-                Timer.run(Event.invoke, event, unit)
+                invoke(event, unit)
+            }
+        }
+        Unit.onImmediateOrder[orderId("undefend")].addListener((unit) => {
+            if (getUnitAbilityLevel(unit.handle, morphDetectAbilityId) == 0) {
+                Timer.run(ifNotLeft, unit)
             }
         })
     })
@@ -1976,7 +1977,6 @@ export class Unit extends Handle<junit> {
             EventListener<[Unit, number]>
         >(
             (event) => {
-                const invoke = Event.invoke
                 const listener = (unit: Unit, id: number) => {
                     const target = GetSpellTargetUnit()
                         ? Unit.of(GetSpellTargetUnit())
@@ -2192,7 +2192,6 @@ export class Unit extends Handle<junit> {
 
     public static readonly onDamaging = (() => {
         const event = new Event<[source: Unit | undefined, target: Unit, event: DamagingEvent]>()
-        const invoke = Event.invoke
         const trigger = CreateTrigger()
         TriggerRegisterAnyUnitEventBJ(trigger, EVENT_PLAYER_UNIT_DAMAGING)
         TriggerAddCondition(
@@ -2313,7 +2312,6 @@ export class Unit extends Handle<junit> {
         jtrigger
     >(
         (event) => {
-            const invoke = Event.invoke
             const trigger = CreateTrigger()
             TriggerRegisterAnyUnitEventBJ(trigger, EVENT_PLAYER_UNIT_DAMAGED)
             TriggerAddCondition(
