@@ -8,7 +8,7 @@ const safeCall = warpack.safeCall
 
 const next = _G.next
 
-export type EventListener<T extends any[]> = (...args: T) => void
+export type EventListener<T extends any[]> = (this: void, ...args: T) => void
 
 export const enum EventListenerPriority {
     LOWEST = 0,
@@ -142,7 +142,7 @@ type IgnoreEvent = typeof IgnoreEvent
 export { IgnoreEvent }
 
 const invokeEventIfNotIgnored: {
-    <T extends any[]>(event: Event<T>, ...[arg, ...args]: [IgnoreEvent] | [...T]): void
+    <T extends any[]>(this: void, event: Event<T>, ...[arg, ...args]: [IgnoreEvent] | [...T]): void
     // make TSTL emit better code
 } = (event: Event<any[]>, arg?: any, ...args: any[]): void => {
     if (arg != IgnoreEvent) {
@@ -189,15 +189,16 @@ export type DispatchingEvent<
 export const createDispatchingEvent: {
     <T extends Event<any>, S extends Event<EventParameters<T>>>(
         underlyingEvent: T,
-        extractKey: (...args: EventParameters<T>) => number,
-        ...createEvent: [...(Event<any> extends S ? [(() => S)?] : [() => S])]
-    ): DispatchingEvent<EventParameters<T>, T>
+        extractKey: (this: void, ...args: EventParameters<T>) => number,
+        invokeEvent?: (this: void, event: S, ...args: EventParameters<T>) => unknown,
+        ...createEvent: [...(Event<any> extends S ? [((this: void) => S)?] : [(this: void) => S])]
+    ): DispatchingEvent<EventParameters<T>, T, S>
 } = <T extends Event<any>, S extends Event<EventParameters<T>>>(
     underlyingEvent: T,
-    extractKey: (...args: EventParameters<T>) => number,
-    createEvent?: () => S,
+    extractKey: (this: void, ...args: EventParameters<T>) => number,
+    invokeEvent: (this: void, event: S, ...args: EventParameters<T>) => unknown = Event.invoke,
+    createEvent: (this: void) => S = () => new Event() as S,
 ): DispatchingEvent<EventParameters<T>, T, S> => {
-    const actualCreateEvent = createEvent ?? ((() => new Event()) as () => S)
     let initialized = false
     return setmetatable({} as EventDispatchTable<EventParameters<T>>, {
         __index(id: number | keyof T): T[keyof T] | Event<EventParameters<T>> {
@@ -205,20 +206,19 @@ export const createDispatchingEvent: {
                 return underlyingEvent[id]
             }
             if (!initialized) {
-                const invoke = Event.invoke
                 underlyingEvent.addListener((...args) => {
                     const key = extractKey(...(args as EventParameters<T>))
-                    const event = rawget(this, key)
+                    const event = rawget(this, key) as S | undefined
                     if (event) {
-                        invoke(event, ...args)
+                        invokeEvent(event, ...(args as EventParameters<T>))
                     }
                 })
                 initialized = true
             }
-            const event = actualCreateEvent()
+            const event = createEvent()
             rawset(
                 this as {
-                    readonly [id: number]: Event<EventParameters<T>>
+                    readonly [id: number]: S
                 },
                 id,
                 event,
@@ -226,11 +226,15 @@ export const createDispatchingEvent: {
             return event
         },
         __newindex: underlyingEvent,
-    }) as T & EventDispatchTable<EventParameters<T>>
+    }) as T & EventDispatchTable<S>
 }
 
 const invokeEventIfNeeded: {
-    <T extends any[]>(event: Event<T>, ...[needed, ...args]: [false] | [boolean, ...T]): void
+    <T extends any[]>(
+        this: void,
+        event: Event<T>,
+        ...[needed, ...args]: [false] | [boolean, ...T]
+    ): void
     // make TSTL emit better code
 } = <T extends any[]>(event: Event<T>, needed: boolean, ...args: T | []): void => {
     if (needed) {
