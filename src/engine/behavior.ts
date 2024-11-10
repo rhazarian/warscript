@@ -175,7 +175,7 @@ export abstract class Behavior<
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
         count: number,
-        consumer: (behavior: T, ...parameters: ConsumerParameters) => any,
+        consumer: (this: void, behavior: T, ...parameters: ConsumerParameters) => any,
         ...parameters: ConsumerParameters
     ): number
 
@@ -188,7 +188,7 @@ export abstract class Behavior<
         object: T extends Behavior<infer Object> ? Object : never,
         count: number,
         key: K,
-        ...parameters: T[K] extends (...args: any) => any ? Parameters<T[K]> : never
+        ...parameters: T[K] extends (this: T, ...args: any) => any ? Parameters<T[K]> : never
     ): number
 
     public static forFirst<
@@ -200,8 +200,8 @@ export abstract class Behavior<
         object: T extends Behavior<infer Object> ? Object : never,
         count: number,
         consumerOrKey:
-            | ((behavior: T, ...parameters: ConsumerParameters) => unknown)
-            | KeysOfType<T, (...parameters: ConsumerParameters) => unknown>,
+            | ((this: void, behavior: T, ...parameters: ConsumerParameters) => unknown)
+            | KeysOfType<T, (this: T, ...parameters: ConsumerParameters) => unknown>,
         ...parameters: ConsumerParameters
     ): number {
         let behaviorsCount = 0
@@ -240,7 +240,7 @@ export abstract class Behavior<
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
-        consumer: (behavior: T, ...parameters: ConsumerParameters) => unknown,
+        consumer: (this: void, behavior: T, ...parameters: ConsumerParameters) => unknown,
         ...parameters: ConsumerParameters
     ): number
 
@@ -252,7 +252,7 @@ export abstract class Behavior<
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
         key: K,
-        ...parameters: T[K] extends (...args: any) => any ? Parameters<T[K]> : never
+        ...parameters: T[K] extends (this: T, ...args: any) => any ? Parameters<T[K]> : never
     ): number
 
     public static forAll<
@@ -263,8 +263,8 @@ export abstract class Behavior<
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
         consumerOrKey:
-            | ((behavior: T, ...parameters: ConsumerParameters) => unknown)
-            | KeysOfType<T, (...parameters: ConsumerParameters) => unknown>,
+            | ((this: void, behavior: T, ...parameters: ConsumerParameters) => unknown)
+            | KeysOfType<T, (this: T, ...parameters: ConsumerParameters) => unknown>,
         ...parameters: ConsumerParameters
     ): number {
         let behaviorsCount = 0
