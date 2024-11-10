@@ -168,7 +168,7 @@ export abstract class Behavior<
     }
 
     public static forFirst<
-        T extends Behavior<any>,
+        T extends Behavior<AnyNotNil>,
         ConstructorParameters extends any[],
         ConsumerParameters extends any[],
     >(
@@ -180,7 +180,7 @@ export abstract class Behavior<
     ): number
 
     public static forFirst<
-        T extends Behavior<any>,
+        T extends Behavior<AnyNotNil>,
         ConstructorParameters extends any[],
         K extends KeysOfType<T, (this: T, ...args: any) => any>,
     >(
@@ -234,7 +234,7 @@ export abstract class Behavior<
     }
 
     public static forAll<
-        T extends Behavior<any>,
+        T extends Behavior<AnyNotNil>,
         ConstructorParameters extends any[],
         ConsumerParameters extends any[],
     >(
@@ -245,7 +245,7 @@ export abstract class Behavior<
     ): number
 
     public static forAll<
-        T extends Behavior<any>,
+        T extends Behavior<AnyNotNil>,
         ConstructorParameters extends any[],
         K extends KeysOfType<T, (this: T, ...args: any) => any>,
     >(
@@ -256,7 +256,7 @@ export abstract class Behavior<
     ): number
 
     public static forAll<
-        T extends Behavior<any>,
+        T extends Behavior<AnyNotNil>,
         ConstructorParameters extends any[],
         ConsumerParameters extends any[],
     >(
