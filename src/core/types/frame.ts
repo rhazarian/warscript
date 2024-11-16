@@ -86,6 +86,8 @@ export class Frame extends Handle<jframehandle> {
     public static readonly GAME_UI: Frame = Frame.byOrigin(ORIGIN_FRAME_GAME_UI)
     public static readonly CONSOLE_UI: Frame = Frame.byOrigin(ORIGIN_FRAME_SIMPLE_UI_PARENT)
     public static readonly CONSOLE_UI_BACKDROP: Frame = Frame.byName("ConsoleUIBackdrop")
+    public static readonly CONSOLE_TOP_BAR: Frame = Frame.byName("ConsoleTopBar")
+    public static readonly CONSOLE_BOTTOM_BAR: Frame = Frame.byName("ConsoleBottomBar")
     public static readonly WORLD: Frame = Frame.byOrigin(ORIGIN_FRAME_WORLD_FRAME)
     public static readonly CHAT: Frame = Frame.byOrigin(ORIGIN_FRAME_CHAT_MSG)
     public static readonly TIME_OF_DAY_CLOCK = Frame.GAME_UI.getChild(5).getChild(0)
@@ -161,7 +163,7 @@ export class Frame extends Handle<jframehandle> {
                 eventType,
                 (c
                     ? () => $multi(Player.of(GetTriggerPlayer()), ...(c as Collector<T>)())
-                    : FrameEvent.playerCollector) as unknown as Collector<[Player, ...T]>
+                    : FrameEvent.playerCollector) as unknown as Collector<[Player, ...T]>,
             )
         }
         return this.events[eventId] as FrameEvent<T>
@@ -359,13 +361,13 @@ export class Frame extends Handle<jframehandle> {
 
     get onSliderValueChanged(): FrameEvent<[number]> {
         return this.getEvent(FRAMEEVENT_SLIDER_VALUE_CHANGED, () =>
-            $multi(BlzGetTriggerFrameValue())
+            $multi(BlzGetTriggerFrameValue()),
         )
     }
 
     get onEditBoxTextChange(): FrameEvent<[string]> {
         return this.getEvent(FRAMEEVENT_EDITBOX_TEXT_CHANGED, () =>
-            $multi(BlzGetTriggerFrameText())
+            $multi(BlzGetTriggerFrameText()),
         )
     }
 
@@ -468,7 +470,7 @@ export class Frame extends Handle<jframehandle> {
         relative: Frame,
         relativePoint: jframepointtype,
         x: number,
-        y: number
+        y: number,
     ): void {
         BlzFrameSetPoint(this.handle, point, relative.handle, relativePoint, x, y)
     }
@@ -543,7 +545,7 @@ export class Frame extends Handle<jframehandle> {
                                         player.handle,
                                         ConvertOsKeyType(oskey),
                                         metakey,
-                                        true
+                                        true,
                                     )
                                 }
                             }
@@ -553,8 +555,8 @@ export class Frame extends Handle<jframehandle> {
                     $multi(
                         Player.of(GetTriggerPlayer()),
                         BlzGetTriggerPlayerKey(),
-                        BlzGetTriggerPlayerMetaKey() as oskeymeta
-                    )
+                        BlzGetTriggerPlayerMetaKey() as oskeymeta,
+                    ),
             )
         }
         return this.onKeyPressEvent
@@ -575,7 +577,7 @@ export class Frame extends Handle<jframehandle> {
                                         player.handle,
                                         ConvertOsKeyType(oskey),
                                         metakey,
-                                        false
+                                        false,
                                     )
                                 }
                             }
@@ -585,8 +587,8 @@ export class Frame extends Handle<jframehandle> {
                     $multi(
                         Player.of(GetTriggerPlayer()),
                         BlzGetTriggerPlayerKey(),
-                        BlzGetTriggerPlayerMetaKey() as oskeymeta
-                    )
+                        BlzGetTriggerPlayerMetaKey() as oskeymeta,
+                    ),
             )
         }
         return this.onKeyReleaseEvent
@@ -605,8 +607,8 @@ export class Frame extends Handle<jframehandle> {
                     Player.of(GetTriggerPlayer()),
                     BlzGetTriggerPlayerMouseButton(),
                     BlzGetTriggerPlayerMouseX(),
-                    BlzGetTriggerPlayerMouseY()
-                )
+                    BlzGetTriggerPlayerMouseY(),
+                ),
         )
         rawset(Frame, "onMouseUp", event)
         return event
@@ -623,7 +625,7 @@ export class Frame extends Handle<jframehandle> {
                             TriggerRegisterPlayerEvent(
                                 trigger,
                                 player.handle,
-                                EVENT_PLAYER_MOUSE_DOWN
+                                EVENT_PLAYER_MOUSE_DOWN,
                             )
                         }
                     }),
@@ -632,8 +634,8 @@ export class Frame extends Handle<jframehandle> {
                         Player.of(GetTriggerPlayer()),
                         BlzGetTriggerPlayerMouseButton(),
                         BlzGetTriggerPlayerMouseX(),
-                        BlzGetTriggerPlayerMouseY()
-                    )
+                        BlzGetTriggerPlayerMouseY(),
+                    ),
             )
         }
         return this.onMouseDownEvent
@@ -651,8 +653,8 @@ export class Frame extends Handle<jframehandle> {
                 $multi(
                     Player.of(GetTriggerPlayer()),
                     BlzGetTriggerPlayerMouseX(),
-                    BlzGetTriggerPlayerMouseY()
-                )
+                    BlzGetTriggerPlayerMouseY(),
+                ),
         )
         rawset(Frame, "onMouseMove", event)
         return event
@@ -700,14 +702,14 @@ export class Frame extends Handle<jframehandle> {
         this: FrameSubclass<T>,
         name: string,
         parent?: Frame,
-        createContext?: number
+        createContext?: number,
     ): T {
         return this.of<jframehandle, T>(
             BlzCreateSimpleFrame(
                 name,
                 parent ? parent.handle : BlzGetOriginFrame(ORIGIN_FRAME_SIMPLE_UI_PARENT, 0),
-                createContext ?? 0
-            )
+                createContext ?? 0,
+            ),
         )
     }
 
@@ -716,10 +718,10 @@ export class Frame extends Handle<jframehandle> {
         name: string,
         parent: Frame,
         priority?: number,
-        createContext?: number
+        createContext?: number,
     ): T {
         return this.of<jframehandle, T>(
-            BlzCreateFrame(name, parent.handle, priority ?? 0, createContext ?? 0)
+            BlzCreateFrame(name, parent.handle, priority ?? 0, createContext ?? 0),
         )
     }
 
@@ -749,10 +751,10 @@ export class Frame extends Handle<jframehandle> {
         name: string,
         parent: Frame,
         inherits?: string,
-        createContext?: number
+        createContext?: number,
     ): T {
         return this.of<jframehandle, T>(
-            BlzCreateFrameByType(typeName, name, parent.handle, inherits ?? "", createContext ?? 0)
+            BlzCreateFrameByType(typeName, name, parent.handle, inherits ?? "", createContext ?? 0),
         )
     }
 
@@ -763,7 +765,7 @@ export class Frame extends Handle<jframehandle> {
     static byOrigin<T extends Frame>(
         this: FrameSubclass<T>,
         frameType: joriginframetype,
-        index = 0
+        index = 0,
     ): T {
         return this.of<jframehandle, T>(BlzGetOriginFrame(frameType, index))
     }
