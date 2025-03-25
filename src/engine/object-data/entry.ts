@@ -47,7 +47,7 @@ export const extractObjectDataEntryLevelFieldValue = <
         ? supplier[level]
         : typeof supplier == "function"
         ? supplier(level, currentValue)
-        : supplier
+        : supplier as ValueType
 }
 
 export const extractObjectDataEntryLevelArrayFieldValue = <
