@@ -9,64 +9,108 @@ import {
 } from "../../standard/fields/ability"
 import { AttackType, DamageType, WeaponType } from "../../internal/unit+damage"
 
-export class DamageSelfAbilityBehavior extends AbilityBehavior {
-    public constructor(
+export type DamageAbilityBehaviorParameters = {
+    bonusDamagePerStrength?: AbilityDependentValue<number>
+    bonusDamagePerAgility?: AbilityDependentValue<number>
+    bonusDamagePerIntelligence?: AbilityDependentValue<number>
+    attackType?: AttackType
+    damageType?: DamageType
+    weaponType?: WeaponType
+}
+
+export type DamageAreaAbilityBehaviorParameters = DamageAbilityBehaviorParameters & {
+    maximumDamage?: AbilityDependentValue<number>
+}
+
+abstract class DamageAbilityBehavior<
+    T extends DamageAbilityBehaviorParameters = DamageAbilityBehaviorParameters,
+> extends AbilityBehavior {
+    protected constructor(
         ability: Ability,
-        private readonly damage: AbilityDependentValue<number>,
-        private readonly attackType?: AttackType,
-        private readonly damageType?: DamageType,
-        private readonly weaponType?: WeaponType,
+        protected readonly damage: AbilityDependentValue<number>,
+        protected readonly parameters?: T,
     ) {
         super(ability)
+    }
+
+    protected calculateDamage(caster: Unit): number {
+        const parameters = this.parameters
+        let damage = this.resolveCurrentAbilityDependentValue(this.damage)
+        const bonusDamagePerStrength = this.resolveCurrentAbilityDependentValue(
+            parameters?.bonusDamagePerStrength ?? 0,
+        )
+        if (bonusDamagePerStrength != 0) {
+            damage += bonusDamagePerStrength * caster.strength
+        }
+        const bonusDamagePerAgility = this.resolveCurrentAbilityDependentValue(
+            parameters?.bonusDamagePerAgility ?? 0,
+        )
+        if (bonusDamagePerAgility != 0) {
+            damage += bonusDamagePerAgility * caster.agility
+        }
+        const bonusDamagePerIntelligence = this.resolveCurrentAbilityDependentValue(
+            parameters?.bonusDamagePerIntelligence ?? 0,
+        )
+        if (bonusDamagePerIntelligence != 0) {
+            damage += bonusDamagePerIntelligence * caster.intelligence
+        }
+        return damage
+    }
+}
+
+export class DamageSelfAbilityBehavior extends DamageAbilityBehavior {
+    public constructor(
+        ability: Ability,
+        damage: AbilityDependentValue<number>,
+        parameters?: DamageAbilityBehaviorParameters,
+    ) {
+        super(ability, damage, parameters)
     }
 
     public override onImpact(caster: Unit): void {
+        const parameters = this.parameters
         caster.damageTarget(
             caster,
-            this.resolveCurrentAbilityDependentValue(this.damage),
+            this.calculateDamage(caster),
             undefined,
             undefined,
-            this.attackType,
-            this.damageType,
-            this.weaponType,
+            parameters?.attackType,
+            parameters?.damageType,
+            parameters?.weaponType,
         )
     }
 }
 
-export class DamageTargetAbilityBehavior extends AbilityBehavior {
+export class DamageTargetAbilityBehavior extends DamageAbilityBehavior {
     public constructor(
         ability: Ability,
-        private readonly damage: AbilityDependentValue<number>,
-        private readonly attackType?: AttackType,
-        private readonly damageType?: DamageType,
-        private readonly weaponType?: WeaponType,
+        damage: AbilityDependentValue<number>,
+        parameters?: DamageAbilityBehaviorParameters,
     ) {
-        super(ability)
+        super(ability, damage, parameters)
     }
 
     public override onWidgetTargetImpact(caster: Unit, target: Widget): void {
+        const parameters = this.parameters
         caster.damageTarget(
             target,
-            this.resolveCurrentAbilityDependentValue(this.damage),
+            this.calculateDamage(caster),
             undefined,
             undefined,
-            this.attackType,
-            this.damageType,
-            this.weaponType,
+            parameters?.attackType,
+            parameters?.damageType,
+            parameters?.weaponType,
         )
     }
 }
 
-abstract class DamageAreaAbilityBehavior extends AbilityBehavior {
+abstract class DamageAreaAbilityBehavior extends DamageAbilityBehavior<DamageAreaAbilityBehaviorParameters> {
     protected constructor(
         ability: Ability,
-        private readonly damage: AbilityDependentValue<number>,
-        private readonly maximumDamage?: AbilityDependentValue<number>,
-        private readonly attackType?: AttackType,
-        private readonly damageType?: DamageType,
-        private readonly weaponType?: WeaponType,
+        damage: AbilityDependentValue<number>,
+        parameters?: DamageAreaAbilityBehaviorParameters,
     ) {
-        super(ability)
+        super(ability, damage, parameters)
     }
 
     protected damageArea(caster: Unit, x: number, y: number): void {
@@ -80,21 +124,24 @@ abstract class DamageAreaAbilityBehavior extends AbilityBehavior {
             this.resolveCurrentAbilityDependentValue(AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD),
         )
 
-        let damage = this.resolveCurrentAbilityDependentValue(this.damage)
-        const maximumDamage = this.resolveCurrentAbilityDependentValue(this.maximumDamage ?? 0)
+        let damage = this.calculateDamage(caster)
+        const maximumDamage = this.resolveCurrentAbilityDependentValue(
+            this.parameters?.maximumDamage ?? 0,
+        )
         if (maximumDamage != 0 && damage > maximumDamage) {
             damage = maximumDamage / targets.length
         }
 
+        const parameters = this.parameters
         for (const target of targets) {
             caster.damageTarget(
                 target,
                 damage,
                 undefined,
                 undefined,
-                this.attackType,
-                this.damageType,
-                this.weaponType,
+                parameters?.attackType,
+                parameters?.damageType,
+                parameters?.weaponType,
             )
         }
     }
@@ -104,12 +151,9 @@ export class DamageSelfAreaAbilityBehavior extends DamageAreaAbilityBehavior {
     public constructor(
         ability: Ability,
         damage: AbilityDependentValue<number>,
-        maximumDamage?: AbilityDependentValue<number>,
-        attackType?: AttackType,
-        damageType?: DamageType,
-        weaponType?: WeaponType,
+        parameters?: DamageAreaAbilityBehaviorParameters,
     ) {
-        super(ability, damage, maximumDamage, attackType, damageType, weaponType)
+        super(ability, damage, parameters)
     }
 
     public override onImpact(caster: Unit) {
@@ -121,12 +165,9 @@ export class DamageTargetAreaAbilityBehavior extends DamageAreaAbilityBehavior {
     public constructor(
         ability: Ability,
         damage: AbilityDependentValue<number>,
-        maximumDamage?: AbilityDependentValue<number>,
-        attackType?: AttackType,
-        damageType?: DamageType,
-        weaponType?: WeaponType,
+        parameters?: DamageAreaAbilityBehaviorParameters,
     ) {
-        super(ability, damage, maximumDamage, attackType, damageType, weaponType)
+        super(ability, damage, parameters)
     }
 
     public override onNoTargetImpact(caster: Unit) {
