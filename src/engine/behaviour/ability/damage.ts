@@ -9,7 +9,10 @@ import {
 } from "../../standard/fields/ability"
 
 export class DamageSelfAbilityBehavior extends AbilityBehavior {
-    public constructor(ability: Ability, private readonly damage: AbilityDependentValue<number>) {
+    public constructor(
+        ability: Ability,
+        private readonly damage: AbilityDependentValue<number>,
+    ) {
         super(ability)
     }
 
@@ -19,7 +22,10 @@ export class DamageSelfAbilityBehavior extends AbilityBehavior {
 }
 
 export class DamageTargetAbilityBehavior extends AbilityBehavior {
-    public constructor(ability: Ability, private readonly damage: AbilityDependentValue<number>) {
+    public constructor(
+        ability: Ability,
+        private readonly damage: AbilityDependentValue<number>,
+    ) {
         super(ability)
     }
 
@@ -28,13 +34,59 @@ export class DamageTargetAbilityBehavior extends AbilityBehavior {
     }
 }
 
-export class DamageTargetAreaAbilityBehavior extends AbilityBehavior {
-    public constructor(
+abstract class DamageAreaAbilityBehavior extends AbilityBehavior {
+    protected constructor(
         ability: Ability,
         private readonly damage: AbilityDependentValue<number>,
-        private readonly maximumDamage?: AbilityDependentValue<number>
+        private readonly maximumDamage?: AbilityDependentValue<number>,
     ) {
         super(ability)
+    }
+
+    protected damageArea(caster: Unit, x: number, y: number): void {
+        const targets = Unit.getAllowedTargetsInCollisionRange(
+            caster,
+            this.resolveCurrentAbilityDependentValue(
+                ALLOWED_TARGETS_ABILITY_COMBAT_CLASSIFICATIONS_LEVEL_FIELD,
+            ),
+            x,
+            y,
+            this.resolveCurrentAbilityDependentValue(AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD),
+        )
+
+        let damage = this.resolveCurrentAbilityDependentValue(this.damage)
+        const maximumDamage = this.resolveCurrentAbilityDependentValue(this.maximumDamage ?? 0)
+        if (maximumDamage != 0 && damage > maximumDamage) {
+            damage = maximumDamage / targets.length
+        }
+
+        for (const target of targets) {
+            caster.damageTarget(target, damage)
+        }
+    }
+}
+
+export class DamageSelfAreaAbilityBehavior extends DamageAreaAbilityBehavior {
+    public constructor(
+        ability: Ability,
+        damage: AbilityDependentValue<number>,
+        maximumDamage?: AbilityDependentValue<number>,
+    ) {
+        super(ability, damage, maximumDamage)
+    }
+
+    public override onImpact(caster: Unit) {
+        this.damageArea(caster, caster.x, caster.y)
+    }
+}
+
+export class DamageTargetAreaAbilityBehavior extends DamageAreaAbilityBehavior {
+    public constructor(
+        ability: Ability,
+        damage: AbilityDependentValue<number>,
+        maximumDamage?: AbilityDependentValue<number>,
+    ) {
+        super(ability, damage, maximumDamage)
     }
 
     public override onNoTargetImpact(caster: Unit) {
@@ -47,27 +99,5 @@ export class DamageTargetAreaAbilityBehavior extends AbilityBehavior {
 
     public override onPointTargetImpact(caster: Unit, x: number, y: number): void {
         this.damageArea(caster, x, y)
-    }
-
-    private damageArea(caster: Unit, x: number, y: number): void {
-        const targets = Unit.getAllowedTargetsInCollisionRange(
-            caster,
-            this.resolveCurrentAbilityDependentValue(
-                ALLOWED_TARGETS_ABILITY_COMBAT_CLASSIFICATIONS_LEVEL_FIELD
-            ),
-            x,
-            y,
-            this.resolveCurrentAbilityDependentValue(AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD)
-        )
-
-        let damage = this.resolveCurrentAbilityDependentValue(this.damage)
-        const maximumDamage = this.resolveCurrentAbilityDependentValue(this.maximumDamage ?? 0)
-        if (maximumDamage != 0 && damage > maximumDamage) {
-            damage = maximumDamage / targets.length
-        }
-
-        for (const target of targets) {
-            caster.damageTarget(target, damage)
-        }
     }
 }
