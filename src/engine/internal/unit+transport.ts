@@ -1,6 +1,6 @@
 import { Unit } from "./unit"
 import { Event } from "../../event"
-import { boundMax, boundRegion } from "../../core/mapbounds"
+import { GameMap } from "../game-map"
 
 const eventInvoke = Event.invoke
 const tableRemove = table.remove
@@ -65,22 +65,16 @@ triggerAddCondition(
             deboard(unit)
         }
         if (!unitAlive(handle)) {
-            unit.x = boundMax.x
-            unit.y = boundMax.y
+            unit.x = GameMap.worldBoundsRect.maxX
+            unit.y = GameMap.worldBoundsRect.maxY
         }
         const transport = Unit.of(getTransportUnit())
         transportByUnit.set(unit, transport)
         const cargo = cargoByUnit.get(transport)
         cargo[cargo.length] = unit
         eventInvoke(onBoardEvent, unit, transport)
-    })
+    }),
 )
-
-boundRegion.onUnitEnter.addListener((unit) => {
-    if (transportByUnit.has(unit) && !isUnitLoaded(unit.handle)) {
-        deboard(unit)
-    }
-})
 
 Unit.deathEvent.addListener((unit) => {
     if (transportByUnit.has(unit)) {
