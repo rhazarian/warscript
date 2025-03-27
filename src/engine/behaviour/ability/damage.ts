@@ -7,17 +7,29 @@ import {
     ALLOWED_TARGETS_ABILITY_COMBAT_CLASSIFICATIONS_LEVEL_FIELD,
     AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD,
 } from "../../standard/fields/ability"
+import { AttackType, DamageType, WeaponType } from "../../internal/unit+damage"
 
 export class DamageSelfAbilityBehavior extends AbilityBehavior {
     public constructor(
         ability: Ability,
         private readonly damage: AbilityDependentValue<number>,
+        private readonly attackType?: AttackType,
+        private readonly damageType?: DamageType,
+        private readonly weaponType?: WeaponType,
     ) {
         super(ability)
     }
 
     public override onImpact(caster: Unit): void {
-        caster.damageTarget(caster, this.resolveCurrentAbilityDependentValue(this.damage))
+        caster.damageTarget(
+            caster,
+            this.resolveCurrentAbilityDependentValue(this.damage),
+            undefined,
+            undefined,
+            this.attackType,
+            this.damageType,
+            this.weaponType,
+        )
     }
 }
 
@@ -25,12 +37,23 @@ export class DamageTargetAbilityBehavior extends AbilityBehavior {
     public constructor(
         ability: Ability,
         private readonly damage: AbilityDependentValue<number>,
+        private readonly attackType?: AttackType,
+        private readonly damageType?: DamageType,
+        private readonly weaponType?: WeaponType,
     ) {
         super(ability)
     }
 
     public override onWidgetTargetImpact(caster: Unit, target: Widget): void {
-        caster.damageTarget(target, this.resolveCurrentAbilityDependentValue(this.damage))
+        caster.damageTarget(
+            target,
+            this.resolveCurrentAbilityDependentValue(this.damage),
+            undefined,
+            undefined,
+            this.attackType,
+            this.damageType,
+            this.weaponType,
+        )
     }
 }
 
@@ -39,6 +62,9 @@ abstract class DamageAreaAbilityBehavior extends AbilityBehavior {
         ability: Ability,
         private readonly damage: AbilityDependentValue<number>,
         private readonly maximumDamage?: AbilityDependentValue<number>,
+        private readonly attackType?: AttackType,
+        private readonly damageType?: DamageType,
+        private readonly weaponType?: WeaponType,
     ) {
         super(ability)
     }
@@ -61,7 +87,15 @@ abstract class DamageAreaAbilityBehavior extends AbilityBehavior {
         }
 
         for (const target of targets) {
-            caster.damageTarget(target, damage)
+            caster.damageTarget(
+                target,
+                damage,
+                undefined,
+                undefined,
+                this.attackType,
+                this.damageType,
+                this.weaponType,
+            )
         }
     }
 }
@@ -71,8 +105,11 @@ export class DamageSelfAreaAbilityBehavior extends DamageAreaAbilityBehavior {
         ability: Ability,
         damage: AbilityDependentValue<number>,
         maximumDamage?: AbilityDependentValue<number>,
+        attackType?: AttackType,
+        damageType?: DamageType,
+        weaponType?: WeaponType,
     ) {
-        super(ability, damage, maximumDamage)
+        super(ability, damage, maximumDamage, attackType, damageType, weaponType)
     }
 
     public override onImpact(caster: Unit) {
@@ -85,8 +122,11 @@ export class DamageTargetAreaAbilityBehavior extends DamageAreaAbilityBehavior {
         ability: Ability,
         damage: AbilityDependentValue<number>,
         maximumDamage?: AbilityDependentValue<number>,
+        attackType?: AttackType,
+        damageType?: DamageType,
+        weaponType?: WeaponType,
     ) {
-        super(ability, damage, maximumDamage)
+        super(ability, damage, maximumDamage, attackType, damageType, weaponType)
     }
 
     public override onNoTargetImpact(caster: Unit) {
