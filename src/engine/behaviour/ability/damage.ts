@@ -10,9 +10,9 @@ import {
 import { AttackType, DamageType, WeaponType } from "../../internal/unit+damage"
 
 export type DamageAbilityBehaviorParameters = {
-    bonusDamagePerStrength?: AbilityDependentValue<number>
-    bonusDamagePerAgility?: AbilityDependentValue<number>
-    bonusDamagePerIntelligence?: AbilityDependentValue<number>
+    damagePerStrength?: AbilityDependentValue<number>
+    damagePerAgility?: AbilityDependentValue<number>
+    damagePerIntelligence?: AbilityDependentValue<number>
     attackType?: AttackType
     damageType?: DamageType
     weaponType?: WeaponType
@@ -36,23 +36,23 @@ abstract class DamageAbilityBehavior<
     protected calculateDamage(caster: Unit): number {
         const parameters = this.parameters
         let damage = this.resolveCurrentAbilityDependentValue(this.damage)
-        const bonusDamagePerStrength = this.resolveCurrentAbilityDependentValue(
-            parameters?.bonusDamagePerStrength ?? 0,
+        const damagePerStrength = this.resolveCurrentAbilityDependentValue(
+            parameters?.damagePerStrength ?? 0,
         )
-        if (bonusDamagePerStrength != 0) {
-            damage += bonusDamagePerStrength * caster.strength
+        if (damagePerStrength != 0) {
+            damage += damagePerStrength * caster.strength
         }
-        const bonusDamagePerAgility = this.resolveCurrentAbilityDependentValue(
-            parameters?.bonusDamagePerAgility ?? 0,
+        const damagePerAgility = this.resolveCurrentAbilityDependentValue(
+            parameters?.damagePerAgility ?? 0,
         )
-        if (bonusDamagePerAgility != 0) {
-            damage += bonusDamagePerAgility * caster.agility
+        if (damagePerAgility != 0) {
+            damage += damagePerAgility * caster.agility
         }
-        const bonusDamagePerIntelligence = this.resolveCurrentAbilityDependentValue(
-            parameters?.bonusDamagePerIntelligence ?? 0,
+        const damagePerIntelligence = this.resolveCurrentAbilityDependentValue(
+            parameters?.damagePerIntelligence ?? 0,
         )
-        if (bonusDamagePerIntelligence != 0) {
-            damage += bonusDamagePerIntelligence * caster.intelligence
+        if (damagePerIntelligence != 0) {
+            damage += damagePerIntelligence * caster.intelligence
         }
         return damage
     }
@@ -114,6 +114,8 @@ abstract class DamageAreaAbilityBehavior extends DamageAbilityBehavior<DamageAre
     }
 
     protected damageArea(caster: Unit, x: number, y: number): void {
+        const parameters = this.parameters
+
         const targets = Unit.getAllowedTargetsInCollisionRange(
             caster,
             this.resolveCurrentAbilityDependentValue(
@@ -126,13 +128,12 @@ abstract class DamageAreaAbilityBehavior extends DamageAbilityBehavior<DamageAre
 
         let damage = this.calculateDamage(caster)
         const maximumDamage = this.resolveCurrentAbilityDependentValue(
-            this.parameters?.maximumDamage ?? 0,
+            parameters?.maximumDamage ?? 0,
         )
         if (maximumDamage != 0 && damage > maximumDamage) {
             damage = maximumDamage / targets.length
         }
 
-        const parameters = this.parameters
         for (const target of targets) {
             caster.damageTarget(
                 target,
