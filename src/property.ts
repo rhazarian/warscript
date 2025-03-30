@@ -359,7 +359,7 @@ const loadPropertyValues = (
     }
 }
 
-Timer.run(async () => {
+Timer.run(() => {
     const data = file.read(PersistentPropertiesConfig.defaultFileName) ?? ""
     loadedValueById = loadPropertyValues(data)
     for (const player of Player.all) {
