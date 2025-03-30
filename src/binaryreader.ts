@@ -8,6 +8,10 @@ export class BinaryReader {
         this.s = data
     }
 
+    public toString(): string {
+        return this.s
+    }
+
     public read(fmt: string): any {
         const [value, pos] = unpack(`>${fmt}`, this.s, this.i)
         this.i = pos
