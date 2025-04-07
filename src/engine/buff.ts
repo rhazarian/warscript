@@ -141,6 +141,11 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           destroysOnDamage?: BooleanParameterValueType
           maximumAutoAttackCount?: IntegerParameterValueType
 
+          damageOnExpiration?: NumberParameterValueType
+          healingOnExpiration?: NumberParameterValueType
+          killsOnExpiration?: BooleanParameterValueType
+          explodesOnExpiration?: BooleanParameterValueType
+
           uniqueGroup?: BuffUniqueGroup
       }
     : BuffParameters & (T extends Buff<infer AdditionalParameters> ? AdditionalParameters : object)
@@ -186,6 +191,10 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     destroysOnDamage: true,
     maximumAutoAttackCount: true,
     uniqueGroup: true,
+    damageOnExpiration: true,
+    healingOnExpiration: true,
+    killsOnExpiration: true,
+    explodesOnExpiration: true,
 }
 
 const resolveNumberValue = <T extends number | undefined>(
@@ -239,6 +248,8 @@ const buffBooleanParameters = [
     "ignoresStunImmunity",
     "disablesAutoAttack",
     "providesInvulnerability",
+    "killsOnExpiration",
+    "explodesOnExpiration",
 ] as const
 
 const buffNumberParameters = [
@@ -254,6 +265,8 @@ const buffNumberParameters = [
     "healingInterval",
     "healingPerInterval",
     "healingOverDuration",
+    "damageOnExpiration",
+    "healingOnExpiration",
 ] as const
 
 const unsuccessfulApplicationMarker = {}
@@ -287,6 +300,9 @@ const enum BuffPropertyKey {
     REMAINING_HEALING_OVER_DURATION,
     HEALING_INTERVAL_TIMER,
 
+    DAMAGE_ON_EXPIRATION,
+    HEALING_ON_EXPIRATION,
+
     DAMAGE_UPON_DEATH_ALLOWED_TARGET_CLASSIFICATIONS,
     DAMAGE_UPON_DEATH,
     DAMAGE_UPON_DEATH_RANGE,
@@ -302,6 +318,8 @@ const enum BuffPropertyKey {
     IGNORES_STUN_IMMUNITY,
     DISABLES_AUTO_ATTACK,
     PROVIDES_INVULNERABILITY,
+    KILLS_ON_EXPIRATION,
+    EXPLODES_ON_EXPIRATION,
 }
 
 export const enum BuffTypeIdSelectionPolicy {
@@ -371,6 +389,7 @@ const expireBuff = (buff: Buff) => {
         }
     }
     Timer.run(destroyBuff, buff)
+    buff.onExpiration()
 }
 
 export type BuffAdditionalParameters = Prohibit<Record<string, any>, keyof BuffParameters>
@@ -485,6 +504,9 @@ export class Buff<
     private [BuffPropertyKey.REMAINING_HEALING_OVER_DURATION]?: number
     private [BuffPropertyKey.HEALING_INTERVAL_TIMER]?: Timer
 
+    private [BuffPropertyKey.DAMAGE_ON_EXPIRATION]?: number
+    private [BuffPropertyKey.HEALING_ON_EXPIRATION]?: number
+
     private [BuffPropertyKey.DAMAGE_UPON_DEATH_ALLOWED_TARGET_CLASSIFICATIONS]?: CombatClassifications
     private [BuffPropertyKey.DAMAGE_UPON_DEATH]?: number
     private [BuffPropertyKey.DAMAGE_UPON_DEATH_RANGE]?: number
@@ -500,6 +522,8 @@ export class Buff<
     private [BuffPropertyKey.IGNORES_STUN_IMMUNITY]?: true
     private [BuffPropertyKey.DISABLES_AUTO_ATTACK]?: true
     private [BuffPropertyKey.PROVIDES_INVULNERABILITY]?: true
+    private [BuffPropertyKey.KILLS_ON_EXPIRATION]?: true
+    private [BuffPropertyKey.EXPLODES_ON_EXPIRATION]?: true
 
     protected static readonly defaultParameters: BuffParameters = {}
 
@@ -974,6 +998,24 @@ export class Buff<
         }
     }
 
+    public get damageOnExpiration(): number {
+        return this[BuffPropertyKey.DAMAGE_ON_EXPIRATION] ?? 0
+    }
+
+    public set damageOnExpiration(damageOnExpiration: number) {
+        this[BuffPropertyKey.DAMAGE_ON_EXPIRATION] =
+            damageOnExpiration != 0 ? damageOnExpiration : undefined
+    }
+
+    public get healingOnExpiration(): number {
+        return this[BuffPropertyKey.HEALING_ON_EXPIRATION] ?? 0
+    }
+
+    public set healingOnExpiration(healingOnExpiration: number) {
+        this[BuffPropertyKey.HEALING_ON_EXPIRATION] =
+            healingOnExpiration != 0 ? healingOnExpiration : undefined
+    }
+
     public get receivedDamageFactor(): number {
         return this.getUnitBonus(UnitBonusType.RECEIVED_DAMAGE_FACTOR)
     }
@@ -1056,6 +1098,30 @@ export class Buff<
         } else if (providesInvulnerability && !this[BuffPropertyKey.PROVIDES_INVULNERABILITY]) {
             this.object.incrementInvulnerabilityCounter()
             this[BuffPropertyKey.PROVIDES_INVULNERABILITY] = true
+        }
+    }
+
+    public get killsOnExpiration(): boolean {
+        return this[BuffPropertyKey.KILLS_ON_EXPIRATION] ?? false
+    }
+
+    public set killsOnExpiration(killsOnExpiration: boolean) {
+        if (!killsOnExpiration && this[BuffPropertyKey.KILLS_ON_EXPIRATION]) {
+            this[BuffPropertyKey.KILLS_ON_EXPIRATION] = undefined
+        } else if (killsOnExpiration && !this[BuffPropertyKey.KILLS_ON_EXPIRATION]) {
+            this[BuffPropertyKey.KILLS_ON_EXPIRATION] = true
+        }
+    }
+
+    public get explodesOnExpiration(): boolean {
+        return this[BuffPropertyKey.EXPLODES_ON_EXPIRATION] ?? false
+    }
+
+    public set explodesOnExpiration(killsOnExpiration: boolean) {
+        if (!killsOnExpiration && this[BuffPropertyKey.EXPLODES_ON_EXPIRATION]) {
+            this[BuffPropertyKey.EXPLODES_ON_EXPIRATION] = undefined
+        } else if (killsOnExpiration && !this[BuffPropertyKey.EXPLODES_ON_EXPIRATION]) {
+            this[BuffPropertyKey.EXPLODES_ON_EXPIRATION] = true
         }
     }
 
@@ -1249,6 +1315,27 @@ export class Buff<
             return buff as T
         }
         return undefined
+    }
+
+    public onExpiration(): void {
+        const unit = this.unit
+        if (this[BuffPropertyKey.DAMAGE_ON_EXPIRATION] != undefined) {
+            ;(this[BuffPropertyKey.SOURCE] ?? unit).damageTarget(
+                unit,
+                this[BuffPropertyKey.DAMAGE_ON_EXPIRATION] ?? 0,
+            )
+        }
+        if (this[BuffPropertyKey.HEALING_ON_EXPIRATION] != undefined) {
+            ;(this[BuffPropertyKey.SOURCE] ?? unit).healTarget(
+                unit,
+                this[BuffPropertyKey.DAMAGE_ON_EXPIRATION] ?? 0,
+            )
+        }
+        if (this[BuffPropertyKey.EXPLODES_ON_EXPIRATION]) {
+            unit.explode()
+        } else if (this[BuffPropertyKey.KILLS_ON_EXPIRATION]) {
+            unit.kill()
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
