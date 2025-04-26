@@ -43,8 +43,10 @@ const updateBorders = () => {
     const width4by3 = (w - (h / 600) * 800) / 2
     const pxtodpi = 0.6 / h
     BlzFrameSetAbsPoint(leftBorder, FRAMEPOINT_TOPLEFT, -width4by3 * pxtodpi, 0.6)
+    BlzFrameSetScale(leftBorder, 1)
     BlzFrameSetSize(leftBorder, 0.001, 0.6)
     BlzFrameSetAbsPoint(rightBorder, FRAMEPOINT_TOPRIGHT, (-width4by3 + w) * pxtodpi, 0.6)
+    BlzFrameSetScale(rightBorder, 1)
     BlzFrameSetSize(rightBorder, 0.001, 0.6)
 }
 
