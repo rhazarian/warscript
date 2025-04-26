@@ -88,11 +88,20 @@ export class Frame extends Handle<jframehandle> {
     public static readonly GAME_UI: Frame = Frame.byOrigin(ORIGIN_FRAME_GAME_UI)
     public static readonly CONSOLE_UI: Frame = Frame.byOrigin(ORIGIN_FRAME_SIMPLE_UI_PARENT)
     public static readonly CONSOLE_UI_BACKDROP: Frame = Frame.byName("ConsoleUIBackdrop")
+    private static readonly CONSOLE_UI_BACKDROP_UI_SCALE_HELPER_CHILD: Frame = Frame.createByType(
+        "FRAME",
+        "ConsoleUIBackdropUIScaleHelperChild",
+        Frame.CONSOLE_UI_BACKDROP,
+    )
     public static readonly CONSOLE_TOP_BAR: Frame = Frame.byName("ConsoleTopBar")
     public static readonly CONSOLE_BOTTOM_BAR: Frame = Frame.byName("ConsoleBottomBar")
     public static readonly WORLD: Frame = Frame.byOrigin(ORIGIN_FRAME_WORLD_FRAME)
     public static readonly CHAT: Frame = Frame.byOrigin(ORIGIN_FRAME_CHAT_MSG)
     public static readonly TIME_OF_DAY_CLOCK = Frame.GAME_UI.getChild(5).getChild(0)
+
+    public static get uiScale(): number {
+        return Frame.CONSOLE_BOTTOM_BAR.width / 0.8
+    }
 
     public static get leftBorder(): Frame {
         Timer.onPeriod[1 / 64].addListener(updateBorders)
@@ -722,9 +731,18 @@ export class Frame extends Handle<jframehandle> {
         priority?: number,
         createContext?: number,
     ): T {
-        return this.of<jframehandle, T>(
-            BlzCreateFrame(name, parent.handle, priority ?? 0, createContext ?? 0),
-        )
+        if (parent == Frame.CONSOLE_UI_BACKDROP) {
+            const helper = Frame.CONSOLE_UI_BACKDROP_UI_SCALE_HELPER_CHILD.handle
+            BlzFrameSetScale(helper, 1)
+            const frame = BlzCreateFrame(name, helper, priority ?? 0, createContext ?? 0)
+            BlzFrameSetScale(helper, Frame.uiScale)
+            BlzFrameSetParent(frame, Frame.CONSOLE_UI_BACKDROP.handle)
+            return this.of<jframehandle, T>(frame)
+        } else {
+            return this.of<jframehandle, T>(
+                BlzCreateFrame(name, parent.handle, priority ?? 0, createContext ?? 0),
+            )
+        }
     }
 
     public static createByType<T extends Frame>(
