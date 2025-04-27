@@ -1,5 +1,6 @@
 import { sortBy } from "./arrays"
 import { UnsupportedOperationException } from "../exception"
+import { NonEmptyArray, ReadonlyNonEmptyArray } from "./types"
 
 type IteratorState<T extends AnyNotNil> = {
     t: LuaMap<T, T>
@@ -29,9 +30,16 @@ export interface ReadonlyLinkedSet<T extends AnyNotNil> extends LuaPairsKeyItera
     sumOf(selector: ((value: T) => number) | KeysOfType<T, number>): number
 }
 
+export interface ReadonlyNonEmptyLinkedSet<T extends AnyNotNil> extends ReadonlyLinkedSet<T> {
+    first(): T
+    last(): T
+    toArray(): NonEmptyArray<T>
+}
+
 export interface LinkedSet<T extends AnyNotNil> extends LuaPairsKeyIterable<T> {
     readonly __linkedSet: unique symbol
 }
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class LinkedSet<T extends AnyNotNil> implements ReadonlyLinkedSet<T> {
     private n = new LuaMap<T, T>()
     private p = new LuaMap<T, T>()
@@ -200,7 +208,7 @@ export class LinkedSet<T extends AnyNotNil> implements ReadonlyLinkedSet<T> {
                 t: this.n,
                 n: this.f,
             },
-            undefined
+            undefined,
         )
     }
 }
@@ -217,7 +225,9 @@ export const emptyLinkedSet = <T extends AnyNotNil>(): ReadonlyLinkedSet<T> => {
     return EMPTY_LINKED_SET as any
 }
 
-export const linkedSetOf = <T extends AnyNotNil>(...elements: readonly T[]): LinkedSet<T> => {
+export const mutableLinkedSetOf = <T extends AnyNotNil>(
+    ...elements: ReadonlyArray<T>
+): LinkedSet<T> => {
     const linkedSet = new LinkedSet<T>()
     for (const i of $range(1, select("#", ...elements))) {
         linkedSet.add(select(i, ...elements)[0])
@@ -225,7 +235,7 @@ export const linkedSetOf = <T extends AnyNotNil>(...elements: readonly T[]): Lin
     return linkedSet
 }
 
-export const linkedSetOfNotNull = <T extends AnyNotNil>(
+export const mutableLinkedSetOfNotNull = <T extends AnyNotNil>(
     ...elements: readonly (T | undefined | null)[]
 ): LinkedSet<T> => {
     const linkedSet = new LinkedSet<T>()
@@ -237,3 +247,15 @@ export const linkedSetOfNotNull = <T extends AnyNotNil>(
     }
     return linkedSet
 }
+
+export const linkedSetOf = <T extends AnyNotNil>(
+    ...elements: ReadonlyArray<T>
+): ReadonlyLinkedSet<T> => mutableLinkedSetOf(...elements) as ReadonlyLinkedSet<T>
+
+export const linkedSetOfNotNull = <T extends AnyNotNil>(
+    ...elements: ReadonlyArray<T>
+): ReadonlyLinkedSet<T> => mutableLinkedSetOfNotNull(...elements) as ReadonlyLinkedSet<T>
+
+export const nonEmptyLinkedSetOf = <T extends AnyNotNil>(
+    ...elements: ReadonlyNonEmptyArray<T>
+): ReadonlyNonEmptyLinkedSet<T> => linkedSetOf(...elements) as ReadonlyNonEmptyLinkedSet<T>

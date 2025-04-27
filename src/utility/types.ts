@@ -4,6 +4,8 @@ export type IsExactlyAny<T> = boolean extends (T extends never ? true : false) ?
 
 export type NonEmptyArray<T> = [T, ...T[]]
 
+export type ReadonlyNonEmptyArray<T> = readonly [T, ...T[]]
+
 export type InvertRecordType<T extends Record<PropertyKey, PropertyKey | null | undefined>> = {
     [P in keyof T as NonNullable<T[P]>]: P
 }

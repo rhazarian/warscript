@@ -14,6 +14,9 @@ import { ObjectDataEntryId } from "../object-data/entry"
 import { LightningTypeId } from "../object-data/entry/lightning-type"
 import { CombatClassifications } from "../object-data/auxiliary/combat-classification"
 import { UnitTypeId } from "../object-data/entry/unit-type"
+import { BuffResistanceType } from "../object-data/auxiliary/buff-resistance-type"
+import { BuffPolarity } from "../object-data/auxiliary/buff-polarity"
+import { nonEmptyLinkedSetOf, ReadonlyNonEmptyLinkedSet } from "../../utility/linked-set"
 
 const convertAbilityBooleanField = _G.ConvertAbilityBooleanField
 const convertAbilityIntegerField = _G.ConvertAbilityIntegerField
@@ -25,7 +28,7 @@ const convertAbilityStringLevelField = _G.ConvertAbilityStringLevelField
 
 export abstract class AbilityField<
     ValueType extends number | string | boolean = number | string | boolean,
-    NativeFieldType extends jabilityfield = jabilityfield
+    NativeFieldType extends jabilityfield = jabilityfield,
 > extends ObjectField<AbilityType, Ability, ValueType, NativeFieldType> {
     protected override get instanceClass(): typeof Ability {
         return Ability
@@ -69,7 +72,7 @@ export class AbilityBooleanField extends AbilityField<boolean, jabilitybooleanfi
 }
 
 export abstract class AbilityNumberField<
-    NativeFieldType extends jabilityfield = jabilityfield
+    NativeFieldType extends jabilityfield = jabilityfield,
 > extends AbilityField<number, NativeFieldType> {
     protected override get defaultValue(): number {
         return 0
@@ -143,7 +146,7 @@ const stringValueByAbilityTypeIdByFieldId = postcompile(() => {
 
         stringValueByAbilityTypeIdByFieldId.set(
             fourCC(rawFieldId) as ObjectFieldId,
-            stringValueByAbilityTypeId
+            stringValueByAbilityTypeId,
         )
     }
     return stringValueByAbilityTypeIdByFieldId
@@ -179,7 +182,7 @@ export class AbilityStringField extends AbilityField<string, jabilitystringfield
 
 export abstract class AbilityArrayField<
     ValueType extends number | string | boolean = number | string | boolean,
-    NativeFieldType = unknown
+    NativeFieldType = unknown,
 > extends ObjectArrayField<AbilityType, Ability, ValueType, NativeFieldType> {
     protected override get instanceClass(): typeof Ability {
         return Ability
@@ -206,14 +209,14 @@ export class AbilityStringArrayField extends AbilityArrayField<string, jabilitys
     protected override setNativeFieldValue(
         instance: Ability,
         index: number,
-        value: string
+        value: string,
     ): boolean {
         return instance.setField(this.nativeField, index, value)
     }
 }
 
 export abstract class AbilityObjectDataEntryIdArrayField<
-    T extends ObjectDataEntryId = ObjectDataEntryId
+    T extends ObjectDataEntryId = ObjectDataEntryId,
 > extends AbilityArrayField<T, jabilitystringlevelfield> {
     protected override get defaultValue(): T {
         return 0 as T
@@ -238,7 +241,7 @@ export class AbilityLightningTypeIdArrayField extends AbilityObjectDataEntryIdAr
 export abstract class AbilityLevelField<
     ValueType extends number | string | boolean = number | string | boolean,
     InputValueType extends ValueType = never,
-    NativeFieldType extends jabilityfield = jabilityfield
+    NativeFieldType extends jabilityfield = jabilityfield,
 > extends ObjectLevelField<AbilityType, Ability, ValueType, InputValueType, NativeFieldType> {
     protected override get instanceClass(): typeof Ability {
         return Ability
@@ -272,15 +275,19 @@ export class AbilityBooleanLevelField extends AbilityLevelField<
         return false
     }
 
-    protected getNativeFieldById(id: number): jabilityintegerlevelfield {
+    protected override getNativeFieldById(id: number): jabilityintegerlevelfield {
         return convertAbilityIntegerLevelField(id)
     }
 
-    protected getNativeFieldValue(instance: Ability, level: number): boolean {
+    protected override getNativeFieldValue(instance: Ability, level: number): boolean {
         return instance.getField(this.nativeField, level) != 0
     }
 
-    protected setNativeFieldValue(instance: Ability, level: number, value: boolean): boolean {
+    protected override setNativeFieldValue(
+        instance: Ability,
+        level: number,
+        value: boolean,
+    ): boolean {
         return instance.setField(this.nativeField, level, value ? 1 : 0)
     }
 
@@ -290,7 +297,7 @@ export class AbilityBooleanLevelField extends AbilityLevelField<
 }
 
 export abstract class AbilityNumberLevelField<
-    NativeFieldType extends jabilityfield = jabilityfield
+    NativeFieldType extends jabilityfield = jabilityfield,
 > extends AbilityLevelField<number, number, NativeFieldType> {
     protected override get defaultValue(): number {
         return 0
@@ -302,15 +309,19 @@ export abstract class AbilityNumberLevelField<
 }
 
 export class AbilityFloatLevelField extends AbilityNumberLevelField<jabilityreallevelfield> {
-    protected getNativeFieldById(id: number): jabilityreallevelfield {
+    protected override getNativeFieldById(id: number): jabilityreallevelfield {
         return convertAbilityRealLevelField(id)
     }
 
-    protected getNativeFieldValue(instance: Ability, level: number): number {
+    protected override getNativeFieldValue(instance: Ability, level: number): number {
         return instance.getField(this.nativeField, level)
     }
 
-    protected setNativeFieldValue(instance: Ability, level: number, value: number): boolean {
+    protected override setNativeFieldValue(
+        instance: Ability,
+        level: number,
+        value: number,
+    ): boolean {
         return instance.setField(this.nativeField, level, value)
     }
 
@@ -320,15 +331,19 @@ export class AbilityFloatLevelField extends AbilityNumberLevelField<jabilityreal
 }
 
 export class AbilityIntegerLevelField extends AbilityNumberLevelField<jabilityintegerlevelfield> {
-    protected getNativeFieldById(id: number): jabilityintegerlevelfield {
+    protected override getNativeFieldById(id: number): jabilityintegerlevelfield {
         return convertAbilityIntegerLevelField(id)
     }
 
-    protected getNativeFieldValue(instance: Ability, level: number): number {
+    protected override getNativeFieldValue(instance: Ability, level: number): number {
         return instance.getField(this.nativeField, level)
     }
 
-    protected setNativeFieldValue(instance: Ability, level: number, value: number): boolean {
+    protected override setNativeFieldValue(
+        instance: Ability,
+        level: number,
+        value: number,
+    ): boolean {
         return instance.setField(this.nativeField, level, value)
     }
 
@@ -346,15 +361,19 @@ export class AbilityStringLevelField extends AbilityLevelField<
         return ""
     }
 
-    protected getNativeFieldById(id: number): jabilitystringlevelfield {
+    protected override getNativeFieldById(id: number): jabilitystringlevelfield {
         return convertAbilityStringLevelField(id)
     }
 
-    protected getNativeFieldValue(instance: Ability, level: number): string {
+    protected override getNativeFieldValue(instance: Ability, level: number): string {
         return instance.getField(this.nativeField, level)
     }
 
-    protected setNativeFieldValue(instance: Ability, level: number, value: string): boolean {
+    protected override setNativeFieldValue(
+        instance: Ability,
+        level: number,
+        value: string,
+    ): boolean {
         return instance.setField(this.nativeField, level, value)
     }
 
@@ -364,7 +383,7 @@ export class AbilityStringLevelField extends AbilityLevelField<
 }
 
 export abstract class AbilityObjectDataEntryIdLevelField<
-    T extends ObjectDataEntryId = ObjectDataEntryId
+    T extends ObjectDataEntryId = ObjectDataEntryId,
 > extends AbilityLevelField<T, T, jabilitystringlevelfield> {
     protected override get defaultValue(): T {
         return 0 as T
@@ -388,6 +407,54 @@ export class AbilityAbilityTypeIdLevelField extends AbilityObjectDataEntryIdLeve
 
 export class AbilityUnitTypeIdLevelField extends AbilityObjectDataEntryIdLevelField<UnitTypeId> {}
 
+export abstract class AbilityEnumLevelField<T extends number> extends AbilityLevelField<
+    T,
+    T,
+    jabilityintegerlevelfield
+> {
+    protected abstract values: ReadonlyNonEmptyLinkedSet<T>
+
+    protected override get defaultValue(): T {
+        return this.values.first()
+    }
+
+    protected override getNativeFieldById(id: number): jabilityintegerlevelfield {
+        return convertAbilityIntegerLevelField(id)
+    }
+
+    protected override getNativeFieldValue(instance: Ability, level: number): T {
+        const value = instance.getField(this.nativeField, level)
+        if (this.values.contains(value)) {
+            return value as T
+        }
+        return this.values.first()
+    }
+
+    protected override setNativeFieldValue(instance: Ability, level: number, value: T): boolean {
+        return instance.setField(this.nativeField, level, value)
+    }
+
+    public static get valueChangeEvent(): ObjectLevelFieldValueChangeEvent<AbilityBooleanLevelField> {
+        return this.getOrCreateValueChangeEvent()
+    }
+}
+
+export class AbilityBuffPolarityLevelField extends AbilityEnumLevelField<BuffPolarity> {
+    protected override values = nonEmptyLinkedSetOf(
+        BuffPolarity.HIDDEN,
+        BuffPolarity.POSITIVE,
+        BuffPolarity.NEGATIVE,
+    )
+}
+
+export class AbilityBuffResistanceTypeLevelField extends AbilityEnumLevelField<BuffResistanceType> {
+    protected override values = nonEmptyLinkedSetOf(
+        BuffResistanceType.MAGIC,
+        BuffResistanceType.PHYSICAL,
+        BuffResistanceType.BOTH,
+    )
+}
+
 const allowedTargetCombatClassificationsByLevelByAbilityTypeId = postcompile(() => {
     const allowedTargetCombatClassificationsByLevelByAbilityTypeId = new LuaMap<
         AbilityTypeId,
@@ -396,7 +463,7 @@ const allowedTargetCombatClassificationsByLevelByAbilityTypeId = postcompile(() 
     for (const abilityType of AbilityType.getAll()) {
         allowedTargetCombatClassificationsByLevelByAbilityTypeId.set(
             abilityType.id,
-            abilityType.allowedTargetCombatClassifications
+            abilityType.allowedTargetCombatClassifications,
         )
     }
     return allowedTargetCombatClassificationsByLevelByAbilityTypeId
@@ -429,7 +496,7 @@ export class AbilityCombatClassificationsLevelField extends AbilityLevelField<
     protected setNativeFieldValue(
         instance: Ability,
         level: number,
-        value: CombatClassifications
+        value: CombatClassifications,
     ): boolean {
         return instance.setField(this.nativeField, level, value)
     }
@@ -443,7 +510,7 @@ export type AbilityDependentValue<ValueType extends boolean | number | string> =
 
 export const resolveCurrentAbilityDependentValue = <ValueType extends boolean | number | string>(
     ability: Ability,
-    value: AbilityDependentValue<ValueType>
+    value: AbilityDependentValue<ValueType>,
 ): ValueType => {
     if (value instanceof AbilityField) {
         return value.getValue(ability)
