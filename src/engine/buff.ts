@@ -134,6 +134,7 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           armorIncreaseFactor?: NumberParameterValueType
           attackSpeedIncreaseFactor?: NumberParameterValueType
           movementSpeedIncreaseFactor?: NumberParameterValueType
+          damageFactor?: NumberParameterValueType
           receivedDamageFactor?: NumberParameterValueType
           receivedMagicDamageFactor?: NumberParameterValueType
           durationIncreaseOnAutoAttack?: NumberParameterValueType
@@ -186,6 +187,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     armorIncreaseFactor: true,
     attackSpeedIncreaseFactor: true,
     movementSpeedIncreaseFactor: true,
+    damageFactor: true,
     receivedDamageFactor: true,
     receivedMagicDamageFactor: true,
     durationIncreaseOnAutoAttack: true,
@@ -282,6 +284,7 @@ const buffNumberParameters = [
     "attackSpeedIncreaseFactor",
     "movementSpeedIncreaseFactor",
     "armorIncrease",
+    "damageFactor",
     "receivedDamageFactor",
     "maximumAutoAttackCount",
     "maximumDamageDealtEventCount",
@@ -1050,6 +1053,14 @@ export class Buff<
     public set healingOnExpiration(healingOnExpiration: number) {
         this[BuffPropertyKey.HEALING_ON_EXPIRATION] =
             healingOnExpiration != 0 ? healingOnExpiration : undefined
+    }
+
+    public get damageFactor(): number {
+        return this.getUnitBonus(UnitBonusType.DAMAGE_FACTOR)
+    }
+
+    public set damageFactor(damageFactor: number) {
+        this.addOrUpdateOrRemoveUnitBonus(UnitBonusType.DAMAGE_FACTOR, damageFactor)
     }
 
     public get receivedDamageFactor(): number {

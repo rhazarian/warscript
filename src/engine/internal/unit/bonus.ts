@@ -19,7 +19,7 @@ import {
 import { EventListenerPriority } from "../../../event"
 import {
     MOVEMENT_SPEED_INCREASE_FACTOR_ABILITY_FIELD,
-    MOVEMENT_SPEED_INCREASE_FACTOR_DUMMY_ABILITY_TYPE_ID
+    MOVEMENT_SPEED_INCREASE_FACTOR_DUMMY_ABILITY_TYPE_ID,
 } from "../object-data/movement-speed-increase-factor"
 
 export type UnitBonusId<Brand extends string = any> = number & {
@@ -30,7 +30,8 @@ export type UnitBonusId<Brand extends string = any> = number & {
 export type UnitArmorBonusId = UnitBonusId<"armor">
 export type UnitAttackSpeedFactorBonusId = UnitBonusId<"attackSpeedFactor">
 export type UnitMovementSpeedFactorBonusId = UnitBonusId<"movementSpeedFactor">
-export type UnitDamageBonusId = UnitBonusId<"damage">
+export type UnitAutoAttackDamageBonusId = UnitBonusId<"autoAttackDamage">
+export type UnitDamageFactorBonusId = UnitBonusId<"damageFactor">
 export type UnitReceivedDamageFactorBonusId = UnitBonusId<"receivedDamageFactor">
 
 export type UnitBonusType<Id extends UnitBonusId = UnitBonusId> = (
@@ -54,6 +55,7 @@ export type UnitBonusType<Id extends UnitBonusId = UnitBonusId> = (
     readonly __unitBonusTypeId?: Id
 }
 
+const damageFactorByUnit = new LuaMap<Unit, number>()
 const receivedDamageFactorByUnit = new LuaMap<Unit, number>()
 
 export namespace UnitBonusType {
@@ -78,12 +80,17 @@ export namespace UnitBonusType {
         reduce: sum,
         initialValue: 0,
     }
-    export const DAMAGE: UnitBonusType<UnitDamageBonusId> = {
+    export const AUTO_ATTACK_DAMAGE: UnitBonusType<UnitAutoAttackDamageBonusId> = {
         abilityTypeId: AUTO_ATTACK_DAMAGE_INCREASE_DUMMY_ABILITY_TYPE_ID,
         field: AUTO_ATTACK_DAMAGE_INCREASE_ABILITY_FIELD,
         integer: false,
         reduce: sum,
         initialValue: 0,
+    }
+    export const DAMAGE_FACTOR: UnitBonusType<UnitReceivedDamageFactorBonusId> = {
+        reduce: product,
+        valueByUnit: damageFactorByUnit,
+        initialValue: 1,
     }
     export const RECEIVED_DAMAGE_FACTOR: UnitBonusType<UnitReceivedDamageFactorBonusId> = {
         reduce: product,
@@ -129,8 +136,8 @@ const processUnitBonus = (unit: Unit, bonusType: UnitBonusType, bonusesArray: nu
             abilityHandle,
             bonusType.field as any,
             0,
-            totalValue
-        )
+            totalValue,
+        ),
     )
     BlzSetAbilityIntegerField(abilityHandle, ABILITY_IF_LEVELS, 2)
     SetUnitAbilityLevel(unitHandle, abilityTypeId, 2)
@@ -141,7 +148,7 @@ const processUnitBonus = (unit: Unit, bonusType: UnitBonusType, bonusesArray: nu
 export const addUnitBonus = <Id extends UnitBonusId>(
     unit: Unit,
     bonusType: UnitBonusType<Id>,
-    value: number
+    value: number,
 ): Id => {
     let bonusesByUnit = bonusesByUnitByBonusType.get(bonusType)
     if (bonusesByUnit == undefined) {
@@ -175,7 +182,7 @@ export const addUnitBonus = <Id extends UnitBonusId>(
 export const removeUnitBonus = <Id extends UnitBonusId>(
     unit: Unit,
     bonusType: UnitBonusType<Id>,
-    id: Id
+    id: Id,
 ): boolean => {
     const bonusesByUnit = bonusesByUnitByBonusType.get(bonusType)
     if (bonusesByUnit == undefined) {
@@ -214,7 +221,7 @@ export const updateUnitBonus = <Id extends UnitBonusId>(
     unit: Unit,
     bonusType: UnitBonusType<Id>,
     id: Id,
-    value: number
+    value: number,
 ): boolean => {
     const bonusesByUnit = bonusesByUnitByBonusType.get(bonusType)
     if (bonusesByUnit == undefined) {
@@ -244,7 +251,7 @@ export const addOrUpdateOrRemoveUnitBonus = <Id extends UnitBonusId>(
     unit: Unit,
     bonusType: UnitBonusType<Id>,
     id: Id | undefined,
-    value: number
+    value: number,
 ): Id | undefined => {
     if (value == bonusType.initialValue) {
         if (id == undefined) {
@@ -263,7 +270,7 @@ export const addOrUpdateOrRemoveUnitBonus = <Id extends UnitBonusId>(
 export const getUnitBonus = <Id extends UnitBonusId>(
     unit: Unit,
     bonusType: UnitBonusType<Id>,
-    id: Id
+    id: Id,
 ): number => {
     const bonusesByUnit = bonusesByUnitByBonusType.get(bonusType)
     if (bonusesByUnit == undefined) {
@@ -284,6 +291,9 @@ export const getUnitBonus = <Id extends UnitBonusId>(
 }
 
 Unit.onDamage.addListener(EventListenerPriority.HIGHEST, (source, target, event) => {
+    if (source !== undefined && damageFactorByUnit.has(source)) {
+        event.amount *= damageFactorByUnit.get(source)!
+    }
     if (receivedDamageFactorByUnit.has(target)) {
         event.amount *= receivedDamageFactorByUnit.get(target)!
     }
