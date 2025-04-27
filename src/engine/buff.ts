@@ -33,7 +33,7 @@ import {
 import { CombatClassifications } from "./object-data/auxiliary/combat-classification"
 import { damageArea } from "./internal/mechanics/area-damage"
 import { checkNotNull } from "../utility/preconditions"
-import { IsExactlyAny, NonEmptyArray, Prohibit } from "../utility/types"
+import { IsExactlyAny, Prohibit, ReadonlyNonEmptyArray } from "../utility/types"
 import { Effect } from "../core/types/effect"
 import { ObjectFieldId } from "./object-field"
 import { BuffType, BuffTypeId } from "./object-data/entry/buff-type"
@@ -82,6 +82,10 @@ type NumberParameterValueType = number | AbilityNumberField | AbilityNumberLevel
 type IntegerParameterValueType = number | AbilityIntegerField | AbilityIntegerLevelField
 
 type BooleanParameterValueType = boolean | AbilityBooleanField | AbilityBooleanLevelField
+
+export type BuffPolarityParameterType = EnumParameterValueType<BuffPolarity>
+
+export type BuffResistanceTypeParameterType = EnumParameterValueType<BuffResistanceType>
 
 export class BuffUniqueGroup {}
 
@@ -354,7 +358,7 @@ export const enum BuffTypeIdSelectionPolicy {
 }
 
 const selectBuffTypeIdWithLeastDuration = (
-    buffTypeIds: ApplicableBuffTypeId[],
+    buffTypeIds: readonly ApplicableBuffTypeId[],
     unit: Unit,
 ): ApplicableBuffTypeId => {
     let minimumDuration: number | undefined = undefined
@@ -425,11 +429,11 @@ export type BuffConstructorParameters<AdditionalParameters extends BuffAdditiona
     ...typeId:
         | [ApplicableBuffTypeId]
         | [
-              typeIds: NonEmptyArray<ApplicableBuffTypeId>,
+              typeIds: ReadonlyNonEmptyArray<ApplicableBuffTypeId>,
               typeIdSelectionPolicy: BuffTypeIdSelectionPolicy,
           ],
-    polarity: BuffPolarity,
-    resistanceType: BuffResistanceType,
+    polarity: BuffPolarityParameterType,
+    resistanceType: BuffResistanceTypeParameterType,
     ...abilityOrParameters:
         | [
               ability: Ability,
@@ -616,17 +620,13 @@ export class Buff<
 
     public constructor(
         private _unit: Unit,
-        typeIdOrTypeIds: ApplicableBuffTypeId | NonEmptyArray<ApplicableBuffTypeId>,
-        polarityOrTypeIdSelectionPolicy:
-            | EnumParameterValueType<BuffPolarity>
-            | BuffTypeIdSelectionPolicy,
-        resistanceTypeOrPolarity:
-            | EnumParameterValueType<BuffResistanceType>
-            | EnumParameterValueType<BuffPolarity>,
+        typeIdOrTypeIds: ApplicableBuffTypeId | ReadonlyNonEmptyArray<ApplicableBuffTypeId>,
+        polarityOrTypeIdSelectionPolicy: BuffPolarityParameterType | BuffTypeIdSelectionPolicy,
+        resistanceTypeOrPolarity: BuffResistanceTypeParameterType | BuffPolarityParameterType,
         abilityOrParametersOrResistanceType?:
             | Ability
             | (BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>)
-            | EnumParameterValueType<BuffResistanceType>,
+            | BuffResistanceTypeParameterType,
         parametersOrAbility?:
             | (BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>)
             | Ability,
@@ -636,15 +636,14 @@ export class Buff<
         this[BuffPropertyKey.UNIT] = _unit
 
         let typeId: ApplicableBuffTypeId
-        let polarity: EnumParameterValueType<BuffPolarity>
-        let resistanceType: EnumParameterValueType<BuffResistanceType>
+        let polarity: BuffPolarityParameterType
+        let resistanceType: BuffResistanceTypeParameterType
         let ability: Ability | undefined
         if (typeof typeIdOrTypeIds != "number") {
             typeId = selectBuffTypeIdWithLeastDuration(typeIdOrTypeIds, _unit)
 
-            polarity = resistanceTypeOrPolarity as EnumParameterValueType<BuffPolarity>
-            resistanceType =
-                abilityOrParametersOrResistanceType as EnumParameterValueType<BuffResistanceType>
+            polarity = resistanceTypeOrPolarity as BuffPolarityParameterType
+            resistanceType = abilityOrParametersOrResistanceType as BuffResistanceTypeParameterType
             if (parametersOrAbility instanceof Ability) {
                 ability = parametersOrAbility
             } else {
@@ -653,8 +652,8 @@ export class Buff<
             }
         } else {
             typeId = typeIdOrTypeIds
-            polarity = polarityOrTypeIdSelectionPolicy as EnumParameterValueType<BuffPolarity>
-            resistanceType = resistanceTypeOrPolarity as EnumParameterValueType<BuffResistanceType>
+            polarity = polarityOrTypeIdSelectionPolicy as BuffPolarityParameterType
+            resistanceType = resistanceTypeOrPolarity as BuffResistanceTypeParameterType
             if (abilityOrParametersOrResistanceType instanceof Ability) {
                 ability = abilityOrParametersOrResistanceType
                 parameters = parametersOrAbility as BuffParameters &
@@ -1182,7 +1181,8 @@ export class Buff<
         if (maximumDamageReceivedEventCount == 0) {
             this[BuffPropertyKey.MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT] = undefined
         } else {
-            this[BuffPropertyKey.MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT] = maximumDamageReceivedEventCount
+            this[BuffPropertyKey.MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT] =
+                maximumDamageReceivedEventCount
         }
     }
 
