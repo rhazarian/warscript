@@ -1445,7 +1445,7 @@ export class Buff<
                 this.destroy()
             }
         }
-        if (event.amount != 0) {
+        if (event.originalAmount != 0) {
             const damageDealtEventCount = (this[BuffPropertyKey.DAMAGE_DEALT_EVENT_COUNT] ?? 0) + 1
             this[BuffPropertyKey.DAMAGE_DEALT_EVENT_COUNT] = damageDealtEventCount
             if (damageDealtEventCount == this[BuffPropertyKey.MAXIMUM_DAMAGE_DEALT_EVENT_COUNT]) {
@@ -1455,7 +1455,7 @@ export class Buff<
     }
 
     public override onDamageReceived(source: Unit | undefined, event: DamageEvent) {
-        if (event.amount != 0) {
+        if (event.originalAmount != 0) {
             const damageReceivedEventCount =
                 (this[BuffPropertyKey.DAMAGE_RECEIVED_EVENT_COUNT] ?? 0) + 1
             this[BuffPropertyKey.DAMAGE_RECEIVED_EVENT_COUNT] = damageReceivedEventCount

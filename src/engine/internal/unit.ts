@@ -329,12 +329,12 @@ function dispatch<T extends any[], S extends any[]>(
 }
 
 function dispatchId<T extends any[]>(
-    event: Event<[Unit, number, ...T]>
+    event: Event<[Unit, number, ...T]>,
 ): EventDispatcher<[Unit, number, ...T], [Unit, ...T]> {
     return dispatch(
         event,
         (unit, id, ...args) => id,
-        (unit, id, ...args) => $multi(unit, ...args)
+        (unit, id, ...args) => $multi(unit, ...args),
     )
 }
 
@@ -346,7 +346,7 @@ type AbilityEventDispatcher<T extends any[] = []> = Event<[Unit, Ability, ...T]>
     AbilityDispatcherTable<T>
 
 function dispatchAbility<T extends any[] = []>(
-    event: Event<[Unit, Ability, ...T]>
+    event: Event<[Unit, Ability, ...T]>,
 ): AbilityEventDispatcher<T> {
     let initialized = false
     return setmetatable({} as AbilityDispatcherTable<T>, {
@@ -379,6 +379,7 @@ export interface DamagingEvent {
     damageType: jdamagetype
     weaponType: jweapontype
     readonly isAttack: boolean
+    readonly originalAmount: number
 }
 
 export type DamageEvent = DamagingEvent & {
@@ -412,13 +413,13 @@ function damageEventPreventDeath<P extends any[]>(
     rawset(
         this as InternalDamageEvent,
         DamageEventPropertyKey.PREVENT_DEATH_PARAMETERS_LENGTH,
-        parametersLength
+        parametersLength,
     )
     for (const i of $range(1, parametersLength)) {
         rawset(
             this as any,
             DamageEventPropertyKey.PREVENT_DEATH_PARAMETERS_LENGTH + i,
-            select(i, ...parameters)[0]
+            select(i, ...parameters)[0],
         )
     }
 }
@@ -437,12 +438,12 @@ export type AttackDamageEvent = DamagingEvent & {
 export type AttackHandlerCondition = (
     source: Unit,
     target: Unit,
-    event: Readonly<AttackDamageEvent>
+    event: Readonly<AttackDamageEvent>,
 ) => boolean
 export type AttackHandlerAction = (
     source: Unit,
     target: Unit,
-    event: AttackDamageEvent & { fire(this: void): void }
+    event: AttackDamageEvent & { fire(this: void): void },
 ) => void
 export type AttackHandler = [AttackHandlerCondition, AttackHandlerAction]
 
@@ -478,8 +479,8 @@ const modifiers = {
                 ability,
                 armorBonusField,
                 0,
-                BlzGetAbilityRealLevelField(ability, armorBonusField, 0) + value
-            )
+                BlzGetAbilityRealLevelField(ability, armorBonusField, 0) + value,
+            ),
         )
     },
 }
@@ -494,13 +495,16 @@ const getters = {
 }
 
 export class UnitWeapon {
-    public constructor(public readonly unit: Unit, public readonly index: 0 | 1) {}
+    public constructor(
+        public readonly unit: Unit,
+        public readonly index: 0 | 1,
+    ) {}
 
     public get cooldown(): number {
         return getUnitWeaponRealField(
             this.unit.handle,
             UNIT_WEAPON_RF_ATTACK_BASE_COOLDOWN,
-            this.index
+            this.index,
         )
     }
 
@@ -509,7 +513,7 @@ export class UnitWeapon {
             this.unit.handle,
             UNIT_WEAPON_RF_ATTACK_BASE_COOLDOWN,
             this.index,
-            cooldown
+            cooldown,
         )
     }
 
@@ -561,7 +565,7 @@ export class UnitWeapon {
             UNIT_WEAPON_RF_ATTACK_RANGE,
             index + 1,
             getUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_RANGE, index + 1) +
-                (range - getUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_RANGE, index))
+                (range - getUnitWeaponRealField(handle, UNIT_WEAPON_RF_ATTACK_RANGE, index)),
         )
     }
 
@@ -569,7 +573,7 @@ export class UnitWeapon {
         return getUnitWeaponRealField(
             this.unit.handle,
             UNIT_WEAPON_RF_ATTACK_DAMAGE_POINT,
-            this.index
+            this.index,
         )
     }
 
@@ -578,7 +582,7 @@ export class UnitWeapon {
             this.unit.handle,
             UNIT_WEAPON_RF_ATTACK_DAMAGE_POINT,
             this.index,
-            impactDelay
+            impactDelay,
         )
     }
 
@@ -586,7 +590,7 @@ export class UnitWeapon {
         return getUnitWeaponRealField(
             this.unit.handle,
             UNIT_WEAPON_RF_ATTACK_PROJECTILE_ARC,
-            this.index
+            this.index,
         )
     }
 
@@ -595,7 +599,7 @@ export class UnitWeapon {
             this.unit.handle,
             UNIT_WEAPON_RF_ATTACK_PROJECTILE_ARC,
             this.index,
-            missileArc
+            missileArc,
         )
     }
 
@@ -603,7 +607,7 @@ export class UnitWeapon {
         return getUnitWeaponStringField(
             this.unit.handle,
             UNIT_WEAPON_SF_ATTACK_PROJECTILE_ART,
-            this.index
+            this.index,
         )
     }
 
@@ -612,7 +616,7 @@ export class UnitWeapon {
             this.unit.handle,
             UNIT_WEAPON_SF_ATTACK_PROJECTILE_ART,
             this.index,
-            missileModelPath
+            missileModelPath,
         )
     }
 
@@ -620,7 +624,7 @@ export class UnitWeapon {
         return getUnitWeaponRealField(
             this.unit.handle,
             UNIT_WEAPON_RF_ATTACK_PROJECTILE_SPEED,
-            this.index
+            this.index,
         )
     }
 
@@ -629,7 +633,7 @@ export class UnitWeapon {
             this.unit.handle,
             UNIT_WEAPON_RF_ATTACK_PROJECTILE_SPEED,
             this.index,
-            missileSpeed
+            missileSpeed,
         )
     }
 }
@@ -755,9 +759,12 @@ export class Unit extends Handle<junit> {
         this.events = this.events || {}
         const eventId = GetHandleId(event)
         if (!this.events[eventId]) {
-            this.events[eventId] = new TriggerEvent<T>((trigger) => {
-                TriggerRegisterUnitEvent(trigger, this.handle, event)
-            }, collector || (() => []))
+            this.events[eventId] = new TriggerEvent<T>(
+                (trigger) => {
+                    TriggerRegisterUnitEvent(trigger, this.handle, event)
+                },
+                collector || (() => []),
+            )
         }
         return this.events[eventId]
     }
@@ -767,7 +774,7 @@ export class Unit extends Handle<junit> {
         this._owner = Player.of(getOwningPlayer(handle))
         assert(
             unitAddAbility(handle, leaveDetectAbilityId) &&
-                UnitMakeAbilityPermanent(handle, true, leaveDetectAbilityId)
+                UnitMakeAbilityPermanent(handle, true, leaveDetectAbilityId),
         )
         assert(unitAddAbility(handle, morphDetectAbilityId))
         if (unitAddAbility(handle, fourCC("Amrf"))) {
@@ -816,7 +823,7 @@ export class Unit extends Handle<junit> {
 
     public addAttackHandler(
         condition: AttackHandlerCondition,
-        action: AttackHandlerAction
+        action: AttackHandlerAction,
     ): AttackHandler {
         const handler: AttackHandler = [condition, warpack.wrapThread(action)]
 
@@ -827,7 +834,7 @@ export class Unit extends Handle<junit> {
             const handle = this.handle
             assert(
                 unitAddAbility(handle, attackHandlerAbilityId) &&
-                    UnitMakeAbilityPermanent(handle, true, attackHandlerAbilityId)
+                    UnitMakeAbilityPermanent(handle, true, attackHandlerAbilityId),
             )
         }
 
@@ -858,7 +865,7 @@ export class Unit extends Handle<junit> {
         //    [P in keyof Unit]: Unit[P] extends number ? P : never
         //}[keyof Unit],
         property: keyof typeof modifiers,
-        modifier: (value: number) => number
+        modifier: (value: number) => number,
     ): Destroyable {
         const handle = this.handle
         const deltas = this._deltas
@@ -912,7 +919,7 @@ export class Unit extends Handle<junit> {
 
     public hasCombatClassification(combatClassification: CombatClassification): boolean {
         return (getUnitIntegerField(this.handle, UNIT_IF_TARGETED_AS) as CombatClassifications).has(
-            combatClassification
+            combatClassification,
         )
     }
 
@@ -1125,7 +1132,7 @@ export class Unit extends Handle<junit> {
         }
         BlzSetUnitMaxHP(
             this.handle,
-            maxHealth + (this[UnitPropertyKey.PREVENT_DEATH_HEALTH_BONUS] ?? 0)
+            maxHealth + (this[UnitPropertyKey.PREVENT_DEATH_HEALTH_BONUS] ?? 0),
         )
     }
 
@@ -1143,7 +1150,7 @@ export class Unit extends Handle<junit> {
             handle,
             UNIT_RF_HIT_POINTS_REGENERATION_RATE,
             healthRegenerationRate -
-                getHeroStr(handle, true) * HEALTH_REGENERATION_RATE_BONUS_PER_STRENGTH_POINT
+                getHeroStr(handle, true) * HEALTH_REGENERATION_RATE_BONUS_PER_STRENGTH_POINT,
         )
     }
 
@@ -1185,7 +1192,7 @@ export class Unit extends Handle<junit> {
             handle,
             UNIT_RF_MANA_REGENERATION,
             manaRegenerationRate -
-                getHeroInt(handle, true) * MANA_REGENERATION_RATE_BONUS_PER_INTELLIGENCE_POINT
+                getHeroInt(handle, true) * MANA_REGENERATION_RATE_BONUS_PER_INTELLIGENCE_POINT,
         )
     }
 
@@ -1333,7 +1340,7 @@ export class Unit extends Handle<junit> {
             getUnitIntegerField(handle, UNIT_IF_TINTING_COLOR_RED),
             getUnitIntegerField(handle, UNIT_IF_TINTING_COLOR_GREEN),
             getUnitIntegerField(handle, UNIT_IF_TINTING_COLOR_BLUE),
-            getUnitIntegerField(handle, UNIT_IF_TINTING_COLOR_ALPHA)
+            getUnitIntegerField(handle, UNIT_IF_TINTING_COLOR_ALPHA),
         )
     }
 
@@ -1445,7 +1452,7 @@ export class Unit extends Handle<junit> {
             const ability = UnitAbility.of(
                 checkNotNull(getUnitAbility(this.handle, abilityId)),
                 abilityId,
-                this
+                this,
             )
             const abilities = this.abilities as UnitAbility[]
             abilities[abilities.length] = ability
@@ -1545,7 +1552,7 @@ export class Unit extends Handle<junit> {
                 0,
                 sqrt(dx * dx + dy * dy) -
                     getUnitCollisionSize(targetHandle) -
-                    getUnitCollisionSize(handle)
+                    getUnitCollisionSize(handle),
             )
         } else {
             const dx = (targetUnitOrX as number) - getUnitX(handle)
@@ -1653,7 +1660,7 @@ export class Unit extends Handle<junit> {
                     (trigger) => {
                         TriggerRegisterUnitInRangeSimple(trigger, value, handle)
                     },
-                    () => $multi(Unit.of(handle))
+                    () => $multi(Unit.of(handle)),
                 )
                 rawset(this, value, event)
                 return event
@@ -1671,7 +1678,7 @@ export class Unit extends Handle<junit> {
                     (trigger) => {
                         TriggerRegisterUnitManaEvent(trigger, handle, EQUAL, value)
                     },
-                    () => $multi(Unit.of(handle), value)
+                    () => $multi(Unit.of(handle), value),
                 )
                 rawset(this, value, event)
                 return event
@@ -1703,10 +1710,10 @@ export class Unit extends Handle<junit> {
                                         trigger,
                                         unit.handle,
                                         jlimitopByOperator[operator],
-                                        actualValue
+                                        actualValue,
                                     )
                                 },
-                                () => $multi(unit)
+                                () => $multi(unit),
                             )
 
                             let eventsToDestroy = unit._eventsToDestroy
@@ -1726,7 +1733,7 @@ export class Unit extends Handle<junit> {
 
                     return eventByValue
                 },
-            }
+            },
         )
 
         rawset(this, "manaEvent", eventByValueByOperator)
@@ -1756,8 +1763,8 @@ export class Unit extends Handle<junit> {
                 GetIssuedOrderId(),
                 Unit.of(GetOrderTargetUnit()) ??
                     Item.of(GetOrderTargetItem()) ??
-                    checkNotNull(Destructable.of(GetOrderTargetDestructable()))
-            )
+                    checkNotNull(Destructable.of(GetOrderTargetDestructable())),
+            ),
         )
     }
 
@@ -1772,7 +1779,7 @@ export class Unit extends Handle<junit> {
         x: number,
         y: number,
         facing: number,
-        skinId?: number
+        skinId?: number,
     ): T | null {
         const handle = skinId
             ? BlzCreateUnitWithSkin(owner.handle, id, x, y, facing, skinId)
@@ -1807,7 +1814,7 @@ export class Unit extends Handle<junit> {
         groupEnumUnitsOfPlayer(
             dummyGroup,
             player.handle,
-            predicate ? collectIntoTargetWithPredicate : collectIntoTarget
+            predicate ? collectIntoTargetWithPredicate : collectIntoTarget,
         )
         return targetCollection
     }
@@ -1819,7 +1826,7 @@ export class Unit extends Handle<junit> {
         groupEnumUnitsInRect(
             dummyGroup,
             rect.handle,
-            predicate ? collectIntoTargetWithPredicate : collectIntoTarget
+            predicate ? collectIntoTargetWithPredicate : collectIntoTarget,
         )
         return targetCollection
     }
@@ -1828,7 +1835,7 @@ export class Unit extends Handle<junit> {
         x: number,
         y: number,
         range: number,
-        predicate?: (unit: Unit) => boolean
+        predicate?: (unit: Unit) => boolean,
     ): Unit[] {
         targetCollection = []
         targetCollectionNextIndex = 1
@@ -1838,7 +1845,7 @@ export class Unit extends Handle<junit> {
             x,
             y,
             range,
-            predicate ? collectIntoTargetWithPredicate : collectIntoTarget
+            predicate ? collectIntoTargetWithPredicate : collectIntoTarget,
         )
         return targetCollection
     }
@@ -1847,7 +1854,7 @@ export class Unit extends Handle<junit> {
         x: number,
         y: number,
         range: number,
-        predicate?: (unit: Unit) => boolean
+        predicate?: (unit: Unit) => boolean,
     ): Unit[] {
         targetCollection = []
         targetCollectionNextIndex = 1
@@ -1860,7 +1867,7 @@ export class Unit extends Handle<junit> {
             centerX,
             centerY,
             range + 256,
-            predicate ? collectIntoTargetCollisionWithPredicate : collectIntoTargetCollision
+            predicate ? collectIntoTargetCollisionWithPredicate : collectIntoTargetCollision,
         )
         return targetCollection
     }
@@ -1869,7 +1876,7 @@ export class Unit extends Handle<junit> {
         pos: Vec2,
         range: number,
         offsetAngle: number,
-        centralAngle: number
+        centralAngle: number,
     ): Unit[] {
         posX = pos.x
         posY = pos.y
@@ -1905,11 +1912,11 @@ export class Unit extends Handle<junit> {
     }*/
 
     public static readonly deathEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_DEATH, () =>
-        $multi(Unit.of(GetDyingUnit()), Unit.of(GetKillingUnit()))
+        $multi(Unit.of(GetDyingUnit()), Unit.of(GetKillingUnit())),
     )
 
     public static readonly onDecay = new UnitTriggerEvent(EVENT_PLAYER_UNIT_DECAY, () =>
-        $multi(Unit.of(GetDecayingUnit()))
+        $multi(Unit.of(GetDecayingUnit())),
     )
 
     public static readonly onResurrect = new InitializingEvent<[Unit]>((event) => {
@@ -1944,31 +1951,31 @@ export class Unit extends Handle<junit> {
 
     public static readonly onOwnerChange = new UnitTriggerEvent(
         EVENT_PLAYER_UNIT_CHANGE_OWNER,
-        () => $multi(Unit.of(GetChangingUnit()), Player.of(GetChangingUnitPrevOwner()))
+        () => $multi(Unit.of(GetChangingUnit()), Player.of(GetChangingUnitPrevOwner())),
     )
 
     public static readonly onSelect = new UnitTriggerEvent(EVENT_PLAYER_UNIT_SELECTED, () =>
-        $multi(Unit.of(getTriggerUnit()!), Player.of(getTriggerPlayer()))
+        $multi(Unit.of(getTriggerUnit()!), Player.of(getTriggerPlayer())),
     )
 
     public static readonly onDeselect = new UnitTriggerEvent(EVENT_PLAYER_UNIT_DESELECTED, () =>
-        $multi(Unit.of(getTriggerUnit()!), Player.of(getTriggerPlayer()))
+        $multi(Unit.of(getTriggerUnit()!), Player.of(getTriggerPlayer())),
     )
 
     public static readonly constructionStartEvent = new UnitTriggerEvent(
         EVENT_PLAYER_UNIT_CONSTRUCT_START,
-        () => $multi(Unit.of(GetConstructingStructure()))
+        () => $multi(Unit.of(GetConstructingStructure())),
     )
 
     public static readonly onUpgradeFinish = new UnitTriggerEvent(
         EVENT_PLAYER_UNIT_UPGRADE_FINISH,
-        () => $multi(Unit.of(getTriggerUnit()!))
+        () => $multi(Unit.of(getTriggerUnit()!)),
     )
 
     public static readonly onSpellEffect = dispatchId(
         new UnitTriggerEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, () =>
-            $multi(Unit.of(GetTriggerUnit()!), GetSpellAbilityId())
-        )
+            $multi(Unit.of(GetTriggerUnit()!), GetSpellAbilityId()),
+        ),
     )
 
     public static readonly onTargetCast = dispatchId(
@@ -1981,10 +1988,10 @@ export class Unit extends Handle<junit> {
                     const target = GetSpellTargetUnit()
                         ? Unit.of(GetSpellTargetUnit())
                         : GetSpellTargetItem()
-                        ? Item.of(GetSpellTargetItem())
-                        : GetSpellTargetDestructable()
-                        ? Destructable.of(GetSpellTargetDestructable())
-                        : undefined
+                          ? Item.of(GetSpellTargetItem())
+                          : GetSpellTargetDestructable()
+                            ? Destructable.of(GetSpellTargetDestructable())
+                            : undefined
                     if (target) {
                         invoke(event, unit, id, target)
                     }
@@ -1994,8 +2001,8 @@ export class Unit extends Handle<junit> {
             },
             (listener) => {
                 Unit.onSpellEffect.removeListener(listener)
-            }
-        )
+            },
+        ),
     )
 
     public static readonly onCastPrepare = dispatchAbility(
@@ -2003,9 +2010,9 @@ export class Unit extends Handle<junit> {
             const unit = getTriggerUnit()!
             return $multi(
                 Unit.of(unit),
-                retrieveAbility(unit, getSpellAbility(), getSpellAbilityId())
+                retrieveAbility(unit, getSpellAbility(), getSpellAbilityId()),
             )
-        })
+        }),
     )
 
     public static readonly onCast = dispatchAbility(
@@ -2013,9 +2020,9 @@ export class Unit extends Handle<junit> {
             const unit = getTriggerUnit()!
             return $multi(
                 Unit.of(unit),
-                retrieveAbility(unit, getSpellAbility(), getSpellAbilityId())
+                retrieveAbility(unit, getSpellAbility(), getSpellAbilityId()),
             )
-        })
+        }),
     )
 
     public static readonly onPointCastPrepare = dispatchAbility(
@@ -2033,8 +2040,8 @@ export class Unit extends Handle<junit> {
             },
             (listener) => {
                 Unit.onCastPrepare.removeListener(listener)
-            }
-        )
+            },
+        ),
     )
 
     public static readonly onUnitTargetCastPrepare = dispatchAbility(
@@ -2051,8 +2058,8 @@ export class Unit extends Handle<junit> {
             },
             (listener) => {
                 Unit.onCastPrepare.removeListener(listener)
-            }
-        )
+            },
+        ),
     )
 
     public static readonly onUnitTargetCast = dispatchAbility(
@@ -2069,8 +2076,8 @@ export class Unit extends Handle<junit> {
             },
             (listener) => {
                 Unit.onCast.removeListener(listener)
-            }
-        )
+            },
+        ),
     )
 
     public static readonly onPointCast = dispatchAbility(
@@ -2096,8 +2103,8 @@ export class Unit extends Handle<junit> {
             },
             (listener) => {
                 Unit.onCast.removeListener(listener)
-            }
-        )
+            },
+        ),
     )
 
     public static readonly onCastStart = dispatchAbility(
@@ -2105,9 +2112,9 @@ export class Unit extends Handle<junit> {
             const unit = getTriggerUnit()!
             return $multi(
                 Unit.of(unit),
-                retrieveAbility(unit, getSpellAbility(), getSpellAbilityId())
+                retrieveAbility(unit, getSpellAbility(), getSpellAbilityId()),
             )
-        })
+        }),
     )
 
     public static readonly onUnitTargetCastStart = dispatchAbility(
@@ -2124,8 +2131,8 @@ export class Unit extends Handle<junit> {
             },
             (listener) => {
                 Unit.onCastStart.removeListener(listener)
-            }
-        )
+            },
+        ),
     )
 
     public static readonly onCastFinish = dispatchAbility(
@@ -2133,9 +2140,9 @@ export class Unit extends Handle<junit> {
             const unit = getTriggerUnit()!
             return $multi(
                 Unit.of(unit),
-                retrieveAbility(unit, getSpellAbility(), getSpellAbilityId())
+                retrieveAbility(unit, getSpellAbility(), getSpellAbilityId()),
             )
-        })
+        }),
     )
 
     public static readonly onCastStop = dispatchAbility(
@@ -2143,9 +2150,9 @@ export class Unit extends Handle<junit> {
             const unit = getTriggerUnit()!
             return $multi(
                 Unit.of(unit),
-                retrieveAbility(unit, getSpellAbility(), getSpellAbilityId())
+                retrieveAbility(unit, getSpellAbility(), getSpellAbilityId()),
             )
-        })
+        }),
     )
 
     public static readonly onImmediateOrder = dispatchId(
@@ -2156,7 +2163,7 @@ export class Unit extends Handle<junit> {
                 return $multi(unit, issuedOrderId)
             }
             return $multi(IgnoreEvent)
-        })
+        }),
     )
 
     public static readonly onTargetOrder: EventDispatcher<
@@ -2169,9 +2176,9 @@ export class Unit extends Handle<junit> {
                 GetIssuedOrderId(),
                 Unit.of(GetOrderTargetUnit()) ??
                     Item.of(GetOrderTargetItem()) ??
-                    checkNotNull(Destructable.of(GetOrderTargetDestructable()))
-            )
-        )
+                    checkNotNull(Destructable.of(GetOrderTargetDestructable())),
+            ),
+        ),
     )
 
     public static readonly onPointOrder = dispatchId(
@@ -2180,14 +2187,14 @@ export class Unit extends Handle<junit> {
                 Unit.of(GetOrderedUnit()),
                 GetIssuedOrderId(),
                 GetOrderPointX(),
-                GetOrderPointY()
-            )
-        )
+                GetOrderPointY(),
+            ),
+        ),
     )
 
     public static readonly autoAttackStartEvent = new UnitTriggerEvent<[Unit]>(
         EVENT_PLAYER_UNIT_ATTACKED,
-        () => $multi(Unit.of(GetAttacker()), Unit.of(GetTriggerUnit()!))
+        () => $multi(Unit.of(GetAttacker()), Unit.of(GetTriggerUnit()!)),
     )
 
     public static readonly onDamaging = (() => {
@@ -2216,12 +2223,12 @@ export class Unit extends Handle<junit> {
                         let weapon = BlzGetUnitWeaponBooleanField(
                             source.handle,
                             UNIT_WEAPON_BF_ATTACKS_ENABLED,
-                            1
+                            1,
                         )
                             ? BlzGetUnitWeaponBooleanField(
                                   source.handle,
                                   UNIT_WEAPON_BF_ATTACKS_ENABLED,
-                                  0
+                                  0,
                               )
                                 ? -1
                                 : 1
@@ -2230,8 +2237,9 @@ export class Unit extends Handle<junit> {
                             const targetsAllowed = BlzGetUnitWeaponIntegerField(
                                 source.handle,
                                 UNIT_WEAPON_IF_ATTACK_TARGETS_ALLOWED,
-                                0
+                                0,
                             )
+                            // TODO: deduce weapon based on targets allowed
                             weapon = 0
                         }
                         data.weapon = assert(source.weapons[weapon])
@@ -2249,8 +2257,8 @@ export class Unit extends Handle<junit> {
                                         damageSetters[key](value)
                                         data[key] = value
                                     },
-                                }
-                            )
+                                },
+                            ),
                         )
                         return
                     }
@@ -2288,21 +2296,21 @@ export class Unit extends Handle<junit> {
                                                 true,
                                                 data.attackType,
                                                 data.damageType,
-                                                data.weaponType
+                                                data.weaponType,
                                             )
                                         },
                                     },
                                     {
                                         __index: data as AttackDamageEvent,
                                         __newindex: data,
-                                    }
-                                )
+                                    },
+                                ),
                             )
                             return
                         }
                     }
-                })
-            )
+                }),
+            ),
         )
         return event
     })()
@@ -2328,6 +2336,7 @@ export class Unit extends Handle<junit> {
                             damageType: BlzGetEventDamageType(),
                             weaponType: BlzGetEventWeaponType(),
                             isAttack: BlzGetEventIsAttack(),
+                            originalAmount: GetEventDamage(),
 
                             preventDeath: damageEventPreventDeath,
                         }
@@ -2339,7 +2348,7 @@ export class Unit extends Handle<junit> {
                                     damageSetters[key](value)
                                     data[key] = value
                                 },
-                            }
+                            },
                         )
                         const target = Unit.of(BlzGetEventDamageTarget())
                         invoke(event, source, target, evData)
@@ -2353,7 +2362,7 @@ export class Unit extends Handle<junit> {
                                 bonusHealth
                             BlzSetUnitMaxHP(
                                 target.handle,
-                                BlzGetUnitMaxHP(target.handle) + bonusHealth
+                                BlzGetUnitMaxHP(target.handle) + bonusHealth,
                             )
                             SetWidgetLife(target.handle, GetWidgetLife(target.handle) + bonusHealth)
                             Timer.run(() => {
@@ -2366,31 +2375,31 @@ export class Unit extends Handle<junit> {
                                             (evData[
                                                 DamageEventPropertyKey
                                                     .PREVENT_DEATH_PARAMETERS_LENGTH
-                                            ] ?? 0)
-                                    )
+                                            ] ?? 0),
+                                    ),
                                 )
                                 target[UnitPropertyKey.PREVENT_DEATH_HEALTH_BONUS] =
                                     (target[UnitPropertyKey.PREVENT_DEATH_HEALTH_BONUS] ?? 0) -
                                     bonusHealth
                                 SetWidgetLife(
                                     target.handle,
-                                    GetWidgetLife(target.handle) - bonusHealth
+                                    GetWidgetLife(target.handle) - bonusHealth,
                                 )
                                 BlzSetUnitMaxHP(
                                     target.handle,
-                                    BlzGetUnitMaxHP(target.handle) - bonusHealth
+                                    BlzGetUnitMaxHP(target.handle) - bonusHealth,
                                 )
                             })
                         }
-                    })
-                )
+                    }),
+                ),
             )
             return trigger
         },
         (trigger) => {
             TriggerClearConditions(trigger)
             DestroyTrigger(trigger)
-        }
+        },
     )
 
     public static onItemDrop = new UnitTriggerEvent(EVENT_PLAYER_UNIT_DROP_ITEM, () => {
@@ -2410,14 +2419,14 @@ export class Unit extends Handle<junit> {
     })
 
     public static onItemUse = new UnitTriggerEvent(EVENT_PLAYER_UNIT_USE_ITEM, () =>
-        $multi(Unit.of(GetTriggerUnit()!), Item.of(GetManipulatedItem()))
+        $multi(Unit.of(GetTriggerUnit()!), Item.of(GetManipulatedItem())),
     )
 
     public static get onCreate(): EventDispatcher<[Unit], [Unit]> {
         const onCreate = dispatch<[Unit], [Unit]>(
             Unit.onCreateEvent,
             (unit) => unit.typeId,
-            (unit) => $multi(unit)
+            (unit) => $multi(unit),
         )
         rawset(this, "onCreate", onCreate)
         return onCreate
@@ -2427,7 +2436,7 @@ export class Unit extends Handle<junit> {
         const destroyEvent = dispatch<[Unit], [Unit]>(
             Unit.onDestroyEvent,
             (unit) => unit.typeId,
-            (unit) => $multi(unit)
+            (unit) => $multi(unit),
         )
         rawset(this, "destroyEvent", destroyEvent)
         return destroyEvent
