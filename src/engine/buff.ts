@@ -13,6 +13,7 @@ import {
     AbilityBooleanLevelField,
     AbilityCombatClassificationsLevelField,
     AbilityDependentValue,
+    AbilityEnumLevelField,
     AbilityIntegerField,
     AbilityIntegerLevelField,
     AbilityNumberField,
@@ -73,6 +74,8 @@ export type BuffConstructor<
     T extends Buff<any> = Buff<any>,
     Args extends any[] = any,
 > = OmitConstructor<typeof Buff<any>> & (new (...args: Args) => T)
+
+type EnumParameterValueType<T extends number> = T | AbilityEnumLevelField<T>
 
 type NumberParameterValueType = number | AbilityNumberField | AbilityNumberLevelField
 
@@ -140,6 +143,8 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           disablesAutoAttack?: BooleanParameterValueType
           destroysOnDamage?: BooleanParameterValueType
           maximumAutoAttackCount?: IntegerParameterValueType
+          maximumDamageDealtEventCount?: IntegerParameterValueType
+          maximumDamageReceivedEventCount?: IntegerParameterValueType
 
           damageOnExpiration?: NumberParameterValueType
           healingOnExpiration?: NumberParameterValueType
@@ -190,11 +195,27 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     disablesAutoAttack: true,
     destroysOnDamage: true,
     maximumAutoAttackCount: true,
+    maximumDamageDealtEventCount: true,
+    maximumDamageReceivedEventCount: true,
     uniqueGroup: true,
     damageOnExpiration: true,
     healingOnExpiration: true,
     killsOnExpiration: true,
     explodesOnExpiration: true,
+}
+
+const resolveEnumValue = <T extends number>(
+    ability: Ability | undefined,
+    level: number | undefined,
+    value: T | AbilityEnumLevelField<T>,
+): T | number => {
+    if (value == undefined || typeof value == "number") {
+        return value
+    }
+    if (ability == undefined) {
+        throw new IllegalArgumentException()
+    }
+    return value.getValue(ability, level ?? ability.level)
 }
 
 const resolveNumberValue = <T extends number | undefined>(
@@ -259,6 +280,8 @@ const buffNumberParameters = [
     "armorIncrease",
     "receivedDamageFactor",
     "maximumAutoAttackCount",
+    "maximumDamageDealtEventCount",
+    "maximumDamageReceivedEventCount",
     "damageInterval",
     "damagePerInterval",
     "damageOverDuration",
@@ -313,6 +336,10 @@ const enum BuffPropertyKey {
 
     AUTO_ATTACK_COUNT,
     MAXIMUM_AUTO_ATTACK_COUNT,
+    DAMAGE_DEALT_EVENT_COUNT,
+    MAXIMUM_DAMAGE_DEALT_EVENT_COUNT,
+    DAMAGE_RECEIVED_EVENT_COUNT,
+    MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT,
 
     STUNS,
     IGNORES_STUN_IMMUNITY,
@@ -517,6 +544,10 @@ export class Buff<
 
     private [BuffPropertyKey.MAXIMUM_AUTO_ATTACK_COUNT]?: number
     private [BuffPropertyKey.AUTO_ATTACK_COUNT]?: number
+    private [BuffPropertyKey.MAXIMUM_DAMAGE_DEALT_EVENT_COUNT]?: number
+    private [BuffPropertyKey.DAMAGE_DEALT_EVENT_COUNT]?: number
+    private [BuffPropertyKey.MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT]?: number
+    private [BuffPropertyKey.DAMAGE_RECEIVED_EVENT_COUNT]?: number
 
     private [BuffPropertyKey.STUNS]?: true
     private [BuffPropertyKey.IGNORES_STUN_IMMUNITY]?: true
@@ -586,12 +617,16 @@ export class Buff<
     public constructor(
         private _unit: Unit,
         typeIdOrTypeIds: ApplicableBuffTypeId | NonEmptyArray<ApplicableBuffTypeId>,
-        polarityOrTypeIdSelectionPolicy: BuffPolarity | BuffTypeIdSelectionPolicy,
-        resistanceTypeOrPolarity: BuffResistanceType | BuffPolarity,
+        polarityOrTypeIdSelectionPolicy:
+            | EnumParameterValueType<BuffPolarity>
+            | BuffTypeIdSelectionPolicy,
+        resistanceTypeOrPolarity:
+            | EnumParameterValueType<BuffResistanceType>
+            | EnumParameterValueType<BuffPolarity>,
         abilityOrParametersOrResistanceType?:
             | Ability
             | (BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>)
-            | BuffResistanceType,
+            | EnumParameterValueType<BuffResistanceType>,
         parametersOrAbility?:
             | (BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>)
             | Ability,
@@ -601,14 +636,15 @@ export class Buff<
         this[BuffPropertyKey.UNIT] = _unit
 
         let typeId: ApplicableBuffTypeId
-        let polarity: BuffPolarity
-        let resistanceType: BuffResistanceType
+        let polarity: EnumParameterValueType<BuffPolarity>
+        let resistanceType: EnumParameterValueType<BuffResistanceType>
         let ability: Ability | undefined
         if (typeof typeIdOrTypeIds != "number") {
             typeId = selectBuffTypeIdWithLeastDuration(typeIdOrTypeIds, _unit)
 
-            polarity = resistanceTypeOrPolarity as BuffPolarity
-            resistanceType = abilityOrParametersOrResistanceType as BuffResistanceType
+            polarity = resistanceTypeOrPolarity as EnumParameterValueType<BuffPolarity>
+            resistanceType =
+                abilityOrParametersOrResistanceType as EnumParameterValueType<BuffResistanceType>
             if (parametersOrAbility instanceof Ability) {
                 ability = parametersOrAbility
             } else {
@@ -617,8 +653,8 @@ export class Buff<
             }
         } else {
             typeId = typeIdOrTypeIds
-            polarity = polarityOrTypeIdSelectionPolicy as BuffPolarity
-            resistanceType = resistanceTypeOrPolarity as BuffResistanceType
+            polarity = polarityOrTypeIdSelectionPolicy as EnumParameterValueType<BuffPolarity>
+            resistanceType = resistanceTypeOrPolarity as EnumParameterValueType<BuffResistanceType>
             if (abilityOrParametersOrResistanceType instanceof Ability) {
                 ability = abilityOrParametersOrResistanceType
                 parameters = parametersOrAbility as BuffParameters &
@@ -630,8 +666,6 @@ export class Buff<
             }
         }
         this.typeId = typeId
-        this.polarity = polarity
-        this.resistanceType = resistanceType
 
         if (!(ability instanceof Ability)) {
             parameters = ability
@@ -664,6 +698,9 @@ export class Buff<
             duration = duration ?? getAbilityDuration(ability, _unit)
         }
 
+        this.polarity = resolveEnumValue(ability, level, polarity)
+        this.resistanceType = resolveEnumValue(ability, level, resistanceType)
+
         let buffByTypeId = buffByTypeIdByUnit.get(_unit)
         if (buffByTypeId == undefined) {
             buffByTypeId = new LuaMap()
@@ -681,8 +718,8 @@ export class Buff<
             !internalApplyBuff(
                 _unit,
                 typeId,
-                polarity,
-                resistanceType,
+                this.polarity,
+                this.resistanceType,
                 level,
                 duration,
                 spellStealPriority,
@@ -1125,6 +1162,30 @@ export class Buff<
         }
     }
 
+    public get maximumDamageDealtEventCount(): number {
+        return this[BuffPropertyKey.MAXIMUM_DAMAGE_DEALT_EVENT_COUNT] ?? 0
+    }
+
+    public set maximumDamageDealtEventCount(maximumDamageDealtEventCount: number) {
+        if (maximumDamageDealtEventCount == 0) {
+            this[BuffPropertyKey.MAXIMUM_DAMAGE_DEALT_EVENT_COUNT] = undefined
+        } else {
+            this[BuffPropertyKey.MAXIMUM_DAMAGE_DEALT_EVENT_COUNT] = maximumDamageDealtEventCount
+        }
+    }
+
+    public get maximumDamageReceivedEventCount(): number {
+        return this[BuffPropertyKey.MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT] ?? 0
+    }
+
+    public set maximumDamageReceivedEventCount(maximumDamageReceivedEventCount: number) {
+        if (maximumDamageReceivedEventCount == 0) {
+            this[BuffPropertyKey.MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT] = undefined
+        } else {
+            this[BuffPropertyKey.MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT] = maximumDamageReceivedEventCount
+        }
+    }
+
     public get maximumAutoAttackCount(): number {
         return this[BuffPropertyKey.MAXIMUM_AUTO_ATTACK_COUNT] ?? 0
     }
@@ -1381,6 +1442,27 @@ export class Buff<
             const autoAttackCount = (this[BuffPropertyKey.AUTO_ATTACK_COUNT] ?? 0) + 1
             this[BuffPropertyKey.AUTO_ATTACK_COUNT] = autoAttackCount
             if (autoAttackCount == this[BuffPropertyKey.MAXIMUM_AUTO_ATTACK_COUNT]) {
+                this.destroy()
+            }
+        }
+        if (event.amount != 0) {
+            const damageDealtEventCount = (this[BuffPropertyKey.DAMAGE_DEALT_EVENT_COUNT] ?? 0) + 1
+            this[BuffPropertyKey.DAMAGE_DEALT_EVENT_COUNT] = damageDealtEventCount
+            if (damageDealtEventCount == this[BuffPropertyKey.MAXIMUM_DAMAGE_DEALT_EVENT_COUNT]) {
+                this.destroy()
+            }
+        }
+    }
+
+    public override onDamageReceived(source: Unit | undefined, event: DamageEvent) {
+        if (event.amount != 0) {
+            const damageReceivedEventCount =
+                (this[BuffPropertyKey.DAMAGE_RECEIVED_EVENT_COUNT] ?? 0) + 1
+            this[BuffPropertyKey.DAMAGE_RECEIVED_EVENT_COUNT] = damageReceivedEventCount
+            if (
+                damageReceivedEventCount ==
+                this[BuffPropertyKey.MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT]
+            ) {
                 this.destroy()
             }
         }
