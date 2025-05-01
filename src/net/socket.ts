@@ -3,6 +3,9 @@ import { Player } from "../core/types/player"
 import { send, onReceive, MAX_PAYLOAD_LENGTH } from "../network"
 import { ceil } from "../math"
 
+const stringSub = string.sub
+const tableConcat = table.concat
+
 let nextId = 0
 
 const enum SocketPropertyKey {
@@ -22,7 +25,7 @@ export class Socket {
             const chunks = chunksByPlayer.get(sender)
             if (chunks !== undefined) {
                 chunks[chunks.length] = data
-                Event.invoke(this.onMessage, sender, chunks.join())
+                Event.invoke(this.onMessage, sender, tableConcat(chunks))
                 chunksByPlayer.delete(sender)
             } else {
                 Event.invoke(this.onMessage, sender, data)
@@ -40,12 +43,12 @@ export class Socket {
 
     public send(data: string): void {
         const chunks = ceil(data.length / MAX_PAYLOAD_LENGTH) - 1
-        let offset = 0
+        let offset = 1
         for (const _ of $range(0, chunks - 1)) {
             const nextOffset = offset + MAX_PAYLOAD_LENGTH
-            send(this[SocketPropertyKey.CHUNK_ID], data.substring(offset, nextOffset))
+            send(this[SocketPropertyKey.CHUNK_ID], stringSub(data, offset, nextOffset - 1))
             offset = nextOffset
         }
-        send(this[SocketPropertyKey.ID], data.substring(offset))
+        send(this[SocketPropertyKey.ID], stringSub(data, offset))
     }
 }
