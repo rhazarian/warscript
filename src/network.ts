@@ -14,6 +14,8 @@ const pack = string.pack
 const sub = string.sub
 const unpack = string.unpack
 
+export const MAX_PAYLOAD_LENGTH = 255
+
 export const onReceive = setmetatable(
     {} as {
         [prefix: string]: Event<[Player, string]>
@@ -26,18 +28,18 @@ export const onReceive = setmetatable(
                         triggerRegisterPlayerSyncEvent(trigger, player.handle, prefix, false)
                     }
                 },
-                () => $multi(Player.of(getTriggerPlayer()), getTriggerSyncData())
+                () => $multi(Player.of(getTriggerPlayer()), getTriggerSyncData()),
             )
             this[prefix] = event
             return event
         },
-    }
+    },
 )
 
 export function send(id: string, payload: string): void {
-    if (payload.length > 255) {
+    if (payload.length > MAX_PAYLOAD_LENGTH) {
         throw new IllegalArgumentException(
-            `payload length must be <= 256, but was ${payload.length}`
+            `payload length must be <= ${MAX_PAYLOAD_LENGTH}, but was ${payload.length}`,
         )
     }
     sendSyncData(id, payload)
@@ -74,7 +76,10 @@ export class SyncOperation extends Operation<string> {
         packetsPerRound = value
     }
 
-    public constructor(private readonly player: Player, data: string) {
+    public constructor(
+        private readonly player: Player,
+        data: string,
+    ) {
         super()
         if (!player.isUser || !player.isPlaying) {
             throw new IllegalArgumentException()
