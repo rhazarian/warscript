@@ -3,6 +3,7 @@ import { Ability } from "../internal/ability"
 import { DamageEvent, DamagingEvent, Unit } from "../internal/unit"
 import "../internal/unit+ability"
 import "../internal/unit-missile-launch"
+import { Item } from "../internal/item"
 
 export type UnitBehaviorConstructor<Args extends any[]> = new (
     unit: Unit,
@@ -53,6 +54,22 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         // no-op
     }
 
+    public onItemDropped(item: Item): void {
+        // no-op
+    }
+
+    public onItemPickedUp(item: Item): void {
+        // no-op
+    }
+
+    public onItemUsed(item: Item): void {
+        // no-op
+    }
+
+    public onItemStacked(item: Item): void {
+        // no-op
+    }
+
     public onKill(target: Unit): void {
         // no-op
     }
@@ -97,6 +114,19 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
                 UnitBehavior.forAll(source, "onKill", target)
             }
             UnitBehavior.forAll(target, "onDeath", source)
+        })
+
+        Unit.itemDroppedEvent.addListener((unit, item) => {
+            UnitBehavior.forAll(unit, "onItemDropped", item)
+        })
+        Unit.itemPickedUpEvent.addListener((unit, item) => {
+            UnitBehavior.forAll(unit, "onItemPickedUp", item)
+        })
+        Unit.itemUsedEvent.addListener((unit, item) => {
+            UnitBehavior.forAll(unit, "onItemUsed", item)
+        })
+        Unit.itemStackedEvent.addListener((unit, item) => {
+            UnitBehavior.forAll(unit, "onItemStacked", item)
         })
     }
 }
