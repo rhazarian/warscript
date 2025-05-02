@@ -675,7 +675,6 @@ export class UnitWeapon {
     }
 }
 
-const ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED = _G.ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED
 const unitInventorySize = UnitInventorySize
 const unitItemInSlot = UnitItemInSlot
 const unitDropItemSlot = UnitDropItemSlot
