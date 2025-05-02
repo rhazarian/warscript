@@ -167,4 +167,54 @@ export class ItemType extends ObjectDataEntry<ItemTypeId> {
     public set tooltipExtendedText(tooltipText: string) {
         this.setStringField("utub", tooltipText)
     }
+
+    // Stats
+
+    public get goldCost(): number {
+        return this.getNumberField("igol")
+    }
+
+    public set goldCost(goldCost: number) {
+        this.setNumberField("igol", goldCost)
+    }
+
+    public get lumberCost(): number {
+        return this.getNumberField("ilum")
+    }
+
+    public set lumberCost(lumberCost: number) {
+        this.setNumberField("ilum", lumberCost)
+    }
+
+    public get activelyUsed(): boolean {
+        return this.getBooleanField("iusa")
+    }
+
+    public set activelyUsed(activelyUsed: boolean) {
+        this.setBooleanField("iusa", activelyUsed)
+    }
+
+    public get perishable(): boolean {
+        return this.getBooleanField("iper")
+    }
+
+    public set perishable(perishable: boolean) {
+        this.setBooleanField("iper", perishable)
+    }
+
+    public get initialStackSize(): number {
+        return this.getNumberField("iuse")
+    }
+
+    public set initialStackSize(initialStackSize: number) {
+        this.setNumberField("iuse", initialStackSize)
+    }
+
+    public get maximumStackSize(): number {
+        return this.getNumberField("ista")
+    }
+
+    public set maximumStackSize(maximumStackSize: number) {
+        this.setNumberField("ista", maximumStackSize)
+    }
 }
