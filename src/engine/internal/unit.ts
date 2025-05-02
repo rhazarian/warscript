@@ -494,6 +494,43 @@ const getters = {
     },
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+export interface UnitItems extends Array<Item | undefined> {
+    readonly length: 0 | 1 | 2 | 3 | 4 | 5 | 6
+}
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+export class UnitItems {
+    constructor(private readonly handle: junit) {}
+
+    protected __newindex(slot: number, item: Item | undefined): void {
+        const handle = this.handle
+        if (slot < 0 || slot >= unitInventorySize(handle)) {
+            return
+        }
+        unitRemoveItemFromSlot(handle, slot)
+        if (item !== undefined) {
+            const itemHandle = item.handle
+            const isPowerup = isItemPowerup(itemHandle)
+            if (isPowerup) {
+                setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, false)
+            }
+            unitAddItem(handle, itemHandle)
+            unitDropItemSlot(handle, itemHandle, slot)
+            if (isPowerup) {
+                setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
+            }
+        }
+    }
+
+    protected __index(slot: number): Item | undefined {
+        return Item.of(unitItemInSlot(this.handle, slot))
+    }
+
+    protected __len(): number {
+        return unitInventorySize(this.handle)
+    }
+}
+
 export class UnitWeapon {
     public constructor(
         public readonly unit: Unit,
@@ -638,8 +675,14 @@ export class UnitWeapon {
     }
 }
 
+const ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED = _G.ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED
 const unitInventorySize = UnitInventorySize
 const unitItemInSlot = UnitItemInSlot
+const unitDropItemSlot = UnitDropItemSlot
+const unitRemoveItemFromSlot = UnitRemoveItemFromSlot
+const unitAddItem = UnitAddItem
+const isItemPowerup = IsItemPowerup
+const setItemBooleanField = BlzSetItemBooleanField
 const getItemAbility = BlzGetItemAbility
 const getUnitAbility = BlzGetUnitAbility
 const getUnitAbilityByIndex = BlzGetUnitAbilityByIndex
@@ -1444,7 +1487,13 @@ export class Unit extends Handle<junit> {
     }
 
     public itemInSlot(slot: number): Item | null {
-        return Item.of(UnitItemInSlot(this.handle, slot))
+        return Item.of(unitItemInSlot(this.handle, slot))
+    }
+
+    public get items(): UnitItems {
+        const items = new UnitItems(this.handle)
+        rawset(this, "items", items)
+        return items
     }
 
     public addAbility(abilityId: number): UnitAbility | null {
