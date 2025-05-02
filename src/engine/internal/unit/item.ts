@@ -14,6 +14,14 @@ const unitRemoveItemFromSlot = UnitRemoveItemFromSlot
 
 const handleByUnitItems = setmetatable(new LuaMap<UnitItems, junit>(), { __mode: "k" })
 
+const unitItemsNext = (handle: junit, index: number) => {
+    const slot = index & 0b111
+    if (index >> 3 == slot) {
+        return $multi(undefined as unknown as number, undefined)
+    }
+    return $multi(index + 1, Item.of(unitItemInSlot(handle, slot)))
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export interface UnitItems extends ReadonlyArray<Item | undefined> {
     readonly length: 0 | 1 | 2 | 3 | 4 | 5 | 6
@@ -59,6 +67,11 @@ export class UnitItems {
 
     protected __len(): number {
         return unitInventorySize(handleByUnitItems.get(this)!)
+    }
+
+    protected __ipairs(): LuaIterator<LuaMultiReturn<[number, Item | undefined]>, junit> {
+        const handle = handleByUnitItems.get(this)!
+        return $multi(unitItemsNext, handle, unitInventorySize(handle) << 3)
     }
 }
 
