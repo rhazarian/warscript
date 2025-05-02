@@ -2,6 +2,7 @@ import { Item } from "../item"
 import { Unit } from "../unit"
 
 const rawset = _G.rawset
+const type = _G.type
 
 const isItemPowerup = IsItemPowerup
 const setItemBooleanField = BlzSetItemBooleanField
@@ -49,8 +50,11 @@ export class UnitItems {
         }
     }
 
-    protected __index(slot: number): Item | undefined {
-        return Item.of(unitItemInSlot(handleByUnitItems.get(this)!, slot))
+    protected __index(key: string | number): unknown {
+        if (type(key) == "number") {
+            return Item.of(unitItemInSlot(handleByUnitItems.get(this)!, key as number))
+        }
+        return rawget(UnitItems.prototype as any, key)
     }
 
     protected __len(): number {
