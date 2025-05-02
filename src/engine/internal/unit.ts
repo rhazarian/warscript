@@ -495,8 +495,14 @@ const getters = {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
-export interface UnitItems extends Array<Item | undefined> {
+export interface UnitItems extends ReadonlyArray<Item | undefined> {
     readonly length: 0 | 1 | 2 | 3 | 4 | 5 | 6
+    [0]: Item | undefined
+    [1]: Item | undefined
+    [2]: Item | undefined
+    [3]: Item | undefined
+    [4]: Item | undefined
+    [5]: Item | undefined
 }
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class UnitItems {
