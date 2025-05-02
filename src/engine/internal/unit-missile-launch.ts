@@ -2,6 +2,7 @@ import { Unit } from "./unit"
 
 import { Event } from "../../event"
 import { Timer } from "../../core/types/timer"
+import { luaSetOf } from "../../utility/lua-sets"
 
 declare module "./unit" {
     namespace Unit {
@@ -13,15 +14,34 @@ rawset(Unit, "autoAttackFinishEvent", autoAttackFinishEvent)
 
 const eventTimerByUnit = new LuaMap<Unit, Timer>()
 
-const reset = (source: Unit) => {
-    const eventTimer = eventTimerByUnit.get(source)
-    if (eventTimer) {
-        eventTimer.destroy()
-        eventTimerByUnit.delete(source)
+const instantOrderIds = luaSetOf(
+    orderId("avatar"),
+    orderId("berserk"),
+    orderId("divineshield"),
+    orderId("immolation"),
+    orderId("moveslot0"),
+    orderId("moveslot1"),
+    orderId("moveslot2"),
+    orderId("moveslot3"),
+    orderId("moveslot4"),
+    orderId("moveslot5"),
+    orderId("unavatar"),
+    orderId("undivineshield"),
+    orderId("unimmolation"),
+)
+
+const reset = (source: Unit, orderId: number) => {
+    if (!instantOrderIds.has(orderId)) {
+        const eventTimer = eventTimerByUnit.get(source)
+        if (eventTimer) {
+            eventTimer.destroy()
+            eventTimerByUnit.delete(source)
+        }
     }
 }
 
-// TODO: divine shield? berserk? ...
+// TODO: abilities? custom abilities with berserk/immolation/etc order ids...
+
 Unit.onImmediateOrder.addListener(reset)
 
 Unit.onPointOrder.addListener(reset)
