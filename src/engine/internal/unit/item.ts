@@ -32,10 +32,10 @@ export class UnitItems {
 
     protected __newindex(slot: number, item: Item | undefined): void {
         const handle = handleByUnitItems.get(this)!
-        if (slot < 0 || slot >= unitInventorySize(handle)) {
+        if (slot < 1 || slot > unitInventorySize(handle)) {
             return
         }
-        unitRemoveItemFromSlot(handle, slot)
+        unitRemoveItemFromSlot(handle, slot - 1)
         if (item !== undefined) {
             const itemHandle = item.handle
             const isPowerup = isItemPowerup(itemHandle)
@@ -43,7 +43,7 @@ export class UnitItems {
                 setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, false)
             }
             unitAddItem(handle, itemHandle)
-            unitDropItemSlot(handle, itemHandle, slot)
+            unitDropItemSlot(handle, itemHandle, slot - 1)
             if (isPowerup) {
                 setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
             }
@@ -52,7 +52,7 @@ export class UnitItems {
 
     protected __index(key: string | number): unknown {
         if (type(key) == "number") {
-            return Item.of(unitItemInSlot(handleByUnitItems.get(this)!, key as number))
+            return Item.of(unitItemInSlot(handleByUnitItems.get(this)!, (key as number) - 1))
         }
         return rawget(UnitItems.prototype as any, key)
     }
