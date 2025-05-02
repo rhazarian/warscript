@@ -2451,7 +2451,7 @@ export class Unit extends Handle<junit> {
         },
     )
 
-    public static onItemDrop = new UnitTriggerEvent(EVENT_PLAYER_UNIT_DROP_ITEM, () => {
+    public static itemDroppedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_DROP_ITEM, () => {
         const unit = getTriggerUnit()
         if (getUnitTypeId(unit!) != dummyUnitId) {
             return $multi(Unit.of(unit!), Item.of(getManipulatedItem()!))
@@ -2459,7 +2459,7 @@ export class Unit extends Handle<junit> {
         return $multi(IgnoreEvent)
     })
 
-    public static onItemPickup = new UnitTriggerEvent(EVENT_PLAYER_UNIT_PICKUP_ITEM, () => {
+    public static itemPickedUpEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_PICKUP_ITEM, () => {
         const unit = getTriggerUnit()
         if (getUnitTypeId(unit!) != dummyUnitId) {
             return $multi(Unit.of(unit!), Item.of(getManipulatedItem()!))
@@ -2467,8 +2467,12 @@ export class Unit extends Handle<junit> {
         return $multi(IgnoreEvent)
     })
 
-    public static onItemUse = new UnitTriggerEvent(EVENT_PLAYER_UNIT_USE_ITEM, () =>
-        $multi(Unit.of(GetTriggerUnit()!), Item.of(GetManipulatedItem())),
+    public static itemUsedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_USE_ITEM, () =>
+        $multi(Unit.of(getTriggerUnit()!), Item.of(getManipulatedItem())),
+    )
+
+    public static itemStackedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_STACK_ITEM, () =>
+        $multi(Unit.of(getTriggerUnit()!), Item.of(getManipulatedItem()!)),
     )
 
     public static get onCreate(): EventDispatcher<[Unit], [Unit]> {

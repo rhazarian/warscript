@@ -10,11 +10,11 @@ declare module "./item" {
 
 const ownerByItem = setmetatable(new LuaMap<Item, Unit>(), { __mode: "kv" })
 
-Unit.onItemPickup.addListener((unit, item) => {
+Unit.itemPickedUpEvent.addListener((unit, item) => {
     ownerByItem.set(item, unit)
 })
 
-Unit.onItemDrop.addListener((unit, item) => {
+Unit.itemDroppedEvent.addListener((unit, item) => {
     ownerByItem.delete(item)
 })
 

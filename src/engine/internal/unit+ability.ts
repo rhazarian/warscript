@@ -35,13 +35,13 @@ ItemAbility.onCreate.addListener(EventListenerPriority.LOWEST, (ability) => {
     }
 })
 
-Unit.onItemPickup.addListener(EventListenerPriority.LOWEST, (unit, item) => {
+Unit.itemPickedUpEvent.addListener(EventListenerPriority.LOWEST, (unit, item) => {
     for (const ability of item.abilities) {
         Event.invoke(abilityGainedEvent, unit, ability)
     }
 })
 
-Unit.onItemDrop.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
+Unit.itemDroppedEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
     for (const ability of item.abilities) {
         Event.invoke(abilityLostEvent, unit, ability)
     }
