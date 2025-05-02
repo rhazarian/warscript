@@ -1,5 +1,7 @@
-import { Item } from "./item"
-import { Unit } from "./unit"
+import { Item } from "../item"
+import { Unit } from "../unit"
+
+const rawset = _G.rawset
 
 const isItemPowerup = IsItemPowerup
 const setItemBooleanField = BlzSetItemBooleanField
@@ -8,6 +10,8 @@ const unitDropItemSlot = UnitDropItemSlot
 const unitInventorySize = UnitInventorySize
 const unitItemInSlot = UnitItemInSlot
 const unitRemoveItemFromSlot = UnitRemoveItemFromSlot
+
+const handleByUnitItems = setmetatable(new LuaMap<UnitItems, junit>(), { __mode: "k" })
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export interface UnitItems extends ReadonlyArray<Item | undefined> {
@@ -21,10 +25,12 @@ export interface UnitItems extends ReadonlyArray<Item | undefined> {
 }
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class UnitItems {
-    constructor(private readonly handle: junit) {}
+    constructor(handle: junit) {
+        handleByUnitItems.set(this, handle)
+    }
 
     protected __newindex(slot: number, item: Item | undefined): void {
-        const handle = this.handle
+        const handle = handleByUnitItems.get(this)!
         if (slot < 0 || slot >= unitInventorySize(handle)) {
             return
         }
@@ -44,15 +50,15 @@ export class UnitItems {
     }
 
     protected __index(slot: number): Item | undefined {
-        return Item.of(unitItemInSlot(this.handle, slot))
+        return Item.of(unitItemInSlot(handleByUnitItems.get(this)!, slot))
     }
 
     protected __len(): number {
-        return unitInventorySize(this.handle)
+        return unitInventorySize(handleByUnitItems.get(this)!)
     }
 }
 
-declare module "./unit" {
+declare module "../unit" {
     interface Unit {
         readonly items: UnitItems
     }
