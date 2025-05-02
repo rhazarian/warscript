@@ -1,8 +1,5 @@
 import { Item } from "./item"
 import { Unit } from "./unit"
-import { Destructable } from "../../core/types/destructable"
-import { Handle } from "../../core/types/handle"
-import { RallyRoute } from "./unit+rally"
 
 const isItemPowerup = IsItemPowerup
 const setItemBooleanField = BlzSetItemBooleanField
