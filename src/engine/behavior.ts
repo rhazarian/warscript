@@ -102,22 +102,35 @@ export abstract class Behavior<
     public static getFirst<
         T extends Behavior<AnyNotNil>,
         ConstructorParameters extends any[],
-        Count extends [number] | [],
+        CountOrPredicate extends
+            | [number]
+            | []
+            | [(behavior: T, ...args: PredicateArgs) => boolean, ...PredicateArgs],
+        PredicateArgs extends any[],
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
-        ...[count]: Count
-    ): Count extends [number] ? T[] : T | undefined
+        ...[countOrPredicate]: CountOrPredicate
+    ): CountOrPredicate extends [number] ? T[] : T | undefined
 
-    public static getFirst<T extends Behavior<AnyNotNil>, ConstructorParameters extends any[]>(
+    public static getFirst<
+        T extends Behavior<AnyNotNil>,
+        ConstructorParameters extends any[],
+        PredicateArgs extends any[],
+    >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
-        count?: number,
+        countOrPredicate?: number | ((behavior: T, ...args: PredicateArgs) => boolean),
+        ...predicateArgs: PredicateArgs
     ): T[] | T | undefined {
         let behavior = firstBehaviorByObject.get(object)
-        if (count == undefined) {
+        if (typeof countOrPredicate != "number") {
             while (behavior != undefined) {
-                if (behavior instanceof this) {
+                if (
+                    behavior instanceof this &&
+                    (countOrPredicate == undefined ||
+                        countOrPredicate(behavior as T, ...predicateArgs))
+                ) {
                     return behavior as T
                 }
                 behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
@@ -126,7 +139,7 @@ export abstract class Behavior<
         }
         const behaviors: T[] = []
         let behaviorsCount = 0
-        while (behavior != undefined && behaviorsCount < count) {
+        while (behavior != undefined && behaviorsCount < countOrPredicate) {
             if (behavior instanceof this) {
                 ++behaviorsCount
                 behaviors[behaviorsCount - 1] = behavior as T
@@ -150,15 +163,24 @@ export abstract class Behavior<
         return undefined
     }
 
-    public static getAll<T extends Behavior<AnyNotNil>, ConstructorParameters extends any[]>(
+    public static getAll<
+        T extends Behavior<AnyNotNil>,
+        ConstructorParameters extends any[],
+        PredicateArgs extends any[],
+    >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
+        predicate?: (this: void, behavior: T, ...args: PredicateArgs) => boolean,
+        ...predicateArgs: PredicateArgs
     ): T[] {
         const behaviors: T[] = []
         let behaviorsCount = 0
         let behavior = firstBehaviorByObject.get(object)
         while (behavior != undefined) {
-            if (behavior instanceof this) {
+            if (
+                behavior instanceof this &&
+                (predicate == undefined || predicate(behavior as T, ...predicateArgs))
+            ) {
                 ++behaviorsCount
                 behaviors[behaviorsCount - 1] = behavior as T
             }
