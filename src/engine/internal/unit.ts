@@ -1888,8 +1888,8 @@ export class Unit extends Handle<junit> {
         return targetCollection
     }
 
-    public static getSelectionOf(player: Player): Unit[] {
-        targetCollection = []
+    public static getSelectionOf(player: Player, target: Unit[] = []): Unit[] {
+        targetCollection = target
         targetCollectionNextIndex = 1
         GroupEnumUnitsSelected(dummyGroup, player.handle, collectIntoTarget)
         return targetCollection
