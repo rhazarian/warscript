@@ -1,4 +1,5 @@
 import "./types"
+import "./patch-lua"
 import "./patch-lualib"
 import "./patch-natives"
 import "./global/math"
