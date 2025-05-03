@@ -464,6 +464,14 @@ export class Frame extends Handle<jframehandle> {
         BlzFrameClearAllPoints(this.handle)
     }
 
+    public get children(): Frame[] {
+        const children: Frame[] = []
+        for (const i of $range(0, this.getChildrenCount() - 1)) {
+            children[i] = this.getChild(i)
+        }
+        return children
+    }
+
     getChild(index: number): Frame {
         return Frame.of(BlzFrameGetChild(this.handle, index))
     }
