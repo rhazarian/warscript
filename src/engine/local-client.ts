@@ -2,13 +2,22 @@ import { Unit } from "../core/types/unit"
 import { Async } from "../core/types/async"
 import { TriggerEvent } from "../event"
 import { GraphicsMode } from "./index"
+import { Frame } from "../core/types/frame"
+import { Player } from "../core/types/player"
+import { Timer } from "../core/types/timer"
 
 const loadTOCFile = BlzLoadTOCFile
 const getLocalClientWidth = BlzGetLocalClientWidth
 const getLocalClientHeight = BlzGetLocalClientHeight
 const isLocalClientActive = BlzIsLocalClientActive
+const isHeroUnitId = IsHeroUnitId
+const getHandleId = GetHandleId
 const getMouseFocusUnit = BlzGetMouseFocusUnit
+const getUnitRealField = BlzGetUnitRealField
+const getUnitTypeId = GetUnitTypeId
 const getLocale = BlzGetLocale
+
+const tableSort = table.sort
 
 const tocPath = "_warscript\\IsHD.toc"
 
@@ -19,6 +28,43 @@ compiletime(() => {
         currentMap.addFileString(`_HD.w3mod\\${tocPath}`, `${fdfPath}\r\n`)
     }
 })
+
+let selectionContainerFrame: Frame | undefined
+let selectionContainerFrameChildren: Frame[] | undefined
+
+Timer.run(() => {
+    selectionContainerFrame = Frame.byName("SimpleInfoPanelUnitDetail")
+        .parent.getChild(5)
+        .getChild(0)
+    selectionContainerFrameChildren = selectionContainerFrame.children
+})
+
+const localSelectedUnits: Unit[] = []
+const indexByLocalSelectedUnit = new LuaMap<Unit, number>()
+
+const compareUnitsSelectionPriority = (a: Unit, b: Unit): boolean => {
+    const aHandle = a.handle
+    const bHandle = b.handle
+
+    const priorityDelta =
+        getUnitRealField(bHandle, UNIT_RF_PRIORITY) - getUnitRealField(aHandle, UNIT_RF_PRIORITY)
+
+    if (priorityDelta != 0) {
+        return priorityDelta < 0
+    }
+
+    const aTypeId = getUnitTypeId(aHandle)
+    const bTypeId = getUnitTypeId(bHandle)
+    const orderDelta =
+        (isHeroUnitId(aTypeId) ? getHandleId(aHandle) : aTypeId) -
+        (isHeroUnitId(bTypeId) ? getHandleId(bHandle) : bTypeId)
+
+    return (
+        (orderDelta != 0
+            ? orderDelta
+            : indexByLocalSelectedUnit.get(a)! - indexByLocalSelectedUnit.get(b)!) < 0
+    )
+}
 
 export class LocalClient {
     private constructor() {
@@ -47,15 +93,48 @@ export class LocalClient {
         return isLocalClientActive()
     }
 
-    public static get mouseFocusUnit(): Async<Unit> {
+    public static get mouseFocusUnit(): Async<Unit> | undefined {
         return Unit.of(getMouseFocusUnit())
+    }
+
+    public static get mainSelectedUnit(): Async<Unit> | undefined {
+        Unit.getSelectionOf(Player.local, localSelectedUnits)
+
+        for (const i of $range(1, localSelectedUnits.length)) {
+            indexByLocalSelectedUnit.set(localSelectedUnits[i - 1], i)
+        }
+
+        tableSort(localSelectedUnits, compareUnitsSelectionPriority)
+
+        let mainSelectedUnitIndex: number | undefined
+        if (
+            selectionContainerFrame &&
+            selectionContainerFrameChildren &&
+            selectionContainerFrame.visible
+        ) {
+            for (const i of $range(0, selectionContainerFrameChildren.length - 1)) {
+                if (selectionContainerFrameChildren[i].visible) {
+                    mainSelectedUnitIndex = i
+                    break
+                }
+            }
+        }
+
+        const mainSelectedUnit = localSelectedUnits[mainSelectedUnitIndex ?? 0]
+
+        for (const i of $range(1, localSelectedUnits.length)) {
+            indexByLocalSelectedUnit.delete(localSelectedUnits[i - 1])
+            localSelectedUnits[i - 1] = undefined!
+        }
+
+        return mainSelectedUnit
     }
 
     public static readonly onDisconnect = new TriggerEvent(
         (trigger) => {
             TriggerRegisterGameStateEvent(trigger, GAME_STATE_DISCONNECTED, NOT_EQUAL, 0)
         },
-        () => $multi()
+        () => $multi(),
     )
 }
 
