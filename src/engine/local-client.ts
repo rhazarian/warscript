@@ -5,7 +5,6 @@ import { GraphicsMode } from "./index"
 import { Frame } from "../core/types/frame"
 import { Player } from "../core/types/player"
 import { Timer } from "../core/types/timer"
-import { map } from "../utility/arrays"
 
 const loadTOCFile = BlzLoadTOCFile
 const getLocalClientWidth = BlzGetLocalClientWidth
@@ -30,14 +29,13 @@ compiletime(() => {
     }
 })
 
-let selectionContainer: Frame | undefined
 let selectionButtons: Frame[] | undefined
 
 Timer.run(() => {
-    selectionContainer = Frame.byName("SimpleInfoPanelUnitDetail")
+    selectionButtons = Frame.byName("SimpleInfoPanelUnitDetail")
         .parent.getChild(5)
         .getChild(0)
-    selectionButtons = selectionContainer.children.map((frame) => frame.getChild(0))
+        .children.map((frame) => frame.getChild(1))
 })
 
 const localSelectedUnits: Unit[] = []
@@ -111,11 +109,13 @@ export class LocalClient {
         tableSort(localSelectedUnits, compareUnitsSelectionPriority)
 
         let mainSelectedUnitIndex: number | undefined
-        if (selectionContainer && selectionButtons && selectionContainer.visible) {
+        if (selectionButtons) {
+            let maxButtonWidth = 0
             for (const i of $range(0, selectionButtons.length - 1)) {
-                if (selectionButtons[i].visible) {
+                const width = selectionButtons[i].width
+                if (width > maxButtonWidth) {
+                    maxButtonWidth = width
                     mainSelectedUnitIndex = i
-                    break
                 }
             }
         }
