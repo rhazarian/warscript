@@ -1,6 +1,6 @@
 import { Unit } from "../core/types/unit"
 import { Async } from "../core/types/async"
-import { TriggerEvent } from "../event"
+import { Event, TriggerEvent } from "../event"
 import { GraphicsMode } from "./index"
 import { Frame } from "../core/types/frame"
 import { Player } from "../core/types/player"
@@ -66,6 +66,9 @@ const compareUnitsSelectionPriority = (a: Unit, b: Unit): boolean => {
     )
 }
 
+let mainSelectedUnitChangeEvent: Event<[Unit | undefined, Unit | undefined]>
+let previousMainSelectedUnit: Unit | undefined
+
 export class LocalClient {
     private constructor() {
         // should not be instantiated
@@ -127,7 +130,28 @@ export class LocalClient {
             localSelectedUnits[i - 1] = undefined!
         }
 
+        if (
+            mainSelectedUnitChangeEvent != undefined &&
+            mainSelectedUnit != previousMainSelectedUnit
+        ) {
+            Event.invoke(mainSelectedUnitChangeEvent, previousMainSelectedUnit, mainSelectedUnit)
+            previousMainSelectedUnit = mainSelectedUnit
+        }
+
         return mainSelectedUnit
+    }
+
+    public static get mainSelectedUnitChangeEvent(): Event<
+        [previousMainSelectedUnit: Unit | undefined, newMainSelectedUnit: Unit | undefined]
+    > {
+        if (mainSelectedUnitChangeEvent == undefined) {
+            mainSelectedUnitChangeEvent = new Event()
+            Timer.onPeriod[1 / 64].addListener(() => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const _ = LocalClient.mainSelectedUnit
+            })
+        }
+        return mainSelectedUnitChangeEvent
     }
 
     public static readonly onDisconnect = new TriggerEvent(
