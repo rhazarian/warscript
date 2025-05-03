@@ -248,7 +248,7 @@ export abstract class AbilityLevelField<
     }
 
     protected getLevelCount(entry: AbilityType | Ability): number {
-        return entry instanceof Ability ? entry.levels.length : entry.levelCount
+        return entry.levelCount
     }
 
     protected getObjectDataEntryId(instance: Ability): AbilityTypeId {

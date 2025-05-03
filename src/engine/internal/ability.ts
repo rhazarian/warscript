@@ -26,7 +26,6 @@ const getAbilityStringLevelField = BlzGetAbilityStringLevelField
 const getUnitAbilityCooldownRemaining = BlzGetUnitAbilityCooldownRemaining
 const startUnitAbilityCooldown = BlzStartUnitAbilityCooldown
 const getHandleId = GetHandleId
-const getItemAbility = BlzGetItemAbility
 const match = string.match
 const type = _G.type
 const tostring = _G.tostring
@@ -143,83 +142,6 @@ const orders = postcompile(() => {
     return orders
 })
 
-interface Fields<K, V> {
-    set(field: K, value: V): boolean
-    get(field: K): V
-    has(field: K): boolean
-}
-
-class RealFields implements Fields<jabilityrealfield, number> {
-    public constructor(private handle: jability) {}
-
-    public set(field: jabilityrealfield, value: number): boolean {
-        return BlzSetAbilityRealField(this.handle, field, value)
-    }
-
-    public get(field: jabilityrealfield): number {
-        return BlzGetAbilityRealField(this.handle, field)
-    }
-
-    public has(field: jabilityrealfield): boolean {
-        const handle = this.handle
-        return BlzSetAbilityRealField(handle, field, BlzGetAbilityRealField(handle, field))
-    }
-}
-
-class RealLevelFields implements Fields<jabilityreallevelfield, number> {
-    public constructor(private readonly handle: jability, private readonly level: number) {}
-
-    public set(field: jabilityreallevelfield, value: number): boolean {
-        return BlzSetAbilityRealLevelField(this.handle, field, this.level, value)
-    }
-
-    public get(field: jabilityreallevelfield): number {
-        return BlzGetAbilityRealLevelField(this.handle, field, this.level)
-    }
-
-    public has(field: jabilityreallevelfield): boolean {
-        const handle = this.handle
-        return BlzSetAbilityRealLevelField(
-            handle,
-            field,
-            0,
-            BlzGetAbilityRealLevelField(handle, field, 0)
-        )
-    }
-}
-
-const realLevelMetatable: LuaMetatable<
-    {
-        handle: jability
-        level: number
-    } & Partial<Fields<jabilityreallevelfield, number>>
-> = {
-    __index: this,
-}
-
-interface AbilityLevel {
-    realFields: Fields<jabilityreallevelfield, number>
-}
-
-const levelDescriptors = {
-    realFields(handle: jability, level: number): RealLevelFields {
-        return new RealLevelFields(handle, level)
-    },
-}
-
-const levelMetatable: LuaMetatable<
-    {
-        handle: jability
-        level: number
-    } & Partial<AbilityLevel>
-> = {
-    __index(key: keyof typeof levelDescriptors) {
-        const fields = levelDescriptors[key](this.handle, this.level)
-        rawset(this, key, fields)
-        return fields
-    },
-}
-
 export type jabilityfield =
     | jabilityintegerfield
     | jabilityrealfield
@@ -249,28 +171,28 @@ const fieldGetters: Record<
     abilityintegerlevelfield: (
         ability: Ability,
         field: jabilityintegerlevelfield,
-        level?: number
+        level?: number,
     ): number => {
         return getAbilityIntegerLevelField(ability.handle, field, level ?? ability.level)
     },
     abilityreallevelfield: (
         ability: Ability,
         field: jabilityreallevelfield,
-        level?: number
+        level?: number,
     ): number => {
         return getAbilityRealLevelField(ability.handle, field, level ?? ability.level)
     },
     abilitybooleanlevelfield: (
         ability: Ability,
         field: jabilitybooleanlevelfield,
-        level?: number
+        level?: number,
     ): boolean => {
         return getAbilityBooleanLevelField(ability.handle, field, level ?? ability.level)
     },
     abilitystringlevelfield: (
         ability: Ability,
         field: jabilitystringlevelfield,
-        level?: number
+        level?: number,
     ): string => {
         return getAbilityStringLevelField(ability.handle, field, level ?? ability.level)
     },
@@ -296,7 +218,7 @@ const fieldSetters: Record<
         ability: Ability,
         field: jabilityintegerlevelfield,
         value: number,
-        level?: number
+        level?: number,
     ) => {
         return setAbilityIntegerLevelField(ability.handle, field, level ?? ability.level, value)
     },
@@ -304,7 +226,7 @@ const fieldSetters: Record<
         ability: Ability,
         field: jabilityreallevelfield,
         value: number,
-        level?: number
+        level?: number,
     ) => {
         return setAbilityRealLevelField(ability.handle, field, level ?? ability.level, value)
     },
@@ -312,7 +234,7 @@ const fieldSetters: Record<
         ability: Ability,
         field: jabilitybooleanlevelfield,
         value: boolean,
-        level?: number
+        level?: number,
     ) => {
         return setAbilityBooleanLevelField(ability.handle, field, level ?? ability.level, value)
     },
@@ -320,7 +242,7 @@ const fieldSetters: Record<
         ability: Ability,
         field: jabilitystringlevelfield,
         value: string,
-        level?: number
+        level?: number,
     ) => {
         return setAbilityStringLevelField(ability.handle, field, level ?? ability.level, value)
     },
@@ -350,7 +272,7 @@ export class AbilitySnapshot {
 export const getOrderIdByAbilityTypeId = (abilityTypeId: AbilityTypeId): number => {
     const parentTypeId = availableFields[abilityTypeId]
     return order2orderId(
-        orders[type(parentTypeId) == "number" ? (parentTypeId as number) : abilityTypeId] ?? ""
+        orders[type(parentTypeId) == "number" ? (parentTypeId as number) : abilityTypeId] ?? "",
     )
 }
 
@@ -380,9 +302,9 @@ export abstract class Ability extends Handle<jability> {
                 ? getAbilityStringLevelField(
                       this.handle,
                       ABILITY_SLF_BASE_ORDER_ID_NCL6,
-                      this.level
+                      this.level,
                   )
-                : orders[this.parentTypeId] ?? ""
+                : (orders[this.parentTypeId] ?? ""),
         )
     }
 
@@ -409,7 +331,7 @@ export abstract class Ability extends Handle<jability> {
     public getField(field: jabilitystringfield): string
     public getField(
         field: jabilityintegerlevelfield | jabilityreallevelfield,
-        level?: number
+        level?: number,
     ): number
     public getField(field: jabilitybooleanlevelfield, level?: number): boolean
     public getField(field: jabilitystringlevelfield, level?: number): string
@@ -429,7 +351,7 @@ export abstract class Ability extends Handle<jability> {
     public setField(
         field: jabilityintegerlevelfield | jabilityreallevelfield,
         level: number,
-        value: number
+        value: number,
     ): boolean
     public setField(field: jabilitybooleanlevelfield, level: number, value: boolean): boolean
     public setField(field: jabilitystringlevelfield, level: number, value: string): boolean
@@ -437,7 +359,7 @@ export abstract class Ability extends Handle<jability> {
     public setField(
         field: jabilityfield,
         levelOrValue: number | boolean | string,
-        value?: number | boolean | string
+        value?: number | boolean | string,
     ): boolean {
         const [fieldType] = match(tostring(field), "^(.-):")
         const success =
@@ -458,26 +380,8 @@ export abstract class Ability extends Handle<jability> {
         return success
     }
 
-    public get realFields(): Fields<jabilityrealfield, number> {
-        const realFields = new RealFields(this.handle)
-        rawset(this, "realFields", realFields)
-        return realFields
-    }
-
-    public get levels(): readonly AbilityLevel[] {
-        const handle = this.handle
-        const levels = setmetatable([], {
-            __len() {
-                return BlzGetAbilityIntegerField(handle, ABILITY_IF_LEVELS)
-            },
-            __index(this: any, i: number) {
-                const level = setmetatable({ handle, level: i - 1 }, levelMetatable)
-                this[i] = level
-                return level
-            },
-        })
-        rawset(this, "levels", levels)
-        return levels
+    public get levelCount(): number {
+        return this.getField(ABILITY_IF_LEVELS)
     }
 
     public abstract get level(): number
@@ -495,7 +399,10 @@ export abstract class Ability extends Handle<jability> {
  * Can happen in extreme edge cases such as removing an ability from a unit during a chain of ability events.
  */
 export class UnrecognizedAbility extends Ability {
-    public constructor(typeId: number, public readonly owner: Unit) {
+    public constructor(
+        typeId: number,
+        public readonly owner: Unit,
+    ) {
         super(null as unknown as jability, typeId)
     }
 
@@ -507,7 +414,11 @@ export class UnrecognizedAbility extends Ability {
 export class UnitAbility extends Ability {
     private readonly u: junit
 
-    public constructor(handle: jability, typeId: number, public readonly owner: Unit) {
+    public constructor(
+        handle: jability,
+        typeId: number,
+        public readonly owner: Unit,
+    ) {
         super(handle, typeId)
         this.u = owner.handle
     }
@@ -541,7 +452,7 @@ const getAbilityField = (
     _: jitem,
     ability: Ability,
     field: jabilityfield,
-    level?: number
+    level?: number,
 ): number | boolean | string => {
     return Ability.prototype.getField.call(ability, field as any, level)
 }
@@ -551,13 +462,17 @@ const setAbilityField = (
     ability: Ability,
     field: jabilityfield,
     levelOrValue: number | boolean | string,
-    value?: number | boolean | string
+    value?: number | boolean | string,
 ): boolean => {
     return Ability.prototype.setField.call(ability, field as any, levelOrValue as any, value as any)
 }
 
 export class ItemAbility extends Ability {
-    public constructor(handle: jability, typeId: number, public readonly owner: Item) {
+    public constructor(
+        handle: jability,
+        typeId: number,
+        public readonly owner: Item,
+    ) {
         super(handle, typeId)
     }
 
@@ -566,7 +481,7 @@ export class ItemAbility extends Ability {
     public getField(field: jabilitystringfield): string
     public getField(
         field: jabilityintegerlevelfield | jabilityreallevelfield,
-        level?: number
+        level?: number,
     ): number
     public getField(field: jabilitybooleanlevelfield, level?: number): boolean
     public getField(field: jabilitystringlevelfield, level?: number): string
@@ -585,7 +500,7 @@ export class ItemAbility extends Ability {
     public setField(
         field: jabilityintegerlevelfield | jabilityreallevelfield,
         level: number,
-        value: number
+        value: number,
     ): boolean
     public setField(field: jabilitybooleanlevelfield, level: number, value: boolean): boolean
     public setField(field: jabilitystringlevelfield, level: number, value: string): boolean
@@ -593,7 +508,7 @@ export class ItemAbility extends Ability {
     public setField(
         field: jabilityfield,
         levelOrValue: number | boolean | string,
-        value?: number | boolean | string
+        value?: number | boolean | string,
     ): boolean {
         return doAbilityAction(this.owner.handle, setAbilityField, this, field, levelOrValue, value)
     }
