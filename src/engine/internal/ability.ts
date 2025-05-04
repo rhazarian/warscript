@@ -26,6 +26,7 @@ const getAbilityStringLevelField = BlzGetAbilityStringLevelField
 const getUnitAbilityCooldownRemaining = BlzGetUnitAbilityCooldownRemaining
 const startUnitAbilityCooldown = BlzStartUnitAbilityCooldown
 const getHandleId = GetHandleId
+const unitHideAbility = BlzUnitHideAbility
 const match = string.match
 const type = _G.type
 const tostring = _G.tostring
@@ -421,6 +422,14 @@ export class UnitAbility extends Ability {
     ) {
         super(handle, typeId)
         this.u = owner.handle
+    }
+
+    public incrementHideCounter(): void {
+        unitHideAbility(this.u, this.typeId, true)
+    }
+
+    public decrementHideCounter(): void {
+        unitHideAbility(this.u, this.typeId, false)
     }
 
     public get level(): number {
