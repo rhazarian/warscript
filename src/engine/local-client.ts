@@ -131,8 +131,13 @@ export class LocalClient {
             mainSelectedUnitChangeEvent != undefined &&
             mainSelectedUnit != previousMainSelectedUnit
         ) {
-            Event.invoke(mainSelectedUnitChangeEvent, previousMainSelectedUnit, mainSelectedUnit)
+            const previousPreviousMainSelectedUnit = previousMainSelectedUnit
             previousMainSelectedUnit = mainSelectedUnit
+            Event.invoke(
+                mainSelectedUnitChangeEvent,
+                previousPreviousMainSelectedUnit,
+                previousMainSelectedUnit,
+            )
         }
 
         return mainSelectedUnit
