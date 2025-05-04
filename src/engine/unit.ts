@@ -15,6 +15,7 @@ import "./internal/unit-missile-launch"
 import "./internal/unit/ghost-counter"
 import "./internal/unit/invulnerability-counter"
 import "./internal/unit/detach-missiles"
+import "./internal/unit/main-selected"
 
 import "./internal/unit/band-aids/ancestral-spirit-cannibalize"
 

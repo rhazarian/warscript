@@ -26,8 +26,7 @@ import {
     MANA_REGENERATION_RATE_BONUS_PER_INTELLIGENCE_POINT,
 } from "../constants"
 import { forEach } from "../../utility/arrays"
-import { MAXIMUM_INTEGER, min, MINIMUM_INTEGER } from "../../math"
-import { LocalClient } from "../local-client"
+import { min } from "../../math"
 
 const match = string.match
 const tostring = _G.tostring
@@ -739,8 +738,10 @@ let nextSyncId = 1
 
 const unitBySyncId = setmetatable(new LuaMap<number, Unit>(), { __mode: "k" })
 
+export type UnitSyncId = number & { readonly __unitSyncId: unique symbol }
+
 export class Unit extends Handle<junit> {
-    private [UnitPropertyKey.SYNC_ID] = nextSyncId++
+    public readonly syncId = (nextSyncId++) as UnitSyncId
     private [UnitPropertyKey.IS_PAUSED]?: true
     private [UnitPropertyKey.STUN_COUNTER]?: number
     private [UnitPropertyKey.DELAY_HEALTH_CHECKS_COUNTER]?: number
@@ -787,7 +788,7 @@ export class Unit extends Handle<junit> {
         if (unitAddAbility(handle, fourCC("Amrf"))) {
             assert(unitRemoveAbility(handle, fourCC("Amrf")))
         }
-        unitBySyncId.set(this[UnitPropertyKey.SYNC_ID], this)
+        unitBySyncId.set(this.syncId, this)
         this.abilities
     }
 
@@ -2477,8 +2478,8 @@ export class Unit extends Handle<junit> {
         return `${this.constructor.name}$${util.id2s(this.typeId)}@${getHandleId(this.handle)}`
     }
 
-    public static getMainSelectedOf(player: Player): Unit | undefined {
-        return mainSelectedUnitByPlayer.get(player)
+    public static getBySyncId(syncId: UnitSyncId): Unit | undefined {
+        return unitBySyncId.get(syncId)
     }
 
     static {
@@ -2513,26 +2514,3 @@ export class Unit extends Handle<junit> {
         }
     }
 }
-
-const mainSelectedUnitByPlayer = new LuaMap<Player, Unit | undefined>()
-
-const syncSlider = BlzCreateFrameByType(
-    "SLIDER",
-    "UnitSyncId",
-    BlzGetOriginFrame(ORIGIN_FRAME_WORLD_FRAME, 0),
-    "",
-    0,
-)
-BlzFrameSetMinMaxValue(syncSlider, MINIMUM_INTEGER, MAXIMUM_INTEGER)
-LocalClient.mainSelectedUnitChangeEvent.addListener(() => {
-    const syncId = (LocalClient.mainSelectedUnit as Unit | undefined)?.[UnitPropertyKey.SYNC_ID]
-    BlzFrameSetValue(syncSlider, syncId ?? 0)
-})
-const trg = CreateTrigger()
-BlzTriggerRegisterFrameEvent(trg, syncSlider, FRAMEEVENT_SLIDER_VALUE_CHANGED)
-TriggerAddAction(trg, () => {
-    mainSelectedUnitByPlayer.set(
-        Player.of(GetTriggerPlayer()),
-        unitBySyncId.get(BlzGetTriggerFrameValue()),
-    )
-})
