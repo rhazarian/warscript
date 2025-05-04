@@ -109,7 +109,7 @@ export class LocalClient {
         tableSort(localSelectedUnits, compareUnitsSelectionPriority)
 
         let mainSelectedUnitIndex: number | undefined
-        if (selectionButtons) {
+        if (selectionButtons && localSelectedUnits.length > 1) {
             let maxButtonWidth = 0
             for (const i of $range(0, selectionButtons.length - 1)) {
                 const width = selectionButtons[i].width
