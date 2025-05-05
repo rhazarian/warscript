@@ -2440,10 +2440,10 @@ export class Unit extends Handle<junit> {
     > {
         const event = new Event<[Unit, Item, 0 | 1 | 2 | 3 | 4 | 5, 0 | 1 | 2 | 3 | 4 | 5]>()
         for (const order of $range(orderId("moveslot1"), orderId("moveslot5"))) {
+            const slotTo = (order - orderId("moveslot1")) as 0 | 1 | 2 | 3 | 4 | 5
             this.onTargetOrder[order].addListener((unit, item) => {
                 const slotFrom = unit.items.findSlot(item as Item)
                 if (slotFrom !== undefined) {
-                    const slotTo = (order - orderId("moveslot1")) as 0 | 1 | 2 | 3 | 4 | 5
                     invoke(event, unit, item, slotFrom, slotTo)
                 }
             })
