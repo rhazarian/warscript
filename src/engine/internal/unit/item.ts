@@ -38,6 +38,17 @@ export class UnitItems {
         handleByUnitItems.set(this, handle)
     }
 
+    public findSlot(item: Item): number | undefined {
+        const handle = handleByUnitItems.get(this)!
+        const itemHandle = item.handle
+        for (const slot of $range(0, unitInventorySize(handle) - 1)) {
+            if (itemHandle == unitItemInSlot(handle, slot)) {
+                return slot
+            }
+        }
+        return undefined
+    }
+
     protected __newindex(slot: number, item: Item | undefined): void {
         const handle = handleByUnitItems.get(this)!
         if (slot < 1 || slot > unitInventorySize(handle)) {

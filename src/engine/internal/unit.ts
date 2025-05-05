@@ -741,7 +741,7 @@ const unitBySyncId = setmetatable(new LuaMap<number, Unit>(), { __mode: "k" })
 export type UnitSyncId = number & { readonly __unitSyncId: unique symbol }
 
 export class Unit extends Handle<junit> {
-    public readonly syncId = (nextSyncId++) as UnitSyncId
+    public readonly syncId = nextSyncId++ as UnitSyncId
     private [UnitPropertyKey.IS_PAUSED]?: true
     private [UnitPropertyKey.STUN_COUNTER]?: number
     private [UnitPropertyKey.DELAY_HEALTH_CHECKS_COUNTER]?: number
@@ -2434,6 +2434,23 @@ export class Unit extends Handle<junit> {
     public static itemStackedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_STACK_ITEM, () =>
         $multi(Unit.of(getTriggerUnit()!), Item.of(getManipulatedItem()!)),
     )
+
+    public static get itemMovedEvent(): Event<
+        [unit: Unit, item: Item, slotFrom: number, slotTo: number]
+    > {
+        const event = new Event<[Unit, Item, number, number]>()
+        for (let order = orderId("moveslot1"); order <= orderId("moveslot5"); order++) {
+            this.onTargetOrder[order].addListener((unit, item) => {
+                const slotFrom = unit.items.findSlot(item as Item)
+                if (slotFrom !== undefined) {
+                    const slotTo = order - orderId("moveslot1")
+                    invoke(event, unit, item, slotFrom, slotTo)
+                }
+            })
+        }
+        rawset(this, "itemMovedEvent", event)
+        return event
+    }
 
     public static get onCreate(): EventDispatcher<[Unit], [Unit]> {
         const onCreate = dispatch<[Unit], [Unit]>(
