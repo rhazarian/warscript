@@ -38,12 +38,12 @@ export class UnitItems {
         handleByUnitItems.set(this, handle)
     }
 
-    public findSlot(item: Item): number | undefined {
+    public findSlot(item: Item): 0 | 1 | 2 | 3 | 4 | 5 | undefined {
         const handle = handleByUnitItems.get(this)!
         const itemHandle = item.handle
         for (const slot of $range(0, unitInventorySize(handle) - 1)) {
             if (itemHandle == unitItemInSlot(handle, slot)) {
-                return slot
+                return slot as 0 | 1 | 2 | 3 | 4 | 5
             }
         }
         return undefined

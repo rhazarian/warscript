@@ -2436,14 +2436,14 @@ export class Unit extends Handle<junit> {
     )
 
     public static get itemMovedEvent(): Event<
-        [unit: Unit, item: Item, slotFrom: number, slotTo: number]
+        [unit: Unit, item: Item, slotFrom: 0 | 1 | 2 | 3 | 4 | 5, slotTo: 0 | 1 | 2 | 3 | 4 | 5]
     > {
-        const event = new Event<[Unit, Item, number, number]>()
+        const event = new Event<[Unit, Item, 0 | 1 | 2 | 3 | 4 | 5, 0 | 1 | 2 | 3 | 4 | 5]>()
         for (let order = orderId("moveslot1"); order <= orderId("moveslot5"); order++) {
             this.onTargetOrder[order].addListener((unit, item) => {
                 const slotFrom = unit.items.findSlot(item as Item)
                 if (slotFrom !== undefined) {
-                    const slotTo = order - orderId("moveslot1")
+                    const slotTo = (order - orderId("moveslot1")) as 0 | 1 | 2 | 3 | 4 | 5
                     invoke(event, unit, item, slotFrom, slotTo)
                 }
             })
