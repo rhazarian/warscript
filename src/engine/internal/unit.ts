@@ -2439,7 +2439,7 @@ export class Unit extends Handle<junit> {
         [unit: Unit, item: Item, slotFrom: 0 | 1 | 2 | 3 | 4 | 5, slotTo: 0 | 1 | 2 | 3 | 4 | 5]
     > {
         const event = new Event<[Unit, Item, 0 | 1 | 2 | 3 | 4 | 5, 0 | 1 | 2 | 3 | 4 | 5]>()
-        for (let order = orderId("moveslot1"); order <= orderId("moveslot5"); order++) {
+        for (const order of $range(orderId("moveslot1"), orderId("moveslot5"))) {
             this.onTargetOrder[order].addListener((unit, item) => {
                 const slotFrom = unit.items.findSlot(item as Item)
                 if (slotFrom !== undefined) {
