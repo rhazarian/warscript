@@ -84,6 +84,8 @@ export namespace FramePoint {
     export const BOTTOM_RIGHT: FramePoint = FRAMEPOINT_BOTTOMRIGHT
 }
 
+const tooltipByFrame = setmetatable(new LuaMap<Frame, Frame>(), { __mode: "k" })
+
 export class Frame extends Handle<jframehandle> {
     public static readonly GAME_UI: Frame = Frame.byOrigin(ORIGIN_FRAME_GAME_UI)
     public static readonly CONSOLE_UI: Frame = Frame.byOrigin(ORIGIN_FRAME_SIMPLE_UI_PARENT)
@@ -98,6 +100,11 @@ export class Frame extends Handle<jframehandle> {
     public static readonly WORLD: Frame = Frame.byOrigin(ORIGIN_FRAME_WORLD_FRAME)
     public static readonly CHAT: Frame = Frame.byOrigin(ORIGIN_FRAME_CHAT_MSG)
     public static readonly TIME_OF_DAY_CLOCK = Frame.GAME_UI.getChild(5).getChild(0)
+    private static readonly SIMPLE_FRAME_TEST_CHILD: Frame = Frame.createByType(
+        "SIMPLEFRAME" as any,
+        "SimpleFrameTestParent",
+        Frame.CONSOLE_UI,
+    )
 
     public static get uiScale(): number {
         return Frame.CONSOLE_BOTTOM_BAR.width / 0.8
@@ -339,6 +346,60 @@ export class Frame extends Handle<jframehandle> {
         return this.getEvent(FRAMEEVENT_MOUSE_WHEEL, () => $multi(BlzGetTriggerFrameValue() / 120))
     }
 
+    public get mouseEnterLocalEvent(): Event {
+        const event = new Event()
+        if (!tooltipByFrame.has(this)) {
+            Frame.SIMPLE_FRAME_TEST_CHILD.parent = this
+            const tooltip =
+                Frame.SIMPLE_FRAME_TEST_CHILD.parent == this
+                    ? Frame.createByType("SIMPLEFRAME" as any, "", Frame.CONSOLE_UI)
+                    : Frame.createByType("FRAME", "", Frame.GAME_UI)
+            Frame.SIMPLE_FRAME_TEST_CHILD.parent = Frame.CONSOLE_UI
+            this.setTooltip(tooltip)
+        }
+        let isMouseInside = false
+        Timer.onPeriod[1 / 64].addListener(() => {
+            const tooltip = tooltipByFrame.get(this)
+            if (tooltip && tooltip.visible) {
+                if (!isMouseInside) {
+                    isMouseInside = true
+                    Event.invoke(event)
+                }
+            } else {
+                isMouseInside = false
+            }
+        })
+        rawset(this, "mouseEnterLocalEvent", event)
+        return event
+    }
+
+    public get mouseLeaveLocalEvent(): Event {
+        const event = new Event()
+        if (!tooltipByFrame.has(this)) {
+            Frame.SIMPLE_FRAME_TEST_CHILD.parent = this
+            const tooltip =
+                Frame.SIMPLE_FRAME_TEST_CHILD.parent == this
+                    ? Frame.createByType("SIMPLEFRAME" as any, "", Frame.CONSOLE_UI)
+                    : Frame.createByType("FRAME", "", Frame.GAME_UI)
+            Frame.SIMPLE_FRAME_TEST_CHILD.parent = Frame.CONSOLE_UI
+            this.setTooltip(tooltip)
+        }
+        let isMouseInside = false
+        Timer.onPeriod[1 / 64].addListener(() => {
+            const tooltip = tooltipByFrame.get(this)
+            if (tooltip && tooltip.visible) {
+                isMouseInside = true
+            } else {
+                if (isMouseInside) {
+                    isMouseInside = false
+                    Event.invoke(event)
+                }
+            }
+        })
+        rawset(this, "mouseLeaveLocalEvent", event)
+        return event
+    }
+
     public get popupMenuItemChangeEvent(): FrameEvent<
         [popupMenu: Frame, previousValue: number, newValue: number]
     > {
@@ -524,6 +585,7 @@ export class Frame extends Handle<jframehandle> {
 
     setTooltip(tooltip: Frame): void {
         BlzFrameSetTooltip(this.handle, tooltip.handle)
+        tooltipByFrame.set(this, tooltip)
     }
 
     setMinMaxValue(minValue: number, maxValue: number): void {
