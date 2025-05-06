@@ -22,11 +22,8 @@ const getSpellTargetUnit = GetSpellTargetUnit
 const getSpellTargetX = GetSpellTargetX
 const getSpellTargetY = GetSpellTargetY
 const getTriggerUnit = GetTriggerUnit
-const getUnitAbility = BlzGetUnitAbility
-const unitAddAbility = UnitAddAbility
 const unitInventorySize = UnitInventorySize
 const unitItemInSlot = UnitItemInSlot
-const unitRemoveAbility = UnitRemoveAbility
 
 const retrieveAbility = (
     unit: junit,
@@ -35,13 +32,6 @@ const retrieveAbility = (
 ): Ability => {
     if (ability == undefined) {
         return new UnrecognizedAbility(abilityId, Unit.of(unit))
-    }
-    if (!unitAddAbility(unit, abilityId)) {
-        if (getUnitAbility(unit, abilityId) == ability) {
-            return UnitAbility.of(ability, abilityId, Unit.of(unit))
-        }
-    } else {
-        unitRemoveAbility(unit, abilityId)
     }
     for (const i of $range(0, unitInventorySize(unit) - 1)) {
         const item = unitItemInSlot(unit, i)

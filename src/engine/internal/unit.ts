@@ -654,13 +654,6 @@ function retrieveAbility(unit: junit, ability: jability | undefined, abilityId: 
     if (ability == undefined) {
         return new UnrecognizedAbility(abilityId, Unit.of(unit))
     }
-    if (!unitAddAbility(unit, abilityId)) {
-        if (getUnitAbility(unit, abilityId) == ability) {
-            return UnitAbility.of(ability, abilityId, Unit.of(unit))
-        }
-    } else {
-        unitRemoveAbility(unit, abilityId)
-    }
     for (const i of $range(0, unitInventorySize(unit) - 1)) {
         const item = unitItemInSlot(unit, i)
         if (getItemAbility(item, abilityId) == ability) {
