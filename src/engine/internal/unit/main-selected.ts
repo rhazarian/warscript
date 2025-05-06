@@ -2,6 +2,15 @@ import { Player } from "../../../core/types/player"
 import { MAXIMUM_INTEGER, MINIMUM_INTEGER } from "../../../math"
 import { LocalClient } from "../../local-client"
 import { Unit, UnitSyncId } from "../unit"
+import { Event } from "../../../event"
+
+declare module "../unit" {
+    namespace Unit {
+        const mainSelectedUnitChangeEvent: Event<[Player]>
+    }
+}
+const mainSelectedUnitChangeEvent = new Event<[Player]>()
+rawset(Unit, "mainSelectedUnitChangeEvent", mainSelectedUnitChangeEvent)
 
 const mainSelectedUnitByPlayer = new LuaMap<Player, Unit | undefined>()
 
@@ -20,10 +29,12 @@ LocalClient.mainSelectedUnitChangeEvent.addListener(() => {
 const trg = CreateTrigger()
 BlzTriggerRegisterFrameEvent(trg, syncSlider, FRAMEEVENT_SLIDER_VALUE_CHANGED)
 TriggerAddAction(trg, () => {
-    mainSelectedUnitByPlayer.set(
-        Player.of(GetTriggerPlayer()),
-        Unit.getBySyncId(BlzGetTriggerFrameValue() as UnitSyncId),
-    )
+    const player = Player.of(GetTriggerPlayer())
+    const mainSelectedUnit = Unit.getBySyncId(BlzGetTriggerFrameValue() as UnitSyncId)
+    if (mainSelectedUnit != mainSelectedUnitByPlayer.get(player)) {
+        mainSelectedUnitByPlayer.set(player, mainSelectedUnit)
+        Event.invoke(mainSelectedUnitChangeEvent, player)
+    }
 })
 
 declare module "../unit" {
