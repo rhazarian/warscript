@@ -16,7 +16,7 @@ export const emptyArray = <T>(): readonly T[] => {
 export const joinToString = <T>(
     array: readonly T[],
     separator: string,
-    transform: (element: T) => string = tostring
+    transform: (element: T) => string = tostring,
 ): string => {
     return tableConcat(map(array, transform), separator)
 }
@@ -36,7 +36,7 @@ export const arrayOfNotNull = <T>(...elements: readonly (T | undefined | null)[]
 
 export const array = <T, N extends number>(
     length: N,
-    initialize: (index: number) => T
+    initialize: (index: number) => T,
 ): TupleOf<T, N> => {
     const result: T[] = []
     for (const i of $range(1, length)) {
@@ -76,7 +76,7 @@ export const all: {
     <T>(array: readonly T[], key: KeysOfType<T, boolean>): boolean
 } = <T>(
     array: readonly T[],
-    transform: ((value: T) => boolean) | KeysOfType<T, boolean>
+    transform: ((value: T) => boolean) | KeysOfType<T, boolean>,
 ): boolean => {
     let result = true
     if (typeof transform == "function") {
@@ -113,7 +113,7 @@ export const mapNotNull: {
     <T, K extends keyof T>(array: readonly T[], key: K): NonNullable<T[K]>[]
 } = <T, R>(
     array: readonly T[],
-    transform: ((value: T) => R | null | undefined) | KeysOfType<T, R | null | undefined>
+    transform: ((value: T) => R | null | undefined) | KeysOfType<T, R | null | undefined>,
 ): NonNullable<R>[] => {
     const result: NonNullable<R>[] = []
     let j = 1
@@ -139,12 +139,13 @@ export const mapNotNull: {
 
 export const mapToLuaSet: {
     <T, R extends AnyNotNil>(array: readonly T[], transform: (value: T) => R): LuaSet<R>
-    <T, K extends KeysOfType<T, AnyNotNil>>(array: readonly T[], key: K): LuaSet<
-        T[K] extends AnyNotNil ? T[K] : never
-    >
+    <T, K extends KeysOfType<T, AnyNotNil>>(
+        array: readonly T[],
+        key: K,
+    ): LuaSet<T[K] extends AnyNotNil ? T[K] : never>
 } = <T, R extends AnyNotNil>(
     array: readonly T[],
-    transform: ((value: T) => R) | KeysOfType<T, R>
+    transform: ((value: T) => R) | KeysOfType<T, R>,
 ): LuaSet<R> => {
     const result = new LuaSet<R>()
     if (typeof transform == "function") {
@@ -163,11 +164,11 @@ export const flatMap: {
     <T, R>(array: readonly T[], transform: (value: T) => readonly R[]): R[]
     <T, K extends KeysOfType<T, readonly any[]>>(
         array: readonly T[],
-        key: K
+        key: K,
     ): (T[K] extends readonly (infer R)[] ? R : never)[]
 } = <T, R>(
     array: readonly T[],
-    transform: ((value: T) => readonly R[]) | KeysOfType<T, R[]>
+    transform: ((value: T) => readonly R[]) | KeysOfType<T, R[]>,
 ): R[] => {
     const result: R[] = []
     let k = 1
@@ -193,12 +194,13 @@ export const flatMap: {
 
 export const flatMapToLuaSet: {
     <T, R extends AnyNotNil>(array: readonly T[], transform: (value: T) => readonly R[]): LuaSet<R>
-    <T, K extends KeysOfType<T, readonly AnyNotNil[]>>(array: readonly T[], key: K): LuaSet<
-        T[K] extends readonly (infer R extends AnyNotNil)[] ? R : never
-    >
+    <T, K extends KeysOfType<T, readonly AnyNotNil[]>>(
+        array: readonly T[],
+        key: K,
+    ): LuaSet<T[K] extends readonly (infer R extends AnyNotNil)[] ? R : never>
 } = <T, R extends AnyNotNil>(
     array: readonly T[],
-    transform: ((value: T) => readonly R[]) | KeysOfType<T, R[]>
+    transform: ((value: T) => readonly R[]) | KeysOfType<T, R[]>,
 ): LuaSet<R> => {
     const result = new LuaSet<R>()
     if (typeof transform == "function") {
@@ -221,7 +223,7 @@ export const flatMapToLuaSet: {
 
 export const mapIndexed = <T, R>(
     array: readonly T[],
-    transform: (index: number, value: T) => R
+    transform: (index: number, value: T) => R,
 ): R[] => {
     const result: R[] = []
     for (const i of $range(1, array.length)) {
@@ -233,7 +235,7 @@ export const mapIndexed = <T, R>(
 export const associate = <T, K extends AnyNotNil, V>(
     array: readonly T[],
     keySelector: (value: T) => K,
-    valueSelector: (value: T) => V
+    valueSelector: (value: T) => V,
 ): LuaMap<K, V> => {
     const result = new LuaMap<K, V>()
     for (const i of $range(1, array.length)) {
@@ -243,21 +245,34 @@ export const associate = <T, K extends AnyNotNil, V>(
     return result
 }
 
-export const associateBy = <K extends AnyNotNil, V>(
+export const associateBy: {
+    <K extends AnyNotNil, V>(array: readonly V[], keySelector: (value: V) => K): LuaMap<K, V>
+    <K extends KeysOfType<V, AnyNotNil>, V>(
+        array: readonly V[],
+        keySelector: K,
+    ): LuaMap<V[K] extends AnyNotNil ? V[K] : never, V>
+} = <K extends AnyNotNil, V>(
     array: readonly V[],
-    keySelector: (value: V) => K
+    keySelector: ((value: V) => K) | KeysOfType<V, K>,
 ): LuaMap<K, V> => {
     const result = new LuaMap<K, V>()
-    for (const i of $range(1, array.length)) {
-        const value = array[i - 1]
-        result.set(keySelector(value), value)
+    if (typeof keySelector == "function") {
+        for (const i of $range(1, array.length)) {
+            const value = array[i - 1]
+            result.set(keySelector(value), value)
+        }
+    } else {
+        for (const i of $range(1, array.length)) {
+            const value = array[i - 1]
+            result.set(value[keySelector] as K, value)
+        }
     }
     return result
 }
 
 export const associateByIndexed = <K extends AnyNotNil, V>(
     array: readonly V[],
-    keySelector: (index: number, value: V) => K
+    keySelector: (index: number, value: V) => K,
 ): LuaMap<K, V> => {
     const result = new LuaMap<K, V>()
     for (const i of $range(1, array.length)) {
@@ -269,7 +284,7 @@ export const associateByIndexed = <K extends AnyNotNil, V>(
 
 export const associateWith = <K extends AnyNotNil, V>(
     array: readonly K[],
-    valueSelector: (value: K) => V
+    valueSelector: (value: K) => V,
 ): LuaMap<K, V> => {
     const result = new LuaMap<K, V>()
     for (const i of $range(1, array.length)) {
@@ -281,7 +296,7 @@ export const associateWith = <K extends AnyNotNil, V>(
 
 export const associateWithIndexed = <K extends AnyNotNil, V>(
     array: readonly K[],
-    valueSelector: (index: number, value: K) => V
+    valueSelector: (index: number, value: K) => V,
 ): LuaMap<K, V> => {
     const result = new LuaMap<K, V>()
     for (const i of $range(1, array.length)) {
@@ -350,7 +365,7 @@ export const intersperse = <T>(array: readonly T[], delimiter: T): T[] => {
 export const zip = <T, R, V>(
     array: readonly T[],
     otherArray: readonly R[],
-    transform: (value: T, otherValue: R) => V
+    transform: (value: T, otherValue: R) => V,
 ): V[] => {
     const result: V[] = []
     for (const i of $range(1, mathMin(array.length, otherArray.length))) {
@@ -426,7 +441,7 @@ export const partition: {
     <T, K extends KeysOfType<T, boolean>>(array: readonly T[], key: K): LuaMultiReturn<[T[], T[]]>
 } = <T>(
     array: readonly T[],
-    predicate: ((value: T) => boolean) | KeysOfType<T, boolean>
+    predicate: ((value: T) => boolean) | KeysOfType<T, boolean>,
 ): LuaMultiReturn<[T[], T[]]> => {
     const first: T[] = []
     let firstLength = 0
