@@ -888,6 +888,8 @@ export class Buff<
             timer.start(duration, false, expireBuff, this)
             this._timer = timer
         }
+
+        this.onCreate()
     }
 
     public get level(): number {
@@ -1305,6 +1307,10 @@ export class Buff<
                 .get(this.typeId) ?? "origin",
             isWidgetProvided ? duration : widgetOrDuration,
         )
+    }
+
+    protected onCreate(): void {
+        // no-op
     }
 
     protected override onDestroy(): Destructor {
