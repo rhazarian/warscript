@@ -351,6 +351,42 @@ export const max = (array: readonly number[]): number => {
     return mathMax(...(array as [number, ...number[]]))
 }
 
+export const maxBy: {
+    <T, Args extends any[]>(
+        array: readonly T[],
+        selector: (value: T, ...args: Args) => number,
+        ...args: Args
+    ): T | undefined
+    <T, K extends KeysOfType<T, number>>(array: readonly T[], key: K): T | undefined
+} = <T, Args extends any[]>(
+    array: readonly T[],
+    selector: ((value: T, ...args: Args) => number) | KeysOfType<T, number>,
+    ...args: Args
+): T | undefined => {
+    let result: T | undefined = undefined
+    let maxValue: number = -math.huge
+    if (typeof selector == "function") {
+        for (const i of $range(1, array.length)) {
+            const element = array[i - 1]
+            const value = selector(element, ...args)
+            if (value > maxValue) {
+                result = element
+                maxValue = value
+            }
+        }
+    } else {
+        for (const i of $range(1, array.length)) {
+            const element = array[i - 1]
+            const value = element[selector] as number
+            if (value > maxValue) {
+                result = element
+                maxValue = value
+            }
+        }
+    }
+    return result
+}
+
 export const intersperse = <T>(array: readonly T[], delimiter: T): T[] => {
     const result: T[] = []
     const length = array.length
