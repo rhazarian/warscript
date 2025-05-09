@@ -19,10 +19,19 @@ const getSpecialEffectScale = BlzGetSpecialEffectScale
 const playSpecialEffect = BlzPlaySpecialEffect
 const setSpecialEffectScale = BlzSetSpecialEffectScale
 const setSpecialEffectPitch = BlzSetSpecialEffectPitch
+const setSpecialEffectRoll = BlzSetSpecialEffectRoll
 const setSpecialEffectColorByPlayer = BlzSetSpecialEffectColorByPlayer
 const specialEffectAddSubAnimation = BlzSpecialEffectAddSubAnimation
 const specialEffectClearSubAnimations = BlzSpecialEffectClearSubAnimations
 const specialEffectRemoveSubAnimation = BlzSpecialEffectRemoveSubAnimation
+
+const setSpecialEffectPitchDegrees = (effect: jeffect, pitch: number): void => {
+    setSpecialEffectPitch(effect, -mathRad(pitch))
+}
+
+const setSpecialEffectRollDegrees = (effect: jeffect, pitch: number): void => {
+    setSpecialEffectRoll(effect, -mathRad(pitch))
+}
 
 const animTypeByAnimationName = {
     [AnimationName.ATTACK]: ANIM_TYPE_ATTACK,
@@ -101,6 +110,8 @@ const setSpecialEffectColor = (effect: jeffect, color: PlayerColor): void => {
 const setters = {
     scale: setSpecialEffectScale,
     color: setSpecialEffectColor,
+    pitch: setSpecialEffectPitchDegrees,
+    roll: setSpecialEffectRollDegrees,
 }
 
 const dummyPlayer = Player.neutralExtra
@@ -128,16 +139,20 @@ Timer.onPeriod[period].addListener(() => {
 const enum EffectPropertyKey {
     COLOR = 100,
     PITCH,
+    ROLL,
 }
 
 export type EffectParameters = {
     readonly scale?: number
     readonly color?: PlayerColor
+    readonly pitch?: number
+    readonly roll?: number
 }
 
 export class Effect extends Handle<jeffect> {
     private [EffectPropertyKey.COLOR]?: PlayerColor
     private [EffectPropertyKey.PITCH]?: number
+    private [EffectPropertyKey.ROLL]?: number
 
     protected override onDestroy(): HandleDestructor {
         destroyEffect(this.handle)
@@ -177,14 +192,23 @@ export class Effect extends Handle<jeffect> {
     }
 
     public set pitch(pitch: number) {
-        setSpecialEffectPitch(this.handle, -mathRad(pitch))
+        setSpecialEffectPitchDegrees(this.handle, pitch)
         this[EffectPropertyKey.PITCH] = pitch
+    }
+
+    public get roll(): number {
+        return this[EffectPropertyKey.ROLL] ?? 0
+    }
+
+    public set roll(roll: number) {
+        setSpecialEffectRollDegrees(this.handle, roll)
+        this[EffectPropertyKey.ROLL] = roll
     }
 
     public static create<T extends Effect>(
         this: typeof Effect & (new (handle: jeffect) => T),
         model: string,
-        pos: Vec2
+        pos: Vec2,
     ): T {
         return this.of(addSpecialEffect(model, pos.x, pos.y))
     }
@@ -193,7 +217,7 @@ export class Effect extends Handle<jeffect> {
         this: typeof Effect & (new (handle: jeffect) => T),
         model: string,
         target: Widget,
-        attachPoint: string
+        attachPoint: string,
     ): T {
         return this.of(addSpecialEffectTarget(model, target.handle, attachPoint))
     }
@@ -203,8 +227,8 @@ export class Effect extends Handle<jeffect> {
         ...args: [
             ...pointOrWidget: [x: number, y: number] | [widget: Widget, attachmentPoint: string],
             ...parametersOrDuration:
-                | [parameters?: EffectParameters]
-                | [duration?: number, parameters?: EffectParameters]
+                | [parametersOrDuration?: EffectParameters | number]
+                | [duration?: number, parameters?: EffectParameters],
         ]
     ): void
 
@@ -213,7 +237,7 @@ export class Effect extends Handle<jeffect> {
         xOrWidget: number | Widget,
         yOrOrAttachmentPoint: number | string,
         parametersOrDuration?: EffectParameters | number,
-        parameters?: EffectParameters
+        parameters?: EffectParameters,
     ): void {
         if (typeof parametersOrDuration != "number") {
             parameters = parametersOrDuration
@@ -226,7 +250,7 @@ export class Effect extends Handle<jeffect> {
                 : addSpecialEffectTarget(
                       modelPath,
                       xOrWidget.handle,
-                      yOrOrAttachmentPoint as string
+                      yOrOrAttachmentPoint as string,
                   )
         if (parameters != undefined) {
             for (const [key, value] of pairs(parameters)) {
@@ -246,7 +270,7 @@ export class Effect extends Handle<jeffect> {
         model: string,
         target: Widget,
         attachPoint: string,
-        duration?: number
+        duration?: number,
     ): void {
         const effect = addSpecialEffectTarget(model, target.handle, attachPoint)
         if (effect != undefined) {

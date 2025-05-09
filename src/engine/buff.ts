@@ -34,7 +34,7 @@ import { CombatClassifications } from "./object-data/auxiliary/combat-classifica
 import { damageArea } from "./internal/mechanics/area-damage"
 import { checkNotNull } from "../utility/preconditions"
 import { IsExactlyAny, Prohibit, ReadonlyNonEmptyArray } from "../utility/types"
-import { Effect } from "../core/types/effect"
+import { Effect, EffectParameters } from "../core/types/effect"
 import { ObjectFieldId } from "./object-field"
 import { BuffType, BuffTypeId } from "./object-data/entry/buff-type"
 import { UnitBehavior } from "./behaviour/unit"
@@ -43,6 +43,8 @@ import { forEach } from "../utility/arrays"
 import { Destructor } from "../destroyable"
 import { EventListenerPriority } from "../event"
 import { getAbilityDuration } from "./internal/mechanics/ability-duration"
+import { Item } from "./internal/item"
+import { Destructable } from "../core/types/destructable"
 
 const getUnitAbility = BlzGetUnitAbility
 
@@ -1279,18 +1281,42 @@ export class Buff<
         }
     }
 
-    public flashEffect(...parameters: [...widget: [] | [Widget], ...duration: [] | [number]]): void
+    public flashEffect(
+        ...parameters: [
+            ...widgetOrXY: [] | [Widget] | [x: number, x: number],
+            ...parametersOrDuration: [] | [EffectParameters] | [number],
+        ]
+    ): void
 
-    public flashEffect(widgetOrDuration?: Widget | number, duration?: number): void {
-        const isWidgetProvided = typeof widgetOrDuration == "object"
-        Effect.flash(
-            this[BuffPropertyKey.EFFECT_MODEL_PATH],
-            isWidgetProvided ? widgetOrDuration : this._unit,
-            stringValueByBuffTypeIdByFieldId
-                .get(fourCC("feft") as ObjectFieldId)!
-                .get(this.typeId) ?? "origin",
-            isWidgetProvided ? duration : widgetOrDuration,
-        )
+    public flashEffect(
+        widgetOrXOrParametersOrDuration?: Widget | EffectParameters | number,
+        yOrParametersOrDuration?: EffectParameters | number,
+        parametersOrDuration?: EffectParameters | number,
+    ): void {
+        if (
+            typeof widgetOrXOrParametersOrDuration == "number" &&
+            typeof yOrParametersOrDuration == "number"
+        ) {
+            Effect.flash(
+                this[BuffPropertyKey.EFFECT_MODEL_PATH],
+                widgetOrXOrParametersOrDuration, // x
+                yOrParametersOrDuration, // y
+                parametersOrDuration,
+            )
+        } else {
+            const isWidgetProvided =
+                widgetOrXOrParametersOrDuration instanceof Unit ||
+                widgetOrXOrParametersOrDuration instanceof Item ||
+                widgetOrXOrParametersOrDuration instanceof Destructable
+            Effect.flash(
+                this[BuffPropertyKey.EFFECT_MODEL_PATH],
+                isWidgetProvided ? widgetOrXOrParametersOrDuration : this._unit,
+                stringValueByBuffTypeIdByFieldId
+                    .get(fourCC("feft") as ObjectFieldId)!
+                    .get(this.typeId) ?? "origin",
+                isWidgetProvided ? parametersOrDuration : widgetOrXOrParametersOrDuration,
+            )
+        }
     }
 
     public flashSpecialEffect(
