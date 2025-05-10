@@ -6,7 +6,7 @@ import { Widget } from "./widget"
 import { PlayerColor } from "./playerColor"
 import { Player } from "./player"
 import { Timer } from "./timer"
-import { Unit } from "../../engine/unit"
+import { Unit } from "../../engine/internal/unit"
 
 const pairs = _G.pairs
 const select = _G.select
