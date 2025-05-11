@@ -1314,7 +1314,7 @@ export class Buff<
                 stringValueByBuffTypeIdByFieldId
                     .get(fourCC("feft") as ObjectFieldId)!
                     .get(this.typeId) ?? "origin",
-                isWidgetProvided ? parametersOrDuration : widgetOrXOrParametersOrDuration,
+                isWidgetProvided ? yOrParametersOrDuration : widgetOrXOrParametersOrDuration,
             )
         }
     }
