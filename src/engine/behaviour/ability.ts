@@ -18,7 +18,6 @@ import {
 } from "../standard/fields/ability"
 import { AbilityDependentValue, resolveCurrentAbilityDependentValue } from "../object-field/ability"
 import { Timer } from "../../core/types/timer"
-import { Missile } from "../../core/types/missile"
 
 const createBehaviorFunctionsByAbilityTypeId = new LuaMap<
     AbilityTypeId,
@@ -30,7 +29,7 @@ export type AbilityBehaviorConstructor<Args extends any[]> = new (
     ...args: Args
 ) => AbilityBehavior
 
-const invokeOnMissileArrival = <T extends any[]>(
+/*const invokeOnMissileArrival = <T extends any[]>(
     _missile: Missile,
     success: boolean,
     abilityBehavior: AbilityBehavior<{ periodicActionParameters: T }>,
@@ -39,16 +38,61 @@ const invokeOnMissileArrival = <T extends any[]>(
     if (success) {
         abilityBehavior.onMissileArrival(...parameters)
     }
+}*/
+
+export type AbilityBehaviorParameters = {
+    isExclusiveOnImpactHandler?: boolean
 }
+
+const exclusiveOnImpactHandlerAbilityBehaviorByAbility = setmetatable(
+    new LuaMap<Ability, AbilityBehavior>(),
+    { __mode: "k" },
+)
+
+type UnitEventHandlerParameters<T> = T extends (unit: Unit, ...args: infer P) => any ? P : never
+
+const createZeroTimerUnitEventListener: <K extends keyof AbilityBehavior>(
+    key: K,
+) => EventListener<[Unit, Ability, ...UnitEventHandlerParameters<AbilityBehavior[K]>]> = (key) => {
+    const unitEventListener = createUnitEventListener(key)
+    return (unit, ability, ...args) => {
+        Timer.run(unitEventListener, unit, ability, ...args)
+    }
+}
+
+const createUnitEventListener: <K extends keyof AbilityBehavior>(
+    key: K,
+) => EventListener<[Unit, Ability, ...UnitEventHandlerParameters<AbilityBehavior[K]>]> = (key) => {
+    return (unit, ability, ...args) => {
+        AbilityBehavior.forAll<AbilityBehavior, [Ability], any>(ability, key, unit, ...args)
+    }
+}
+
+const registeredCommandEventIds = new LuaSet<string>()
 
 export abstract class AbilityBehavior<
     Parameters extends {
         periodicActionParameters?: any[]
         missileParameters?: any[]
-    } = {}
+    } = {},
 > extends Behavior<Ability, NonNullable<Parameters["periodicActionParameters"]>> {
-    public constructor(ability: Ability) {
+    public constructor(ability: Ability, parameters?: AbilityBehaviorParameters) {
         super(ability)
+        if (parameters?.isExclusiveOnImpactHandler) {
+            exclusiveOnImpactHandlerAbilityBehaviorByAbility.set(ability, this)
+        }
+    }
+
+    protected registerCommandEvent(
+        orderTypeStringId: string = this.ability.orderTypeStringId,
+    ): void {
+        const commandEventId = `${this.ability.typeId}#${orderTypeStringId}`
+        if (!registeredCommandEventIds.has(commandEventId)) {
+            registeredCommandEventIds.add(commandEventId)
+            Unit.abilityCommandEvent[this.ability.typeId][orderTypeStringId].addListener(
+                createUnitEventListener("onCommand"),
+            )
+        }
     }
 
     public get ability(): Ability {
@@ -56,7 +100,7 @@ export abstract class AbilityBehavior<
     }
 
     protected resolveCurrentAbilityDependentValue<T extends boolean | number | string>(
-        value: AbilityDependentValue<T>
+        value: AbilityDependentValue<T>,
     ): T {
         return resolveCurrentAbilityDependentValue(this.ability, value)
     }
@@ -72,7 +116,7 @@ export abstract class AbilityBehavior<
             AREA_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
             x,
             y,
-            ...parametersOrDuration
+            ...parametersOrDuration,
         )
     }
 
@@ -87,7 +131,7 @@ export abstract class AbilityBehavior<
             EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
             x,
             y,
-            ...parametersOrDuration
+            ...parametersOrDuration,
         )
     }
 
@@ -98,21 +142,21 @@ export abstract class AbilityBehavior<
     protected flashSpecialEffect(
         xOrWidget: number | Widget,
         yOrDuration?: number,
-        duration?: number
+        duration?: number,
     ): void {
         if (typeof xOrWidget == "number") {
             Effect.flash(
                 SPECIAL_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
                 xOrWidget,
                 yOrDuration as number,
-                duration
+                duration,
             )
         } else {
             Effect.flash(
                 SPECIAL_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
                 xOrWidget,
                 SPECIAL_EFFECT_ATTACHMENT_POINT_STRING_FIELD.getValue(this.ability),
-                yOrDuration
+                yOrDuration,
             )
         }
     }
@@ -123,7 +167,7 @@ export abstract class AbilityBehavior<
         public get art(): string {
             return MISSILE_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(
                 this.abilityBehavior.ability,
-                0
+                0,
             )
         }
 
@@ -142,10 +186,12 @@ export abstract class AbilityBehavior<
         return missileLaunchConfig
     }
 
-    protected launchMissile(
+    /*protected launchMissile(
         source: Unit,
-        target: Unit,
-        ...parameters: NonNullable<Parameters["missileParameters"]>
+        ...args: [
+            ...pointOrWidget: [x: number, y: number] | [widget: Widget],
+            ...parameters: NonNullable<Parameters["missileParameters"]>
+        ]
     ): void {
         Missile.launch(
             this.missileLaunchConfig,
@@ -155,7 +201,7 @@ export abstract class AbilityBehavior<
             this,
             ...parameters
         )
-    }
+    }*/
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public onMissileArrival(...parameters: NonNullable<Parameters["missileParameters"]>): void {
@@ -169,6 +215,11 @@ export abstract class AbilityBehavior<
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public onUnitLoseAbility(_unit: Unit): void {
+        // no-op
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public onCommand(caster: Unit, orderTypeStringId: string): void {
         // no-op
     }
 
@@ -278,72 +329,47 @@ export abstract class AbilityBehavior<
     }
 
     static {
-        type UnitEventHandlerParameters<T> = T extends (unit: Unit, ...args: infer P) => any
-            ? P
-            : never
-
-        const createUnitEventListener: <K extends keyof AbilityBehavior>(
-            key: K
-        ) => EventListener<[Unit, Ability, ...UnitEventHandlerParameters<AbilityBehavior[K]>]> = (
-            key
-        ) => {
-            return (unit, ability, ...args) => {
-                AbilityBehavior.forAll<AbilityBehavior, [Ability], any>(ability, key, unit, ...args)
-            }
-        }
-
-        const createZeroTimerUnitEventListener: <K extends keyof AbilityBehavior>(
-            key: K
-        ) => EventListener<[Unit, Ability, ...UnitEventHandlerParameters<AbilityBehavior[K]>]> = (
-            key
-        ) => {
-            const unitEventListener = createUnitEventListener(key)
-            return (unit, ability, ...args) => {
-                Timer.run(unitEventListener, unit, ability, ...args)
-            }
-        }
-
         Unit.abilityGainedEvent.addListener(createUnitEventListener("onUnitGainAbility"))
         Unit.abilityLostEvent.addListener(createUnitEventListener("onUnitLoseAbility"))
         Unit.abilityCastingStartEvent.addListener(createUnitEventListener("onCastingStart"))
         Unit.abilityCastingFinishEvent.addListener(createUnitEventListener("onCastingFinish"))
         Unit.abilityChannelingStartEvent.addListener(createUnitEventListener("onChannelingStart"))
         Unit.abilityWidgetTargetChannelingStartEvent.addListener(
-            createUnitEventListener("onWidgetTargetChannelingStart")
+            createUnitEventListener("onWidgetTargetChannelingStart"),
         )
         Unit.abilityUnitTargetChannelingStartEvent.addListener(
-            createUnitEventListener("onUnitTargetChannelingStart")
+            createUnitEventListener("onUnitTargetChannelingStart"),
         )
         Unit.abilityItemTargetChannelingStartEvent.addListener(
-            createUnitEventListener("onItemTargetChannelingStart")
+            createUnitEventListener("onItemTargetChannelingStart"),
         )
         Unit.abilityDestructibleTargetChannelingStartEvent.addListener(
-            createUnitEventListener("onDestructibleTargetChannelingStart")
+            createUnitEventListener("onDestructibleTargetChannelingStart"),
         )
         Unit.abilityPointTargetChannelingStartEvent.addListener(
-            createUnitEventListener("onPointTargetChannelingStart")
+            createUnitEventListener("onPointTargetChannelingStart"),
         )
         Unit.abilityNoTargetChannelingStartEvent.addListener(
-            createUnitEventListener("onNoTargetChannelingStart")
+            createUnitEventListener("onNoTargetChannelingStart"),
         )
         Unit.abilityChannelingStartEvent.addListener(createZeroTimerUnitEventListener("onImpact"))
         Unit.abilityWidgetTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onWidgetTargetImpact")
+            createZeroTimerUnitEventListener("onWidgetTargetImpact"),
         )
         Unit.abilityUnitTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onUnitTargetImpact")
+            createZeroTimerUnitEventListener("onUnitTargetImpact"),
         )
         Unit.abilityItemTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onItemTargetImpact")
+            createZeroTimerUnitEventListener("onItemTargetImpact"),
         )
         Unit.abilityDestructibleTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onDestructibleTargetImpact")
+            createZeroTimerUnitEventListener("onDestructibleTargetImpact"),
         )
         Unit.abilityPointTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onPointTargetImpact")
+            createZeroTimerUnitEventListener("onPointTargetImpact"),
         )
         Unit.abilityNoTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onNoTargetImpact")
+            createZeroTimerUnitEventListener("onNoTargetImpact"),
         )
         Unit.abilityChannelingFinishEvent.addListener(createUnitEventListener("onChannelingFinish"))
         Unit.abilityStopEvent.addListener(createUnitEventListener("onStop"))
@@ -352,7 +378,7 @@ export abstract class AbilityBehavior<
 
 Ability.onCreate.addListener((ability) => {
     const createBehaviorFunctions = createBehaviorFunctionsByAbilityTypeId.get(
-        ability.typeId as AbilityTypeId
+        ability.typeId as AbilityTypeId,
     )
     if (createBehaviorFunctions != undefined) {
         for (const createBehavior of createBehaviorFunctions) {

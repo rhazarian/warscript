@@ -35,8 +35,8 @@ const setSpecialEffectPitchDegrees = (effect: jeffect, pitch: number): void => {
     setSpecialEffectPitch(effect, -mathRad(pitch))
 }
 
-const setSpecialEffectRollDegrees = (effect: jeffect, pitch: number): void => {
-    setSpecialEffectRoll(effect, -mathRad(pitch))
+const setSpecialEffectRollDegrees = (effect: jeffect, roll: number): void => {
+    setSpecialEffectRoll(effect, -mathRad(roll))
 }
 
 const animTypeByAnimationName = {

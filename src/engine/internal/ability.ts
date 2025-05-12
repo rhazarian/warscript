@@ -296,17 +296,15 @@ export abstract class Ability extends Handle<jability> {
         return parentTypeId
     }
 
-    public get orderId(): number {
+    public get orderTypeStringId(): string {
         const field = orderIdFieldByParentTypeId[this.parentTypeId]
-        return order2orderId(
-            field != undefined
-                ? getAbilityStringLevelField(
-                      this.handle,
-                      ABILITY_SLF_BASE_ORDER_ID_NCL6,
-                      this.level,
-                  )
-                : (orders[this.parentTypeId] ?? ""),
-        )
+        return field != undefined
+            ? getAbilityStringLevelField(this.handle, field, this.level)
+            : (orders[this.parentTypeId] ?? "")
+    }
+
+    public get orderTypeId(): number {
+        return order2orderId(this.orderTypeStringId)
     }
 
     public abstract readonly owner: Unit | Item

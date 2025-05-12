@@ -10,9 +10,15 @@ import {
     DispatchingEvent,
     Event,
     EventListenerPriority,
+    InitializingEvent,
 } from "../../../event"
 import { checkNotNull } from "../../../utility/preconditions"
+import { lazyRecord } from "../../../utility/lazy"
 
+const eventInvoke = Event.invoke
+
+const condition = Condition
+const createTrigger = CreateTrigger
 const getItemAbility = BlzGetItemAbility
 const getSpellAbility = GetSpellAbility
 const getSpellAbilityId = GetSpellAbilityId
@@ -22,13 +28,15 @@ const getSpellTargetUnit = GetSpellTargetUnit
 const getSpellTargetX = GetSpellTargetX
 const getSpellTargetY = GetSpellTargetY
 const getTriggerUnit = GetTriggerUnit
+const triggerAddCondition = TriggerAddCondition
+const triggerRegisterCommandEvent = TriggerRegisterCommandEvent
 const unitInventorySize = UnitInventorySize
 const unitItemInSlot = UnitItemInSlot
 
 const retrieveAbility = (
     unit: junit,
     ability: jability | undefined,
-    abilityId: number
+    abilityId: number,
 ): Ability => {
     if (ability == undefined) {
         return new UnrecognizedAbility(abilityId, Unit.of(unit))
@@ -49,7 +57,7 @@ type InternalUnitAbilityEventParameters = [
     targetItem: jitem | undefined,
     targetDestructible: jdestructable | undefined,
     x: number,
-    y: number
+    y: number,
 ]
 
 const collectInternalUnitAbilityEventParameters =
@@ -62,7 +70,7 @@ const collectInternalUnitAbilityEventParameters =
             getSpellTargetItem(),
             getSpellTargetDestructible(),
             getSpellTargetX(),
-            getSpellTargetY()
+            getSpellTargetY(),
         )
     }
 
@@ -72,19 +80,19 @@ const collectUnitAbilityEventParameters = (): LuaMultiReturn<[Unit, Ability]> =>
 }
 
 const createCommonEvent = (
-    underlyingEvent: Event<InternalUnitAbilityEventParameters>
+    underlyingEvent: Event<InternalUnitAbilityEventParameters>,
 ): Event<[caster: Unit, ability: Ability]> => {
     return new DependentInitializingEvent(
         underlyingEvent,
         EventListenerPriority.HIGH,
         (caster, ability) => {
             return $multi(true as const, caster, ability)
-        }
+        },
     )
 }
 
 const createWidgetTargetEvent = (
-    underlyingEvent: Event<InternalUnitAbilityEventParameters>
+    underlyingEvent: Event<InternalUnitAbilityEventParameters>,
 ): Event<[caster: Unit, ability: Ability, target: Widget]> => {
     return new DependentInitializingEvent(
         underlyingEvent,
@@ -101,17 +109,17 @@ const createWidgetTargetEvent = (
                     ability,
                     (Unit.of(targetUnit) ??
                         Item.of(targetItem) ??
-                        Destructable.of(targetDestructible)) as Widget
+                        Destructable.of(targetDestructible)) as Widget,
                 )
             } else {
                 return $multi(false as const)
             }
-        }
+        },
     )
 }
 
 const createUnitTargetEvent = (
-    underlyingEvent: Event<InternalUnitAbilityEventParameters>
+    underlyingEvent: Event<InternalUnitAbilityEventParameters>,
 ): Event<[caster: Unit, ability: Ability, target: Unit]> => {
     return new DependentInitializingEvent(
         underlyingEvent,
@@ -122,12 +130,12 @@ const createUnitTargetEvent = (
             } else {
                 return $multi(false as const)
             }
-        }
+        },
     )
 }
 
 const createItemTargetEvent = (
-    underlyingEvent: Event<InternalUnitAbilityEventParameters>
+    underlyingEvent: Event<InternalUnitAbilityEventParameters>,
 ): Event<[caster: Unit, ability: Ability, target: Item]> => {
     return new DependentInitializingEvent(
         underlyingEvent,
@@ -138,12 +146,12 @@ const createItemTargetEvent = (
             } else {
                 return $multi(false as const)
             }
-        }
+        },
     )
 }
 
 const createDestructibleTargetEvent = (
-    underlyingEvent: Event<InternalUnitAbilityEventParameters>
+    underlyingEvent: Event<InternalUnitAbilityEventParameters>,
 ): Event<[caster: Unit, ability: Ability, target: Destructable]> => {
     return new DependentInitializingEvent(
         underlyingEvent,
@@ -154,12 +162,12 @@ const createDestructibleTargetEvent = (
             } else {
                 return $multi(false as const)
             }
-        }
+        },
     )
 }
 
 const createPointTargetEvent = (
-    underlyingEvent: Event<InternalUnitAbilityEventParameters>
+    underlyingEvent: Event<InternalUnitAbilityEventParameters>,
 ): Event<[caster: Unit, ability: Ability, x: number, y: number]> => {
     return new DependentInitializingEvent(
         underlyingEvent,
@@ -176,12 +184,12 @@ const createPointTargetEvent = (
             } else {
                 return $multi(false as const)
             }
-        }
+        },
     )
 }
 
 const createNoTargetEvent = (
-    underlyingEvent: Event<InternalUnitAbilityEventParameters>
+    underlyingEvent: Event<InternalUnitAbilityEventParameters>,
 ): Event<[caster: Unit, ability: Ability]> => {
     return new DependentInitializingEvent(
         underlyingEvent,
@@ -198,7 +206,7 @@ const createNoTargetEvent = (
             } else {
                 return $multi(false as const)
             }
-        }
+        },
     )
 }
 
@@ -208,7 +216,7 @@ const extractAbilityTypeId = (unit: Unit, ability: Ability) => ability.typeId
 
 const internalAbilityCastingStartEvent = new UnitTriggerEvent(
     EVENT_PLAYER_UNIT_SPELL_CHANNEL,
-    collectInternalUnitAbilityEventParameters
+    collectInternalUnitAbilityEventParameters,
 )
 
 declare module "../unit" {
@@ -221,8 +229,8 @@ rawset(
     "abilityCastingStartEvent",
     createDispatchingEvent(
         createCommonEvent(internalAbilityCastingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -235,8 +243,8 @@ rawset(
     "abilityWidgetTargetCastingStartEvent",
     createDispatchingEvent(
         createWidgetTargetEvent(internalAbilityCastingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -249,8 +257,8 @@ rawset(
     "abilityUnitTargetCastingStartEvent",
     createDispatchingEvent(
         createUnitTargetEvent(internalAbilityCastingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -263,8 +271,8 @@ rawset(
     "abilityItemTargetCastingStartEvent",
     createDispatchingEvent(
         createItemTargetEvent(internalAbilityCastingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -279,8 +287,8 @@ rawset(
     "abilityDestructibleTargetCastingStartEvent",
     createDispatchingEvent(
         createDestructibleTargetEvent(internalAbilityCastingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -293,8 +301,8 @@ rawset(
     "abilityPointTargetCastingStartEvent",
     createDispatchingEvent(
         createPointTargetEvent(internalAbilityCastingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -307,15 +315,15 @@ rawset(
     "abilityNoTargetCastingStartEvent",
     createDispatchingEvent(
         createNoTargetEvent(internalAbilityCastingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 // === CASTING FINISH ===
 
 const internalAbilityCastingFinishEvent = new UnitTriggerEvent(
     EVENT_PLAYER_UNIT_SPELL_CAST,
-    collectInternalUnitAbilityEventParameters
+    collectInternalUnitAbilityEventParameters,
 )
 
 declare module "../unit" {
@@ -328,8 +336,8 @@ rawset(
     "abilityCastingFinishEvent",
     createDispatchingEvent(
         createCommonEvent(internalAbilityCastingFinishEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -342,8 +350,8 @@ rawset(
     "abilityWidgetTargetCastingFinishEvent",
     createDispatchingEvent(
         createWidgetTargetEvent(internalAbilityCastingFinishEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -356,8 +364,8 @@ rawset(
     "abilityUnitTargetCastingFinishEvent",
     createDispatchingEvent(
         createUnitTargetEvent(internalAbilityCastingFinishEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -370,8 +378,8 @@ rawset(
     "abilityItemTargetCastingFinishEvent",
     createDispatchingEvent(
         createItemTargetEvent(internalAbilityCastingFinishEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -386,8 +394,8 @@ rawset(
     "abilityDestructibleTargetCastingFinishEvent",
     createDispatchingEvent(
         createDestructibleTargetEvent(internalAbilityCastingFinishEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -402,8 +410,8 @@ rawset(
     "abilityPointTargetCastingFinishEvent",
     createDispatchingEvent(
         createPointTargetEvent(internalAbilityCastingFinishEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -416,15 +424,15 @@ rawset(
     "abilityNoTargetCastingFinishEvent",
     createDispatchingEvent(
         createNoTargetEvent(internalAbilityCastingFinishEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 // === CHANNELING START ===
 
 const internalAbilityChannelingStartEvent = new UnitTriggerEvent(
     EVENT_PLAYER_UNIT_SPELL_EFFECT,
-    collectInternalUnitAbilityEventParameters
+    collectInternalUnitAbilityEventParameters,
 )
 
 declare module "../unit" {
@@ -437,8 +445,8 @@ rawset(
     "abilityChannelingStartEvent",
     createDispatchingEvent(
         createCommonEvent(internalAbilityChannelingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -451,8 +459,8 @@ rawset(
     "abilityWidgetTargetChannelingStartEvent",
     createDispatchingEvent(
         createWidgetTargetEvent(internalAbilityChannelingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -465,8 +473,8 @@ rawset(
     "abilityUnitTargetChannelingStartEvent",
     createDispatchingEvent(
         createUnitTargetEvent(internalAbilityChannelingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -479,8 +487,8 @@ rawset(
     "abilityItemTargetChannelingStartEvent",
     createDispatchingEvent(
         createItemTargetEvent(internalAbilityChannelingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -495,8 +503,8 @@ rawset(
     "abilityDestructibleTargetChannelingStartEvent",
     createDispatchingEvent(
         createDestructibleTargetEvent(internalAbilityChannelingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -511,8 +519,8 @@ rawset(
     "abilityPointTargetChannelingStartEvent",
     createDispatchingEvent(
         createPointTargetEvent(internalAbilityChannelingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 declare module "../unit" {
@@ -525,8 +533,8 @@ rawset(
     "abilityNoTargetChannelingStartEvent",
     createDispatchingEvent(
         createNoTargetEvent(internalAbilityChannelingStartEvent),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 // === CHANNELING FINISH ===
@@ -542,10 +550,10 @@ rawset(
     createDispatchingEvent(
         new UnitTriggerEvent<[Ability]>(
             EVENT_PLAYER_UNIT_SPELL_FINISH,
-            collectUnitAbilityEventParameters
+            collectUnitAbilityEventParameters,
         ),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
 )
 
 // === STOP ===
@@ -561,8 +569,44 @@ rawset(
     createDispatchingEvent(
         new UnitTriggerEvent<[Ability]>(
             EVENT_PLAYER_UNIT_SPELL_ENDCAST,
-            collectUnitAbilityEventParameters
+            collectUnitAbilityEventParameters,
         ),
-        extractAbilityTypeId
-    )
+        extractAbilityTypeId,
+    ),
+)
+
+// === COMMAND ===
+
+declare module "../unit" {
+    namespace Unit {
+        const abilityCommandEvent: {
+            readonly [abilityTypeId: number]: {
+                readonly [orderTypeStringId: string]: Event<[Unit, Ability, string]>
+            }
+        }
+    }
+}
+rawset(
+    Unit,
+    "abilityCommandEvent",
+    lazyRecord((abilityTypeId: number) => {
+        return lazyRecord((orderTypeStringId: string) => {
+            return new InitializingEvent<[Unit, Ability, string]>((event) => {
+                const trigger = createTrigger()
+                triggerRegisterCommandEvent(trigger, abilityTypeId, orderTypeStringId)
+                triggerAddCondition(
+                    trigger,
+                    condition(() => {
+                        const unit = Unit.of(getTriggerUnit())
+                        if (unit !== undefined) {
+                            const ability = unit.getAbilityById(abilityTypeId)
+                            if (ability !== undefined) {
+                                eventInvoke(event, unit, ability, orderTypeStringId)
+                            }
+                        }
+                    }),
+                )
+            })
+        })
+    }),
 )
