@@ -99,7 +99,7 @@ export abstract class AbilityBehavior<
         return this.object
     }
 
-    protected resolveCurrentAbilityDependentValue<T extends boolean | number | string>(
+    protected resolveCurrentAbilityDependentValue<T extends boolean | number | string | undefined>(
         value: AbilityDependentValue<T>,
     ): T {
         return resolveCurrentAbilityDependentValue(this.ability, value)
