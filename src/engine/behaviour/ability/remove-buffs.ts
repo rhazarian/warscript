@@ -10,6 +10,9 @@ export class RemoveBuffsSelfAbilityBehavior extends AbilityBehavior {
         ability: Ability,
         private readonly polarity?: AbilityDependentValue<BuffPolarity>,
         private readonly resistanceType?: AbilityDependentValue<BuffResistanceType>,
+        private readonly includeExpirationTimers?: AbilityDependentValue<boolean>,
+        private readonly includeAuras?: AbilityDependentValue<boolean>,
+        private readonly autoDispel?: AbilityDependentValue<boolean>,
     ) {
         super(ability)
     }
@@ -18,6 +21,9 @@ export class RemoveBuffsSelfAbilityBehavior extends AbilityBehavior {
         caster.removeBuffs(
             this.resolveCurrentAbilityDependentValue(this.polarity),
             this.resolveCurrentAbilityDependentValue(this.resistanceType),
+            this.resolveCurrentAbilityDependentValue(this.includeExpirationTimers),
+            this.resolveCurrentAbilityDependentValue(this.includeAuras),
+            this.resolveCurrentAbilityDependentValue(this.autoDispel),
         )
     }
 }
