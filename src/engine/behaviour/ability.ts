@@ -115,10 +115,13 @@ export abstract class AbilityBehavior<
     }
 
     protected flashCasterEffect(widget: Widget): void {
+        const attachmentPoint = CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD.getValue(
+            this.ability,
+        )
         Effect.flash(
             CASTER_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
             widget,
-            CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD.getValue(this.ability),
+            attachmentPoint != "" ? attachmentPoint : "origin",
         )
     }
 
