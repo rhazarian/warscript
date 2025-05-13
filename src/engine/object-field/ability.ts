@@ -502,18 +502,25 @@ export class AbilityCombatClassificationsLevelField extends AbilityLevelField<
     }
 }
 
-export type AbilityDependentValue<ValueType extends boolean | number | string | undefined> =
+export type AbilityDependentValue<ValueType extends boolean | number | string> =
     | ValueType
-    | AbilityField<NonNullable<ValueType>>
-    | AbilityLevelField<NonNullable<ValueType>>
+    | AbilityField<ValueType>
+    | AbilityLevelField<ValueType>
     | ((ability: Ability) => ValueType)
 
-export const resolveCurrentAbilityDependentValue = <
-    ValueType extends boolean | number | string | undefined,
->(
+export const resolveCurrentAbilityDependentValue: {
+    <ValueType extends boolean | number | string>(
+        ability: Ability,
+        value: AbilityDependentValue<ValueType>,
+    ): ValueType
+    <ValueType extends boolean | number | string>(
+        ability: Ability,
+        value?: AbilityDependentValue<ValueType>,
+    ): ValueType | undefined
+} = <ValueType extends boolean | number | string>(
     ability: Ability,
-    value: AbilityDependentValue<ValueType>,
-): ValueType => {
+    value?: AbilityDependentValue<ValueType>,
+): ValueType | undefined => {
     if (value instanceof AbilityField) {
         return value.getValue(ability)
     } else if (value instanceof AbilityLevelField) {
