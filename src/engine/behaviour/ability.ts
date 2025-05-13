@@ -9,6 +9,8 @@ import { Destructable } from "../../core/types/destructable"
 import { Effect, EffectParameters } from "../../core/types/effect"
 import {
     AREA_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+    CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD,
+    CASTER_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
     EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
     MISSILE_ARC_ABILITY_FLOAT_FIELD,
     MISSILE_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
@@ -110,6 +112,14 @@ export abstract class AbilityBehavior<
         value?: AbilityDependentValue<T>,
     ): T | undefined {
         return resolveCurrentAbilityDependentValue(this.ability, value)
+    }
+
+    protected flashCasterEffect(widget: Widget): void {
+        Effect.flash(
+            CASTER_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
+            widget,
+            CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD.getValue(this.ability),
+        )
     }
 
     protected flashAreaEffect(

@@ -26,6 +26,8 @@ export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
             caster.startAbilityCooldown(this.ability.typeId, cooldown)
         }
 
+        this.flashCasterEffect(caster)
+
         AbilityBehavior.forAll(this.ability, "onImpact", caster)
     }
 }

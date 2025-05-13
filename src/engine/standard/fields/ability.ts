@@ -2548,6 +2548,14 @@ export const CASTER_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD = AbilityStrin
     fourCC("acat")
 )
 
+export const CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD = AbilityStringField.create(
+    fourCC("acap")
+)
+
+export const CASTER_EFFECT_SECOND_ATTACHMENT_POINT_STRING_FIELD = AbilityStringField.create(
+    fourCC("aca1")
+)
+
 export const TARGET_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD = AbilityStringArrayField.create(
     fourCC("atat")
 )
