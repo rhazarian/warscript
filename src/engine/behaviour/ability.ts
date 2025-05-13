@@ -83,6 +83,7 @@ export abstract class AbilityBehavior<
         if (parameters?.isExclusiveOnImpactHandler) {
             exclusiveOnImpactHandlerAbilityBehaviorByAbility.set(ability, this)
         }
+        this.onCreate()
     }
 
     protected registerCommandEvent(
@@ -222,6 +223,10 @@ export abstract class AbilityBehavior<
             ...parameters
         )
     }*/
+
+    protected onCreate(): void {
+        // no-op
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public onMissileArrival(...parameters: NonNullable<Parameters["missileParameters"]>): void {
