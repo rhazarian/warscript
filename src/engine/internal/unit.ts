@@ -2428,7 +2428,25 @@ export class Unit extends Handle<junit> {
         $multi(Unit.of(getTriggerUnit()!), Item.of(getManipulatedItem()!)),
     )
 
-    public static get itemMovedEvent(): Event<
+    public static get itemUseOrderEvent(): Event<[unit: Unit, item: Item]> {
+        const event = new Event<[Unit, Item]>()
+        for (const order of $range(orderId("useslot0"), orderId("useslot5"))) {
+            const slot = (order - orderId("useslot0")) as 0 | 1 | 2 | 3 | 4 | 5
+            const listener = (unit: Unit) => {
+                const item = unit.items[slot]
+                if (item !== undefined) {
+                    invoke(event, unit, item)
+                }
+            }
+            this.onImmediateOrder[order].addListener(listener)
+            this.onTargetOrder[order].addListener(listener)
+            this.onPointOrder[order].addListener(listener)
+        }
+        rawset(this, "itemUseOrderEvent", event)
+        return event
+    }
+
+    public static get itemMoveOrderEvent(): Event<
         [unit: Unit, item: Item, slotFrom: 0 | 1 | 2 | 3 | 4 | 5, slotTo: 0 | 1 | 2 | 3 | 4 | 5]
     > {
         const event = new Event<[Unit, Item, 0 | 1 | 2 | 3 | 4 | 5, 0 | 1 | 2 | 3 | 4 | 5]>()
@@ -2441,7 +2459,7 @@ export class Unit extends Handle<junit> {
                 }
             })
         }
-        rawset(this, "itemMovedEvent", event)
+        rawset(this, "itemMoveOrderEvent", event)
         return event
     }
 
