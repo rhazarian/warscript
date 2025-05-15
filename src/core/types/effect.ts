@@ -149,6 +149,7 @@ const enum EffectPropertyKey {
 }
 
 export type EffectParameters = {
+    readonly delay?: number
     readonly scale?: number
     readonly color?: PlayerColor
     readonly pitch?: number
@@ -253,57 +254,20 @@ export class Effect extends Handle<jeffect> {
             parametersOrDuration = undefined
         }
 
-        const coordinatesProvided = typeof xOrWidget == "number"
-        const isPositional = coordinatesProvided || parameters?.detached == true
-        const x = !isPositional ? 0 : coordinatesProvided ? xOrWidget : xOrWidget.x
-        const y = !isPositional
-            ? 0
-            : coordinatesProvided
-              ? (yOrOrAttachmentPoint as number)
-              : xOrWidget.y
-
-        const effect = isPositional
-            ? addSpecialEffect(modelPath, x, y)
-            : addSpecialEffectTarget(
-                  modelPath,
-                  xOrWidget.handle,
-                  (yOrOrAttachmentPoint ?? "origin") as string,
-              )
-        if (
-            isPositional &&
-            !coordinatesProvided &&
-            parameters?.scale == undefined &&
-            xOrWidget instanceof Unit
-        ) {
-            setSpecialEffectScale(effect, xOrWidget.scale)
-        }
-        if (parameters != undefined) {
-            for (const [key, value] of pairs(parameters)) {
-                if (key != "zOffset" && key != "detached" && key != "scaleZOffset") {
-                    setters[key](effect, value as any)
-                }
-            }
-            if (isPositional && parameters.zOffset != undefined) {
-                moveLocation(location, x, y)
-                const z =
-                    xOrWidget instanceof Unit
-                        ? getLocationZ(location) + xOrWidget.flyHeight
-                        : getLocationZ(location)
-                BlzSetSpecialEffectZ(
-                    effect,
-                    z +
-                        parameters.zOffset *
-                            (parameters.scaleZOffset ? getSpecialEffectScale(effect) : 1),
-                )
-            }
-        }
-        if (parametersOrDuration != undefined && parametersOrDuration > 0) {
-            ++temporaryEffectsCount
-            temporaryEffects[temporaryEffectsCount - 1] = effect
-            temporaryEffectsDurations[temporaryEffectsCount - 1] = parametersOrDuration
+        if (parameters && parameters.delay != undefined) {
+            Timer.simple(
+                parameters.delay,
+                flash,
+                modelPath,
+                xOrWidget,
+                yOrOrAttachmentPoint,
+                parametersOrDuration,
+                parameters,
+            )
             return
         }
-        destroyEffect(effect)
+
+        flash(modelPath, xOrWidget, yOrOrAttachmentPoint, parametersOrDuration, parameters)
     }
 
     public static flashTarget(
@@ -323,4 +287,64 @@ export class Effect extends Handle<jeffect> {
             }
         }
     }
+}
+
+const flash = (
+    modelPath: string,
+    xOrWidget: number | Widget,
+    yOrOrAttachmentPoint?: number | string,
+    duration?: number,
+    parameters?: EffectParameters,
+): void => {
+    const coordinatesProvided = typeof xOrWidget == "number"
+    const isPositional = coordinatesProvided || parameters?.detached == true
+    const x = !isPositional ? 0 : coordinatesProvided ? xOrWidget : xOrWidget.x
+    const y = !isPositional
+        ? 0
+        : coordinatesProvided
+          ? (yOrOrAttachmentPoint as number)
+          : xOrWidget.y
+
+    const effect = isPositional
+        ? addSpecialEffect(modelPath, x, y)
+        : addSpecialEffectTarget(
+              modelPath,
+              xOrWidget.handle,
+              (yOrOrAttachmentPoint ?? "origin") as string,
+          )
+    if (
+        isPositional &&
+        !coordinatesProvided &&
+        parameters?.scale == undefined &&
+        xOrWidget instanceof Unit
+    ) {
+        setSpecialEffectScale(effect, xOrWidget.scale)
+    }
+    if (parameters != undefined) {
+        for (const [key, value] of pairs(parameters)) {
+            if (key != "zOffset" && key != "detached" && key != "scaleZOffset" && key != "delay") {
+                setters[key](effect, value as any)
+            }
+        }
+        if (isPositional && parameters.zOffset != undefined) {
+            moveLocation(location, x, y)
+            const z =
+                xOrWidget instanceof Unit
+                    ? getLocationZ(location) + xOrWidget.flyHeight
+                    : getLocationZ(location)
+            BlzSetSpecialEffectZ(
+                effect,
+                z +
+                    parameters.zOffset *
+                        (parameters.scaleZOffset ? getSpecialEffectScale(effect) : 1),
+            )
+        }
+    }
+    if (duration != undefined && duration > 0) {
+        ++temporaryEffectsCount
+        temporaryEffects[temporaryEffectsCount - 1] = effect
+        temporaryEffectsDurations[temporaryEffectsCount - 1] = duration
+        return
+    }
+    destroyEffect(effect)
 }
