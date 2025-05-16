@@ -5,6 +5,7 @@ import { BlankItemType } from "../../object-data/entry/item-type/blank"
 import { abilityTypeIdGenerator } from "../../object-data/utility/object-data-entry-id-generator"
 import type { AbilityTypeId } from "../../object-data/entry/ability-type"
 import { MINIMUM_POSITIVE_NORMALIZED_FLOAT } from "../../../math"
+import { Timer } from "../../../core/types/timer"
 
 const isItemOwned = IsItemOwned
 const isItemPowerup = IsItemPowerup
@@ -64,7 +65,13 @@ const startItemCooldownInternal = (handle: jitem, cooldown: number): void => {
     setAbilityRealLevelField(cooldownStarterAbility, ABILITY_RLF_COOLDOWN, 0, cooldown)
     unitResetCooldown(dummy)
     unitUseItem(dummy, cooldownStarterItem)
-    //setItemIntegerField(handle, ITEM_IF_COOLDOWN_GROUP, cooldownGroup)
+    Timer.run(restoreCooldownGroup, handle, cooldownGroup)
+}
+
+const restoreCooldownGroup = (handle: jitem, cooldownGroup: number): void => {
+    if (getItemIntegerField(handle, ITEM_IF_COOLDOWN_GROUP) == COOLDOWN_STARTER_ABILITY_TYPE_ID) {
+        setItemIntegerField(handle, ITEM_IF_COOLDOWN_GROUP, cooldownGroup)
+    }
 }
 
 /** @internal For use by internal systems only. */
