@@ -3,7 +3,7 @@ import { Event } from "../../event"
 import type { Item } from "../../core/types/item"
 import type { Unit } from "./unit"
 import type { AbilityTypeId } from "../object-data/entry/ability-type"
-import { doAbilityAction } from "./item/ability"
+import { abilityActionDummy, doAbilityAction, doAbilityActionForceDummy } from "./item/ability"
 
 const getUnitAbilityLevel = GetUnitAbilityLevel
 const setUnitAbilityLevel = SetUnitAbilityLevel
@@ -385,6 +385,12 @@ export abstract class Ability extends Handle<jability> {
 
     public abstract get level(): number
 
+    public abstract get cooldownRemaining(): number
+
+    public abstract set cooldownRemaining(cooldownRemaining: number)
+
+    public abstract interruptCast(): void
+
     public static get onCreate(): Event<[Ability]> {
         return this.onCreateEvent
     }
@@ -405,9 +411,17 @@ export class UnrecognizedAbility extends Ability {
         super(null as unknown as jability, typeId)
     }
 
-    override get level(): number {
+    public override get level(): number {
         return 0
     }
+
+    public override get cooldownRemaining(): number {
+        return 0
+    }
+
+    public override set cooldownRemaining(_: number) {}
+
+    public override interruptCast(): void {}
 }
 
 export class UnitAbility extends Ability {
@@ -430,7 +444,7 @@ export class UnitAbility extends Ability {
         unitHideAbility(this.u, this.typeId, false)
     }
 
-    public get level(): number {
+    public override get level(): number {
         return getUnitAbilityLevel(this.u, this.typeId) - 1
     }
 
@@ -438,12 +452,16 @@ export class UnitAbility extends Ability {
         setUnitAbilityLevel(this.u, this.typeId, v + 1)
     }
 
-    public get cooldownRemaining(): number {
+    public override get cooldownRemaining(): number {
         return getUnitAbilityCooldownRemaining(this.u, this.typeId)
     }
 
-    public set cooldownRemaining(v: number) {
-        startUnitAbilityCooldown(this.u, this.typeId, v)
+    public override set cooldownRemaining(cooldownRemaining: number) {
+        startUnitAbilityCooldown(this.u, this.typeId, cooldownRemaining)
+    }
+
+    public override interruptCast(): void {
+        this.owner.interruptCast(this.typeId)
     }
 
     public static get onCreate(): Event<[UnitAbility]> {
@@ -473,6 +491,16 @@ const setAbilityField = (
 ): boolean => {
     return Ability.prototype.setField.call(ability, field as any, levelOrValue as any, value as any)
 }
+
+const getAbilityCooldown = (_: jitem, abilityTypeId: AbilityTypeId): number => {
+    return getUnitAbilityCooldownRemaining(abilityActionDummy, abilityTypeId)
+}
+
+const startAbilityCooldown = (_: jitem, abilityTypeId: AbilityTypeId, cooldown: number): void => {
+    startUnitAbilityCooldown(abilityActionDummy, abilityTypeId, cooldown)
+}
+
+const doNothing = (): void => {}
 
 export class ItemAbility extends Ability {
     public constructor(
@@ -522,6 +550,32 @@ export class ItemAbility extends Ability {
 
     public get level(): number {
         return 0
+    }
+
+    public override get cooldownRemaining(): number {
+        const item = this.owner
+        return doAbilityActionForceDummy(
+            item.handle,
+            item.owner?.handle,
+            getAbilityCooldown,
+            this.typeId,
+        )
+    }
+
+    public override set cooldownRemaining(cooldownRemaining: number) {
+        const item = this.owner
+        doAbilityActionForceDummy(
+            item.handle,
+            item.owner?.handle,
+            startAbilityCooldown,
+            this.typeId,
+            cooldownRemaining,
+        )
+    }
+
+    public override interruptCast(): void {
+        const item = this.owner
+        doAbilityActionForceDummy(item.handle, item.owner?.handle, doNothing)
     }
 
     public static get onCreate(): Event<[ItemAbility]> {

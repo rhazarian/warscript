@@ -1,5 +1,6 @@
 import { Item } from "../item"
 import { Unit } from "../unit"
+import { findUnitItemSlot } from "../utility"
 
 const rawset = _G.rawset
 const type = _G.type
@@ -39,14 +40,7 @@ export class UnitItems {
     }
 
     public findSlot(item: Item): 0 | 1 | 2 | 3 | 4 | 5 | undefined {
-        const handle = handleByUnitItems.get(this)!
-        const itemHandle = item.handle
-        for (const slot of $range(0, unitInventorySize(handle) - 1)) {
-            if (itemHandle == unitItemInSlot(handle, slot)) {
-                return slot as 0 | 1 | 2 | 3 | 4 | 5
-            }
-        }
-        return undefined
+        return findUnitItemSlot(handleByUnitItems.get(this)!, item.handle)
     }
 
     protected __newindex(slot: number, item: Item | undefined): void {

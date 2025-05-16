@@ -7,7 +7,6 @@ import {
 
 export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
     protected emulateImpact(caster: Unit) {
-        const abilityTypeId = this.ability.typeId
         const manaCost = this.resolveCurrentAbilityDependentValue(
             MANA_COST_ABILITY_INTEGER_LEVEL_FIELD,
         )
@@ -15,15 +14,15 @@ export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
             COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD,
         )
 
-        if (caster.getAbilityRemainingCooldown(abilityTypeId) != 0 || caster.mana < manaCost) {
+        if (this.ability.cooldownRemaining != 0 || caster.mana < manaCost) {
             return
         }
 
         caster.mana -= manaCost
         if (cooldown == 0) {
-            caster.interruptCast(this.ability.typeId)
+            this.ability.interruptCast()
         } else {
-            caster.startAbilityCooldown(this.ability.typeId, cooldown)
+            this.ability.cooldownRemaining = cooldown
         }
 
         this.flashCasterEffect(caster)
