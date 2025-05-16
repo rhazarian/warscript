@@ -287,14 +287,14 @@ export class Effect extends Handle<jeffect> {
             parametersOrDuration = undefined
         }
 
-        if (parameters && parameters.delay != undefined) {
+        if (parameters && (parameters.delay ?? 0) > 0) {
             ++delayedEffectsCount
             delayedEffectsModelPath[delayedEffectsCount - 1] = modelPath
             delayedEffectsXOrWidget[delayedEffectsCount - 1] = xOrWidget
             delayedEffectsYOrAttachmentPoint[delayedEffectsCount - 1] = yOrOrAttachmentPoint
             delayedEffectsDuration[delayedEffectsCount - 1] = parametersOrDuration
             delayedEffectsParameters[delayedEffectsCount - 1] = parameters
-            delayedEffectsDelay[delayedEffectsCount - 1] = parameters.delay
+            delayedEffectsDelay[delayedEffectsCount - 1] = parameters.delay!
             return
         }
 
