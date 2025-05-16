@@ -1,8 +1,10 @@
 import { Player } from "../../../core/types/player"
 import { dummyUnitId } from "../../../objutil/dummy"
 import { findUnitItemSlot } from "../utility"
-import { BerserkAbilityType } from "../../object-data/entry/ability-type/berserk"
 import { BlankItemType } from "../../object-data/entry/item-type/blank"
+import { abilityTypeIdGenerator } from "../../object-data/utility/object-data-entry-id-generator"
+import type { AbilityTypeId } from "../../object-data/entry/ability-type"
+import { MINIMUM_POSITIVE_NORMALIZED_FLOAT } from "../../../math"
 
 const isItemOwned = IsItemOwned
 const isItemPowerup = IsItemPowerup
@@ -20,9 +22,20 @@ const unitUseItem = UnitUseItem
 const unitResetCooldown = UnitResetCooldown
 
 const COOLDOWN_STARTER_ABILITY_TYPE_ID = compiletime(() => {
-    const abilityType = BerserkAbilityType.create()
-    abilityType.manaCost = 0
-    return abilityType.id
+    if (!currentMap) {
+        return 0 as AbilityTypeId
+    }
+    const abilityType = currentMap.objects.ability.newObject(
+        util.id2s(abilityTypeIdGenerator.next()),
+        "Absk",
+    )
+    abilityType["bsk1"] = 0
+    abilityType["bsk2"] = 0
+    abilityType["bsk3"] = 0
+    abilityType["amcs"] = 0
+    abilityType["adur"] = MINIMUM_POSITIVE_NORMALIZED_FLOAT
+    abilityType["ahdu"] = MINIMUM_POSITIVE_NORMALIZED_FLOAT
+    return util.s2id(abilityType.id) as AbilityTypeId
 })
 
 const COOLDOWN_STARTER_ITEM_TYPE_ID = compiletime(() => {

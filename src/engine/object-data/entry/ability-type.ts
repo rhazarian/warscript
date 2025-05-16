@@ -1,4 +1,10 @@
+import { Unit } from "../../internal/unit"
+import "../../internal/unit/ability"
+import { EventListenerPriority } from "../../../event"
+import { Timer } from "../../../core/types/timer"
+import { Effect } from "../../../core/types/effect"
 import { mapValues } from "../../../utility/lua-maps"
+import { Ability } from "../../internal/ability"
 import { array, map, mapIndexed } from "../../../utility/arrays"
 import { TupleOf } from "../../../utility/types"
 
@@ -30,7 +36,7 @@ import {
     ObjectDataEntryId,
     ObjectDataEntryLevelFieldValueSupplier,
 } from "../entry"
-import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
+import { abilityTypeIdGenerator } from "../utility/object-data-entry-id-generator"
 
 import { BuffTypeId } from "./buff-type"
 import { LightningTypeId } from "./lightning-type"
@@ -38,6 +44,8 @@ import { UnitTypeId } from "./unit-type"
 import { Upgrade, UpgradeId } from "./upgrade"
 
 export type AbilityTypeId = ObjectDataEntryId & { readonly __abilityTypeId: unique symbol }
+
+const castAnimationFQNByAbilityTypeId = new LuaMap<AbilityTypeId, string>()
 
 const isButtonVisibleFalseAbilityTypes = new LuaSet<AbilityType>()
 
@@ -48,7 +56,7 @@ const casterChannelingEffectPresetsByAbilityTypeId = new LuaMap<AbilityTypeId, A
 const targetCastingEffectPresetsByAbilityTypeId = new LuaMap<AbilityTypeId, AttachmentPreset[]>()
 
 export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
-    private static readonly idGenerator = new ObjectDataEntryIdGenerator(fourCC("A000"))
+    private static readonly idGenerator = abilityTypeIdGenerator
 
     protected static override generateId(): number {
         return this.idGenerator.next()
@@ -679,22 +687,76 @@ const _: void = postcompile(() => {
     }
 })
 
-/** @internal For use by internal systems only. */
-export const casterCastingEffectModelPathsByAbilityTypeId = postcompile(() => {
+for (const [abilityTypeId, animationFQN] of postcompile(() => castAnimationFQNByAbilityTypeId)) {
+    Unit.abilityCastingStartEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        (caster, ability) => {
+            if (ability.getField(ABILITY_RLF_CASTING_TIME) != 0) {
+                Timer.run(() => {
+                    caster.playAnimation(animationFQN)
+                })
+            }
+        },
+    )
+}
+
+const casterCastingEffectModelPathsByAbilityTypeId = postcompile(() => {
     return mapValues(casterCastingEffectPresetsByAbilityTypeId, (casterCastingEffectPresets) =>
         map(casterCastingEffectPresets, extractAttachmentPresetInputModelPath),
     )
 })
 
-/** @internal For use by internal systems only. */
-export const casterCastingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
+const casterCastingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
     return mapValues(casterCastingEffectPresetsByAbilityTypeId, (casterCastingEffectPresets) =>
         map(casterCastingEffectPresets, extractAttachmentPresetInputNodeFQN),
     )
 })
 
-/** @internal For use by internal systems only. */
-export const casterChannelingEffectModelPathsByAbilityTypeId = postcompile(() => {
+const casterCastingEffectsByCaster = new LuaMap<Unit, Effect[]>()
+
+const handleAbilityCastingStartEvent = (caster: Unit, ability: Ability): void => {
+    const effectModelPaths = casterCastingEffectModelPathsByAbilityTypeId.get(ability.typeId)
+    const attachmentPoints = casterCastingEffectAttachmentPointsByAbilityTypeId.get(ability.typeId)
+    const effects: Effect[] = []
+    if (effectModelPaths != undefined) {
+        for (const i of $range(1, effectModelPaths.length)) {
+            const effectModelPath = effectModelPaths[i - 1]
+            let attachmentPoint = attachmentPoints && attachmentPoints[i - 1]
+            if (attachmentPoint == undefined || attachmentPoint == "") {
+                attachmentPoint = "origin"
+            }
+            effects[i - 1] = Effect.createTarget(effectModelPath, caster, attachmentPoint)
+        }
+    }
+    casterCastingEffectsByCaster.set(caster, effects)
+}
+
+const handleAbilityStopCastingEvent = (caster: Unit): void => {
+    const effects = casterCastingEffectsByCaster.get(caster)
+    if (effects != undefined) {
+        for (const i of $range(1, effects.length)) {
+            effects[i - 1].destroy()
+        }
+        casterCastingEffectsByCaster.delete(caster)
+    }
+}
+
+for (const [abilityTypeId] of casterCastingEffectModelPathsByAbilityTypeId) {
+    Unit.abilityCastingStartEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        handleAbilityCastingStartEvent,
+    )
+    Unit.abilityChannelingStartEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        handleAbilityStopCastingEvent,
+    )
+    Unit.abilityStopEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        handleAbilityStopCastingEvent,
+    )
+}
+
+const casterChannelingEffectModelPathsByAbilityTypeId = postcompile(() => {
     return mapValues(
         casterChannelingEffectPresetsByAbilityTypeId,
         (casterChannelingEffectPresets) =>
@@ -702,8 +764,7 @@ export const casterChannelingEffectModelPathsByAbilityTypeId = postcompile(() =>
     )
 })
 
-/** @internal For use by internal systems only. */
-export const casterChannelingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
+const casterChannelingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
     return mapValues(
         casterChannelingEffectPresetsByAbilityTypeId,
         (casterChannelingEffectPresets) =>
@@ -711,7 +772,48 @@ export const casterChannelingEffectAttachmentPointsByAbilityTypeId = postcompile
     )
 })
 
-warpack.afterMapInit(() => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require("ability-type-effects")
-})
+const casterChannelingEffectsByCaster = new LuaMap<Unit, Effect[]>()
+
+const handleAbilityChannelingStartEvent = (caster: Unit, ability: Ability): void => {
+    const effectModelPaths = casterChannelingEffectModelPathsByAbilityTypeId.get(ability.typeId)
+    const attachmentPoints = casterChannelingEffectAttachmentPointsByAbilityTypeId.get(
+        ability.typeId,
+    )
+    const effects: Effect[] = []
+    if (effectModelPaths != undefined) {
+        for (const i of $range(1, effectModelPaths.length)) {
+            const effectModelPath = effectModelPaths[i - 1]
+            let attachmentPoint = attachmentPoints && attachmentPoints[i - 1]
+            if (attachmentPoint == undefined || attachmentPoint == "") {
+                attachmentPoint = "origin"
+            }
+            effects[i - 1] = Effect.createTarget(effectModelPath, caster, attachmentPoint)
+        }
+    }
+    casterChannelingEffectsByCaster.set(caster, effects)
+}
+
+const handleAbilityStopChannelingEvent = (caster: Unit): void => {
+    const effects = casterChannelingEffectsByCaster.get(caster)
+    if (effects != undefined) {
+        for (const i of $range(1, effects.length)) {
+            effects[i - 1].destroy()
+        }
+        casterChannelingEffectsByCaster.delete(caster)
+    }
+}
+
+for (const [abilityTypeId] of casterChannelingEffectModelPathsByAbilityTypeId) {
+    Unit.abilityChannelingStartEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        handleAbilityChannelingStartEvent,
+    )
+    Unit.abilityChannelingFinishEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        handleAbilityStopChannelingEvent,
+    )
+    Unit.abilityStopEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        handleAbilityStopChannelingEvent,
+    )
+}
