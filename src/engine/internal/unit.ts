@@ -1524,8 +1524,9 @@ export class Unit extends Handle<junit> {
     }
 
     public interruptCast(abilityId: number): void {
-        unitDisableAbility(this.handle, abilityId, true, false)
-        unitDisableAbility(this.handle, abilityId, false, false)
+        const handle = this.handle
+        unitDisableAbility(handle, abilityId, true, false)
+        Timer.run(unitDisableAbility, handle, abilityId, false, false)
     }
 
     public getDistanceTo(target: Unit | Vec2): number {

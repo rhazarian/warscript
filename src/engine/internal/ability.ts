@@ -31,6 +31,8 @@ const getAbilityStringLevelField = BlzGetAbilityStringLevelField
 const getUnitAbilityCooldownRemaining = BlzGetUnitAbilityCooldownRemaining
 const startUnitAbilityCooldown = BlzStartUnitAbilityCooldown
 const getHandleId = GetHandleId
+const getItemBooleanField = BlzGetItemBooleanField
+const setItemBooleanField = BlzSetItemBooleanField
 const unitHideAbility = BlzUnitHideAbility
 const match = string.match
 const type = _G.type
@@ -569,8 +571,12 @@ export class ItemAbility extends Ability {
     }
 
     public override interruptCast(): void {
-        const item = this.owner
-        doAbilityActionForceDummy(item.handle, item.owner?.handle, doNothing)
+        const handle = this.owner.handle
+        const activelyUsed = getItemBooleanField(handle, ITEM_BF_ACTIVELY_USED)
+        if (activelyUsed) {
+            setItemBooleanField(handle, ITEM_BF_ACTIVELY_USED, false)
+            setItemBooleanField(handle, ITEM_BF_ACTIVELY_USED, true)
+        }
     }
 
     public static get onCreate(): Event<[ItemAbility]> {
