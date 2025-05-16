@@ -54,3 +54,6 @@ export class ObjectDataEntryIdGenerator {
         return id
     }
 }
+
+/** @internal For use by internal systems only. */
+export const abilityTypeIdGenerator = new ObjectDataEntryIdGenerator(fourCC("A000"))
