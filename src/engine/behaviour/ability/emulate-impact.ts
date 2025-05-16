@@ -4,6 +4,7 @@ import {
     COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD,
     MANA_COST_ABILITY_INTEGER_LEVEL_FIELD,
 } from "../../standard/fields/ability"
+import { max, MINIMUM_POSITIVE_NORMALIZED_FLOAT } from "../../../math"
 
 export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
     protected emulateImpact(caster: Unit) {
@@ -19,11 +20,7 @@ export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
         }
 
         caster.mana -= manaCost
-        if (cooldown == 0) {
-            this.ability.interruptCast()
-        } else {
-            this.ability.cooldownRemaining = cooldown
-        }
+        this.ability.cooldownRemaining = max(cooldown, MINIMUM_POSITIVE_NORMALIZED_FLOAT)
 
         this.flashCasterEffect(caster)
 
