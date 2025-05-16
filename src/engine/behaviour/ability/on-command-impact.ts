@@ -12,3 +12,9 @@ export class OnCommandImpactAbilityBehavior extends EmulateImpactAbilityBehavior
         this.emulateImpact(caster)
     }
 }
+
+Unit.itemUseOrderEvent.addListener((unit, item) => {
+    for (const ability of item.abilities) {
+        OnCommandImpactAbilityBehavior.forAll(ability, "onCommand", unit)
+    }
+})
