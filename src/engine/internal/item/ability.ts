@@ -40,6 +40,7 @@ const COOLDOWN_STARTER_ABILITY_TYPE_ID = compiletime(() => {
 
 const COOLDOWN_STARTER_ITEM_TYPE_ID = compiletime(() => {
     const itemType = BlankItemType.create()
+    itemType.name = "[Warscript/Dummy] Item Cooldown Starter"
     itemType.abilityTypeIds = [COOLDOWN_STARTER_ABILITY_TYPE_ID]
     itemType.cooldownGroupId = COOLDOWN_STARTER_ABILITY_TYPE_ID
     itemType.activelyUsed = true
@@ -63,7 +64,7 @@ const startItemCooldownInternal = (handle: jitem, cooldown: number): void => {
     setAbilityRealLevelField(cooldownStarterAbility, ABILITY_RLF_COOLDOWN, 0, cooldown)
     unitResetCooldown(dummy)
     unitUseItem(dummy, cooldownStarterItem)
-    setItemIntegerField(handle, ITEM_IF_COOLDOWN_GROUP, cooldownGroup)
+    //setItemIntegerField(handle, ITEM_IF_COOLDOWN_GROUP, cooldownGroup)
 }
 
 /** @internal For use by internal systems only. */
