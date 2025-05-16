@@ -1,10 +1,4 @@
-import { Unit } from "../../internal/unit"
-import "../../internal/unit/ability"
-import { EventListenerPriority } from "../../../event"
-import { Timer } from "../../../core/types/timer"
-import { Effect } from "../../../core/types/effect"
 import { mapValues } from "../../../utility/lua-maps"
-import { Ability } from "../../internal/ability"
 import { array, map, mapIndexed } from "../../../utility/arrays"
 import { TupleOf } from "../../../utility/types"
 
@@ -45,8 +39,6 @@ import { Upgrade, UpgradeId } from "./upgrade"
 
 export type AbilityTypeId = ObjectDataEntryId & { readonly __abilityTypeId: unique symbol }
 
-const castAnimationFQNByAbilityTypeId = new LuaMap<AbilityTypeId, string>()
-
 const isButtonVisibleFalseAbilityTypes = new LuaSet<AbilityType>()
 
 const casterCastingEffectPresetsByAbilityTypeId = new LuaMap<AbilityTypeId, AttachmentPreset[]>()
@@ -75,7 +67,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public set channelingAnimation(
-        animations: [...([] | [AnimationName]), ...AnimationQualifier[]]
+        animations: [...([] | [AnimationName]), ...AnimationQualifier[]],
     ) {
         this.setStringsField("aani", animations)
     }
@@ -111,7 +103,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     public set casterCastingEffectPresets(casterCastingEffectPresets: AttachmentPresetInput[]) {
         casterCastingEffectPresetsByAbilityTypeId.set(
             this.id,
-            map(casterCastingEffectPresets, toAttachmentPreset)
+            map(casterCastingEffectPresets, toAttachmentPreset),
         )
     }
 
@@ -120,11 +112,11 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public set casterChannelingEffectPresets(
-        casterChannelingEffectPresets: AttachmentPresetInput[]
+        casterChannelingEffectPresets: AttachmentPresetInput[],
     ) {
         casterChannelingEffectPresetsByAbilityTypeId.set(
             this.id,
-            map(casterChannelingEffectPresets, toAttachmentPreset)
+            map(casterChannelingEffectPresets, toAttachmentPreset),
         )
     }
 
@@ -136,7 +128,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public set casterAttachmentPresets(
-        casterAttachmentPresets: TupleOf<AttachmentPresetInput, 0 | 1 | 2>
+        casterAttachmentPresets: TupleOf<AttachmentPresetInput, 0 | 1 | 2>,
     ) {
         this.setAttachmentPresetListField("acat", ["acap", "aca1"], "acac", casterAttachmentPresets)
     }
@@ -281,61 +273,61 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     public set targetCastingEffectPresets(targetCastingEffectPresets: AttachmentPresetInput[]) {
         targetCastingEffectPresetsByAbilityTypeId.set(
             this.id,
-            map(targetCastingEffectPresets, toAttachmentPreset)
+            map(targetCastingEffectPresets, toAttachmentPreset),
         )
     }
 
     public get targetEffectPresets(): TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6> {
         return this.getAttachmentPresetListField(
             "atat",
-            array(6, (i) => `ata${i}`)
+            array(6, (i) => `ata${i}`),
         ) as TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6>
     }
 
     public set targetEffectPresets(
-        targetEffectPresets: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+        targetEffectPresets: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>,
     ) {
         this.setAttachmentPresetListField(
             "atat",
             array(6, (i) => `ata${i}`),
             "atac",
-            targetEffectPresets
+            targetEffectPresets,
         )
     }
 
     public get targetEffectPresetsSD(): TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6> {
         return this.getAttachmentPresetListField(
             "atat:sd",
-            array(6, (i) => `ata${i}:sd`)
+            array(6, (i) => `ata${i}:sd`),
         ) as TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6>
     }
 
     public set targetEffectPresetsSD(
-        targetEffectPresetsSD: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+        targetEffectPresetsSD: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>,
     ) {
         this.setAttachmentPresetListField(
             "atat:sd",
             array(6, (i) => `ata${i}:sd`),
             "atac:sd",
-            targetEffectPresetsSD
+            targetEffectPresetsSD,
         )
     }
 
     public get targetEffectPresetsHD(): TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6> {
         return this.getAttachmentPresetListField(
             "atat:hd",
-            array(6, (i) => `ata${i}:hd`)
+            array(6, (i) => `ata${i}:hd`),
         ) as TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6>
     }
 
     public set targetEffectPresetsHD(
-        targetEffectPresetsHD: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+        targetEffectPresetsHD: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>,
     ) {
         this.setAttachmentPresetListField(
             "atat:hd",
             array(6, (i) => `ata${i}:hd`),
             "atac:hd",
-            targetEffectPresetsHD
+            targetEffectPresetsHD,
         )
     }
 
@@ -394,11 +386,11 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     public set techTreeDependencies(techTreeDependencies: TechTreeDependencyInput[]) {
         const techTreeDependencyIds = map(
             techTreeDependencies,
-            extractTechTreeDependencyInputObjectDataEntryId
+            extractTechTreeDependencyInputObjectDataEntryId,
         )
         const techTreeDependencyInternalLevels = map(
             map(techTreeDependencies, extractTechTreeDependencyInputLevel),
-            (techTreeDependencyLevel) => techTreeDependencyLevel + 1
+            (techTreeDependencyLevel) => techTreeDependencyLevel + 1,
         )
         this.setObjectDataEntryIdsField("areq", techTreeDependencyIds)
         this.setNumbersField("arqa", techTreeDependencyInternalLevels)
@@ -483,7 +475,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public set tooltipExtendedText(
-        tooltipExtendedText: ObjectDataEntryLevelFieldValueSupplier<string>
+        tooltipExtendedText: ObjectDataEntryLevelFieldValueSupplier<string>,
     ) {
         this.setStringLevelField("aub1", tooltipExtendedText)
     }
@@ -509,7 +501,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public set turnOffTooltipText(
-        turnOffTooltipText: ObjectDataEntryLevelFieldValueSupplier<string>
+        turnOffTooltipText: ObjectDataEntryLevelFieldValueSupplier<string>,
     ) {
         this.setStringLevelField("aut1", turnOffTooltipText)
     }
@@ -519,7 +511,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public set turnOffTooltipExtendedText(
-        turnOffTooltipExtendedText: ObjectDataEntryLevelFieldValueSupplier<string>
+        turnOffTooltipExtendedText: ObjectDataEntryLevelFieldValueSupplier<string>,
     ) {
         this.setStringLevelField("auu1", turnOffTooltipExtendedText)
     }
@@ -549,16 +541,16 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public set allowedTargetCombatClassifications(
-        allowedTargetCombatClassifications: ObjectDataEntryLevelFieldValueSupplier<CombatClassifications>
+        allowedTargetCombatClassifications: ObjectDataEntryLevelFieldValueSupplier<CombatClassifications>,
     ) {
         this.setStringsLevelField("atar", (level, currentValue) =>
             combatClassificationsToStringArray(
                 extractObjectDataEntryLevelFieldValue(
                     allowedTargetCombatClassifications,
                     level,
-                    stringArrayToCombatClassifications(currentValue)
-                )
-            )
+                    stringArrayToCombatClassifications(currentValue),
+                ),
+            ),
         )
     }
 
@@ -615,7 +607,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public set effectBuffTypeIds(
-        effectBuffTypeIds: ObjectDataEntryLevelFieldValueSupplier<BuffTypeId[]>
+        effectBuffTypeIds: ObjectDataEntryLevelFieldValueSupplier<BuffTypeId[]>,
     ) {
         this.setObjectDataEntryIdsLevelField("aeff", effectBuffTypeIds)
     }
@@ -673,7 +665,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public set spellStealPriority(
-        spellStealPriority: ObjectDataEntryLevelFieldValueSupplier<number>
+        spellStealPriority: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
         this.setNumberLevelField("apri", spellStealPriority)
     }
@@ -687,133 +679,39 @@ const _: void = postcompile(() => {
     }
 })
 
-for (const [abilityTypeId, animationFQN] of postcompile(() => castAnimationFQNByAbilityTypeId)) {
-    Unit.abilityCastingStartEvent[abilityTypeId].addListener(
-        EventListenerPriority.HIGHEST,
-        (caster, ability) => {
-            if (ability.getField(ABILITY_RLF_CASTING_TIME) != 0) {
-                Timer.run(() => {
-                    caster.playAnimation(animationFQN)
-                })
-            }
-        }
-    )
-}
-
-const casterCastingEffectModelPathsByAbilityTypeId = postcompile(() => {
+/** @internal For use by internal systems only. */
+export const casterCastingEffectModelPathsByAbilityTypeId = postcompile(() => {
     return mapValues(casterCastingEffectPresetsByAbilityTypeId, (casterCastingEffectPresets) =>
-        map(casterCastingEffectPresets, extractAttachmentPresetInputModelPath)
+        map(casterCastingEffectPresets, extractAttachmentPresetInputModelPath),
     )
 })
 
-const casterCastingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
+/** @internal For use by internal systems only. */
+export const casterCastingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
     return mapValues(casterCastingEffectPresetsByAbilityTypeId, (casterCastingEffectPresets) =>
-        map(casterCastingEffectPresets, extractAttachmentPresetInputNodeFQN)
+        map(casterCastingEffectPresets, extractAttachmentPresetInputNodeFQN),
     )
 })
 
-const casterCastingEffectsByCaster = new LuaMap<Unit, Effect[]>()
-
-const handleAbilityCastingStartEvent = (caster: Unit, ability: Ability): void => {
-    const effectModelPaths = casterCastingEffectModelPathsByAbilityTypeId.get(ability.typeId)
-    const attachmentPoints = casterCastingEffectAttachmentPointsByAbilityTypeId.get(ability.typeId)
-    const effects: Effect[] = []
-    if (effectModelPaths != undefined) {
-        for (const i of $range(1, effectModelPaths.length)) {
-            const effectModelPath = effectModelPaths[i - 1]
-            let attachmentPoint = attachmentPoints && attachmentPoints[i - 1]
-            if (attachmentPoint == undefined || attachmentPoint == "") {
-                attachmentPoint = "origin"
-            }
-            effects[i - 1] = Effect.createTarget(effectModelPath, caster, attachmentPoint)
-        }
-    }
-    casterCastingEffectsByCaster.set(caster, effects)
-}
-
-const handleAbilityStopEvent = (caster: Unit): void => {
-    const effects = casterCastingEffectsByCaster.get(caster)
-    if (effects != undefined) {
-        for (const i of $range(1, effects.length)) {
-            effects[i - 1].destroy()
-        }
-        casterCastingEffectsByCaster.delete(caster)
-    }
-}
-
-for (const [abilityTypeId] of casterCastingEffectModelPathsByAbilityTypeId) {
-    Unit.abilityCastingStartEvent[abilityTypeId].addListener(
-        EventListenerPriority.HIGHEST,
-        handleAbilityCastingStartEvent
-    )
-    Unit.abilityChannelingStartEvent[abilityTypeId].addListener(
-        EventListenerPriority.HIGHEST,
-        handleAbilityStopEvent
-    )
-    Unit.abilityStopEvent[abilityTypeId].addListener(
-        EventListenerPriority.HIGHEST,
-        handleAbilityStopEvent
-    )
-}
-
-const casterChannelingEffectModelPathsByAbilityTypeId = postcompile(() => {
+/** @internal For use by internal systems only. */
+export const casterChannelingEffectModelPathsByAbilityTypeId = postcompile(() => {
     return mapValues(
         casterChannelingEffectPresetsByAbilityTypeId,
         (casterChannelingEffectPresets) =>
-            map(casterChannelingEffectPresets, extractAttachmentPresetInputModelPath)
+            map(casterChannelingEffectPresets, extractAttachmentPresetInputModelPath),
     )
 })
 
-const casterChannelingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
+/** @internal For use by internal systems only. */
+export const casterChannelingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
     return mapValues(
         casterChannelingEffectPresetsByAbilityTypeId,
         (casterChannelingEffectPresets) =>
-            map(casterChannelingEffectPresets, extractAttachmentPresetInputNodeFQN)
+            map(casterChannelingEffectPresets, extractAttachmentPresetInputNodeFQN),
     )
 })
 
-const casterChannelingEffectsByCaster = new LuaMap<Unit, Effect[]>()
-
-const handleAbilityChannelingStartEvent = (caster: Unit, ability: Ability): void => {
-    const effectModelPaths = casterChannelingEffectModelPathsByAbilityTypeId.get(ability.typeId)
-    const attachmentPoints = casterChannelingEffectAttachmentPointsByAbilityTypeId.get(
-        ability.typeId
-    )
-    const effects: Effect[] = []
-    if (effectModelPaths != undefined) {
-        for (const i of $range(1, effectModelPaths.length)) {
-            const effectModelPath = effectModelPaths[i - 1]
-            let attachmentPoint = attachmentPoints && attachmentPoints[i - 1]
-            if (attachmentPoint == undefined || attachmentPoint == "") {
-                attachmentPoint = "origin"
-            }
-            effects[i - 1] = Effect.createTarget(effectModelPath, caster, attachmentPoint)
-        }
-    }
-    casterChannelingEffectsByCaster.set(caster, effects)
-}
-
-const handleAbilityStopEventV2 = (caster: Unit): void => {
-    const effects = casterChannelingEffectsByCaster.get(caster)
-    if (effects != undefined) {
-        for (const i of $range(1, effects.length)) {
-            effects[i - 1].destroy()
-        }
-        casterChannelingEffectsByCaster.delete(caster)
-    }
-}
-
-for (const [abilityTypeId] of casterChannelingEffectModelPathsByAbilityTypeId) {
-    Unit.abilityChannelingStartEvent[abilityTypeId].addListener(
-        EventListenerPriority.HIGHEST,
-        handleAbilityChannelingStartEvent
-    )
-    Unit.abilityChannelingFinishEvent[abilityTypeId].addListener(
-        EventListenerPriority.HIGHEST,
-        handleAbilityStopEventV2
-    )
-    Unit.abilityStopEvent[abilityTypeId].addListener(
-        EventListenerPriority.HIGHEST,
-        handleAbilityStopEventV2
-    )
-}
+warpack.afterMapInit(() => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require("ability-type-effects")
+})
