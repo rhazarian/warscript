@@ -126,6 +126,14 @@ const temporaryEffects: jeffect[] = []
 const temporaryEffectsDurations: number[] = []
 let temporaryEffectsCount = 0
 
+const delayedEffectsModelPath: string[] = []
+const delayedEffectsXOrWidget: (number | Widget)[] = []
+const delayedEffectsYOrAttachmentPoint: (number | string | undefined)[] = []
+const delayedEffectsDuration: (number | undefined)[] = []
+const delayedEffectsParameters: (EffectParameters | undefined)[] = []
+const delayedEffectsDelay: number[] = []
+let delayedEffectsCount = 0
+
 const period = 1 / 32
 Timer.onPeriod[period].addListener(() => {
     let i = 1
@@ -134,9 +142,34 @@ Timer.onPeriod[period].addListener(() => {
         if (duration <= 0) {
             destroyEffect(temporaryEffects[i - 1])
             temporaryEffects[i - 1] = temporaryEffects[temporaryEffectsCount - 1]
+            temporaryEffectsDurations[i - 1] = temporaryEffectsDurations[temporaryEffectsCount - 1]
             --temporaryEffectsCount
         } else {
             temporaryEffectsDurations[i - 1] = duration - period
+            ++i
+        }
+    }
+    i = 1
+    while (i <= delayedEffectsCount) {
+        const delay = delayedEffectsDelay[i - 1]
+        if (delay <= 0) {
+            flash(
+                delayedEffectsModelPath[i - 1],
+                delayedEffectsXOrWidget[i - 1],
+                delayedEffectsYOrAttachmentPoint[i - 1],
+                delayedEffectsDuration[i - 1],
+                delayedEffectsParameters[i - 1],
+            )
+            delayedEffectsModelPath[i - 1] = delayedEffectsModelPath[delayedEffectsCount - 1]
+            delayedEffectsXOrWidget[i - 1] = delayedEffectsXOrWidget[delayedEffectsCount - 1]
+            delayedEffectsYOrAttachmentPoint[i - 1] =
+                delayedEffectsYOrAttachmentPoint[delayedEffectsCount - 1]
+            delayedEffectsDuration[i - 1] = delayedEffectsDuration[delayedEffectsCount - 1]
+            delayedEffectsParameters[i - 1] = delayedEffectsParameters[delayedEffectsCount - 1]
+            delayedEffectsDelay[i - 1] = delayedEffectsDelay[delayedEffectsCount - 1]
+            --delayedEffectsCount
+        } else {
+            delayedEffectsDelay[i - 1] = delay - period
             ++i
         }
     }
@@ -255,15 +288,13 @@ export class Effect extends Handle<jeffect> {
         }
 
         if (parameters && parameters.delay != undefined) {
-            Timer.simple(
-                parameters.delay,
-                flash,
-                modelPath,
-                xOrWidget,
-                yOrOrAttachmentPoint,
-                parametersOrDuration,
-                parameters,
-            )
+            ++delayedEffectsCount
+            delayedEffectsModelPath[delayedEffectsCount - 1] = modelPath
+            delayedEffectsXOrWidget[delayedEffectsCount - 1] = xOrWidget
+            delayedEffectsYOrAttachmentPoint[delayedEffectsCount - 1] = yOrOrAttachmentPoint
+            delayedEffectsDuration[delayedEffectsCount - 1] = parametersOrDuration
+            delayedEffectsParameters[delayedEffectsCount - 1] = parameters
+            delayedEffectsDelay[delayedEffectsCount - 1] = parameters.delay
             return
         }
 
