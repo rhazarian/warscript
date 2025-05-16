@@ -29,12 +29,12 @@ const COOLDOWN_STARTER_ABILITY_TYPE_ID = compiletime(() => {
         util.id2s(abilityTypeIdGenerator.next()),
         "Absk",
     )
-    abilityType["bsk1"] = 0
-    abilityType["bsk2"] = 0
-    abilityType["bsk3"] = 0
-    abilityType["amcs"] = 0
-    abilityType["adur"] = MINIMUM_POSITIVE_NORMALIZED_FLOAT
-    abilityType["ahdu"] = MINIMUM_POSITIVE_NORMALIZED_FLOAT
+    abilityType["bsk1+0"] = 0
+    abilityType["bsk2+0"] = 0
+    abilityType["bsk3+0"] = 0
+    abilityType["amcs+0"] = 0
+    abilityType["adur+0"] = MINIMUM_POSITIVE_NORMALIZED_FLOAT
+    abilityType["ahdu+0"] = MINIMUM_POSITIVE_NORMALIZED_FLOAT
     return util.s2id(abilityType.id) as AbilityTypeId
 })
 
