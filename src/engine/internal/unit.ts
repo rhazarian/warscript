@@ -2159,10 +2159,12 @@ export class Unit extends Handle<junit> {
 
     public static readonly onImmediateOrder = dispatchId(
         new UnitTriggerEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () => {
-            const unit = Unit.of(getOrderedUnit())
-            const issuedOrderId = getIssuedOrderId()
-            if (unit != undefined && unit.state == HandleState.CREATED) {
-                return $multi(unit, issuedOrderId)
+            const handle = getOrderedUnit()
+            if (handle != undefined && getUnitTypeId(handle) != dummyUnitId) {
+                const unit = Unit.of(handle)
+                if (unit.state == HandleState.CREATED) {
+                    return $multi(unit, getIssuedOrderId())
+                }
             }
             return $multi(IgnoreEvent)
         }),
@@ -2420,9 +2422,13 @@ export class Unit extends Handle<junit> {
         return $multi(IgnoreEvent)
     })
 
-    public static itemUsedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_USE_ITEM, () =>
-        $multi(Unit.of(getTriggerUnit()!), Item.of(getManipulatedItem())),
-    )
+    public static itemUsedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_USE_ITEM, () => {
+        const unit = getTriggerUnit()
+        if (getUnitTypeId(unit!) != dummyUnitId) {
+            return $multi(Unit.of(unit!), Item.of(getManipulatedItem()!))
+        }
+        return $multi(IgnoreEvent)
+    })
 
     public static itemStackedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_STACK_ITEM, () =>
         $multi(Unit.of(getTriggerUnit()!), Item.of(getManipulatedItem()!)),
