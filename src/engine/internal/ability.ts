@@ -3,7 +3,12 @@ import { Event } from "../../event"
 import type { Item } from "../../core/types/item"
 import type { Unit } from "./unit"
 import type { AbilityTypeId } from "../object-data/entry/ability-type"
-import { abilityActionDummy, doAbilityAction, doAbilityActionForceDummy } from "./item/ability"
+import {
+    abilityActionDummy,
+    doAbilityAction,
+    doAbilityActionForceDummy,
+    startItemCooldown,
+} from "./item/ability"
 
 const getUnitAbilityLevel = GetUnitAbilityLevel
 const setUnitAbilityLevel = SetUnitAbilityLevel
@@ -496,10 +501,6 @@ const getAbilityCooldown = (_: jitem, abilityTypeId: AbilityTypeId): number => {
     return getUnitAbilityCooldownRemaining(abilityActionDummy, abilityTypeId)
 }
 
-const startAbilityCooldown = (_: jitem, abilityTypeId: AbilityTypeId, cooldown: number): void => {
-    startUnitAbilityCooldown(abilityActionDummy, abilityTypeId, cooldown)
-}
-
 const doNothing = (): void => {}
 
 export class ItemAbility extends Ability {
@@ -564,13 +565,7 @@ export class ItemAbility extends Ability {
 
     public override set cooldownRemaining(cooldownRemaining: number) {
         const item = this.owner
-        doAbilityActionForceDummy(
-            item.handle,
-            item.owner?.handle,
-            startAbilityCooldown,
-            this.typeId,
-            cooldownRemaining,
-        )
+        startItemCooldown(item.handle, item.owner?.handle, cooldownRemaining)
     }
 
     public override interruptCast(): void {

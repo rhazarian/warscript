@@ -170,6 +170,14 @@ export class ItemType extends ObjectDataEntry<ItemTypeId> {
 
     // Stats
 
+    public get cooldownGroupId(): number {
+        return this.getObjectDataEntryIdField("icid")
+    }
+
+    public set cooldownGroupId(cooldownGroupId: number) {
+        this.setObjectDataEntryIdField("icid", cooldownGroupId as ObjectDataEntryId)
+    }
+
     public get goldCost(): number {
         return this.getNumberField("igol")
     }

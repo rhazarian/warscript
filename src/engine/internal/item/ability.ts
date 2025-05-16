@@ -1,19 +1,66 @@
 import { Player } from "../../../core/types/player"
 import { dummyUnitId } from "../../../objutil/dummy"
 import { findUnitItemSlot } from "../utility"
+import { BerserkAbilityType } from "../../object-data/entry/ability-type/berserk"
+import { BlankItemType } from "../../object-data/entry/item-type/blank"
 
 const isItemOwned = IsItemOwned
 const isItemPowerup = IsItemPowerup
 const getItemX = GetItemX
 const getItemY = GetItemY
+const setAbilityRealLevelField = BlzSetAbilityRealLevelField
+const setItemIntegerField = BlzSetItemIntegerField
+const getItemIntegerField = BlzGetItemIntegerField
 const setItemBooleanField = BlzSetItemBooleanField
 const setItemPosition = SetItemPosition
 const unitAddItem = UnitAddItem
 const unitDropItemSlot = UnitDropItemSlot
 const unitRemoveItem = UnitRemoveItem
+const unitUseItem = UnitUseItem
+const unitResetCooldown = UnitResetCooldown
+
+const COOLDOWN_STARTER_ABILITY_TYPE_ID = compiletime(() => {
+    const abilityType = BerserkAbilityType.create()
+    abilityType.manaCost = 0
+    return abilityType.id
+})
+
+const COOLDOWN_STARTER_ITEM_TYPE_ID = compiletime(() => {
+    const itemType = BlankItemType.create()
+    itemType.abilityTypeIds = [COOLDOWN_STARTER_ABILITY_TYPE_ID]
+    itemType.cooldownGroupId = COOLDOWN_STARTER_ABILITY_TYPE_ID
+    itemType.activelyUsed = true
+    return itemType.id
+})
 
 const dummy = assert(CreateUnit(Player.neutralVictim.handle, dummyUnitId, 0, 0, 270))
+
+const cooldownStarterItem = UnitAddItemById(dummy, COOLDOWN_STARTER_ITEM_TYPE_ID)
+
+const cooldownStarterAbility = BlzGetItemAbility(
+    cooldownStarterItem,
+    COOLDOWN_STARTER_ABILITY_TYPE_ID,
+)!
+
 ShowUnit(dummy, false)
+
+const startItemCooldownInternal = (handle: jitem, cooldown: number): void => {
+    const cooldownGroup = getItemIntegerField(handle, ITEM_IF_COOLDOWN_GROUP)
+    setItemIntegerField(handle, ITEM_IF_COOLDOWN_GROUP, COOLDOWN_STARTER_ABILITY_TYPE_ID)
+    setAbilityRealLevelField(cooldownStarterAbility, ABILITY_RLF_COOLDOWN, 0, cooldown)
+    unitResetCooldown(dummy)
+    unitUseItem(dummy, cooldownStarterItem)
+    setItemIntegerField(handle, ITEM_IF_COOLDOWN_GROUP, cooldownGroup)
+}
+
+/** @internal For use by internal systems only. */
+export const startItemCooldown = (
+    handle: jitem,
+    owner: junit | undefined,
+    cooldown: number,
+): void => {
+    doAbilityActionForceDummy(handle, owner, startItemCooldownInternal, cooldown)
+}
 
 /** @internal For use by internal systems only. */
 export const abilityActionDummy = dummy
