@@ -18,8 +18,16 @@ import {
     SPECIAL_EFFECT_ATTACHMENT_POINT_STRING_FIELD,
     SPECIAL_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
 } from "../standard/fields/ability"
-import { AbilityDependentValue, resolveCurrentAbilityDependentValue } from "../object-field/ability"
+import {
+    AbilityDependentValue,
+    AbilityField,
+    AbilityLevelField,
+    ReadonlySubscribableAbilityDependentValue,
+    resolveCurrentAbilityDependentValue,
+    SubscribableAbilityDependentValue,
+} from "../object-field/ability"
 import { Timer } from "../../core/types/timer"
+import { Destructor } from "../../destroyable"
 
 const createBehaviorFunctionsByAbilityTypeId = new LuaMap<
     AbilityTypeId,
@@ -72,6 +80,11 @@ const createUnitEventListener: <K extends keyof AbilityBehavior>(
 
 const registeredCommandEventIds = new LuaSet<string>()
 
+const subscribedValuesByAbilityBehavior = new LuaMap<
+    AbilityBehavior,
+    LuaSet<SubscribableAbilityDependentValue<any>>
+>()
+
 export abstract class AbilityBehavior<
     Parameters extends {
         periodicActionParameters?: any[]
@@ -84,6 +97,24 @@ export abstract class AbilityBehavior<
             exclusiveOnImpactHandlerAbilityBehaviorByAbility.set(ability, this)
         }
         this.onCreate()
+    }
+
+    protected override onDestroy(): Destructor {
+        subscribedValuesByAbilityBehavior.delete(this)
+        return super.onDestroy()
+    }
+
+    protected subscribe<T extends boolean | number | string>(
+        value: SubscribableAbilityDependentValue<T>,
+    ): void {
+        if (value instanceof AbilityField || value instanceof AbilityLevelField) {
+            let subscribedValues = subscribedValuesByAbilityBehavior.get(this)
+            if (subscribedValues == undefined) {
+                subscribedValues = new LuaSet()
+                subscribedValuesByAbilityBehavior.set(this, subscribedValues)
+            }
+            subscribedValues.add(value)
+        }
     }
 
     protected registerCommandEvent(
@@ -225,6 +256,13 @@ export abstract class AbilityBehavior<
     }*/
 
     protected onCreate(): void {
+        // no-op
+    }
+
+    public onValueChange(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _value: ReadonlySubscribableAbilityDependentValue<string | number | boolean>,
+    ): void {
         // no-op
     }
 
@@ -400,6 +438,24 @@ export abstract class AbilityBehavior<
         Unit.abilityStopEvent.addListener(createUnitEventListener("onStop"))
     }
 }
+
+const checkBehaviorOnValueChange = (
+    behavior: AbilityBehavior,
+    field: ReadonlySubscribableAbilityDependentValue<boolean | number | string>,
+) => {
+    const subscribedValues = subscribedValuesByAbilityBehavior.get(behavior)
+    if (subscribedValues != undefined && subscribedValues.has(field)) {
+        behavior.onValueChange(field)
+    }
+}
+
+AbilityField.valueChangeEvent.addListener((ability, field) => {
+    AbilityBehavior.forAll(ability, checkBehaviorOnValueChange, field)
+})
+
+AbilityLevelField.valueChangeEvent.addListener((ability, field) => {
+    AbilityBehavior.forAll(ability, checkBehaviorOnValueChange, field)
+})
 
 Ability.onCreate.addListener((ability) => {
     const createBehaviorFunctions = createBehaviorFunctionsByAbilityTypeId.get(

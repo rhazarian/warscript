@@ -502,10 +502,19 @@ export class AbilityCombatClassificationsLevelField extends AbilityLevelField<
     }
 }
 
-export type AbilityDependentValue<ValueType extends boolean | number | string> =
+export type ReadonlySubscribableAbilityDependentValue<ValueType extends boolean | number | string> =
+
+        | ValueType
+        | ReadonlyObjectFieldType<AbilityField<ValueType>>
+        | ReadonlyObjectLevelFieldType<AbilityLevelField<ValueType>>
+
+export type SubscribableAbilityDependentValue<ValueType extends boolean | number | string> =
     | ValueType
     | AbilityField<ValueType>
     | AbilityLevelField<ValueType>
+
+export type AbilityDependentValue<ValueType extends boolean | number | string> =
+    | SubscribableAbilityDependentValue<ValueType>
     | ((ability: Ability) => ValueType)
 
 export const resolveCurrentAbilityDependentValue: {
