@@ -182,7 +182,7 @@ export class AbilityStringField extends AbilityField<string, jabilitystringfield
 
 export abstract class AbilityArrayField<
     ValueType extends number | string | boolean = number | string | boolean,
-    NativeFieldType = unknown,
+    NativeFieldType extends jabilityfield = jabilityfield,
 > extends ObjectArrayField<AbilityType, Ability, ValueType, NativeFieldType> {
     protected override get instanceClass(): typeof Ability {
         return Ability
@@ -190,6 +190,10 @@ export abstract class AbilityArrayField<
 
     protected override getObjectDataEntryId(instance: Ability): AbilityTypeId {
         return instance.typeId
+    }
+
+    protected override hasNativeFieldValue(instance: Ability): boolean {
+        return instance.hasField(this.nativeField)
     }
 }
 

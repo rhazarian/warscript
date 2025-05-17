@@ -20,7 +20,7 @@ const compiletimeDefaultValueByObjectDataEntryIdByObjectFieldId = new LuaMap<
 >()
 
 const defaultValueByObjectDataEntryIdByObjectFieldId = postcompile(
-    () => compiletimeDefaultValueByObjectDataEntryIdByObjectFieldId
+    () => compiletimeDefaultValueByObjectDataEntryIdByObjectFieldId,
 )
 
 const objectFieldById = new LuaMap<number, ObjectFieldBase<any, any, any, any>>()
@@ -39,7 +39,7 @@ abstract class ObjectFieldBase<
     ObjectDataEntryType extends ObjectDataEntry,
     InstanceType extends AnyNotNil,
     ValueType,
-    NativeFieldType
+    NativeFieldType,
 > {
     /** @internal */
     protected readonly valueByInstance = setmetatable(new LuaMap<InstanceType, ValueType>(), {
@@ -65,8 +65,21 @@ abstract class ObjectFieldBase<
     protected abstract getNativeFieldById(id: number): NativeFieldType
 
     protected abstract getObjectDataEntryId(
-        instance: InstanceType
+        instance: InstanceType,
     ): ObjectDataEntryIdType<ObjectDataEntryType>
+
+    protected abstract hasNativeFieldValue(instance: InstanceType): boolean
+
+    public hasValue(instance: InstanceType): boolean {
+        const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
+            this.id,
+        )
+        return (
+            (defaultValueByObjectDataEntryId != undefined &&
+                defaultValueByObjectDataEntryId.has(this.getObjectDataEntryId(instance))) ||
+            this.hasNativeFieldValue(instance)
+        )
+    }
 
     public constructor(id: number) {
         if (objectFieldById.has(id)) {
@@ -78,14 +91,14 @@ abstract class ObjectFieldBase<
 
     public static create<T extends ObjectFieldBase<any, any, any, any>>(
         this: ObjectFieldConstructor<T>,
-        id?: number
+        id?: number,
     ): T & symbol {
         return new this(id ?? idGenerator.next()) as T & symbol
     }
 
     public static of<T extends ObjectFieldBase<any, any, any, any>>(
         this: ObjectFieldAbstractConstructor<T>,
-        id: number
+        id: number,
     ): T | undefined {
         const objectField = objectFieldById.get(id)
         return objectField instanceof this ? (objectField as T & symbol) : undefined
@@ -95,16 +108,19 @@ abstract class ObjectFieldBase<
 export type ObjectFieldValueChangeEvent<
     T extends
         | ObjectField<any, any, any, any>
-        | ReadonlyObjectFieldType<ObjectField<any, any, any, any>>
-> = T extends ObjectField<any, infer InstanceType, infer ValueType, any>
-    ? DispatchingEvent<
-          [instance: InstanceType, field: T, previousValue: ValueType, newValue: ValueType]
-      >
-    : T extends ReadonlyObjectFieldType<ObjectField<any, infer InstanceType, infer ValueType, any>>
-    ? DispatchingEvent<
-          [instance: InstanceType, field: T, previousValue: ValueType, newValue: ValueType]
-      >
-    : never
+        | ReadonlyObjectFieldType<ObjectField<any, any, any, any>>,
+> =
+    T extends ObjectField<any, infer InstanceType, infer ValueType, any>
+        ? DispatchingEvent<
+              [instance: InstanceType, field: T, previousValue: ValueType, newValue: ValueType]
+          >
+        : T extends ReadonlyObjectFieldType<
+                ObjectField<any, infer InstanceType, infer ValueType, any>
+            >
+          ? DispatchingEvent<
+                [instance: InstanceType, field: T, previousValue: ValueType, newValue: ValueType]
+            >
+          : never
 
 export type ReadonlyObjectFieldType<T extends ObjectField<any, any, any, any>> = Omit<
     T,
@@ -123,11 +139,9 @@ export abstract class ObjectField<
     ObjectDataEntryType extends ObjectDataEntry = ObjectDataEntry,
     InstanceType extends AnyNotNil = AnyNotNil,
     ValueType extends number | string | boolean = number | string | boolean,
-    NativeFieldType = unknown
+    NativeFieldType = unknown,
 > extends ObjectFieldBase<ObjectDataEntryType, InstanceType, ValueType, NativeFieldType> {
     protected abstract readonly defaultValue: ValueType
-
-    protected abstract hasNativeFieldValue(instance: InstanceType): boolean
 
     protected abstract getNativeFieldValue(instance: InstanceType): ValueType
 
@@ -149,11 +163,11 @@ export abstract class ObjectField<
             return this.defaultValue
         }
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
-            this.id
+            this.id,
         )
         if (defaultValueByObjectDataEntryId != undefined) {
             const defaultValue = defaultValueByObjectDataEntryId.get(
-                this.getObjectDataEntryId(entry)
+                this.getObjectDataEntryId(entry),
             ) as ValueType | undefined
             if (defaultValue != undefined) {
                 return this.valueByInstance.get(entry) ?? defaultValue
@@ -173,7 +187,7 @@ export abstract class ObjectField<
                 defaultValueByObjectDataEntryId = new LuaMap()
                 compiletimeDefaultValueByObjectDataEntryIdByObjectFieldId.set(
                     this.id,
-                    defaultValueByObjectDataEntryId
+                    defaultValueByObjectDataEntryId,
                 )
             }
             defaultValueByObjectDataEntryId.set(entry.id, value)
@@ -181,11 +195,11 @@ export abstract class ObjectField<
         }
 
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
-            this.id
+            this.id,
         )
         if (defaultValueByObjectDataEntryId != undefined) {
             const defaultValue = defaultValueByObjectDataEntryId.get(
-                this.getObjectDataEntryId(entry)
+                this.getObjectDataEntryId(entry),
             ) as ValueType | undefined
             if (defaultValue != undefined) {
                 const previousValue =
@@ -238,7 +252,7 @@ export abstract class ObjectField<
             instance: InstanceType,
             field: this,
             previousValue: ValueType,
-            newValue: ValueType
+            newValue: ValueType,
         ]
     ): void {
         this.invokeValueChangeEventRecursive(getClass(this), ...args)
@@ -250,7 +264,7 @@ export abstract class ObjectField<
             instance: InstanceType,
             field: this,
             previousValue: ValueType,
-            newValue: ValueType
+            newValue: ValueType,
         ]
     ): void {
         if (clazz == undefined) {
@@ -258,7 +272,7 @@ export abstract class ObjectField<
         }
         this.invokeValueChangeEventRecursive(getSuperclass(clazz), ...args)
         const valueChangeEvent = valueChangeEventByObjectFieldConstructor.get(
-            clazz as unknown as typeof ObjectField
+            clazz as unknown as typeof ObjectField,
         )
         if (valueChangeEvent != undefined) {
             Event.invoke(valueChangeEvent, ...args)
@@ -267,13 +281,13 @@ export abstract class ObjectField<
 
     protected static getOrCreateValueChangeEvent<
         T extends ObjectField,
-        R extends ReadonlyObjectFieldType<T>
+        R extends ReadonlyObjectFieldType<T>,
     >(this: ReadonlyObjectFieldConstructor<T>): ObjectFieldValueChangeEvent<R> {
         let valueChangeEvent = valueChangeEventByObjectFieldConstructor.get(this)
         if (valueChangeEvent == undefined) {
             valueChangeEvent = createDispatchingEvent(
                 new Event<EventParameters<ObjectFieldValueChangeEvent<R>>>(),
-                (...[, objectLevelField]) => objectLevelField.id
+                (...[, objectLevelField]) => objectLevelField.id,
             )
             valueChangeEventByObjectFieldConstructor.set(this, valueChangeEvent)
         }
@@ -295,30 +309,31 @@ export type ReadonlyObjectLevelFieldType<T extends ObjectLevelField<any, any, an
 export type ObjectLevelFieldValueChangeEvent<
     T extends
         | ObjectLevelField<any, any, any, any>
-        | ReadonlyObjectLevelFieldType<ObjectLevelField<any, any, any, any>>
-> = T extends ObjectLevelField<any, infer InstanceType, infer ValueType, any, any>
-    ? DispatchingEvent<
-          [
-              instance: InstanceType,
-              field: T,
-              level: number,
-              previousValue: ValueType,
-              newValue: ValueType
-          ]
-      >
-    : T extends ReadonlyObjectLevelFieldType<
-          ObjectLevelField<any, infer InstanceType, infer ValueType, any, any>
-      >
-    ? DispatchingEvent<
-          [
-              instance: InstanceType,
-              field: T,
-              level: number,
-              previousValue: ValueType,
-              newValue: ValueType
-          ]
-      >
-    : never
+        | ReadonlyObjectLevelFieldType<ObjectLevelField<any, any, any, any>>,
+> =
+    T extends ObjectLevelField<any, infer InstanceType, infer ValueType, any, any>
+        ? DispatchingEvent<
+              [
+                  instance: InstanceType,
+                  field: T,
+                  level: number,
+                  previousValue: ValueType,
+                  newValue: ValueType,
+              ]
+          >
+        : T extends ReadonlyObjectLevelFieldType<
+                ObjectLevelField<any, infer InstanceType, infer ValueType, any, any>
+            >
+          ? DispatchingEvent<
+                [
+                    instance: InstanceType,
+                    field: T,
+                    level: number,
+                    previousValue: ValueType,
+                    newValue: ValueType,
+                ]
+            >
+          : never
 
 type ReadonlyObjectLevelFieldConstructor<T extends ObjectLevelField> = OmitConstructor<
     typeof ObjectLevelField
@@ -334,7 +349,7 @@ export abstract class ObjectArrayField<
     ObjectDataEntryType extends ObjectDataEntry = ObjectDataEntry,
     InstanceType extends AnyNotNil = AnyNotNil,
     ValueType extends number | string | boolean = number | string | boolean,
-    NativeFieldType = unknown
+    NativeFieldType = unknown,
 > extends ObjectFieldBase<ObjectDataEntryType, InstanceType, ValueType[], NativeFieldType> {
     protected abstract readonly defaultValue: ValueType
 
@@ -343,7 +358,7 @@ export abstract class ObjectArrayField<
     protected abstract setNativeFieldValue(
         instance: InstanceType,
         index: number,
-        value: ValueType
+        value: ValueType,
     ): boolean
 
     public getValue<IndexType extends [number] | []>(
@@ -353,7 +368,7 @@ export abstract class ObjectArrayField<
 
     public getValue(
         entry: ObjectDataEntryType | InstanceType,
-        index?: number
+        index?: number,
     ): ValueType[] | ValueType {
         if (entry instanceof ObjectDataEntry) {
             const defaultValueByObjectDataEntryId = (
@@ -366,22 +381,22 @@ export abstract class ObjectArrayField<
                     | ValueType[]
                     | undefined
                 if (value != undefined) {
-                    return index == undefined ? value : value[index] ?? this.defaultValue
+                    return index == undefined ? value : (value[index] ?? this.defaultValue)
                 }
             }
             return index == undefined ? [] : this.defaultValue
         }
 
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
-            this.id
+            this.id,
         )
         if (defaultValueByObjectDataEntryId != undefined) {
             const defaultValue = defaultValueByObjectDataEntryId.get(
-                this.getObjectDataEntryId(entry)
+                this.getObjectDataEntryId(entry),
             ) as ValueType[] | undefined
             if (defaultValue != undefined) {
                 const value = this.valueByInstance.get(entry) ?? defaultValue
-                return index == undefined ? value : value[index] ?? this.defaultValue
+                return index == undefined ? value : (value[index] ?? this.defaultValue)
             }
         }
 
@@ -415,18 +430,16 @@ export abstract class ObjectLevelField<
     InstanceType extends AnyNotNil = AnyNotNil,
     ValueType extends number | string | boolean = number | string | boolean,
     InputValueType extends ValueType = never,
-    NativeFieldType = unknown
+    NativeFieldType = unknown,
 > extends ObjectFieldBase<ObjectDataEntryType, InstanceType, ValueType[], NativeFieldType> {
     protected abstract readonly defaultValue: ValueType
-
-    protected abstract hasNativeFieldValue(instance: InstanceType): boolean
 
     protected abstract getNativeFieldValue(instance: InstanceType, level: number): ValueType
 
     protected abstract setNativeFieldValue(
         instance: InstanceType,
         level: number,
-        value: ValueType
+        value: ValueType,
     ): boolean
 
     protected abstract getLevelCount(entry: ObjectDataEntryType | InstanceType): number
@@ -438,7 +451,7 @@ export abstract class ObjectLevelField<
 
     public getValue(
         entry: ObjectDataEntryType | InstanceType,
-        level?: number
+        level?: number,
     ): ValueType[] | ValueType {
         if (level == undefined) {
             const result: ValueType[] = []
@@ -467,11 +480,11 @@ export abstract class ObjectLevelField<
         }
 
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
-            this.id
+            this.id,
         )
         if (defaultValueByObjectDataEntryId != undefined) {
             const defaultValueByLevel = defaultValueByObjectDataEntryId.get(
-                this.getObjectDataEntryId(entry)
+                this.getObjectDataEntryId(entry),
             ) as ValueType[] | undefined
             if (defaultValueByLevel != undefined) {
                 return (
@@ -494,7 +507,7 @@ export abstract class ObjectLevelField<
     public setValue(
         entry: ObjectDataEntryType | InstanceType,
         levelOrValue: number | ObjectDataEntryLevelFieldValueSupplier<InputValueType, ValueType>,
-        value?: InputValueType
+        value?: InputValueType,
     ): boolean {
         if (value == undefined) {
             let result = false
@@ -510,8 +523,8 @@ export abstract class ObjectLevelField<
                                 ValueType
                             >,
                             i,
-                            this.getValue(entry, i)
-                        )
+                            this.getValue(entry, i),
+                        ),
                     ) || result
             }
             return result
@@ -531,7 +544,7 @@ export abstract class ObjectLevelField<
                 defaultValueByObjectDataEntryId = new LuaMap()
                 compiletimeDefaultValueByObjectDataEntryIdByObjectFieldId.set(
                     this.id,
-                    defaultValueByObjectDataEntryId
+                    defaultValueByObjectDataEntryId,
                 )
             }
             let valueByLevel = defaultValueByObjectDataEntryId.get(entry.id) as
@@ -545,11 +558,11 @@ export abstract class ObjectLevelField<
             return true
         }
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
-            this.id
+            this.id,
         )
         if (defaultValueByObjectDataEntryId != undefined) {
             const defaultValueByLevel = defaultValueByObjectDataEntryId.get(
-                this.getObjectDataEntryId(entry)
+                this.getObjectDataEntryId(entry),
             ) as ValueType[] | undefined
             if (defaultValueByLevel != undefined) {
                 let valueByLevel = this.valueByInstance.get(entry)
@@ -582,7 +595,7 @@ export abstract class ObjectLevelField<
     public trySetValue(
         entry: ObjectDataEntryType | InstanceType,
         levelOrValue: number | unknown,
-        value?: unknown
+        value?: unknown,
     ): boolean {
         if (value != undefined) {
             if (typeof value != typeof this.defaultValue) {
@@ -606,7 +619,7 @@ export abstract class ObjectLevelField<
             field: this,
             level: number,
             previousValue: ValueType,
-            newValue: ValueType
+            newValue: ValueType,
         ]
     ): void {
         this.invokeValueChangeEventRecursive(getClass(this), ...args)
@@ -619,7 +632,7 @@ export abstract class ObjectLevelField<
             field: this,
             level: number,
             previousValue: ValueType,
-            newValue: ValueType
+            newValue: ValueType,
         ]
     ): void {
         if (clazz == undefined) {
@@ -627,7 +640,7 @@ export abstract class ObjectLevelField<
         }
         this.invokeValueChangeEventRecursive(getSuperclass(clazz), ...args)
         const valueChangeEvent = valueChangeEventByObjectLevelFieldConstructor.get(
-            clazz as unknown as typeof ObjectLevelField
+            clazz as unknown as typeof ObjectLevelField,
         )
         if (valueChangeEvent != undefined) {
             Event.invoke(valueChangeEvent, ...args)
@@ -636,13 +649,13 @@ export abstract class ObjectLevelField<
 
     protected static getOrCreateValueChangeEvent<
         T extends ObjectLevelField,
-        R extends ReadonlyObjectLevelFieldType<T>
+        R extends ReadonlyObjectLevelFieldType<T>,
     >(this: ReadonlyObjectLevelFieldConstructor<T>): ObjectLevelFieldValueChangeEvent<R> {
         let valueChangeEvent = valueChangeEventByObjectLevelFieldConstructor.get(this)
         if (valueChangeEvent == undefined) {
             valueChangeEvent = createDispatchingEvent(
                 new Event<EventParameters<ObjectLevelFieldValueChangeEvent<R>>>(),
-                (...[, objectLevelField]) => objectLevelField.id
+                (...[, objectLevelField]) => objectLevelField.id,
             )
             valueChangeEventByObjectLevelFieldConstructor.set(this, valueChangeEvent)
         }
