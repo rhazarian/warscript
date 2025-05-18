@@ -1,8 +1,6 @@
 import { BlankItemType } from "../../object-data/entry/item-type/blank"
 import { array } from "../../../utility/arrays"
 import { ignoreEventsItems } from "./ignore-events-items"
-import { Unit } from "../unit"
-import { EventListenerPriority } from "../../../event"
 
 const setItemVisible = SetItemVisible
 const unitAddItem = UnitAddItem
@@ -22,8 +20,10 @@ const fillerItems = array(6, () => {
     return item
 })
 
-const unitsWithFillerItems = new LuaSet<junit>()
+/** @internal For use by internal systems only. */
+export const unitsWithFillerItems = new LuaSet<junit>()
 
+/** @internal For use by internal systems only. */
 export const unitAddItemToSlot = (unit: junit, item: jitem, slot: number): void => {
     for (const previousSlot of $range(0, slot - 2)) {
         if (unitItemInSlot(unit, previousSlot) == undefined) {
@@ -41,15 +41,3 @@ export const unitAddItemToSlot = (unit: junit, item: jitem, slot: number): void 
         unitsWithFillerItems.delete(unit)
     }
 }
-
-Unit.itemPickedUpEvent.addListener(EventListenerPriority.HIGHEST, (unit) => {
-    const handle = unit.handle
-    if (unitsWithFillerItems.has(handle)) {
-        for (const previousSlot of $range(1, 6)) {
-            const fillerItem = fillerItems[previousSlot - 1]
-            unitRemoveItem(handle, fillerItem)
-            setItemVisible(fillerItem, false)
-        }
-        unitsWithFillerItems.delete(handle)
-    }
-})
