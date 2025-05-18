@@ -54,7 +54,7 @@ export class UnitItems {
             if (isPowerup) {
                 setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, false)
             }
-            unitAddItemToSlot(handle, itemHandle, slot)
+            unitAddItemToSlot(handle, itemHandle, slot - 1)
             if (isPowerup) {
                 setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
             }

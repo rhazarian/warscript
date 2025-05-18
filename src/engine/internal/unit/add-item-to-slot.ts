@@ -26,7 +26,7 @@ export const unitsWithFillerItems = new LuaSet<junit>()
 
 /** @internal For use by internal systems only. */
 export const unitAddItemToSlot = (unit: junit, item: jitem, slot: number): void => {
-    for (const previousSlot of $range(0, slot - 2)) {
+    for (const previousSlot of $range(0, slot - 1)) {
         if (unitItemInSlot(unit, previousSlot) == undefined) {
             unitAddItem(unit, fillerItems[previousSlot])
             unitsWithFillerItems.add(unit)
@@ -34,7 +34,7 @@ export const unitAddItemToSlot = (unit: junit, item: jitem, slot: number): void 
     }
     unitAddItem(unit, item)
     if (unitsWithFillerItems.has(unit)) {
-        for (const previousSlot of $range(0, slot - 2)) {
+        for (const previousSlot of $range(0, slot - 1)) {
             const fillerItem = fillerItems[previousSlot]
             unitRemoveItem(unit, fillerItem)
             setItemVisible(fillerItem, false)
