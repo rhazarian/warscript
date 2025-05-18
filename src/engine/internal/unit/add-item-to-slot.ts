@@ -6,6 +6,7 @@ import { EventListenerPriority } from "../../../event"
 
 const setItemVisible = SetItemVisible
 const unitAddItem = UnitAddItem
+const unitItemInSlot = UnitItemInSlot
 const unitRemoveItem = UnitRemoveItem
 
 const FILLER_ITEM_TYPE_ID = compiletime(() => {
@@ -30,7 +31,7 @@ export const unitAddItemToSlot = (unit: junit, item: jitem, slot: number): void 
             unitsWithFillerItems.add(unit)
         }
     }
-    unitAddItem(unit, itemHandle)
+    unitAddItem(unit, item)
     if (unitsWithFillerItems.has(unit)) {
         for (const previousSlot of $range(0, slot - 2)) {
             const fillerItem = fillerItems[previousSlot]
