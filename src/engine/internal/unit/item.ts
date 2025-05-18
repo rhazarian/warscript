@@ -1,6 +1,10 @@
 import { Item } from "../item"
 import { Unit } from "../unit"
 import { findUnitItemSlot } from "../utility"
+import { BlankItemType } from "../../object-data/entry/item-type/blank"
+import { array } from "../../../utility/arrays"
+import { ignoreEventsItems } from "./ignore-events-items"
+import { EventListenerPriority } from "../../../event"
 
 const rawset = _G.rawset
 const type = _G.type
@@ -8,10 +12,25 @@ const type = _G.type
 const isItemPowerup = IsItemPowerup
 const setItemBooleanField = BlzSetItemBooleanField
 const unitAddItem = UnitAddItem
-const unitDropItemSlot = UnitDropItemSlot
 const unitInventorySize = UnitInventorySize
 const unitItemInSlot = UnitItemInSlot
+const unitRemoveItem = UnitRemoveItem
 const unitRemoveItemFromSlot = UnitRemoveItemFromSlot
+
+const FILLER_ITEM_TYPE_ID = compiletime(() => {
+    const itemType = BlankItemType.create()
+    itemType.name = "[Warscript/Dummy] Slot Filler"
+    return itemType.id
+})
+
+const fillerItems = array(6, () => {
+    const item = CreateItem(FILLER_ITEM_TYPE_ID, 0, 0)
+    SetItemVisible(item, false)
+    ignoreEventsItems.add(item)
+    return item
+})
+
+const unitsWithFillerItems = new LuaSet<junit>()
 
 const handleByUnitItems = setmetatable(new LuaMap<UnitItems, junit>(), { __mode: "k" })
 
@@ -55,8 +74,19 @@ export class UnitItems {
             if (isPowerup) {
                 setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, false)
             }
+            for (const previousSlot of $range(0, slot - 2)) {
+                if (unitItemInSlot(handle, previousSlot) == undefined) {
+                    unitAddItem(handle, fillerItems[previousSlot])
+                    unitsWithFillerItems.add(handle)
+                }
+            }
             unitAddItem(handle, itemHandle)
-            unitDropItemSlot(handle, itemHandle, slot - 1)
+            if (unitsWithFillerItems.has(handle)) {
+                for (const previousSlot of $range(0, slot - 2)) {
+                    unitRemoveItem(handle, fillerItems[previousSlot])
+                }
+                unitsWithFillerItems.delete(handle)
+            }
             if (isPowerup) {
                 setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
             }
@@ -79,6 +109,16 @@ export class UnitItems {
         return $multi(unitItemsNext, handle, unitInventorySize(handle) << 3)
     }
 }
+
+Unit.itemPickedUpEvent.addListener(EventListenerPriority.HIGHEST, (unit) => {
+    const handle = unit.handle
+    if (unitsWithFillerItems.has(handle)) {
+        for (const previousSlot of $range(1, 6)) {
+            unitRemoveItem(handle, fillerItems[previousSlot - 1])
+        }
+        unitsWithFillerItems.delete(handle)
+    }
+})
 
 declare module "../unit" {
     interface Unit {
