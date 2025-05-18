@@ -912,6 +912,10 @@ export class Unit extends Handle<junit> {
         return isUnitIllusion(this.handle)
     }
 
+    public get isStunned(): boolean {
+        return isUnitType(this.hnadle, UNIT_TYPE_STUNNED)
+    }
+
     public get combatClassifications(): CombatClassifications {
         return getUnitIntegerField(this.handle, UNIT_IF_TARGETED_AS) as CombatClassifications
     }
