@@ -913,7 +913,7 @@ export class Unit extends Handle<junit> {
     }
 
     public get isStunned(): boolean {
-        return isUnitType(this.hnadle, UNIT_TYPE_STUNNED)
+        return isUnitType(this.handle, UNIT_TYPE_STUNNED)
     }
 
     public get combatClassifications(): CombatClassifications {
