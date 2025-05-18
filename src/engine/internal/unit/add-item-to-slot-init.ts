@@ -1,6 +1,11 @@
 import { Unit } from "../unit"
 import { EventListenerPriority } from "../../../event"
 
+import { unitsWithFillerItems } from "./add-item-to-slot"
+
+const setItemVisible = SetItemVisible
+const unitRemoveItem = UnitRemoveItem
+
 Unit.itemPickedUpEvent.addListener(EventListenerPriority.HIGHEST, (unit) => {
     const handle = unit.handle
     if (unitsWithFillerItems.has(handle)) {
