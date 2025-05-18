@@ -702,6 +702,9 @@ for (const player of Player.all) {
     dummies.set(player, dummy)
 }
 
+/** @internal For use by internal systems only. */
+export const ignoreEventsItems = new LuaSet<jitem>()
+
 const enum UnitPropertyKey {
     SYNC_ID = 100,
     IS_PAUSED,
@@ -2409,24 +2412,27 @@ export class Unit extends Handle<junit> {
 
     public static itemDroppedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_DROP_ITEM, () => {
         const unit = getTriggerUnit()
-        if (getUnitTypeId(unit!) != dummyUnitId) {
-            return $multi(Unit.of(unit!), Item.of(getManipulatedItem()!))
+        const item = getManipulatedItem()
+        if (getUnitTypeId(unit!) != dummyUnitId && !ignoreEventsItems.has(item)) {
+            return $multi(Unit.of(unit!), Item.of(item!))
         }
         return $multi(IgnoreEvent)
     })
 
     public static itemPickedUpEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_PICKUP_ITEM, () => {
         const unit = getTriggerUnit()
-        if (getUnitTypeId(unit!) != dummyUnitId) {
-            return $multi(Unit.of(unit!), Item.of(getManipulatedItem()!))
+        const item = getManipulatedItem()
+        if (getUnitTypeId(unit!) != dummyUnitId && !ignoreEventsItems.has(item)) {
+            return $multi(Unit.of(unit!), Item.of(item!))
         }
         return $multi(IgnoreEvent)
     })
 
     public static itemUsedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_USE_ITEM, () => {
         const unit = getTriggerUnit()
-        if (getUnitTypeId(unit!) != dummyUnitId) {
-            return $multi(Unit.of(unit!), Item.of(getManipulatedItem()!))
+        const item = getManipulatedItem()
+        if (getUnitTypeId(unit!) != dummyUnitId && !ignoreEventsItems.has(item)) {
+            return $multi(Unit.of(unit!), Item.of(item!))
         }
         return $multi(IgnoreEvent)
     })

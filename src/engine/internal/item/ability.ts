@@ -6,6 +6,7 @@ import { abilityTypeIdGenerator } from "../../object-data/utility/object-data-en
 import type { AbilityTypeId } from "../../object-data/entry/ability-type"
 import { MINIMUM_POSITIVE_NORMALIZED_FLOAT } from "../../../math"
 import { Timer } from "../../../core/types/timer"
+import { ignoreEventsItems } from "../unit"
 
 const isItemOwned = IsItemOwned
 const isItemPowerup = IsItemPowerup
@@ -92,6 +93,11 @@ export const doAbilityAction = <T, Args extends any[]>(
     action: (handle: jitem, ...args: Args) => T,
     ...args: Args
 ): T => {
+    const isAlreadyIgnoredInEvents = ignoreEventsItems.has(handle)
+    if (!isAlreadyIgnoredInEvents) {
+        ignoreEventsItems.add(handle)
+    }
+
     const isOwned = isItemOwned(handle)
     let isPowerup: boolean | undefined
     let x: number | undefined
@@ -116,6 +122,10 @@ export const doAbilityAction = <T, Args extends any[]>(
         }
     }
 
+    if (!isAlreadyIgnoredInEvents) {
+        ignoreEventsItems.delete(handle)
+    }
+
     return result
 }
 
@@ -134,6 +144,11 @@ export const doAbilityActionForceDummy = <T, Args extends any[]>(
         return doAbilityAction(handle, action, ...args)
     }
 
+    const isAlreadyIgnoredInEvents = ignoreEventsItems.has(handle)
+    if (!isAlreadyIgnoredInEvents) {
+        ignoreEventsItems.add(handle)
+    }
+
     let isPowerup: boolean | undefined
     if (isItemPowerup(handle)) {
         setItemBooleanField(handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, false)
@@ -149,6 +164,10 @@ export const doAbilityActionForceDummy = <T, Args extends any[]>(
     unitDropItemSlot(owner, handle, slot)
     if (isPowerup) {
         setItemBooleanField(handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
+    }
+
+    if (!isAlreadyIgnoredInEvents) {
+        ignoreEventsItems.delete(handle)
     }
 
     return result
