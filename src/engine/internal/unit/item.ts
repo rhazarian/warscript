@@ -11,6 +11,7 @@ const type = _G.type
 
 const isItemPowerup = IsItemPowerup
 const setItemBooleanField = BlzSetItemBooleanField
+const setItemVisible = SetItemVisible
 const unitAddItem = UnitAddItem
 const unitInventorySize = UnitInventorySize
 const unitItemInSlot = UnitItemInSlot
@@ -25,7 +26,7 @@ const FILLER_ITEM_TYPE_ID = compiletime(() => {
 
 const fillerItems = array(6, () => {
     const item = CreateItem(FILLER_ITEM_TYPE_ID, 0, 0)
-    SetItemVisible(item, false)
+    setItemVisible(item, false)
     ignoreEventsItems.add(item)
     return item
 })
@@ -83,7 +84,9 @@ export class UnitItems {
             unitAddItem(handle, itemHandle)
             if (unitsWithFillerItems.has(handle)) {
                 for (const previousSlot of $range(0, slot - 2)) {
-                    unitRemoveItem(handle, fillerItems[previousSlot])
+                    const fillerItem = fillerItems[previousSlot]
+                    unitRemoveItem(handle, fillerItem)
+                    setItemVisible(fillerItem, false)
                 }
                 unitsWithFillerItems.delete(handle)
             }
@@ -114,7 +117,9 @@ Unit.itemPickedUpEvent.addListener(EventListenerPriority.HIGHEST, (unit) => {
     const handle = unit.handle
     if (unitsWithFillerItems.has(handle)) {
         for (const previousSlot of $range(1, 6)) {
-            unitRemoveItem(handle, fillerItems[previousSlot - 1])
+            const fillerItem = fillerItems[previousSlot - 1]
+            unitRemoveItem(handle, fillerItem)
+            setItemVisible(fillerItem, false)
         }
         unitsWithFillerItems.delete(handle)
     }
