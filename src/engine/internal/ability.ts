@@ -503,8 +503,6 @@ const getAbilityCooldown = (_: jitem, abilityTypeId: AbilityTypeId): number => {
     return getUnitAbilityCooldownRemaining(abilityActionDummy, abilityTypeId)
 }
 
-const doNothing = (): void => {}
-
 export class ItemAbility extends Ability {
     public constructor(
         handle: jability,

@@ -7,6 +7,7 @@ import type { AbilityTypeId } from "../../object-data/entry/ability-type"
 import { MINIMUM_POSITIVE_NORMALIZED_FLOAT } from "../../../math"
 import { Timer } from "../../../core/types/timer"
 import { ignoreEventsItems } from "../unit/ignore-events-items"
+import { unitAddItemToSlot } from "../unit/add-item-to-slot"
 
 const isItemOwned = IsItemOwned
 const isItemPowerup = IsItemPowerup
@@ -18,7 +19,6 @@ const getItemIntegerField = BlzGetItemIntegerField
 const setItemBooleanField = BlzSetItemBooleanField
 const setItemPosition = SetItemPosition
 const unitAddItem = UnitAddItem
-const unitDropItemSlot = UnitDropItemSlot
 const unitRemoveItem = UnitRemoveItem
 const unitUseItem = UnitUseItem
 const unitResetCooldown = UnitResetCooldown
@@ -160,8 +160,7 @@ export const doAbilityActionForceDummy = <T, Args extends any[]>(
     const result = action(handle, ...args)
 
     unitRemoveItem(dummy, handle)
-    unitAddItem(owner, handle)
-    unitDropItemSlot(owner, handle, slot)
+    unitAddItemToSlot(owner, handle, slot)
     if (isPowerup) {
         setItemBooleanField(handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
     }
