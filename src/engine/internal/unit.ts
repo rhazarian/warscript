@@ -54,6 +54,7 @@ const setUnitScale = SetUnitScale
 const setUnitPosition = SetUnitPosition
 const setUnitTimeScale = SetUnitTimeScale
 const getHandleId = GetHandleId
+const getUnitCurrentOrder = GetUnitCurrentOrder
 const createUnit = CreateUnit
 const killUnit = KillUnit
 const setUnitExploded = SetUnitExploded
@@ -913,7 +914,7 @@ export class Unit extends Handle<junit> {
     }
 
     public get isStunned(): boolean {
-        return isUnitType(this.handle, UNIT_TYPE_STUNNED)
+        return getUnitCurrentOrder(this.handle) == orderId("stunned")
     }
 
     public get combatClassifications(): CombatClassifications {
