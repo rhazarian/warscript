@@ -27,6 +27,7 @@ import {
 } from "../constants"
 import { forEach } from "../../utility/arrays"
 import { min } from "../../math"
+import { ignoreEventsItems } from "./unit/ignore-events-items"
 
 const match = string.match
 const tostring = _G.tostring
@@ -701,9 +702,6 @@ for (const player of Player.all) {
     ShowUnit(dummy, false)
     dummies.set(player, dummy)
 }
-
-/** @internal For use by internal systems only. */
-export const ignoreEventsItems = new LuaSet<jitem>()
 
 const enum UnitPropertyKey {
     SYNC_ID = 100,

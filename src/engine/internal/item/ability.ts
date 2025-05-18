@@ -6,7 +6,7 @@ import { abilityTypeIdGenerator } from "../../object-data/utility/object-data-en
 import type { AbilityTypeId } from "../../object-data/entry/ability-type"
 import { MINIMUM_POSITIVE_NORMALIZED_FLOAT } from "../../../math"
 import { Timer } from "../../../core/types/timer"
-import { ignoreEventsItems } from "../unit"
+import { ignoreEventsItems } from "../unit/ignore-events-items"
 
 const isItemOwned = IsItemOwned
 const isItemPowerup = IsItemPowerup
