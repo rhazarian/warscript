@@ -1,7 +1,7 @@
 import { Unit } from "../unit"
 import { EventListenerPriority } from "../../../event"
 
-import { unitsWithFillerItems } from "./add-item-to-slot"
+import { fillerItems, unitsWithFillerItems } from "./add-item-to-slot"
 
 const setItemVisible = SetItemVisible
 const unitRemoveItem = UnitRemoveItem

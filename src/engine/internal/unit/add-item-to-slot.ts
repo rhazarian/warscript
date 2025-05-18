@@ -13,7 +13,8 @@ const FILLER_ITEM_TYPE_ID = compiletime(() => {
     return itemType.id
 })
 
-const fillerItems = array(6, () => {
+/** @internal For use by internal systems only. */
+export const fillerItems = array(6, () => {
     const item = CreateItem(FILLER_ITEM_TYPE_ID, 0, 0)
     setItemVisible(item, false)
     ignoreEventsItems.add(item)
