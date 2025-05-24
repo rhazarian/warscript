@@ -7,6 +7,7 @@ import { Unit } from "../core/types/unit"
 import { Forward, forwardByN } from "../utility/functions"
 import { MISSILE_DATA_BY_UNIT_TYPE_ID } from "./internal/unit-missile-data"
 import { UnitTypeId } from "./object-data/entry/unit-type"
+import { ceil } from "../math"
 
 const type = _G.type
 const select = _G.select
@@ -26,6 +27,11 @@ const getUnitZ = BlzGetUnitZ
 const getUnitFlyHeight = GetUnitFlyHeight
 const getLocationZ = GetLocationZ
 const moveLocation = MoveLocation
+const getLightningColorA = GetLightningColorA
+const getLightningColorR = GetLightningColorR
+const getLightningColorG = GetLightningColorG
+const getLightningColorB = GetLightningColorB
+const setLightningColor = SetLightningColor
 
 const location = Location(0, 0)
 
@@ -47,6 +53,7 @@ const enum LightningPropertyKey {
     TARGET_Y,
     TARGET_Z,
     DURATION,
+    FADING,
 }
 
 export type LightningConstructor<T extends Lightning> = typeof Lightning &
@@ -63,8 +70,12 @@ export class Lightning extends Handle<jlightning> {
     private [LightningPropertyKey.TARGET_Y]?: number
     private [LightningPropertyKey.TARGET_Z]?: number
     private [LightningPropertyKey.DURATION]?: number
+    private [LightningPropertyKey.FADING]?: true
 
-    public constructor(handle: jlightning, public readonly typeId: LightningTypeId) {
+    public constructor(
+        handle: jlightning,
+        public readonly typeId: LightningTypeId,
+    ) {
         super(handle)
     }
 
@@ -89,20 +100,20 @@ export class Lightning extends Handle<jlightning> {
                       sourceZ: number,
                       targetX: number,
                       targetY: number,
-                      targetZ: number
+                      targetZ: number,
                   ]
                 | [
                       source: Unit,
                       ...target:
                           | [targetX: number, targetY: number, ...targetZ: [number] | []]
-                          | [Unit]
+                          | [Unit],
                   ]
                 | [
                       ...source:
                           | [sourceX: number, sourceY: number, ...sourceZ: [number] | []]
                           | [Unit],
-                      target: Unit
-                  ]
+                      target: Unit,
+                  ],
         ]
     ): T
 
@@ -115,7 +126,7 @@ export class Lightning extends Handle<jlightning> {
         sourceZOrTargetXOrTargetUnitOrTargetY?: number | Unit,
         targetXOrTargetUnitOrTargetYOrTargetZ?: number | Unit,
         targetY?: number,
-        targetZ?: number
+        targetZ?: number,
     ): T {
         if (typeof checkVisibility != "boolean") {
             return this.create(
@@ -126,7 +137,7 @@ export class Lightning extends Handle<jlightning> {
                 sourceYOrTargetXOrTargetUnit as any,
                 sourceZOrTargetXOrTargetUnitOrTargetY as any,
                 targetXOrTargetUnitOrTargetYOrTargetZ as any,
-                targetY as any
+                targetY as any,
             )
         }
 
@@ -140,9 +151,9 @@ export class Lightning extends Handle<jlightning> {
                     sourceZOrTargetXOrTargetUnitOrTargetY as number,
                     targetXOrTargetUnitOrTargetYOrTargetZ as number,
                     targetY as number,
-                    targetZ as number
+                    targetZ as number,
                 ),
-                typeId
+                typeId,
             )
         }
         if (targetXOrTargetUnitOrTargetYOrTargetZ != undefined) {
@@ -155,9 +166,9 @@ export class Lightning extends Handle<jlightning> {
                             sourceXOrSourceUnit as number,
                             sourceYOrTargetXOrTargetUnit as number,
                             sourceZOrTargetXOrTargetUnitOrTargetY as number,
-                            targetXOrTargetUnitOrTargetYOrTargetZ as number
+                            targetXOrTargetUnitOrTargetYOrTargetZ as number,
                         ),
-                        typeId
+                        typeId,
                     )
                 }
                 const unit = (sourceXOrSourceUnit as Unit).handle
@@ -170,9 +181,9 @@ export class Lightning extends Handle<jlightning> {
                         getUnitZ(unit),
                         sourceYOrTargetXOrTargetUnit as number,
                         sourceZOrTargetXOrTargetUnitOrTargetY as number,
-                        targetXOrTargetUnitOrTargetYOrTargetZ as number
+                        targetXOrTargetUnitOrTargetYOrTargetZ as number,
                     ),
-                    typeId
+                    typeId,
                 )
                 lightning[LightningPropertyKey.CHECK_VISIBILITY] = checkVisibility
                 lightning[LightningPropertyKey.SOURCE_UNIT] = unit
@@ -197,9 +208,9 @@ export class Lightning extends Handle<jlightning> {
                     sourceZOrTargetXOrTargetUnitOrTargetY as number,
                     getUnitX(unit),
                     getUnitY(unit),
-                    getUnitZ(unit)
+                    getUnitZ(unit),
                 ),
-                typeId
+                typeId,
             )
             lightning[LightningPropertyKey.CHECK_VISIBILITY] = checkVisibility
             lightning[LightningPropertyKey.SOURCE_X] = sourceXOrSourceUnit as number
@@ -219,7 +230,7 @@ export class Lightning extends Handle<jlightning> {
                 moveLocation(
                     location,
                     sourceYOrTargetXOrTargetUnit as number,
-                    sourceZOrTargetXOrTargetUnitOrTargetY as number
+                    sourceZOrTargetXOrTargetUnitOrTargetY as number,
                 )
                 const z = getLocationZ(location)
                 const lightning = this.of(
@@ -231,9 +242,9 @@ export class Lightning extends Handle<jlightning> {
                         getUnitZ(unit),
                         sourceYOrTargetXOrTargetUnit as number,
                         sourceZOrTargetXOrTargetUnitOrTargetY as number,
-                        z
+                        z,
                     ),
-                    typeId
+                    typeId,
                 )
                 lightning[LightningPropertyKey.CHECK_VISIBILITY] = checkVisibility
                 lightning[LightningPropertyKey.SOURCE_UNIT] = unit
@@ -251,7 +262,7 @@ export class Lightning extends Handle<jlightning> {
             moveLocation(
                 location,
                 sourceXOrSourceUnit as number,
-                sourceYOrTargetXOrTargetUnit as number
+                sourceYOrTargetXOrTargetUnit as number,
             )
             const z = getLocationZ(location)
             const lightning = this.of(
@@ -263,9 +274,9 @@ export class Lightning extends Handle<jlightning> {
                     z,
                     getUnitX(unit),
                     getUnitY(unit),
-                    getUnitZ(unit)
+                    getUnitZ(unit),
                 ),
-                typeId
+                typeId,
             )
             lightning[LightningPropertyKey.CHECK_VISIBILITY] = checkVisibility
             lightning[LightningPropertyKey.SOURCE_X] = sourceXOrSourceUnit as number
@@ -289,9 +300,9 @@ export class Lightning extends Handle<jlightning> {
                 getUnitZ(sourceUnit) + getUnitFlyHeight(sourceUnit),
                 getUnitX(targetUnit),
                 getUnitY(targetUnit),
-                getUnitZ(targetUnit) + getUnitFlyHeight(targetUnit)
+                getUnitZ(targetUnit) + getUnitFlyHeight(targetUnit),
             ),
-            typeId
+            typeId,
         )
         lightning[LightningPropertyKey.CHECK_VISIBILITY] = checkVisibility
         lightning[LightningPropertyKey.SOURCE_UNIT] = sourceUnit
@@ -307,15 +318,28 @@ export class Lightning extends Handle<jlightning> {
     }
 
     public static flash(
-        ...parameters: [...parameters: Parameters<(typeof Lightning)["create"]>, duration: number]
+        ...parameters: [
+            ...parameters: Parameters<(typeof Lightning)["create"]>,
+            duration: number,
+            fading?: boolean,
+        ]
     ): void {
         const parametersToForwardCount = (select("#", ...parameters) - 1) as 3 | 4 | 5 | 6 | 7 | 8
         const lightning = (forwardByN[parametersToForwardCount] as Forward<3 | 4 | 5 | 6 | 7 | 8>)(
             Lightning.create,
             this,
-            ...parameters
+            ...parameters,
         )
-        const [duration] = select<any>(-1, ...parameters)
+        const [parameterOrDuration, durationOrFading] = select<any>(-2, ...parameters)
+        let duration: number
+        if (type(durationOrFading) == "number") {
+            duration = durationOrFading
+        } else {
+            duration = parameterOrDuration
+            if (durationOrFading) {
+                lightning[LightningPropertyKey.FADING] = true
+            }
+        }
         lightning[LightningPropertyKey.DURATION] = duration
         ++temporaryLightningsCount
         temporaryLightnings[temporaryLightningsCount - 1] = lightning
@@ -331,7 +355,7 @@ Timer.onPeriod[UPDATE_PERIOD].addListener(() => {
             lightning[LightningPropertyKey.TARGET_UNIT]!,
         ]
         const sourceUnitMissileData = MISSILE_DATA_BY_UNIT_TYPE_ID.get(
-            getUnitTypeId(sourceUnit) as UnitTypeId
+            getUnitTypeId(sourceUnit) as UnitTypeId,
         )
         const sourceUnitFacing = rad(getUnitFacing(sourceUnit) - 90)
         const sourceUnitFacingCos = cos(sourceUnitFacing)
@@ -363,14 +387,14 @@ Timer.onPeriod[UPDATE_PERIOD].addListener(() => {
                 getUnitFlyHeight(targetUnit) +
                 MISSILE_DATA_BY_UNIT_TYPE_ID.get(getUnitTypeId(targetUnit) as UnitTypeId)
                     .impactOffsetZ +
-                lightning[LightningPropertyKey.TARGET_Z]!
+                lightning[LightningPropertyKey.TARGET_Z]!,
         )
     }
 
     for (const lightning of unitToPointLightnings) {
         const sourceUnit = lightning[LightningPropertyKey.SOURCE_UNIT]!
         const sourceUnitMissileData = MISSILE_DATA_BY_UNIT_TYPE_ID.get(
-            getUnitTypeId(sourceUnit) as UnitTypeId
+            getUnitTypeId(sourceUnit) as UnitTypeId,
         )
         const sourceUnitFacing = rad(getUnitFacing(sourceUnit) - 90)
         const sourceUnitFacingCos = cos(sourceUnitFacing)
@@ -397,7 +421,7 @@ Timer.onPeriod[UPDATE_PERIOD].addListener(() => {
                 lightning[LightningPropertyKey.SOURCE_Z]!,
             lightning[LightningPropertyKey.TARGET_X]!,
             lightning[LightningPropertyKey.TARGET_Y]!,
-            lightning[LightningPropertyKey.TARGET_Z]!
+            lightning[LightningPropertyKey.TARGET_Z]!,
         )
     }
 
@@ -415,7 +439,7 @@ Timer.onPeriod[UPDATE_PERIOD].addListener(() => {
                 getUnitFlyHeight(targetUnit) +
                 MISSILE_DATA_BY_UNIT_TYPE_ID.get(getUnitTypeId(targetUnit) as UnitTypeId)
                     .impactOffsetZ +
-                lightning[LightningPropertyKey.TARGET_Z]!
+                lightning[LightningPropertyKey.TARGET_Z]!,
         )
     }
 
@@ -429,6 +453,16 @@ Timer.onPeriod[UPDATE_PERIOD].addListener(() => {
             temporaryLightnings[temporaryLightningsCount - 1] = undefined!
             --temporaryLightningsCount
         } else {
+            if (lightning[LightningPropertyKey.FADING]) {
+                const handle = lightning.handle
+                setLightningColor(
+                    handle,
+                    getLightningColorR(handle),
+                    getLightningColorG(handle),
+                    getLightningColorB(handle),
+                    ceil(getLightningColorA(handle) * (1 - UPDATE_PERIOD / duration)),
+                )
+            }
             lightning[LightningPropertyKey.DURATION] = duration - UPDATE_PERIOD
             ++i
         }
