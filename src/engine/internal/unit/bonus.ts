@@ -21,6 +21,10 @@ import {
     MOVEMENT_SPEED_INCREASE_FACTOR_ABILITY_FIELD,
     MOVEMENT_SPEED_INCREASE_FACTOR_DUMMY_ABILITY_TYPE_ID,
 } from "../object-data/movement-speed-increase-factor"
+import {
+    EVASION_PROBABILITY_ABILITY_FIELD,
+    EVASION_PROBABILITY_DUMMY_ABILITY_TYPE_ID,
+} from "../object-data/evasion-probability"
 
 export type UnitBonusId<Brand extends string = any> = number & {
     readonly __unitBonusId: unique symbol
@@ -33,6 +37,7 @@ export type UnitMovementSpeedFactorBonusId = UnitBonusId<"movementSpeedFactor">
 export type UnitAutoAttackDamageBonusId = UnitBonusId<"autoAttackDamage">
 export type UnitDamageFactorBonusId = UnitBonusId<"damageFactor">
 export type UnitReceivedDamageFactorBonusId = UnitBonusId<"receivedDamageFactor">
+export type UnitEvasionProbabilityBonusId = UnitBonusId<"evasionProbability">
 
 export type UnitBonusType<Id extends UnitBonusId = UnitBonusId> = (
     | {
@@ -57,6 +62,14 @@ export type UnitBonusType<Id extends UnitBonusId = UnitBonusId> = (
 
 const damageFactorByUnit = new LuaMap<Unit, number>()
 const receivedDamageFactorByUnit = new LuaMap<Unit, number>()
+
+const atLeastOnceProbability = (array: readonly number[]): number => {
+    let oppositeEventProbability = 1
+    for (const i of $range(1, array.length)) {
+        oppositeEventProbability *= 1 - array[i - 1]
+    }
+    return 1 - oppositeEventProbability
+}
 
 export namespace UnitBonusType {
     export const ARMOR: UnitBonusType<UnitArmorBonusId> = {
@@ -96,6 +109,13 @@ export namespace UnitBonusType {
         reduce: product,
         valueByUnit: receivedDamageFactorByUnit,
         initialValue: 1,
+    }
+    export const EVASION_PROBABILITY: UnitBonusType<UnitEvasionProbabilityBonusId> = {
+        abilityTypeId: EVASION_PROBABILITY_DUMMY_ABILITY_TYPE_ID,
+        field: EVASION_PROBABILITY_ABILITY_FIELD,
+        integer: false,
+        reduce: atLeastOnceProbability,
+        initialValue: 0,
     }
 }
 

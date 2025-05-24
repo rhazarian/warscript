@@ -136,6 +136,7 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           armorIncreaseFactor?: NumberParameterValueType
           attackSpeedIncreaseFactor?: NumberParameterValueType
           movementSpeedIncreaseFactor?: NumberParameterValueType
+          evasionProbability?: NumberParameterValueType
           damageFactor?: NumberParameterValueType
           receivedDamageFactor?: NumberParameterValueType
           receivedMagicDamageFactor?: NumberParameterValueType
@@ -189,6 +190,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     armorIncreaseFactor: true,
     attackSpeedIncreaseFactor: true,
     movementSpeedIncreaseFactor: true,
+    evasionProbability: true,
     damageFactor: true,
     receivedDamageFactor: true,
     receivedMagicDamageFactor: true,
@@ -285,6 +287,7 @@ const buffNumberParameters = [
     "durationIncreaseOnAutoAttack",
     "attackSpeedIncreaseFactor",
     "movementSpeedIncreaseFactor",
+    "evasionProbability",
     "armorIncrease",
     "damageFactor",
     "receivedDamageFactor",
@@ -1241,6 +1244,14 @@ export class Buff<
             UnitBonusType.MOVEMENT_SPEED_FACTOR,
             movementSpeedIncreaseFactor,
         )
+    }
+
+    public get evasionProbability(): number {
+        return this.getUnitBonus(UnitBonusType.EVASION_PROBABILITY)
+    }
+
+    public set evasionProbability(evasionProbability: number) {
+        this.addOrUpdateOrRemoveUnitBonus(UnitBonusType.EVASION_PROBABILITY, evasionProbability)
     }
 
     public get duration(): number {

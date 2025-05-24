@@ -8,7 +8,9 @@ export class EvasionAbilityType extends AbilityType {
         return this.getNumberLevelField("Eev1")
     }
 
-    public set evasionProbability(evasionProbability: ObjectDataEntryLevelFieldValueSupplier<number>) {
+    public set evasionProbability(
+        evasionProbability: ObjectDataEntryLevelFieldValueSupplier<number>,
+    ) {
         this.setNumberLevelField("Eev1", evasionProbability)
     }
 }
