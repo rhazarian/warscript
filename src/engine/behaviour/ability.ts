@@ -17,6 +17,8 @@ import {
     MISSILE_SPEED_ABILITY_INTEGER_FIELD,
     SPECIAL_EFFECT_ATTACHMENT_POINT_STRING_FIELD,
     SPECIAL_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+    TARGET_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD,
+    TARGET_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
 } from "../standard/fields/ability"
 import {
     AbilityDependentValue,
@@ -152,6 +154,17 @@ export abstract class AbilityBehavior<
         )
         Effect.flash(
             CASTER_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
+            widget,
+            attachmentPoint != "" ? attachmentPoint : "origin",
+        )
+    }
+
+    protected flashTargetEffect(widget: Widget): void {
+        const attachmentPoint = TARGET_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD.getValue(
+            this.ability,
+        )
+        Effect.flash(
+            TARGET_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
             widget,
             attachmentPoint != "" ? attachmentPoint : "origin",
         )
