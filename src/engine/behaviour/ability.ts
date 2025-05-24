@@ -148,7 +148,12 @@ export abstract class AbilityBehavior<
         return resolveCurrentAbilityDependentValue(this.ability, value)
     }
 
-    protected flashCasterEffect(widget: Widget): void {
+    protected flashCasterEffect(
+        widget: Widget,
+        ...parametersOrDuration:
+            | [parameters?: EffectParameters]
+            | [duration?: number, parameters?: EffectParameters]
+    ): void {
         const attachmentPoint = CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD.getValue(
             this.ability,
         )
@@ -156,10 +161,16 @@ export abstract class AbilityBehavior<
             CASTER_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
             widget,
             attachmentPoint != "" ? attachmentPoint : "origin",
+            ...parametersOrDuration,
         )
     }
 
-    protected flashTargetEffect(widget: Widget): void {
+    protected flashTargetEffect(
+        widget: Widget,
+        ...parametersOrDuration:
+            | [parameters?: EffectParameters]
+            | [duration?: number, parameters?: EffectParameters]
+    ): void {
         const attachmentPoint = TARGET_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD.getValue(
             this.ability,
         )
@@ -167,6 +178,7 @@ export abstract class AbilityBehavior<
             TARGET_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
             widget,
             attachmentPoint != "" ? attachmentPoint : "origin",
+            ...parametersOrDuration,
         )
     }
 
