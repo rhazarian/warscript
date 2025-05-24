@@ -7,7 +7,6 @@ import { Unit } from "../core/types/unit"
 import { Forward, forwardByN } from "../utility/functions"
 import { MISSILE_DATA_BY_UNIT_TYPE_ID } from "./internal/unit-missile-data"
 import { UnitTypeId } from "./object-data/entry/unit-type"
-import { ceil } from "../math"
 
 const type = _G.type
 const select = _G.select
@@ -467,7 +466,7 @@ Timer.onPeriod[UPDATE_PERIOD].addListener(() => {
                     getLightningColorR(handle),
                     getLightningColorG(handle),
                     getLightningColorB(handle),
-                    ceil(getLightningColorA(handle) * (1 - UPDATE_PERIOD / duration)),
+                    getLightningColorA(handle) * (1 - UPDATE_PERIOD / duration),
                 )
             }
             lightning[LightningPropertyKey.DURATION] = duration - UPDATE_PERIOD
