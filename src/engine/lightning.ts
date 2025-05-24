@@ -324,21 +324,28 @@ export class Lightning extends Handle<jlightning> {
             fading?: boolean,
         ]
     ): void {
-        const parametersToForwardCount = (select("#", ...parameters) - 1) as 3 | 4 | 5 | 6 | 7 | 8
+        const [parameterOrDuration, durationOrFading] = select<any>(-2, ...parameters)
+        const hasFading = type(durationOrFading) != "number"
+        const parametersToForwardCount = (select("#", ...parameters) - (hasFading ? 2 : 1)) as
+            | 3
+            | 4
+            | 5
+            | 6
+            | 7
+            | 8
         const lightning = (forwardByN[parametersToForwardCount] as Forward<3 | 4 | 5 | 6 | 7 | 8>)(
             Lightning.create,
             this,
             ...parameters,
         )
-        const [parameterOrDuration, durationOrFading] = select<any>(-2, ...parameters)
         let duration: number
-        if (type(durationOrFading) == "number") {
-            duration = durationOrFading
-        } else {
+        if (hasFading) {
             duration = parameterOrDuration
             if (durationOrFading) {
                 lightning[LightningPropertyKey.FADING] = true
             }
+        } else {
+            duration = durationOrFading
         }
         lightning[LightningPropertyKey.DURATION] = duration
         ++temporaryLightningsCount
