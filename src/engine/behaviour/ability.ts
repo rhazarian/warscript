@@ -229,10 +229,13 @@ export abstract class AbilityBehavior<
                 duration,
             )
         } else {
+            const attachmentPoint = SPECIAL_EFFECT_ATTACHMENT_POINT_STRING_FIELD.getValue(
+                this.ability,
+            )
             Effect.flash(
                 SPECIAL_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
                 xOrWidget,
-                SPECIAL_EFFECT_ATTACHMENT_POINT_STRING_FIELD.getValue(this.ability),
+                attachmentPoint != "" ? attachmentPoint : "origin",
                 yOrDuration,
             )
         }
