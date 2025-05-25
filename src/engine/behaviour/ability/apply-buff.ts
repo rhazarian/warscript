@@ -195,3 +195,41 @@ export class ApplyBuffTargetAreaAbilityBehavior<
         }
     }
 }
+
+const behaviorByBuff = new LuaMap<Buff, ApplyBuffChannelingTargetAbilityBehavior<any>>()
+
+export class ApplyBuffChannelingTargetAbilityBehavior<
+    T extends BuffConstructor = typeof Buff,
+> extends ApplyBuffAbilityBehavior<T> {
+    private buff?: InstanceType<T>
+
+    public override onUnitTargetChannelingStart(caster: Unit, target: Unit): void {
+        const previousBuff = this.buff
+        if (previousBuff !== undefined) {
+            behaviorByBuff.delete(previousBuff)
+            previousBuff.destroy()
+        }
+        const buff = this.applyBuff(target)
+        if (buff != undefined) {
+            behaviorByBuff.set(buff, this)
+        }
+        this.buff = buff
+    }
+
+    public override onStop(): void {
+        const buff = this.buff
+        if (buff !== undefined) {
+            behaviorByBuff.delete(buff)
+            buff.destroy()
+            this.buff = undefined
+        }
+    }
+}
+
+Buff.destroyEvent.addListener((buff) => {
+    const behavior = behaviorByBuff.get(buff)
+    if (behavior !== undefined) {
+        behaviorByBuff.delete(buff)
+        behavior.ability.interruptCast()
+    }
+})

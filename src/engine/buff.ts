@@ -41,7 +41,7 @@ import { UnitBehavior } from "./behaviour/unit"
 import type { Widget } from "../core/types/widget"
 import { forEach } from "../utility/arrays"
 import { Destructor } from "../destroyable"
-import { EventListenerPriority } from "../event"
+import { Event, EventListenerPriority } from "../event"
 import { getAbilityDuration } from "./internal/mechanics/ability-duration"
 import { Item } from "./internal/item"
 import { Destructable } from "../core/types/destructable"
@@ -509,6 +509,8 @@ const buffHealingIntervalTimerCallback = (buff: Buff) => {
         source.healTarget(buff[BuffPropertyKey.UNIT], healingPerInterval)
     }
 }
+
+const buffDestroyEvent = new Event<[Buff]>()
 
 export class Buff<
     AdditionalParameters extends Prohibit<Record<string, any>, keyof BuffParameters> = object,
@@ -1402,6 +1404,8 @@ export class Buff<
             }
         }
 
+        Event.invoke(buffDestroyEvent, this)
+
         return super.onDestroy()
     }
 
@@ -1521,6 +1525,8 @@ export class Buff<
             }
         }
     }
+
+    public static readonly destroyEvent = buffDestroyEvent
 
     static {
         const destroyBuffIfNeeded = (buff: Buff) => {
