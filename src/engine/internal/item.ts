@@ -5,6 +5,8 @@ import { ReadonlyRect, Rect } from "../../core/types/rect"
 import { ItemAbility } from "./ability"
 import { AbilityTypeId } from "../object-data/entry/ability-type"
 import { doAbilityAction } from "./item/ability"
+import { DUMMY_ITEM_ID } from "./object-data/dummy-item"
+import { SLOT_FILLER_ITEM_TYPE_ID } from "./unit/add-item-to-slot"
 
 const itemAddAbility = BlzItemAddAbility
 const itemRemoveAbility = BlzItemRemoveAbility
@@ -15,6 +17,10 @@ const getAbilityId = BlzGetAbilityId
 const getWidgetLife = GetWidgetLife
 const removeItem = RemoveItem
 const getHandleId = GetHandleId
+const setRect = SetRect
+const enumItemsInRect = EnumItemsInRect
+const getEnumItem = GetEnumItem
+const getItemTypeId = GetItemTypeId
 
 const getItemIntegerField = BlzGetItemIntegerField
 
@@ -42,6 +48,17 @@ const getItemAbilities = (handle: jitem, item: Item): ItemAbility[] => {
         abilities[i] = ItemAbility.of(ability, getAbilityId(ability), item)
     }
     return abilities
+}
+
+let targetCollection: Item[]
+let targetCollectionNextIndex: number
+const collectIntoTarget = () => {
+    const item = getEnumItem()
+    const typeId = getItemTypeId(item)
+    if (typeId != DUMMY_ITEM_ID && typeId != SLOT_FILLER_ITEM_TYPE_ID) {
+        targetCollection[targetCollectionNextIndex - 1] = Item.of(getEnumItem())
+        ++targetCollectionNextIndex
+    }
 }
 
 const enum ItemPropertyKey {
@@ -83,7 +100,7 @@ export class Item extends Handle<jitem> {
         id: number,
         x: number,
         y: number,
-        skinId?: number
+        skinId?: number,
     ): T {
         return this.of(BlzCreateItemWithSkin(id, x, y, skinId ?? id))
     }
@@ -301,7 +318,7 @@ export class Item extends Handle<jitem> {
             getItemIntegerField(handle, ITEM_IF_TINTING_COLOR_RED),
             getItemIntegerField(handle, ITEM_IF_TINTING_COLOR_GREEN),
             getItemIntegerField(handle, ITEM_IF_TINTING_COLOR_BLUE),
-            getItemIntegerField(handle, ITEM_IF_TINTING_COLOR_ALPHA)
+            getItemIntegerField(handle, ITEM_IF_TINTING_COLOR_ALPHA),
         )
     }
 
@@ -371,28 +388,24 @@ export class Item extends Handle<jitem> {
         return this[ItemPropertyKey.ABILITIES]
     }
 
-    public static getInRange(pos: Vec2, range: number): Item[] {
-        const collection: Item[] = []
-        SetRect(enumRect, pos.x - range, pos.y - range, pos.x + range, pos.y + range)
-        EnumItemsInRect(enumRect, undefined, () => {
-            collection[collection.length] = this.of(GetEnumItem())
-        })
-        return collection
+    public static getInRange(x: number, y: number, range: number): Item[] {
+        targetCollection = []
+        setRect(enumRect, x - range, y - range, x + range, y + range)
+        enumItemsInRect(enumRect, undefined, collectIntoTarget)
+        return targetCollection
     }
 
     public static getInRect(rect: ReadonlyRect): Item[] {
-        const collection: Item[] = []
-        EnumItemsInRect(rect.handle, undefined, () => {
-            collection[collection.length] = this.of(GetEnumItem())
-        })
-        return collection
+        targetCollection = []
+        enumItemsInRect(rect.handle, undefined, collectIntoTarget)
+        return targetCollection
     }
 
     public static get onCreate(): Event<[Item]> {
         return this.onCreateEvent
     }
 
-    public static get onDestroy(): Event<[Item]> {
+    public static override get destroyEvent(): Event<[Item]> {
         return this.onDestroyEvent
     }
 }

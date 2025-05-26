@@ -7,7 +7,8 @@ const unitAddItem = UnitAddItem
 const unitItemInSlot = UnitItemInSlot
 const unitRemoveItem = UnitRemoveItem
 
-const FILLER_ITEM_TYPE_ID = compiletime(() => {
+/** @internal For use by internal systems only. */
+export const SLOT_FILLER_ITEM_TYPE_ID = compiletime(() => {
     const itemType = BlankItemType.create()
     itemType.name = "[Warscript/Dummy] Slot Filler"
     return itemType.id
@@ -15,7 +16,7 @@ const FILLER_ITEM_TYPE_ID = compiletime(() => {
 
 /** @internal For use by internal systems only. */
 export const fillerItems = array(6, () => {
-    const item = CreateItem(FILLER_ITEM_TYPE_ID, 0, 0)
+    const item = CreateItem(SLOT_FILLER_ITEM_TYPE_ID, 0, 0)
     setItemVisible(item, false)
     ignoreEventsItems.add(item)
     return item
