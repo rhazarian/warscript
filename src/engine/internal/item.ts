@@ -390,6 +390,7 @@ export class Item extends Handle<jitem> {
 
     public static getInRange(x: number, y: number, range: number): Item[] {
         targetCollection = []
+        targetCollectionNextIndex = 1
         setRect(enumRect, x - range, y - range, x + range, y + range)
         enumItemsInRect(enumRect, undefined, collectIntoTarget)
         return targetCollection
@@ -397,6 +398,7 @@ export class Item extends Handle<jitem> {
 
     public static getInRect(rect: ReadonlyRect): Item[] {
         targetCollection = []
+        targetCollectionNextIndex = 1
         enumItemsInRect(rect.handle, undefined, collectIntoTarget)
         return targetCollection
     }
