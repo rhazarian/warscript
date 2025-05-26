@@ -7,6 +7,7 @@ import { AbilityTypeId } from "../object-data/entry/ability-type"
 import { doAbilityAction } from "./item/ability"
 import { DUMMY_ITEM_ID } from "./object-data/dummy-item"
 import { SLOT_FILLER_ITEM_TYPE_ID } from "./unit/add-item-to-slot"
+import { distance } from "../../math/vec2"
 
 const itemAddAbility = BlzItemAddAbility
 const itemRemoveAbility = BlzItemRemoveAbility
@@ -21,6 +22,8 @@ const setRect = SetRect
 const enumItemsInRect = EnumItemsInRect
 const getEnumItem = GetEnumItem
 const getItemTypeId = GetItemTypeId
+const getItemX = GetItemX
+const getItemY = GetItemY
 
 const getItemIntegerField = BlzGetItemIntegerField
 
@@ -52,10 +55,25 @@ const getItemAbilities = (handle: jitem, item: Item): ItemAbility[] => {
 
 let targetCollection: Item[]
 let targetCollectionNextIndex: number
+let centerX: number
+let centerY: number
+let enumRange: number
 const collectIntoTarget = () => {
     const item = getEnumItem()
     const typeId = getItemTypeId(item)
     if (typeId != DUMMY_ITEM_ID && typeId != SLOT_FILLER_ITEM_TYPE_ID) {
+        targetCollection[targetCollectionNextIndex - 1] = Item.of(getEnumItem())
+        ++targetCollectionNextIndex
+    }
+}
+const collectIntoTargetRange = () => {
+    const item = getEnumItem()
+    const typeId = getItemTypeId(item)
+    if (
+        distance(getItemX(item), getItemY(item), centerX, centerY) <= enumRange &&
+        typeId != DUMMY_ITEM_ID &&
+        typeId != SLOT_FILLER_ITEM_TYPE_ID
+    ) {
         targetCollection[targetCollectionNextIndex - 1] = Item.of(getEnumItem())
         ++targetCollectionNextIndex
     }
@@ -391,8 +409,11 @@ export class Item extends Handle<jitem> {
     public static getInRange(x: number, y: number, range: number): Item[] {
         targetCollection = []
         targetCollectionNextIndex = 1
+        centerX = x
+        centerY = y
+        enumRange = range
         setRect(enumRect, x - range, y - range, x + range, y + range)
-        enumItemsInRect(enumRect, undefined, collectIntoTarget)
+        enumItemsInRect(enumRect, undefined, collectIntoTargetRange)
         return targetCollection
     }
 
