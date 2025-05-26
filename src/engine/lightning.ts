@@ -1,12 +1,12 @@
 import { LightningTypeId } from "./object-data/entry/lightning-type"
 
-import { Handle, HandleDestructor } from "../core/types/handle"
 import { Timer } from "../core/types/timer"
 import { Unit } from "../core/types/unit"
 
 import { Forward, forwardByN } from "../utility/functions"
 import { MISSILE_DATA_BY_UNIT_TYPE_ID } from "./internal/unit-missile-data"
 import { UnitTypeId } from "./object-data/entry/unit-type"
+import { AbstractDestroyable, Destructor } from "../destroyable"
 
 const type = _G.type
 const select = _G.select
@@ -58,7 +58,7 @@ const enum LightningPropertyKey {
 export type LightningConstructor<T extends Lightning> = typeof Lightning &
     (new (handle: jlightning, typeId: LightningTypeId) => T)
 
-export class Lightning extends Handle<jlightning> {
+export class Lightning extends AbstractDestroyable {
     private [LightningPropertyKey.CHECK_VISIBILITY]?: boolean
     private [LightningPropertyKey.SOURCE_UNIT]?: junit
     private [LightningPropertyKey.TARGET_UNIT]?: junit
@@ -72,13 +72,13 @@ export class Lightning extends Handle<jlightning> {
     private [LightningPropertyKey.FADING]?: true
 
     public constructor(
-        handle: jlightning,
+        public readonly handle: jlightning,
         public readonly typeId: LightningTypeId,
     ) {
-        super(handle)
+        super()
     }
 
-    protected override onDestroy(): HandleDestructor {
+    protected override onDestroy(): Destructor {
         unitToUnitLightnings.delete(this)
         unitToPointLightnings.delete(this)
         pointToUnitLightnings.delete(this)
@@ -141,7 +141,7 @@ export class Lightning extends Handle<jlightning> {
         }
 
         if (targetZ != undefined) {
-            return this.of(
+            return new this(
                 addLightningEx(
                     util.id2s(typeId),
                     checkVisibility,
@@ -153,12 +153,12 @@ export class Lightning extends Handle<jlightning> {
                     targetZ as number,
                 ),
                 typeId,
-            )
+            ) as T
         }
         if (targetXOrTargetUnitOrTargetYOrTargetZ != undefined) {
             if (type(targetXOrTargetUnitOrTargetYOrTargetZ) == "number") {
                 if (type(sourceXOrSourceUnit) == "number") {
-                    return this.of(
+                    return new this(
                         addLightning(
                             util.id2s(typeId),
                             checkVisibility,
@@ -168,10 +168,10 @@ export class Lightning extends Handle<jlightning> {
                             targetXOrTargetUnitOrTargetYOrTargetZ as number,
                         ),
                         typeId,
-                    )
+                    ) as T
                 }
                 const unit = (sourceXOrSourceUnit as Unit).handle
-                const lightning = this.of(
+                const lightning = new this(
                     addLightningEx(
                         util.id2s(typeId),
                         checkVisibility,
@@ -183,7 +183,7 @@ export class Lightning extends Handle<jlightning> {
                         targetXOrTargetUnitOrTargetYOrTargetZ as number,
                     ),
                     typeId,
-                )
+                ) as T
                 lightning[LightningPropertyKey.CHECK_VISIBILITY] = checkVisibility
                 lightning[LightningPropertyKey.SOURCE_UNIT] = unit
                 lightning[LightningPropertyKey.SOURCE_X] = 0
@@ -198,7 +198,7 @@ export class Lightning extends Handle<jlightning> {
                 return lightning
             }
             const unit = (targetXOrTargetUnitOrTargetYOrTargetZ as Unit).handle
-            const lightning = this.of(
+            const lightning = new this(
                 addLightningEx(
                     util.id2s(typeId),
                     checkVisibility,
@@ -210,7 +210,7 @@ export class Lightning extends Handle<jlightning> {
                     getUnitZ(unit),
                 ),
                 typeId,
-            )
+            ) as T
             lightning[LightningPropertyKey.CHECK_VISIBILITY] = checkVisibility
             lightning[LightningPropertyKey.SOURCE_X] = sourceXOrSourceUnit as number
             lightning[LightningPropertyKey.SOURCE_Y] = sourceYOrTargetXOrTargetUnit as number
@@ -232,7 +232,7 @@ export class Lightning extends Handle<jlightning> {
                     sourceZOrTargetXOrTargetUnitOrTargetY as number,
                 )
                 const z = getLocationZ(location)
-                const lightning = this.of(
+                const lightning = new this(
                     addLightningEx(
                         util.id2s(typeId),
                         checkVisibility,
@@ -244,7 +244,7 @@ export class Lightning extends Handle<jlightning> {
                         z,
                     ),
                     typeId,
-                )
+                ) as T
                 lightning[LightningPropertyKey.CHECK_VISIBILITY] = checkVisibility
                 lightning[LightningPropertyKey.SOURCE_UNIT] = unit
                 lightning[LightningPropertyKey.SOURCE_X] = 0
@@ -264,7 +264,7 @@ export class Lightning extends Handle<jlightning> {
                 sourceYOrTargetXOrTargetUnit as number,
             )
             const z = getLocationZ(location)
-            const lightning = this.of(
+            const lightning = new this(
                 addLightningEx(
                     util.id2s(typeId),
                     checkVisibility,
@@ -276,7 +276,7 @@ export class Lightning extends Handle<jlightning> {
                     getUnitZ(unit),
                 ),
                 typeId,
-            )
+            ) as T
             lightning[LightningPropertyKey.CHECK_VISIBILITY] = checkVisibility
             lightning[LightningPropertyKey.SOURCE_X] = sourceXOrSourceUnit as number
             lightning[LightningPropertyKey.SOURCE_Y] = sourceYOrTargetXOrTargetUnit as number
@@ -290,7 +290,7 @@ export class Lightning extends Handle<jlightning> {
         }
         const sourceUnit = (sourceXOrSourceUnit as Unit).handle
         const targetUnit = (sourceYOrTargetXOrTargetUnit as Unit).handle
-        const lightning = this.of(
+        const lightning = new this(
             addLightningEx(
                 util.id2s(typeId),
                 checkVisibility,
@@ -302,7 +302,7 @@ export class Lightning extends Handle<jlightning> {
                 getUnitZ(targetUnit) + getUnitFlyHeight(targetUnit),
             ),
             typeId,
-        )
+        ) as T
         lightning[LightningPropertyKey.CHECK_VISIBILITY] = checkVisibility
         lightning[LightningPropertyKey.SOURCE_UNIT] = sourceUnit
         lightning[LightningPropertyKey.SOURCE_X] = 0
