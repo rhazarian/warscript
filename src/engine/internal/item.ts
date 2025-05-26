@@ -62,7 +62,7 @@ const collectIntoTarget = () => {
     const item = getEnumItem()
     const typeId = getItemTypeId(item)
     if (typeId != DUMMY_ITEM_ID && typeId != SLOT_FILLER_ITEM_TYPE_ID) {
-        targetCollection[targetCollectionNextIndex - 1] = Item.of(getEnumItem())
+        targetCollection[targetCollectionNextIndex - 1] = Item.of(item)
         ++targetCollectionNextIndex
     }
 }
@@ -74,7 +74,7 @@ const collectIntoTargetRange = () => {
         typeId != DUMMY_ITEM_ID &&
         typeId != SLOT_FILLER_ITEM_TYPE_ID
     ) {
-        targetCollection[targetCollectionNextIndex - 1] = Item.of(getEnumItem())
+        targetCollection[targetCollectionNextIndex - 1] = Item.of(item)
         ++targetCollectionNextIndex
     }
 }
