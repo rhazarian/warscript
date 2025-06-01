@@ -32,7 +32,7 @@ import {
 } from "./internal/unit/bonus"
 import { CombatClassifications } from "./object-data/auxiliary/combat-classification"
 import { damageArea } from "./internal/mechanics/area-damage"
-import { checkNotNull } from "../utility/preconditions"
+import { check, checkNotNull } from "../utility/preconditions"
 import { IsExactlyAny, Prohibit, ReadonlyNonEmptyArray } from "../utility/types"
 import { Effect, EffectParameters } from "../core/types/effect"
 import { ObjectFieldId } from "./object-field"
@@ -45,6 +45,7 @@ import { Event, EventListenerPriority } from "../event"
 import { getAbilityDuration } from "./internal/mechanics/ability-duration"
 import { Item } from "./internal/item"
 import { Destructable } from "../core/types/destructable"
+import { HandleState } from "../core/types/handle"
 
 const getUnitAbility = BlzGetUnitAbility
 
@@ -307,7 +308,9 @@ const buffNumberParameters = [
 const unsuccessfulApplicationMarker = {}
 
 const enum BuffPropertyKey {
-    UNIT = 100,
+    STATE = 100,
+
+    UNIT,
     SOURCE,
 
     DURATION,
@@ -517,6 +520,8 @@ export class Buff<
 > extends UnitBehavior {
     protected readonly __additionalParametersBrand?: AdditionalParameters
 
+    private [BuffPropertyKey.STATE]: HandleState
+
     private [BuffPropertyKey.UNIT]: Unit
     private [BuffPropertyKey.SOURCE]?: Unit
 
@@ -643,6 +648,7 @@ export class Buff<
         parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>,
     ) {
         super(_unit)
+        this[BuffPropertyKey.STATE] = HandleState.BEING_CREATED
         this[BuffPropertyKey.UNIT] = _unit
 
         let typeId: ApplicableBuffTypeId
@@ -897,6 +903,8 @@ export class Buff<
         }
 
         this.onCreate()
+
+        this[BuffPropertyKey.STATE] = HandleState.CREATED
     }
 
     public get level(): number {
@@ -1353,6 +1361,12 @@ export class Buff<
     }
 
     protected override onDestroy(): Destructor {
+        check(
+            this[BuffPropertyKey.STATE] != HandleState.BEING_CREATED,
+            "Cannot destroy a buff that has not finished creating yet.",
+        )
+        this[BuffPropertyKey.STATE] = HandleState.BEING_DESTROYED
+
         const unit = this._unit
 
         if (getUnitAbility(unit.handle, this.typeId) == this.handle) {
@@ -1405,6 +1419,8 @@ export class Buff<
         }
 
         Event.invoke(buffDestroyEvent, this)
+
+        this[BuffPropertyKey.STATE] = HandleState.DESTROYED
 
         return super.onDestroy()
     }
@@ -1530,7 +1546,10 @@ export class Buff<
 
     static {
         const destroyBuffIfNeeded = (buff: Buff) => {
-            if (getUnitAbility(buff[BuffPropertyKey.UNIT].handle, buff.typeId) != buff.handle) {
+            if (
+                getUnitAbility(buff[BuffPropertyKey.UNIT].handle, buff.typeId) != buff.handle &&
+                buff[BuffPropertyKey.STATE] == HandleState.CREATED
+            ) {
                 buff.destroy()
             }
         }
