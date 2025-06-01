@@ -138,6 +138,7 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           attackSpeedIncreaseFactor?: NumberParameterValueType
           movementSpeedIncreaseFactor?: NumberParameterValueType
           evasionProbability?: NumberParameterValueType
+          missProbability?: NumberParameterValueType
           damageFactor?: NumberParameterValueType
           receivedDamageFactor?: NumberParameterValueType
           receivedMagicDamageFactor?: NumberParameterValueType
@@ -192,6 +193,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     attackSpeedIncreaseFactor: true,
     movementSpeedIncreaseFactor: true,
     evasionProbability: true,
+    missProbability: true,
     damageFactor: true,
     receivedDamageFactor: true,
     receivedMagicDamageFactor: true,
@@ -362,6 +364,8 @@ const enum BuffPropertyKey {
     PROVIDES_INVULNERABILITY,
     KILLS_ON_EXPIRATION,
     EXPLODES_ON_EXPIRATION,
+
+    MISS_PROBABILITY,
 }
 
 export const enum BuffTypeIdSelectionPolicy {
@@ -604,6 +608,7 @@ export class Buff<
     private readonly _level?: number
     private readonly _spellStealPriority?: number
     private readonly _learnLevelMinimum?: number
+    private readonly [BuffPropertyKey.MISS_PROBABILITY]?: number
     private _bonusIdByBonusType?: LuaMap<UnitBonusType, UnitBonusId | undefined>
     private readonly _abilityTypeIds?: LuaSet<AbilityTypeId>
     private _behaviors?: UnitBehavior[]
@@ -716,6 +721,12 @@ export class Buff<
         this.polarity = resolveEnumValue(ability, level, polarity)
         this.resistanceType = resolveEnumValue(ability, level, resistanceType)
 
+        let missProbability = parameters?.missProbability ?? defaultParameters.missProbability
+        if (missProbability != undefined) {
+            missProbability = resolveNumberValue(ability, level, missProbability)
+            this[BuffPropertyKey.MISS_PROBABILITY] = missProbability
+        }
+
         let buffByTypeId = buffByTypeIdByUnit.get(_unit)
         if (buffByTypeId == undefined) {
             buffByTypeId = new LuaMap()
@@ -739,6 +750,7 @@ export class Buff<
                 duration,
                 spellStealPriority,
                 learnLevelMinimum,
+                missProbability,
             )
         ) {
             super.destroy()
@@ -1289,6 +1301,7 @@ export class Buff<
                         remainingDuration,
                         this._spellStealPriority,
                         this._learnLevelMinimum,
+                        this[BuffPropertyKey.MISS_PROBABILITY],
                     )
                 ) {
                     let timer = this._timer
