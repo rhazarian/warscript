@@ -753,12 +753,14 @@ export class Buff<
                 missProbability,
             )
         ) {
+            this[BuffPropertyKey.STATE] = HandleState.CREATED
             super.destroy()
             throw unsuccessfulApplicationMarker
         }
 
         const handle = BlzGetUnitAbility(_unit.handle, typeId)
         if (handle == undefined) {
+            this[BuffPropertyKey.STATE] = HandleState.CREATED
             super.destroy()
             throw unsuccessfulApplicationMarker
         }
