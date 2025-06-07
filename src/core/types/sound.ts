@@ -2,14 +2,13 @@ import { Handle, HandleDestructor } from "./handle"
 import { Unit } from "./unit"
 
 const createSound = CreateSound
+const createSoundFromLabel = CreateSoundFromLabel
 const setSoundPitch = SetSoundPitch
 const setSoundChannel = SetSoundChannel
 const setSoundPosition = SetSoundPosition
 const setSoundVolume = SetSoundVolume
 const setSoundDistances = SetSoundDistances
 const setSoundDistanceCutoff = SetSoundDistanceCutoff
-const setSoundConeAngles = SetSoundConeAngles
-const setSoundConeOrientation = SetSoundConeOrientation
 const startSound = StartSound
 const setSoundPlayPosition = SetSoundPlayPosition
 const stopSound = StopSound
@@ -135,7 +134,7 @@ const createPresetSound = (fileName: string, preset: SoundPreset) => {
         true,
         preset.fadeInRate ?? 12700,
         preset.fadeOutRate ?? 12700,
-        preset.eax ?? SoundEax.Default
+        preset.eax ?? SoundEax.Default,
     )
     setSoundChannel(sound, preset.channel ?? SoundChannel.General)
     setSoundVolume(sound, preset.volume ?? 127)
@@ -150,7 +149,24 @@ const createPreset3DSound = (fileName: string, preset: Sound3DPreset) => {
         preset.stopWhenOutOfRange ?? true,
         preset.fadeInRate ?? 12700,
         preset.fadeOutRate ?? 12700,
-        preset.eax ?? SoundEax.Default
+        preset.eax ?? SoundEax.Default,
+    )
+    setSoundChannel(sound, preset.channel ?? SoundChannel.General)
+    setSoundVolume(sound, preset.volume ?? 127)
+    setSoundPitch(sound, preset.pitch ?? 1)
+    setSoundDistances(sound, preset.minDistance ?? 600, preset.maxDistance ?? 8000)
+    setSoundDistanceCutoff(sound, preset.distanceCutoff ?? 1500)
+    return sound
+}
+
+const createPreset3DSoundFromLabel = (label: string, preset: Sound3DPreset) => {
+    const sound = createSoundFromLabel(
+        label,
+        preset.looping ?? false,
+        true,
+        preset.stopWhenOutOfRange ?? true,
+        preset.fadeInRate ?? 12700,
+        preset.fadeOutRate ?? 12700,
     )
     setSoundChannel(sound, preset.channel ?? SoundChannel.General)
     setSoundVolume(sound, preset.volume ?? 127)
@@ -214,7 +230,7 @@ export class Sound3D extends Sound {
         preset: Sound3DPreset,
         x = 0,
         y = 0,
-        z = 0
+        z = 0,
     ): void {
         const sound = createPreset3DSound(fileName, preset)
         setSoundPosition(sound, x, y, z)
@@ -229,12 +245,19 @@ export class Sound3D extends Sound {
         killSoundWhenDone(sound)
     }
 
+    public static playFromLabel(label: string, preset: Sound3DPreset, unit: Unit): void {
+        const sound = createPreset3DSoundFromLabel(label, preset)
+        attachSoundToUnit(sound, unit.handle)
+        startSound(sound)
+        killSoundWhenDone(sound)
+    }
+
     public static createAtPosition(
         fileName: string,
         preset: Sound3DPreset,
         x = 0,
         y = 0,
-        z = 0
+        z = 0,
     ): Sound3D {
         const sound = createPreset3DSound(fileName, preset)
         setSoundPosition(sound, x, y, z)

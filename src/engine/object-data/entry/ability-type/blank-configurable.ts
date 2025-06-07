@@ -2,7 +2,7 @@ import { ChannelAbilityType, ChannelAbilityTypeTargetingType } from "./channel"
 
 import { AbilityTypeId } from "../ability-type"
 
-import { AnimationName } from "../../auxiliary/animation-name"
+import { AnimationName, isAnimationName } from "../../auxiliary/animation-name"
 import { TargetingType } from "../../auxiliary/targeting-type"
 import { orderTypeStringIdFactory } from "../../utility/order-type-string-id-factory"
 import { ObjectDataEntryLevelFieldValueSupplier } from "../../entry"
@@ -19,6 +19,8 @@ import {
 } from "../../../standard/fields/ability"
 import { LinkedSet } from "../../../../utility/linked-set"
 import { Ability } from "../../../internal/ability"
+import { Sound3D, SoundPreset } from "../../../../core/types/sound"
+import { AnimationQualifier } from "../../auxiliary/animation-qualifier"
 
 const isChannelingAbilityTypeIds = new LuaSet<AbilityTypeId>()
 const usesAttackAnimationByAbilityTypeId = new LuaMap<AbilityTypeId, boolean>()
@@ -84,7 +86,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
     }
 
     public override set targetingType(
-        targetingType: ObjectDataEntryLevelFieldValueSupplier<ChannelAbilityTypeTargetingType>
+        targetingType: ObjectDataEntryLevelFieldValueSupplier<ChannelAbilityTypeTargetingType>,
     ) {
         this.setNumberLevelField("Ncl2", targetingType)
         if (this.autoOrderTypeStringIdsEnabled) {
@@ -97,7 +99,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
     }
 
     public override set baseOrderTypeStringId(
-        baseOrderTypeStringId: ObjectDataEntryLevelFieldValueSupplier<string>
+        baseOrderTypeStringId: ObjectDataEntryLevelFieldValueSupplier<string>,
     ) {
         this.autoOrderTypeStringIdsEnabled = false
         this.setStringLevelField("Ncl6", baseOrderTypeStringId)
@@ -108,7 +110,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
 
         const unusedTargetingTypes: ChannelAbilityTypeTargetingType[] = []
         for (const [targetingType, orderTypeStringId] of pairs(
-            this.autoOrderTypeStringIdByTargetingType
+            this.autoOrderTypeStringIdByTargetingType,
         )) {
             if (!targetingTypes.has(targetingType)) {
                 unusedTargetingTypes.push(targetingType)
@@ -128,7 +130,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
 
         this.baseOrderTypeStringId = (level) => {
             return checkNotNull(
-                this.autoOrderTypeStringIdByTargetingType[this.targetingType[level]]
+                this.autoOrderTypeStringIdByTargetingType[this.targetingType[level]],
             )
         }
     }
@@ -152,7 +154,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
         const abilityUnitTargetChannelingStartEventListener = (
             caster: Unit,
             ability: Ability,
-            target: Unit
+            target: Unit,
         ): void => {
             targets.add(target)
 
@@ -167,12 +169,12 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
                 abilityTypeId: ability.typeId,
                 areaOfEffect: AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD.getValue(
                     ability,
-                    ability.level
+                    ability.level,
                 ),
                 allowedTargetCombatClassifications:
                     ALLOWED_TARGETS_ABILITY_COMBAT_CLASSIFICATIONS_LEVEL_FIELD.getValue(
                         ability,
-                        ability.level
+                        ability.level,
                     ),
                 target: target,
             })
@@ -195,7 +197,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
         for (const abilityTypeId of postcompile(() => isChannelingAbilityTypeIds)) {
             Unit.abilityUnitTargetChannelingStartEvent[abilityTypeId].addListener(
                 EventListenerPriority.LOWEST,
-                abilityUnitTargetChannelingStartEventListener
+                abilityUnitTargetChannelingStartEventListener,
             )
             Unit.abilityStopEvent[abilityTypeId].addListener(abilityStopEventListener)
         }
@@ -210,7 +212,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
                     if (
                         !unit.isAllowedTarget(
                             caster,
-                            channelInfo.allowedTargetCombatClassifications
+                            channelInfo.allowedTargetCombatClassifications,
                         ) ||
                         unit.isInvisibleTo(caster.owner) ||
                         (channelInfo.areaOfEffect > 0 &&
@@ -234,7 +236,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
         (caster, ability, target) => {
             unitChangeEventListener(target)
             Timer.run(unitChangeEventListener, target)
-        }
+        },
     )
 
     Unit.onBoard.addListener(EventListenerPriority.HIGHEST, unitChangeEventListener)
@@ -252,11 +254,26 @@ for (const [abilityTypeId, usesAttackAnimation] of postcompile(() => {
     for (const [abilityTypeId, usesAttackAnimation] of usesAttackAnimationByAbilityTypeId) {
         if (usesAttackAnimation) {
             const abilityType = checkNotNull(BlankConfigurableAbilityType.of(abilityTypeId))
-            abilityType.channelingAnimation = [AnimationName.ATTACK]
+            if (isAnimationName(abilityType.channelingAnimation[0])) {
+                if (abilityType.channelingAnimation[0] != AnimationName.ATTACK) {
+                    abilityType.channelingAnimation = [AnimationName.ATTACK]
+                }
+            } else {
+                abilityType.channelingAnimation = [
+                    AnimationName.ATTACK,
+                    ...(abilityType.channelingAnimation as AnimationQualifier[]),
+                ]
+            }
         }
     }
     return usesAttackAnimationByAbilityTypeId
 })) {
+    Unit.abilityCastingFinishEvent[abilityTypeId].addListener((caster, ability) => {
+        const effectSound = ability.getField(ABILITY_SF_EFFECT_SOUND)
+        if (effectSound != "") {
+            Sound3D.playFromLabel(effectSound, SoundPreset.Ability, caster)
+        }
+    })
     if (usesAttackAnimation) {
         Unit.abilityCastingStartEvent[abilityTypeId].addListener(
             EventListenerPriority.HIGHEST,
@@ -266,7 +283,7 @@ for (const [abilityTypeId, usesAttackAnimation] of postcompile(() => {
                         caster.playAnimation("ready")
                     })
                 }
-            }
+            },
         )
         Unit.abilityCastingFinishEvent[abilityTypeId].addListener((caster, ability) => {
             if (ability.getField(ABILITY_RLF_FOLLOW_THROUGH_TIME) == 0) {
@@ -275,14 +292,14 @@ for (const [abilityTypeId, usesAttackAnimation] of postcompile(() => {
                     BlzGetUnitWeaponRealField(
                         caster.handle,
                         UNIT_WEAPON_RF_ATTACK_BACKSWING_POINT,
-                        0
+                        0,
                     ) +
                         BlzGetUnitWeaponRealField(
                             caster.handle,
                             UNIT_WEAPON_RF_ATTACK_DAMAGE_POINT,
-                            0
+                            0,
                         ) -
-                        caster.getField(UNIT_RF_CAST_POINT)
+                        caster.getField(UNIT_RF_CAST_POINT),
                 )
             }
         })
@@ -291,7 +308,7 @@ for (const [abilityTypeId, usesAttackAnimation] of postcompile(() => {
             if (ability.getField(ABILITY_RLF_FOLLOW_THROUGH_TIME) == 0) {
                 ability.setField(
                     ABILITY_RLF_FOLLOW_THROUGH_TIME,
-                    caster.getField(UNIT_RF_CAST_BACK_SWING)
+                    caster.getField(UNIT_RF_CAST_BACK_SWING),
                 )
             }
         })
