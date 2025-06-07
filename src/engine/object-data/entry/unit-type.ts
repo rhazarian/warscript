@@ -24,6 +24,7 @@ import type { AbilityTypeId } from "./ability-type"
 import type { UpgradeId } from "./upgrade"
 import { AnimationQualifier } from "../auxiliary/animation-qualifier"
 import { AttackType } from "../auxiliary/attack-type"
+import { WarscriptConfig } from "../../../config"
 
 export type UnitTypeId = ObjectDataEntryId & { readonly __unitTypeId: unique symbol }
 
@@ -32,7 +33,10 @@ export type StandardUnitTypeId = UnitTypeId & { readonly __standardUnitTypeId: u
 let getOrCreateUnitTypeWeapons: (unitType: UnitType) => TupleOf<UnitTypeWeapon, 2>
 
 export class UnitTypeWeapon {
-    private constructor(private readonly unitType: UnitType, private readonly index: 1 | 2) {}
+    private constructor(
+        private readonly unitType: UnitType,
+        private readonly index: 1 | 2,
+    ) {}
 
     public get attackType(): AttackType {
         return this.unitType["getStringField"](`ua${this.index}t`) as AttackType
@@ -168,6 +172,8 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
     protected static override getObjectData(map: WarMap): WarObjects {
         return map.objects.unit
     }
+
+    private isPortraitModelPathSet?: true
 
     // Abilities
 
@@ -459,6 +465,12 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set modelPath(modelPath: string) {
         this.setStringField("umdl", modelPath)
+        if (
+            !this.isPortraitModelPathSet &&
+            WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
+        ) {
+            this.setStringField("upor", modelPath)
+        }
     }
 
     public get modelPathSD(): string {
@@ -467,6 +479,12 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set modelPathSD(modelPathSD: string) {
         this.setStringField("umdl:sd", modelPathSD)
+        if (
+            !this.isPortraitModelPathSet &&
+            WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
+        ) {
+            this.setStringField("upor:sd", modelPathSD)
+        }
     }
 
     public get modelPathHD(): string {
@@ -475,6 +493,39 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set modelPathHD(modelPathHD: string) {
         this.setStringField("umdl:hd", modelPathHD)
+        if (
+            !this.isPortraitModelPathSet &&
+            WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
+        ) {
+            this.setStringField("upor:hd", modelPathHD)
+        }
+    }
+
+    public get portraitModelPath(): string {
+        return this.getStringField("upor")
+    }
+
+    public set portraitModelPath(portraitModelPath: string) {
+        this.setStringField("upor", portraitModelPath)
+        this.isPortraitModelPathSet = true
+    }
+
+    public get portraitModelPathSD(): string {
+        return this.getStringField("upor:sd")
+    }
+
+    public set portraitModelPathSD(portraitModelPathSD: string) {
+        this.setStringField("upor:sd", portraitModelPathSD)
+        this.isPortraitModelPathSet = true
+    }
+
+    public get portraitModelPathHD(): string {
+        return this.getStringField("upor:hd")
+    }
+
+    public set portraitModelPathHD(portraitModelPathHD: string) {
+        this.setStringField("upor:hd", portraitModelPathHD)
+        this.isPortraitModelPathSet = true
     }
 
     public get runSpeed(): number {
@@ -940,7 +991,7 @@ export type HeroUnitTypeId = UnitTypeId & {
 export type StandardHeroUnitTypeId = StandardUnitTypeId & HeroUnitTypeId
 
 export abstract class HeroUnitType<
-    Id extends HeroUnitTypeId = HeroUnitTypeId
+    Id extends HeroUnitTypeId = HeroUnitTypeId,
 > extends UnitType<Id> {
     static readonly [id: StandardUnitTypeId]: ObjectDataEntryConstructor<HeroUnitType>
 
