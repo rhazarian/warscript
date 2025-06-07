@@ -3,6 +3,7 @@ import { LevelFieldValueProvider, ObjectDefinition } from "./object"
 import * as idgen from "./idgen"
 import { AbilityDefinition } from "./ability"
 import Classification = UnitDefinition.Classification
+import { WarscriptConfig } from "../config"
 
 const attackTypes = setmetatable<
     Record<string, UnitWeaponDefinition.AttackType>,
@@ -422,6 +423,9 @@ export class UnitDefinition extends ObjectDefinition {
 
     public set model(v: string) {
         this.setStringField("umdl", v)
+        if (WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH) {
+            this.setStringField("upor", v)
+        }
     }
 
     public get modelHD(): string {
@@ -430,6 +434,9 @@ export class UnitDefinition extends ObjectDefinition {
 
     public set modelHD(v: string | undefined) {
         this.object.setField("umdl:hd", v)
+        if (WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH) {
+            this.object.setField("upor:hd", v)
+        }
     }
 
     public get selectionScale(): number {
