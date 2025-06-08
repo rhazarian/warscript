@@ -1,5 +1,4 @@
-import { ObjectDataEntry, ObjectDataEntryConstructor, ObjectDataEntryId } from "../entry"
-import { implementReadonlyNumberIndexSupplier } from "../../../utility/reflection"
+import { ObjectDataEntry, ObjectDataEntryId } from "../entry"
 
 export type SoundPresetId = ObjectDataEntryId & string & { readonly __soundPresetId: unique symbol }
 
@@ -8,16 +7,6 @@ export type StandardSoundPresetId = SoundPresetId & {
 }
 
 export class SoundPreset extends ObjectDataEntry<SoundPresetId> {
-    static readonly [id: StandardSoundPresetId]: ObjectDataEntryConstructor<SoundPreset>
-
-    static {
-        implementReadonlyNumberIndexSupplier(SoundPreset, (id) => {
-            return class extends SoundPreset {
-                public static override readonly BASE_ID = id
-            }
-        })
-    }
-
     public static override readonly BASE_ID = "BlizzardWave" as SoundPresetId
 
     private static nextId = 0
