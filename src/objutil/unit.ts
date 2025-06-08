@@ -424,7 +424,7 @@ export class UnitDefinition extends ObjectDefinition {
     public set model(v: string) {
         this.setStringField("umdl", v)
         if (WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH) {
-            this.setStringField("upor", v)
+            this.setStringField("upor", "")
         }
     }
 
@@ -435,7 +435,7 @@ export class UnitDefinition extends ObjectDefinition {
     public set modelHD(v: string | undefined) {
         this.object.setField("umdl:hd", v)
         if (WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH) {
-            this.object.setField("upor:hd", v)
+            this.object.setField("upor:hd", "")
         }
     }
 

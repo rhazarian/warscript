@@ -469,7 +469,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
             !this.isPortraitModelPathSet &&
             WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
         ) {
-            this.setStringField("upor", modelPath)
+            this.setStringField("upor", "")
         }
     }
 
@@ -483,7 +483,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
             !this.isPortraitModelPathSet &&
             WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
         ) {
-            this.setStringField("upor:sd", modelPathSD)
+            this.setStringField("upor:sd", "")
         }
     }
 
@@ -497,7 +497,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
             !this.isPortraitModelPathSet &&
             WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
         ) {
-            this.setStringField("upor:hd", modelPathHD)
+            this.setStringField("upor:hd", "")
         }
     }
 
