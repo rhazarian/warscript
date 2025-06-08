@@ -26,18 +26,18 @@ export class DiseaseCloudAbilityType extends AbilityType {
     }
 
     public set plagueWardDuration(
-        plagueWardDuration: ObjectDataEntryLevelFieldValueSupplier<number>
+        plagueWardDuration: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
         this.setNumberLevelField("Apl3", plagueWardDuration)
     }
 
     public get plagueWardUnitTypeId(): UnitTypeId[] {
-        return this.getObjectDataEntryIdLevelField("Aplu")
+        return this.getObjectDataEntryNumericIdLevelField("Aplu")
     }
 
     public set plagueWardUnitTypeId(
-        plagueWardUnitTypeId: ObjectDataEntryLevelFieldValueSupplier<UnitTypeId>
+        plagueWardUnitTypeId: ObjectDataEntryLevelFieldValueSupplier<UnitTypeId>,
     ) {
-        this.setObjectDataEntryIdLevelField("Aplu", plagueWardUnitTypeId)
+        this.setObjectDataEntryNumericIdLevelField("Aplu", plagueWardUnitTypeId)
     }
 }

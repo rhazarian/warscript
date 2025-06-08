@@ -7,13 +7,13 @@ export class FeralSpiritAbilityType extends AbilityType {
     public static override readonly BASE_ID = fourCC("AOsf") as AbilityTypeId
 
     public get summonedUnitTypeId(): UnitTypeId[] {
-        return this.getObjectDataEntryIdLevelField("Osf1")
+        return this.getObjectDataEntryNumericIdLevelField("Osf1")
     }
 
     public set summonedUnitTypeId(
-        summonedUnitTypeId: ObjectDataEntryLevelFieldValueSupplier<UnitTypeId>
+        summonedUnitTypeId: ObjectDataEntryLevelFieldValueSupplier<UnitTypeId>,
     ) {
-        this.setObjectDataEntryIdLevelField("Osf1", summonedUnitTypeId)
+        this.setObjectDataEntryNumericIdLevelField("Osf1", summonedUnitTypeId)
     }
 
     public get summonedUnitCount(): number[] {
@@ -21,7 +21,7 @@ export class FeralSpiritAbilityType extends AbilityType {
     }
 
     public set summonedUnitCount(
-        summonedUnitCount: ObjectDataEntryLevelFieldValueSupplier<number>
+        summonedUnitCount: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
         this.setNumberLevelField("Osf2", summonedUnitCount)
     }

@@ -12,11 +12,10 @@ import { MutableKeys } from "../../utility/types"
 import { check } from "../../utility/preconditions"
 import { max } from "../../math"
 
-export type ObjectDataEntryId = number & { readonly __objectDataEntryId: unique symbol }
+export type ObjectDataEntryId = (number | string) & { readonly __objectDataEntryId: unique symbol }
 
-export type ObjectDataEntryIdType<T extends ObjectDataEntry> = T extends ObjectDataEntry<infer Id>
-    ? Id
-    : never
+export type ObjectDataEntryIdType<T extends ObjectDataEntry> =
+    T extends ObjectDataEntry<infer Id> ? Id : never
 
 export type ObjectDataEntryConstructor<T extends ObjectDataEntry> = OmitConstructor<
     typeof ObjectDataEntry
@@ -32,37 +31,37 @@ export type ObjectDataEntryProperties<T extends ObjectDataEntry> = Partial<T[Mut
 
 export type ObjectDataEntryLevelFieldValueSupplier<
     ValueType extends string | number | boolean | undefined | Record<string, any>,
-    InputValueType = ValueType
+    InputValueType = ValueType,
 > = ValueType | readonly ValueType[] | ((level: number, currentValue: InputValueType) => ValueType)
 
 export const extractObjectDataEntryLevelFieldValue = <
     ValueType extends string | number | boolean | undefined | Record<string, any>,
-    InputValueType = ValueType
+    InputValueType = ValueType,
 >(
     supplier: ObjectDataEntryLevelFieldValueSupplier<ValueType, InputValueType>,
     level: number,
-    currentValue: InputValueType
+    currentValue: InputValueType,
 ): ValueType => {
     return Array.isArray(supplier)
         ? supplier[level]
         : typeof supplier == "function"
-        ? supplier(level, currentValue)
-        : supplier as ValueType
+          ? supplier(level, currentValue)
+          : (supplier as ValueType)
 }
 
 export const extractObjectDataEntryLevelArrayFieldValue = <
     T extends string | number | boolean | undefined | Record<string, any>,
-    S extends T[]
+    S extends T[],
 >(
     supplier: ObjectDataEntryLevelFieldValueSupplier<S>,
     level: number,
-    currentValue: S
+    currentValue: S,
 ): S => {
     return typeof supplier == "function"
         ? supplier(level, currentValue)
         : Array.isArray(supplier[0])
-        ? supplier[0]
-        : (supplier as S)
+          ? supplier[0]
+          : (supplier as S)
 }
 
 const objectDataEntryByObjectDataEntryId = new LuaMap<ObjectDataEntryId, ObjectDataEntry>()
@@ -75,7 +74,7 @@ type LevelFieldParameters<T extends string | number | boolean | undefined | Reco
         this: void,
         supplier: ObjectDataEntryLevelFieldValueSupplier<T>,
         level: number,
-        value: T
+        value: T,
     ) => T
     dataToValue: (this: void, data: string | number | undefined) => T
     valueToData: (this: void, value: T) => string | number
@@ -84,12 +83,18 @@ type LevelFieldParameters<T extends string | number | boolean | undefined | Reco
 export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataEntryId> {
     public static readonly BASE_ID = 0 as ObjectDataEntryId
 
+    public static readonly ID_TYPE = typeof this.BASE_ID == "number" ? "number" : "string"
+
     protected static readonly IS_SYNTHETIC: boolean = false
 
     private readonly levelFieldParametersByField = new LuaMap<string, LevelFieldParameters<any>>()
     private readonly maxAffectedLevelByField = new LuaMap<string, number>()
 
     private _isInternal = false
+
+    private get type(): ObjectDataEntryConstructor<ObjectDataEntry<Id>> {
+        return this.constructor as ObjectDataEntryConstructor<ObjectDataEntry<Id>>
+    }
 
     public get isInternal(): boolean {
         return this._isInternal
@@ -105,22 +110,22 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         this._isInternal = isInternal
     }
 
-    protected static generateId(): number {
+    protected static generateId(): number | string {
         throw new IllegalStateException(
-            `An object type definition must override the 'generateId' static method.`
+            `An object type definition must override the 'generateId' static method.`,
         )
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     protected static getObjectData(map: WarMap): WarObjects {
         throw new IllegalStateException(
-            `An object type definition must override the 'getObjectData' static method.`
+            `An object type definition must override the 'getObjectData' static method.`,
         )
     }
 
     public static getAllIdsByBaseIds<T extends ObjectDataEntry>(
         this: ObjectDataEntryAbstractConstructor<T>,
-        baseIds: number | number[]
+        baseIds: number | number[] | string | string[],
     ): ObjectDataEntryIdType<T>[] {
         return map(this.getAllByBaseIds(baseIds), "id") as ObjectDataEntryIdType<T>[]
     }
@@ -135,7 +140,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
     public static create<T extends ObjectDataEntry>(
         this: ObjectDataEntryConstructor<T>,
         id?: number | ObjectDataEntryProperties<T>,
-        properties?: ObjectDataEntryProperties<T>
+        properties?: ObjectDataEntryProperties<T>,
     ): T {
         if (typeof id == "object") {
             id = undefined
@@ -144,7 +149,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
 
         if (currentMap == undefined) {
             throw new IllegalStateException(
-                `Cannot create a new object type when not compiling a map.`
+                `Cannot create a new object type when not compiling a map.`,
             )
         }
         const constructor = this as ObjectDataEntryConstructor<T> & typeof ObjectDataEntry
@@ -152,12 +157,12 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         const baseId = this.BASE_ID
         if (baseId == 0) {
             throw new IllegalStateException(
-                `An object type definition must override the BASE_ID static property.`
+                `An object type definition must override the BASE_ID static property.`,
             )
         }
         const object = registry.newObject(
             objectDataEntryIdToData(id ?? constructor.generateId()),
-            objectDataEntryIdToData(baseId)
+            objectDataEntryIdToData(baseId),
         )
         const objectDataEntry: T = new this(object)
         if (properties != undefined) {
@@ -168,7 +173,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
 
     public static getAllByBaseIds<T extends ObjectDataEntry>(
         this: ObjectDataEntryAbstractConstructor<T>,
-        baseIds: number | number[]
+        baseIds: number | number[] | string | string[],
     ): T[] {
         if (currentMap == undefined) {
             return []
@@ -188,7 +193,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         const constructor = this as ObjectDataEntryAbstractConstructor<T> & typeof ObjectDataEntry
         for (const [id, object] of pairs(constructor.getObjectData(currentMap).all)) {
             if (dataBaseIds.has(object.parentId ?? id)) {
-                const objectDataEntry = this.of(dataToObjectDataEntryId(id))
+                const objectDataEntry = this.of(dataToObjectDataEntryId(id, this.ID_TYPE))
                 if (objectDataEntry != undefined && !objectDataEntry.isInternal) {
                     result[result.length] = objectDataEntry
                 }
@@ -199,7 +204,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
     }
 
     public static getAll<T extends ObjectDataEntry>(
-        this: ObjectDataEntryAbstractConstructor<T>
+        this: ObjectDataEntryAbstractConstructor<T>,
     ): T[] {
         if (currentMap == undefined) {
             return []
@@ -207,7 +212,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         const constructor = this as unknown as typeof ObjectDataEntry
         const result: T[] = []
         for (const [id] of pairs(constructor.getObjectData(currentMap).all)) {
-            const objectDataEntry = this.of(dataToObjectDataEntryId(id))
+            const objectDataEntry = this.of(dataToObjectDataEntryId(id, this.ID_TYPE))
             if (objectDataEntry != undefined && !objectDataEntry.isInternal) {
                 result[result.length] = objectDataEntry as T
             }
@@ -217,7 +222,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
 
     public static of<T extends ObjectDataEntry>(
         this: ObjectDataEntryAbstractConstructor<T>,
-        id: number
+        id: number | string,
     ): T | undefined {
         if (currentMap == undefined) {
             return undefined
@@ -229,12 +234,13 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
             return undefined
         }
         let objectDataEntry = objectDataEntryByObjectDataEntryId.get(
-            dataToObjectDataEntryId(object.id)
+            dataToObjectDataEntryId(object.id, this.ID_TYPE),
         )
         if (objectDataEntry == undefined) {
             if (
                 !constructor.IS_SYNTHETIC &&
-                (this.BASE_ID == 0 || dataToObjectDataEntryId(object.parentId) == this.BASE_ID)
+                (this.BASE_ID == 0 ||
+                    dataToObjectDataEntryId(object.parentId, this.ID_TYPE) == this.BASE_ID)
             ) {
                 objectDataEntry = new (class AbstractObjectDataEntryView extends constructor {
                     public constructor(object: WarObject) {
@@ -258,11 +264,11 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
     }
 
     public get id(): Id {
-        return dataToObjectDataEntryId(this.object.id)
+        return dataToObjectDataEntryId(this.object.id, this.type.ID_TYPE)
     }
 
     public get baseId(): Id {
-        return dataToObjectDataEntryId(this.object.parentId ?? this.object.id)
+        return dataToObjectDataEntryId(this.object.parentId ?? this.object.id, this.type.ID_TYPE)
     }
 
     public get isCustom(): boolean {
@@ -314,7 +320,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
                         const value = extractor(
                             supplier,
                             level - 1,
-                            dataToValue(this.object.getField(`${otherField}+${level}`))
+                            dataToValue(this.object.getField(`${otherField}+${level}`)),
                         )
                         this.object.setField(`${otherField}+${level}`, valueToData(value))
                     }
@@ -331,25 +337,27 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         this.object.setField(field, stringToData(value))
     }
 
-    protected getObjectDataEntryIdField<Id extends ObjectDataEntryId>(field: string): Id {
-        return dataToObjectDataEntryId(this.object.getField(field))
+    protected getObjectDataEntryNumericIdField<Id extends ObjectDataEntryId & number>(
+        field: string,
+    ): Id {
+        return dataToObjectDataEntryNumericId(this.object.getField(field))
     }
 
-    protected setObjectDataEntryIdField<Id extends ObjectDataEntryId>(
+    protected setObjectDataEntryNumericIdField<Id extends ObjectDataEntryId & number>(
         field: string,
-        value: Id
+        value: Id,
     ): void {
-        this.object.setField(field, objectDataEntryIdToData(value))
+        this.object.setField(field, objectDataEntryNumericIdToData(value))
     }
 
     protected getAttachmentPresetField(
         modelPathField: string,
-        nodeFQNField: string
+        nodeFQNField: string,
     ): AttachmentPreset | undefined {
         const modelPath = this.getStringField(modelPathField)
         if (modelPath != "") {
             const [nodeName, nodeQualifiers] = splitAttachmentNodeFQN(
-                this.getStringField(nodeFQNField)
+                this.getStringField(nodeFQNField),
             )
             return {
                 modelPath: modelPath,
@@ -363,7 +371,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
     protected setAttachmentPresetField(
         modelPathField: string,
         nodeFQNField: string,
-        attachmentPreset: AttachmentPresetInput | undefined
+        attachmentPreset: AttachmentPresetInput | undefined,
     ): void {
         this.setStringField(modelPathField, extractAttachmentPresetInputModelPath(attachmentPreset))
         this.setStringField(nodeFQNField, extractAttachmentPresetInputNodeFQN(attachmentPreset))
@@ -393,25 +401,27 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         this.object.setField(field, stringsToData(values))
     }
 
-    protected getObjectDataEntryIdsField<Id extends ObjectDataEntryId>(field: string): Id[] {
-        return dataToObjectDataEntryIds(this.object.getField(field))
+    protected getObjectDataEntryNumericIdsField<Id extends ObjectDataEntryId & number>(
+        field: string,
+    ): Id[] {
+        return dataToObjectDataEntryNumericIds(this.object.getField(field))
     }
 
-    protected setObjectDataEntryIdsField<Id extends ObjectDataEntryId>(
+    protected setObjectDataEntryNumericIdsField<Id extends ObjectDataEntryId & number>(
         field: string,
-        values: Id[]
+        values: Id[],
     ): void {
-        this.object.setField(field, objectDataEntryIdsToData(values))
+        this.object.setField(field, objectDataEntryNumericIdsToData(values))
     }
 
     protected getAttachmentPresetListField(
         modelPathListField: string,
-        nodeFQNFields: string[]
+        nodeFQNFields: string[],
     ): AttachmentPreset[] {
         const modelPaths = this.getStringsField(modelPathListField)
         return zip(modelPaths, nodeFQNFields, (modelPath, nodeFQNField) => {
             const [nodeName, nodeQualifiers] = splitAttachmentNodeFQN(
-                this.getStringField(nodeFQNField)
+                this.getStringField(nodeFQNField),
             )
             return {
                 modelPath: modelPath,
@@ -425,16 +435,16 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         modelPathListField: string,
         nodeFQNFields: string[],
         lengthField: string,
-        attachmentPresets: AttachmentPresetInput[]
+        attachmentPresets: AttachmentPresetInput[],
     ): void {
         this.setStringsField(
             modelPathListField,
-            map(attachmentPresets, extractAttachmentPresetInputModelPath)
+            map(attachmentPresets, extractAttachmentPresetInputModelPath),
         )
         for (const i of $range(0, nodeFQNFields.length - 1)) {
             this.setStringField(
                 nodeFQNFields[i],
-                extractAttachmentPresetInputNodeFQN(attachmentPresets[i])
+                extractAttachmentPresetInputNodeFQN(attachmentPresets[i]),
             )
         }
         this.setNumberField(lengthField, attachmentPresets.length)
@@ -443,13 +453,13 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
     protected setFlagLevelFieldValue(
         fieldId: string,
         flag: 1 | 2 | 4 | 8 | 16,
-        supplier: ObjectDataEntryLevelFieldValueSupplier<boolean>
+        supplier: ObjectDataEntryLevelFieldValueSupplier<boolean>,
     ): void {
         this.setNumberLevelField(fieldId, (level, currentValue) => {
             const value = extractObjectDataEntryLevelFieldValue(
                 supplier,
                 level,
-                (currentValue & flag) != 0
+                (currentValue & flag) != 0,
             )
             return (currentValue & ~flag) | (value ? flag : 0)
         })
@@ -465,14 +475,14 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
 
     protected setBooleanLevelField(
         field: string,
-        values: ObjectDataEntryLevelFieldValueSupplier<boolean>
+        values: ObjectDataEntryLevelFieldValueSupplier<boolean>,
     ): void {
         this.setLevelField(
             field,
             values,
             extractObjectDataEntryLevelFieldValue,
             dataToBoolean,
-            booleanToData
+            booleanToData,
         )
     }
 
@@ -482,14 +492,14 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
 
     protected setNumberLevelField(
         field: string,
-        values: ObjectDataEntryLevelFieldValueSupplier<number>
+        values: ObjectDataEntryLevelFieldValueSupplier<number>,
     ): void {
         this.setLevelField(
             field,
             values,
             extractObjectDataEntryLevelFieldValue,
             dataToNumber,
-            numberToData
+            numberToData,
         )
     }
 
@@ -499,31 +509,33 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
 
     protected setStringLevelField(
         field: string,
-        values: ObjectDataEntryLevelFieldValueSupplier<string>
+        values: ObjectDataEntryLevelFieldValueSupplier<string>,
     ): void {
         this.setLevelField(
             field,
             values,
             extractObjectDataEntryLevelFieldValue,
             dataToString,
-            stringToData
+            stringToData,
         )
     }
 
-    protected getObjectDataEntryIdLevelField<Id extends ObjectDataEntryId>(field: string): Id[] {
-        return this.getLevelField(field, dataToObjectDataEntryId<Id>)
+    protected getObjectDataEntryNumericIdLevelField<Id extends ObjectDataEntryId & number>(
+        field: string,
+    ): Id[] {
+        return this.getLevelField(field, dataToObjectDataEntryNumericId<Id>)
     }
 
-    protected setObjectDataEntryIdLevelField<Id extends ObjectDataEntryId>(
+    protected setObjectDataEntryNumericIdLevelField<Id extends ObjectDataEntryId & number>(
         field: string,
-        values: ObjectDataEntryLevelFieldValueSupplier<Id>
+        values: ObjectDataEntryLevelFieldValueSupplier<Id>,
     ): void {
         this.setLevelField(
             field,
             values,
             extractObjectDataEntryLevelFieldValue,
-            dataToObjectDataEntryId,
-            objectDataEntryIdToData
+            dataToObjectDataEntryNumericId,
+            objectDataEntryNumericIdToData,
         )
     }
 
@@ -533,14 +545,14 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
 
     protected setBooleansLevelField(
         field: string,
-        values: ObjectDataEntryLevelFieldValueSupplier<boolean[]>
+        values: ObjectDataEntryLevelFieldValueSupplier<boolean[]>,
     ): void {
         this.setLevelField(
             field,
             values,
             extractObjectDataEntryLevelArrayFieldValue,
             dataToBooleans,
-            booleansToData
+            booleansToData,
         )
     }
 
@@ -550,14 +562,14 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
 
     protected setNumbersLevelField(
         field: string,
-        values: ObjectDataEntryLevelFieldValueSupplier<number[]>
+        values: ObjectDataEntryLevelFieldValueSupplier<number[]>,
     ): void {
         this.setLevelField(
             field,
             values,
             extractObjectDataEntryLevelArrayFieldValue,
             dataToNumbers,
-            numbersToData
+            numbersToData,
         )
     }
 
@@ -567,42 +579,44 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
 
     protected setStringsLevelField(
         field: string,
-        values: ObjectDataEntryLevelFieldValueSupplier<string[]>
+        values: ObjectDataEntryLevelFieldValueSupplier<string[]>,
     ): void {
         this.setLevelField(
             field,
             values,
             extractObjectDataEntryLevelArrayFieldValue,
             dataToStrings,
-            stringsToData
+            stringsToData,
         )
     }
 
-    protected getObjectDataEntryIdsLevelField<T extends ObjectDataEntryId>(field: string): T[][] {
-        return this.getLevelField(field, dataToObjectDataEntryIds<T>)
+    protected getObjectDataEntryNumericIdsLevelField<T extends ObjectDataEntryId & number>(
+        field: string,
+    ): T[][] {
+        return this.getLevelField(field, dataToObjectDataEntryNumericIds<T>)
     }
 
-    protected setObjectDataEntryIdsLevelField<T extends ObjectDataEntryId>(
+    protected setObjectDataEntryNumericIdsLevelField<T extends ObjectDataEntryId & number>(
         field: string,
-        values: ObjectDataEntryLevelFieldValueSupplier<T[]>
+        values: ObjectDataEntryLevelFieldValueSupplier<T[]>,
     ): void {
         this.setLevelField(
             field,
             values,
             extractObjectDataEntryLevelArrayFieldValue,
-            dataToObjectDataEntryIds<T>,
-            objectDataEntryIdsToData<T>
+            dataToObjectDataEntryNumericIds<T>,
+            objectDataEntryNumericIdsToData<T>,
         )
     }
 
     private getLevelField<T>(
         field: string,
-        dataToValue: (data: string | number | undefined) => T
+        dataToValue: (data: string | number | undefined, idType: "number" | "string") => T,
     ): T[] {
         const values: T[] = []
         const object = this.object
         for (const level of $range(1, tonumber(object.getField("levels")) ?? 1)) {
-            values[level - 1] = dataToValue(object.getField(`${field}+${level}`))
+            values[level - 1] = dataToValue(object.getField(`${field}+${level}`), "number")
         }
         return values
     }
@@ -613,10 +627,10 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         extractor: (
             supplier: ObjectDataEntryLevelFieldValueSupplier<T>,
             level: number,
-            value: T
+            value: T,
         ) => T,
         dataToValue: (data: string | number | undefined) => T,
-        valueToData: (value: T) => string | number
+        valueToData: (value: T) => string | number,
     ): void {
         const levelFieldParameters: LevelFieldParameters<T> = {
             supplier,
@@ -640,7 +654,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
 
         const maxAffectedLevel = max(
             this.maxAffectedLevelByField.get(field) ?? 0,
-            tonumber(object.getField("levels")) ?? tonumber(object.getField("maxlevel")) ?? 0
+            tonumber(object.getField("levels")) ?? tonumber(object.getField("maxlevel")) ?? 0,
         )
         this.maxAffectedLevelByField.set(field, maxAffectedLevel)
 
@@ -648,7 +662,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
             const value = extractor(
                 supplier,
                 level - 1,
-                dataToValue(object.getField(`${field}+${level}`))
+                dataToValue(object.getField(`${field}+${level}`)),
             )
             object.setField(`${field}+${level}`, valueToData(value))
         }
@@ -681,12 +695,12 @@ const dataToString = (data: number | string | undefined): string => {
     return tostring(data ?? "")
 }
 
-const objectDataEntryIdToData = (value: number): string => {
+const objectDataEntryNumericIdToData = (value: number): string => {
     return value == 0 ? "" : string.pack(">I4", value)
 }
 
-const dataToObjectDataEntryId = <Id extends ObjectDataEntryId>(
-    data: number | string | undefined
+const dataToObjectDataEntryNumericId = <Id extends ObjectDataEntryId & number>(
+    data: number | string | undefined,
 ): Id => {
     const dataString = dataToString(data)
     if (isDataNotBlank(dataString)) {
@@ -694,6 +708,20 @@ const dataToObjectDataEntryId = <Id extends ObjectDataEntryId>(
     } else {
         return 0 as Id
     }
+}
+
+const objectDataEntryIdToData = (value: number | string): string => {
+    return typeof value == "number" ? objectDataEntryNumericIdToData(value) : value
+}
+
+const dataToObjectDataEntryId = <Id extends ObjectDataEntryId>(
+    data: number | string | undefined,
+    type: "number" | "string",
+): Id => {
+    if (type == "number") {
+        return dataToObjectDataEntryNumericId(data) as Id
+    }
+    return dataToString(data) as Id
 }
 
 const booleansToData = (value: boolean[]): string => {
@@ -729,17 +757,21 @@ const dataToStrings = (data: number | string | undefined): string[] => {
         .map((data) => dataToString(data))
 }
 
-const objectDataEntryIdsToData = <T extends ObjectDataEntryId>(value: T[]): string => {
-    return value.map((objectDataEntryId) => objectDataEntryIdToData(objectDataEntryId)).join(",")
+const objectDataEntryNumericIdsToData = <T extends ObjectDataEntryId & number>(
+    value: T[],
+): string => {
+    return value
+        .map((objectDataEntryId) => objectDataEntryNumericIdToData(objectDataEntryId))
+        .join(",")
 }
 
-const dataToObjectDataEntryIds = <T extends ObjectDataEntryId>(
-    data: number | string | undefined
+const dataToObjectDataEntryNumericIds = <T extends ObjectDataEntryId & number>(
+    data: number | string | undefined,
 ): T[] => {
     return dataToString(data)
         .split(",")
         .filter(isDataNotBlank)
-        .map((data) => dataToObjectDataEntryId<T>(data))
+        .map((data) => dataToObjectDataEntryNumericId<T>(data))
 }
 
 const isDataNotBlank = function (this: any, data: string): boolean {

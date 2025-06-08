@@ -3,7 +3,8 @@ import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-gene
 import { Color } from "../../../core/types/color"
 import { implementReadonlyNumberIndexSupplier } from "../../../utility/reflection"
 
-export type LightningTypeId = ObjectDataEntryId & { readonly __lightningTypeId: unique symbol }
+export type LightningTypeId = ObjectDataEntryId &
+    number & { readonly __lightningTypeId: unique symbol }
 
 export type StandardLightningTypeId = LightningTypeId & {
     readonly __standardLightningTypeId: unique symbol
@@ -81,7 +82,7 @@ export class LightningType extends ObjectDataEntry<LightningTypeId> {
             this.getNumberField("R"),
             this.getNumberField("G"),
             this.getNumberField("B"),
-            this.getNumberField("A")
+            this.getNumberField("A"),
         )
     }
 

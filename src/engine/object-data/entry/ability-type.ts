@@ -43,7 +43,7 @@ import { LightningTypeId } from "./lightning-type"
 import { UnitTypeId } from "./unit-type"
 import { Upgrade, UpgradeId } from "./upgrade"
 
-export type AbilityTypeId = ObjectDataEntryId & { readonly __abilityTypeId: unique symbol }
+export type AbilityTypeId = ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol }
 
 const castAnimationFQNByAbilityTypeId = new LuaMap<AbilityTypeId, string>()
 
@@ -219,11 +219,11 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public get lightningTypeIds(): LightningTypeId[] {
-        return this.getObjectDataEntryIdsField("alig")
+        return this.getObjectDataEntryNumericIdsField("alig")
     }
 
     public set lightningTypeIds(lightningTypeIds: LightningTypeId[]) {
-        this.setObjectDataEntryIdsField("alig", lightningTypeIds)
+        this.setObjectDataEntryNumericIdsField("alig", lightningTypeIds)
     }
 
     public get missileModelPath(): string {
@@ -374,7 +374,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public get techTreeDependencies(): TechTreeDependency[] {
-        const techTreeDependencyIds = this.getObjectDataEntryIdsField("areq")
+        const techTreeDependencyIds = this.getObjectDataEntryNumericIdsField("areq")
         const techTreeDependencyInternalLevels = this.getNumbersField("arqa")
         return mapIndexed(techTreeDependencyIds, (index, techTreeDependencyId) => {
             const techTreeDependencyInternalLevel = techTreeDependencyInternalLevels[index] ?? 1
@@ -400,7 +400,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
             map(techTreeDependencies, extractTechTreeDependencyInputLevel),
             (techTreeDependencyLevel) => techTreeDependencyLevel + 1,
         )
-        this.setObjectDataEntryIdsField("areq", techTreeDependencyIds)
+        this.setObjectDataEntryNumericIdsField("areq", techTreeDependencyIds)
         this.setNumbersField("arqa", techTreeDependencyInternalLevels)
     }
 
@@ -579,11 +579,11 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public get buffTypeIds(): BuffTypeId[][] {
-        return this.getObjectDataEntryIdsLevelField("abuf")
+        return this.getObjectDataEntryNumericIdsLevelField("abuf")
     }
 
     public set buffTypeIds(buffTypeIds: ObjectDataEntryLevelFieldValueSupplier<BuffTypeId[]>) {
-        this.setObjectDataEntryIdsLevelField("abuf", buffTypeIds)
+        this.setObjectDataEntryNumericIdsLevelField("abuf", buffTypeIds)
     }
 
     public get castRange(): number[] {
@@ -611,13 +611,13 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public get effectBuffTypeIds(): BuffTypeId[][] {
-        return this.getObjectDataEntryIdsLevelField("aeff")
+        return this.getObjectDataEntryNumericIdsLevelField("aeff")
     }
 
     public set effectBuffTypeIds(
         effectBuffTypeIds: ObjectDataEntryLevelFieldValueSupplier<BuffTypeId[]>,
     ) {
-        this.setObjectDataEntryIdsLevelField("aeff", effectBuffTypeIds)
+        this.setObjectDataEntryNumericIdsLevelField("aeff", effectBuffTypeIds)
     }
 
     public get heroBuffDuration(): number[] {

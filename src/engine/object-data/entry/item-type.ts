@@ -3,7 +3,7 @@ import { ObjectDataEntry, ObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 import type { AbilityTypeId } from "./ability-type"
 
-export type ItemTypeId = ObjectDataEntryId & { readonly __itemTypeId: unique symbol }
+export type ItemTypeId = ObjectDataEntryId & number & { readonly __itemTypeId: unique symbol }
 
 export class ItemType extends ObjectDataEntry<ItemTypeId> {
     private static readonly idGenerator = new ObjectDataEntryIdGenerator(fourCC("I000"))
@@ -19,11 +19,11 @@ export class ItemType extends ObjectDataEntry<ItemTypeId> {
     // Abilities
 
     public get abilityTypeIds(): AbilityTypeId[] {
-        return this.getObjectDataEntryIdsField("iabi")
+        return this.getObjectDataEntryNumericIdsField("iabi")
     }
 
     public set abilityTypeIds(abilityTypeIds: AbilityTypeId[]) {
-        this.setObjectDataEntryIdsField("iabi", abilityTypeIds)
+        this.setObjectDataEntryNumericIdsField("iabi", abilityTypeIds)
     }
 
     // Art
@@ -171,11 +171,11 @@ export class ItemType extends ObjectDataEntry<ItemTypeId> {
     // Stats
 
     public get cooldownGroupId(): number {
-        return this.getObjectDataEntryIdField("icid")
+        return this.getObjectDataEntryNumericIdField("icid")
     }
 
     public set cooldownGroupId(cooldownGroupId: number) {
-        this.setObjectDataEntryIdField("icid", cooldownGroupId as ObjectDataEntryId)
+        this.setObjectDataEntryNumericIdField("icid", cooldownGroupId as ObjectDataEntryId & number)
     }
 
     public get goldCost(): number {

@@ -7,9 +7,10 @@ import {
 import { ObjectDataEntry, ObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 
-export type DestructibleTypeId = ObjectDataEntryId & {
-    readonly __destructibleTypeId: unique symbol
-}
+export type DestructibleTypeId = ObjectDataEntryId &
+    number & {
+        readonly __destructibleTypeId: unique symbol
+    }
 
 export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeId> {
     private static readonly idGenerator = new ObjectDataEntryIdGenerator(fourCC("D000"))

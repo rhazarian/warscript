@@ -9,7 +9,7 @@ import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-gene
 
 import { LightningTypeId } from "./lightning-type"
 
-export type BuffTypeId = ObjectDataEntryId & { readonly __buffTypeId: unique symbol }
+export type BuffTypeId = ObjectDataEntryId & number & { readonly __buffTypeId: unique symbol }
 
 export abstract class BuffType<Id extends BuffTypeId = BuffTypeId> extends ObjectDataEntry<Id> {
     private static readonly idGenerator = new ObjectDataEntryIdGenerator(fourCC("B000"))
@@ -65,11 +65,11 @@ export abstract class BuffType<Id extends BuffTypeId = BuffTypeId> extends Objec
     }
 
     public get lightningTypeIds(): LightningTypeId[] {
-        return this.getObjectDataEntryIdsField("flig")
+        return this.getObjectDataEntryNumericIdsField("flig")
     }
 
     public set lightningTypeIds(lightningTypeIds: LightningTypeId[]) {
-        this.setObjectDataEntryIdsField("flig", lightningTypeIds)
+        this.setObjectDataEntryNumericIdsField("flig", lightningTypeIds)
     }
 
     public get missileModelPath(): string {
@@ -123,18 +123,18 @@ export abstract class BuffType<Id extends BuffTypeId = BuffTypeId> extends Objec
     public get targetAttachmentPresets(): TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6> {
         return this.getAttachmentPresetListField(
             "ftat",
-            array(6, (i) => `fta${i}`)
+            array(6, (i) => `fta${i}`),
         ) as TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6>
     }
 
     public set targetAttachmentPresets(
-        targetAttachmentPresets: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+        targetAttachmentPresets: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>,
     ) {
         this.setAttachmentPresetListField(
             "ftat",
             array(6, (i) => `fta${i}`),
             "ftac",
-            targetAttachmentPresets
+            targetAttachmentPresets,
         )
     }
 

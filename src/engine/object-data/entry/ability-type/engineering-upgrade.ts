@@ -18,7 +18,7 @@ export class EngineeringUpgradeAbilityType extends AbilityType {
     }
 
     public set movementSpeedIncreaseFactor(
-        movementSpeedIncreaseFactor: ObjectDataEntryLevelFieldValueSupplier<number>
+        movementSpeedIncreaseFactor: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
         this.setNumberLevelField("Neg1", movementSpeedIncreaseFactor)
     }
@@ -28,7 +28,7 @@ export class EngineeringUpgradeAbilityType extends AbilityType {
     }
 
     public set autoAttackDamageIncrease(
-        autoAttackDamageIncrease: ObjectDataEntryLevelFieldValueSupplier<number>
+        autoAttackDamageIncrease: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
         this.setNumberLevelField("Neg2", autoAttackDamageIncrease)
     }
@@ -36,7 +36,7 @@ export class EngineeringUpgradeAbilityType extends AbilityType {
     public get abilityUpgrades(): TupleOf<[AbilityTypeId, AbilityTypeId], 0 | 1 | 2 | 3 | 4>[] {
         const abilityUpgrades: TupleOf<[AbilityTypeId, AbilityTypeId], 0 | 1 | 2 | 3 | 4>[] = []
         for (const i of $range(0, 3)) {
-            const abilityUpgrade = this.getObjectDataEntryIdsLevelField(`Neg${3 + i}`)
+            const abilityUpgrade = this.getObjectDataEntryNumericIdsLevelField(`Neg${3 + i}`)
             for (const level of $range(0, abilityUpgrade.length - 1)) {
                 const levelAbilityUpgrade = abilityUpgrade[level]
                 if (levelAbilityUpgrade.length == 2) {
@@ -53,11 +53,11 @@ export class EngineeringUpgradeAbilityType extends AbilityType {
     public set abilityUpgrades(
         abilityUpgrades:
             | TupleOf<[AbilityTypeId, AbilityTypeId], 0 | 1 | 2 | 3 | 4>
-            | TupleOf<[AbilityTypeId, AbilityTypeId], 0 | 1 | 2 | 3 | 4>[]
+            | TupleOf<[AbilityTypeId, AbilityTypeId], 0 | 1 | 2 | 3 | 4>[],
     ) {
         const isArray = Array.isArray(abilityUpgrades[0]?.[0])
         for (const i of $range(0, abilityUpgrades.length - 1)) {
-            this.setObjectDataEntryIdsLevelField(
+            this.setObjectDataEntryNumericIdsLevelField(
                 `Neg${3 + i}`,
                 isArray
                     ? map(
@@ -67,9 +67,9 @@ export class EngineeringUpgradeAbilityType extends AbilityType {
                           >[],
                           (levelAbilityUpgrades) => {
                               return levelAbilityUpgrades[i]
-                          }
+                          },
                       )
-                    : abilityUpgrades[i] ?? emptyArray()
+                    : (abilityUpgrades[i] ?? emptyArray()),
             )
         }
     }

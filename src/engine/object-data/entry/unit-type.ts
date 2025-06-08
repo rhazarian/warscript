@@ -26,7 +26,7 @@ import { AnimationQualifier } from "../auxiliary/animation-qualifier"
 import { AttackType } from "../auxiliary/attack-type"
 import { WarscriptConfig } from "../../../config"
 
-export type UnitTypeId = ObjectDataEntryId & { readonly __unitTypeId: unique symbol }
+export type UnitTypeId = ObjectDataEntryId & number & { readonly __unitTypeId: unique symbol }
 
 export type StandardUnitTypeId = UnitTypeId & { readonly __standardUnitTypeId: unique symbol }
 
@@ -178,19 +178,19 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
     // Abilities
 
     public get abilityTypeIds(): AbilityTypeId[] {
-        return this.getObjectDataEntryIdsField("uabi")
+        return this.getObjectDataEntryNumericIdsField("uabi")
     }
 
     public set abilityTypeIds(abilityTypeIds: AbilityTypeId[]) {
-        this.setObjectDataEntryIdsField("uabi", abilityTypeIds)
+        this.setObjectDataEntryNumericIdsField("uabi", abilityTypeIds)
     }
 
     public get defaultActiveAbilityTypeId(): AbilityTypeId | undefined {
-        return this.getObjectDataEntryIdsField<AbilityTypeId>("udaa")[0]
+        return this.getObjectDataEntryNumericIdsField<AbilityTypeId>("udaa")[0]
     }
 
     public set defaultActiveAbilityTypeId(abilityTypeId: AbilityTypeId | undefined) {
-        this.setObjectDataEntryIdsField("udaa", arrayOfNotNull(abilityTypeId))
+        this.setObjectDataEntryNumericIdsField("udaa", arrayOfNotNull(abilityTypeId))
     }
 
     // Art
@@ -937,11 +937,11 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
     // Tech Tree
 
     public get affectingUpgradeIds(): UpgradeId[] {
-        return this.getObjectDataEntryIdsField("upgr")
+        return this.getObjectDataEntryNumericIdsField("upgr")
     }
 
     public set affectingUpgradeIds(affectingUpgradeIds: UpgradeId[]) {
-        this.setObjectDataEntryIdsField("upgr", affectingUpgradeIds)
+        this.setObjectDataEntryNumericIdsField("upgr", affectingUpgradeIds)
     }
 
     // Text
@@ -1004,11 +1004,11 @@ export abstract class HeroUnitType<
     // Abilities
 
     public get heroAbilityTypeIds(): AbilityTypeId[] {
-        return this.getObjectDataEntryIdsField("uhab")
+        return this.getObjectDataEntryNumericIdsField("uhab")
     }
 
     public set heroAbilityTypeIds(heroAbilityTypeIds: AbilityTypeId[]) {
-        this.setObjectDataEntryIdsField("uhab", heroAbilityTypeIds)
+        this.setObjectDataEntryNumericIdsField("uhab", heroAbilityTypeIds)
     }
 
     // Text

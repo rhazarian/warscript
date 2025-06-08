@@ -7,13 +7,13 @@ export class PhoenixMorphAbilityType extends AbilityType {
     public static override readonly BASE_ID = fourCC("Aphx") as AbilityTypeId
 
     public get normalFormUnitTypeId(): UnitTypeId[] {
-        return this.getObjectDataEntryIdLevelField("Eme1")
+        return this.getObjectDataEntryNumericIdLevelField("Eme1")
     }
 
     public set normalFormUnitTypeId(
-        normalFormUnitTypeId: ObjectDataEntryLevelFieldValueSupplier<UnitTypeId>
+        normalFormUnitTypeId: ObjectDataEntryLevelFieldValueSupplier<UnitTypeId>,
     ) {
-        this.setObjectDataEntryIdLevelField("Eme1", normalFormUnitTypeId)
+        this.setObjectDataEntryNumericIdLevelField("Eme1", normalFormUnitTypeId)
     }
 
     public get isUninterruptible(): boolean[] {
@@ -21,7 +21,7 @@ export class PhoenixMorphAbilityType extends AbilityType {
     }
 
     public set isUninterruptible(
-        isUninterruptible: ObjectDataEntryLevelFieldValueSupplier<boolean>
+        isUninterruptible: ObjectDataEntryLevelFieldValueSupplier<boolean>,
     ) {
         this.setFlagLevelFieldValue("Eme2", 1, isUninterruptible)
     }
@@ -31,7 +31,7 @@ export class PhoenixMorphAbilityType extends AbilityType {
     }
 
     public set isLandingImmediate(
-        isLandingImmediate: ObjectDataEntryLevelFieldValueSupplier<boolean>
+        isLandingImmediate: ObjectDataEntryLevelFieldValueSupplier<boolean>,
     ) {
         this.setFlagLevelFieldValue("Eme2", 2, isLandingImmediate)
     }
@@ -41,7 +41,7 @@ export class PhoenixMorphAbilityType extends AbilityType {
     }
 
     public set isTakeOffImmediate(
-        isTakeOffImmediate: ObjectDataEntryLevelFieldValueSupplier<boolean>
+        isTakeOffImmediate: ObjectDataEntryLevelFieldValueSupplier<boolean>,
     ) {
         this.setFlagLevelFieldValue("Eme2", 4, isTakeOffImmediate)
     }
@@ -67,7 +67,7 @@ export class PhoenixMorphAbilityType extends AbilityType {
     }
 
     public set attitudeAdjustmentDuration(
-        attitudeAdjustmentDuration: ObjectDataEntryLevelFieldValueSupplier<number>
+        attitudeAdjustmentDuration: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
         this.setNumberLevelField("Eme3", attitudeAdjustmentDuration)
     }
@@ -77,18 +77,18 @@ export class PhoenixMorphAbilityType extends AbilityType {
     }
 
     public set landingDelayDuration(
-        landingDelayDuration: ObjectDataEntryLevelFieldValueSupplier<number>
+        landingDelayDuration: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
         this.setNumberLevelField("Eme4", landingDelayDuration)
     }
 
     public get alternateFormUnitTypeId(): UnitTypeId[] {
-        return this.getObjectDataEntryIdLevelField("Emeu")
+        return this.getObjectDataEntryNumericIdLevelField("Emeu")
     }
 
     public set alternateFormUnitTypeId(
-        alternateFormUnitTypeId: ObjectDataEntryLevelFieldValueSupplier<UnitTypeId>
+        alternateFormUnitTypeId: ObjectDataEntryLevelFieldValueSupplier<UnitTypeId>,
     ) {
-        this.setObjectDataEntryIdLevelField("Emeu", alternateFormUnitTypeId)
+        this.setObjectDataEntryNumericIdLevelField("Emeu", alternateFormUnitTypeId)
     }
 }

@@ -17,15 +17,15 @@ export type TechTreeDependency =
 export type TechTreeDependencyInput = TechTreeDependency | UnitTypeId | UpgradeId
 
 export const extractTechTreeDependencyInputObjectDataEntryId = (
-    techTreeDependencyInput: TechTreeDependencyInput
-): ObjectDataEntryId => {
+    techTreeDependencyInput: TechTreeDependencyInput,
+): ObjectDataEntryId & number => {
     return typeof techTreeDependencyInput == "number"
         ? techTreeDependencyInput
-        : techTreeDependencyInput.unitTypeId ?? techTreeDependencyInput.upgradeId
+        : (techTreeDependencyInput.unitTypeId ?? techTreeDependencyInput.upgradeId)
 }
 
 export const extractTechTreeDependencyInputLevel = (
-    techTreeDependencyInput: TechTreeDependencyInput
+    techTreeDependencyInput: TechTreeDependencyInput,
 ): number => {
-    return typeof techTreeDependencyInput == "number" ? 0 : techTreeDependencyInput.level ?? 0
+    return typeof techTreeDependencyInput == "number" ? 0 : (techTreeDependencyInput.level ?? 0)
 }

@@ -7,13 +7,13 @@ export class SummonQuilbeastAbilityType extends AbilityType {
     public static override readonly BASE_ID = fourCC("ANsq") as AbilityTypeId
 
     public get summonedUnitTypeId(): UnitTypeId[] {
-        return this.getObjectDataEntryIdLevelField("Hwe1")
+        return this.getObjectDataEntryNumericIdLevelField("Hwe1")
     }
 
     public set summonedUnitTypeId(
-        summonedUnitTypeId: ObjectDataEntryLevelFieldValueSupplier<UnitTypeId>
+        summonedUnitTypeId: ObjectDataEntryLevelFieldValueSupplier<UnitTypeId>,
     ) {
-        this.setObjectDataEntryIdLevelField("Hwe1", summonedUnitTypeId)
+        this.setObjectDataEntryNumericIdLevelField("Hwe1", summonedUnitTypeId)
     }
 
     public get summonedUnitCount(): number[] {
@@ -21,7 +21,7 @@ export class SummonQuilbeastAbilityType extends AbilityType {
     }
 
     public set summonedUnitCount(
-        summonedUnitCount: ObjectDataEntryLevelFieldValueSupplier<number>
+        summonedUnitCount: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
         this.setNumberLevelField("Hwe2", summonedUnitCount)
     }

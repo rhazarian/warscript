@@ -18,7 +18,7 @@ import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-gene
 import { AbilityTypeId } from "./ability-type"
 import type { UnitTypeId } from "./unit-type"
 
-export type UpgradeId = ObjectDataEntryId & { readonly __upgradeId: unique symbol }
+export type UpgradeId = ObjectDataEntryId & number & { readonly __upgradeId: unique symbol }
 
 export const enum UpgradeEffectType {
     ABILITY_LEVEL_BONUS = "rlev",
@@ -120,7 +120,7 @@ export abstract class Upgrade extends ObjectDataEntry<UpgradeId> {
     // Tech Tree
 
     public get techTreeDependencies(): TechTreeDependency[][] {
-        const techTreeDependencyIds = this.getObjectDataEntryIdsLevelField("greq")
+        const techTreeDependencyIds = this.getObjectDataEntryNumericIdsLevelField("greq")
         const techTreeDependencyInternalLevels = this.getNumbersLevelField("grqc")
         return mapIndexed(techTreeDependencyIds, (level, levelTechTreeDependencyIds) => {
             const levelTechTreeDependencyInternalLevels =
@@ -143,27 +143,27 @@ export abstract class Upgrade extends ObjectDataEntry<UpgradeId> {
     }
 
     public set techTreeDependencies(
-        techTreeDependencies: ObjectDataEntryLevelFieldValueSupplier<TechTreeDependencyInput[]>
+        techTreeDependencies: ObjectDataEntryLevelFieldValueSupplier<TechTreeDependencyInput[]>,
     ) {
         const currentTechTreeDependencies = this.techTreeDependencies
-        const techTreeDependencyIds: ObjectDataEntryId[][] = []
+        const techTreeDependencyIds: (ObjectDataEntryId & number)[][] = []
         const techTreeDependencyInternalLevels: number[][] = []
         for (const level of $range(0, this.levelCount - 1)) {
             const levelTechTreeDependencies = extractObjectDataEntryLevelArrayFieldValue(
                 techTreeDependencies,
                 level,
-                currentTechTreeDependencies[level]
+                currentTechTreeDependencies[level],
             )
             techTreeDependencyIds[level] = map(
                 levelTechTreeDependencies,
-                extractTechTreeDependencyInputObjectDataEntryId
+                extractTechTreeDependencyInputObjectDataEntryId,
             )
             techTreeDependencyInternalLevels[level] = map(
                 map(levelTechTreeDependencies, extractTechTreeDependencyInputLevel),
-                (level) => level + 1
+                (level) => level + 1,
             )
         }
-        this.setObjectDataEntryIdsLevelField("greq", techTreeDependencyIds)
+        this.setObjectDataEntryNumericIdsLevelField("greq", techTreeDependencyIds)
         this.setNumbersLevelField("grqc", techTreeDependencyInternalLevels)
     }
 
@@ -198,7 +198,7 @@ export abstract class Upgrade extends ObjectDataEntry<UpgradeId> {
     }
 
     public set tooltipExtendedText(
-        tooltipExtendedText: ObjectDataEntryLevelFieldValueSupplier<string>
+        tooltipExtendedText: ObjectDataEntryLevelFieldValueSupplier<string>,
     ) {
         this.setStringLevelField("gub1", tooltipExtendedText)
     }
@@ -212,7 +212,7 @@ export abstract class Upgrade extends ObjectDataEntry<UpgradeId> {
                 type: effectType,
                 bonusBase: this.getNumberField(`gba${i}`),
                 bonusIncrement: this.getNumberField(`gmo${i}`),
-                abilityTypeId: this.getObjectDataEntryIdField(`gco${i}`),
+                abilityTypeId: this.getObjectDataEntryNumericIdField(`gco${i}`),
             }
         }
         return undefined
@@ -223,7 +223,7 @@ export abstract class Upgrade extends ObjectDataEntry<UpgradeId> {
         this.setNumberField(`gba${i}`, effect?.bonusBase ?? 0)
         this.setNumberField(`gmo${i}`, effect?.bonusIncrement ?? 0)
         if (effect?.abilityTypeId != undefined) {
-            this.setObjectDataEntryIdField(`gco${i}`, effect?.abilityTypeId)
+            this.setObjectDataEntryNumericIdField(`gco${i}`, effect?.abilityTypeId)
         } else {
             this.setStringField(`gco${i}`, "")
         }
