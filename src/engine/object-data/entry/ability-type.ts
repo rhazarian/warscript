@@ -42,6 +42,7 @@ import { LightningTypeId } from "./lightning-type"
 import { UnitTypeId } from "./unit-type"
 import { Upgrade, UpgradeId } from "./upgrade"
 import { SoundPresetId } from "./sound-preset"
+import { Sound3D, SoundPreset } from "../../../core/types/sound"
 
 export type AbilityTypeId = ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol }
 
@@ -54,6 +55,11 @@ const casterCastingEffectPresetsByAbilityTypeId = new LuaMap<AbilityTypeId, Atta
 const casterChannelingEffectPresetsByAbilityTypeId = new LuaMap<AbilityTypeId, AttachmentPreset[]>()
 
 const targetCastingEffectPresetsByAbilityTypeId = new LuaMap<AbilityTypeId, AttachmentPreset[]>()
+
+const targetEffectSoundPresetByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    SoundPresetId | undefined
+>()
 
 export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     private static readonly idGenerator = abilityTypeIdGenerator
@@ -545,6 +551,14 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         this.setStringField("aefl", casterEffectLoopingSoundPresetId)
     }
 
+    public get targetEffectSoundPresetId(): SoundPresetId | undefined {
+        return targetEffectSoundPresetByAbilityTypeId.get(this.id)
+    }
+
+    public set targetEffectSoundPresetId(targetEffectSoundPresetId: SoundPresetId | undefined) {
+        targetEffectSoundPresetByAbilityTypeId.set(this.id, targetEffectSoundPresetId)
+    }
+
     // Stats
 
     public get allowedTargetCombatClassifications(): CombatClassifications[] {
@@ -701,6 +715,29 @@ for (const [abilityTypeId, animationFQN] of postcompile(() => castAnimationFQNBy
             }
         },
     )
+}
+
+for (const [abilityTypeId, soundPresetId] of postcompile(
+    () => targetEffectSoundPresetByAbilityTypeId,
+)) {
+    if (soundPresetId !== undefined) {
+        Unit.abilityWidgetTargetChannelingStartEvent[abilityTypeId].addListener(
+            EventListenerPriority.HIGHEST,
+            (caster, ability, target) => {
+                if (target instanceof Unit) {
+                    Sound3D.playFromLabel(soundPresetId, SoundPreset.Ability, target)
+                } else {
+                    Sound3D.playFromLabel(soundPresetId, SoundPreset.Ability, target.x, target.y)
+                }
+            },
+        )
+        Unit.abilityPointTargetChannelingStartEvent[abilityTypeId].addListener(
+            EventListenerPriority.HIGHEST,
+            (caster, ability, x, y) => {
+                Sound3D.playFromLabel(soundPresetId, SoundPreset.Ability, x, y)
+            },
+        )
+    }
 }
 
 const casterCastingEffectModelPathsByAbilityTypeId = postcompile(() => {

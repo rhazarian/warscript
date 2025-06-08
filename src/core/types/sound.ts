@@ -245,9 +245,25 @@ export class Sound3D extends Sound {
         killSoundWhenDone(sound)
     }
 
-    public static playFromLabel(label: string, preset: Sound3DPreset, unit: Unit): void {
+    public static playFromLabel(
+        label: string,
+        preset: Sound3DPreset,
+        ...positionOrUnit: [Unit] | [number, number, number?]
+    ): void
+
+    public static playFromLabel(
+        label: string,
+        preset: Sound3DPreset,
+        unitOrX: Unit | number,
+        y?: number,
+        z?: number,
+    ): void {
         const sound = createPreset3DSoundFromLabel(label, preset)
-        attachSoundToUnit(sound, unit.handle)
+        if (typeof unitOrX !== "number") {
+            attachSoundToUnit(sound, unitOrX.handle)
+        } else {
+            setSoundPosition(sound, unitOrX, y ?? 0, z ?? 0)
+        }
         startSound(sound)
         killSoundWhenDone(sound)
     }
