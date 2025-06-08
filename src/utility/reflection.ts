@@ -20,19 +20,17 @@ export const implementReadonlyNumberIndexSupplier = <
     rawset(
         metatable,
         "__index",
-        setmetatable(memoizedValueByKey, {
-            __index: function (this: any, key: any): any {
-                if (typeof key == "number") {
-                    const value = supplier(key as any)
-                    memoizedValueByKey.set(key, value)
-                    return value
-                }
-                if (typeof originalIndex == "function") {
-                    return (originalIndex as any)(this, key)
-                }
-                return (originalIndex as any)[key]
-            },
-        }),
+        function (this: any, key: any): any {
+            if (typeof key == "number") {
+                const value = supplier(key as any)
+                memoizedValueByKey.set(key, value)
+                return value
+            }
+            if (typeof originalIndex == "function") {
+                return (originalIndex as any)(this, key)
+            }
+            return (originalIndex as any)[key]
+        },
     )
 }
 
