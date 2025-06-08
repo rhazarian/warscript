@@ -83,8 +83,6 @@ type LevelFieldParameters<T extends string | number | boolean | undefined | Reco
 export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataEntryId> {
     public static readonly BASE_ID = 0 as ObjectDataEntryId
 
-    public static readonly ID_TYPE = typeof this.BASE_ID == "number" ? "number" : "string"
-
     protected static readonly IS_SYNTHETIC: boolean = false
 
     private readonly levelFieldParametersByField = new LuaMap<string, LevelFieldParameters<any>>()
@@ -108,6 +106,10 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
             internalObjectDataEntryIds.delete(this.id)
         }
         this._isInternal = isInternal
+    }
+
+    public static get idType(): "number" | "string" {
+        return typeof this.BASE_ID == "number" ? "number" : "string"
     }
 
     protected static generateId(): number | string {
@@ -193,7 +195,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         const constructor = this as ObjectDataEntryAbstractConstructor<T> & typeof ObjectDataEntry
         for (const [id, object] of pairs(constructor.getObjectData(currentMap).all)) {
             if (dataBaseIds.has(object.parentId ?? id)) {
-                const objectDataEntry = this.of(dataToObjectDataEntryId(id, this.ID_TYPE))
+                const objectDataEntry = this.of(dataToObjectDataEntryId(id, this.idType))
                 if (objectDataEntry != undefined && !objectDataEntry.isInternal) {
                     result[result.length] = objectDataEntry
                 }
@@ -212,7 +214,7 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         const constructor = this as unknown as typeof ObjectDataEntry
         const result: T[] = []
         for (const [id] of pairs(constructor.getObjectData(currentMap).all)) {
-            const objectDataEntry = this.of(dataToObjectDataEntryId(id, this.ID_TYPE))
+            const objectDataEntry = this.of(dataToObjectDataEntryId(id, this.idType))
             if (objectDataEntry != undefined && !objectDataEntry.isInternal) {
                 result[result.length] = objectDataEntry as T
             }
@@ -234,13 +236,13 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
             return undefined
         }
         let objectDataEntry = objectDataEntryByObjectDataEntryId.get(
-            dataToObjectDataEntryId(object.id, this.ID_TYPE),
+            dataToObjectDataEntryId(object.id, this.idType),
         )
         if (objectDataEntry == undefined) {
             if (
                 !constructor.IS_SYNTHETIC &&
                 (this.BASE_ID == 0 ||
-                    dataToObjectDataEntryId(object.parentId, this.ID_TYPE) == this.BASE_ID)
+                    dataToObjectDataEntryId(object.parentId, this.idType) == this.BASE_ID)
             ) {
                 objectDataEntry = new (class AbstractObjectDataEntryView extends constructor {
                     public constructor(object: WarObject) {
@@ -264,11 +266,11 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
     }
 
     public get id(): Id {
-        return dataToObjectDataEntryId(this.object.id, this.type.ID_TYPE)
+        return dataToObjectDataEntryId(this.object.id, this.type.idType)
     }
 
     public get baseId(): Id {
-        return dataToObjectDataEntryId(this.object.parentId ?? this.object.id, this.type.ID_TYPE)
+        return dataToObjectDataEntryId(this.object.parentId ?? this.object.id, this.type.idType)
     }
 
     public get isCustom(): boolean {
