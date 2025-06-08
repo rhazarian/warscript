@@ -9,7 +9,6 @@ import {
     combatClassificationsOf,
 } from "../../auxiliary/combat-classification"
 import { Race } from "../../auxiliary/race"
-import { SoundPresetName } from "../../auxiliary/sound-preset-name"
 import { BuffType, BuffTypeId } from "../buff-type"
 import { ObjectDataEntryConstructor } from "../../entry"
 
@@ -43,7 +42,7 @@ const enum ApplicatorType {
     PHYSICAL_POSITIVE = 852100, // berserk
     PHYSICAL_NEGATIVE = 852173, // flamingarrowstarg
     MAGIC_POSITIVE = 852101, // bloodlust
-    MAGIC_NEGATIVE = 852189, // cripple
+    MAGIC_NEGATIVE = 852190, // curse
 }
 
 export class ApplicableBuffType extends BuffType<ApplicableBuffTypeId> {
