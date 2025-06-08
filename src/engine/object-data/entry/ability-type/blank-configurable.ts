@@ -268,12 +268,6 @@ for (const [abilityTypeId, usesAttackAnimation] of postcompile(() => {
     }
     return usesAttackAnimationByAbilityTypeId
 })) {
-    Unit.abilityCastingFinishEvent[abilityTypeId].addListener((caster, ability) => {
-        const effectSound = ability.getField(ABILITY_SF_EFFECT_SOUND)
-        if (effectSound != "") {
-            Sound3D.playFromLabel(effectSound, SoundPreset.Ability, caster)
-        }
-    })
     if (usesAttackAnimation) {
         Unit.abilityCastingStartEvent[abilityTypeId].addListener(
             EventListenerPriority.HIGHEST,
