@@ -135,13 +135,13 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
     public static create<T extends ObjectDataEntry>(
         this: ObjectDataEntryConstructor<T>,
         ...args:
-            | [id?: number, properties?: ObjectDataEntryProperties<T>]
+            | [id?: number | string, properties?: ObjectDataEntryProperties<T>]
             | [properties: ObjectDataEntryProperties<T>]
     ): T
 
     public static create<T extends ObjectDataEntry>(
         this: ObjectDataEntryConstructor<T>,
-        id?: number | ObjectDataEntryProperties<T>,
+        id?: number | string | ObjectDataEntryProperties<T>,
         properties?: ObjectDataEntryProperties<T>,
     ): T {
         if (typeof id == "object") {

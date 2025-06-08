@@ -17,21 +17,20 @@ export const implementReadonlyNumberIndexSupplier = <
     const metatable = checkNotNull(getmetatable(clazz))
     const originalIndex = checkNotNull(rawget(metatable, "__index"))
     const memoizedValueByKey = new LuaMap<number, any>()
-    rawset(
-        metatable,
-        "__index",
-        function (this: any, key: any): any {
-            if (typeof key == "number") {
-                const value = supplier(key as any)
+    rawset(metatable, "__index", function (this: any, key: any): any {
+        if (typeof key == "number") {
+            let value = memoizedValueByKey.get(key)
+            if (value == undefined) {
+                value = supplier(key as any)
                 memoizedValueByKey.set(key, value)
-                return value
             }
-            if (typeof originalIndex == "function") {
-                return (originalIndex as any)(this, key)
-            }
-            return (originalIndex as any)[key]
-        },
-    )
+            return value
+        }
+        if (typeof originalIndex == "function") {
+            return (originalIndex as any)(this, key)
+        }
+        return (originalIndex as any)[key]
+    })
 }
 
 export const getClass = <T extends object>(object: T): Constructor<T> | undefined => {
