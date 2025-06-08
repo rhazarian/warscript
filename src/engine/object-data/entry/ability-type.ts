@@ -23,7 +23,6 @@ import {
     stringArrayToCombatClassifications,
 } from "../auxiliary/combat-classification"
 import { Race } from "../auxiliary/race"
-import { SoundPresetName } from "../auxiliary/sound-preset-name"
 import {
     extractTechTreeDependencyInputLevel,
     extractTechTreeDependencyInputObjectDataEntryId,
@@ -42,6 +41,7 @@ import { BuffTypeId } from "./buff-type"
 import { LightningTypeId } from "./lightning-type"
 import { UnitTypeId } from "./unit-type"
 import { Upgrade, UpgradeId } from "./upgrade"
+import { SoundPresetId } from "./sound-preset"
 
 export type AbilityTypeId = ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol }
 
@@ -526,20 +526,23 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
 
     // Sound
 
-    public get soundPresetName(): SoundPresetName {
-        return this.getStringField("aefs") as SoundPresetName
+    public get casterEffectSoundPresetId(): SoundPresetId | undefined {
+        const casterEffectSoundPresetId = this.getStringField("aefs")
+        return casterEffectSoundPresetId != ""
+            ? (casterEffectSoundPresetId as SoundPresetId)
+            : undefined
     }
 
-    public set soundPresetName(soundPresetName: SoundPresetName) {
-        this.setStringField("aefs", soundPresetName)
+    public set casterEffectSoundPresetId(casterEffectSoundPresetId: SoundPresetId | undefined) {
+        this.setStringField("aefs", casterEffectSoundPresetId ?? ("" as SoundPresetId))
     }
 
-    public get loopingSoundPresetName(): SoundPresetName {
-        return this.getStringField("aefl") as SoundPresetName
+    public get casterEffectLoopingSoundPresetId(): SoundPresetId {
+        return this.getStringField("aefl") as SoundPresetId
     }
 
-    public set loopingSoundPresetName(loopingSoundPresetName: SoundPresetName) {
-        this.setStringField("aefl", loopingSoundPresetName)
+    public set casterEffectLoopingSoundPresetId(casterEffectLoopingSoundPresetId: SoundPresetId) {
+        this.setStringField("aefl", casterEffectLoopingSoundPresetId)
     }
 
     // Stats

@@ -81,7 +81,7 @@ const [
         abilityType.buttonPositionY = -11
         abilityType.casterAttachmentPresets = []
         abilityType.targetEffectPresets = []
-        abilityType.soundPresetName = SoundPresetName.NONE
+        abilityType.casterEffectSoundPresetId = undefined
         abilityType.learnLevelMinimum = 6
         abilityType.race = Race.OTHER
         abilityType.shouldCheckTechTreeDependencies = false
