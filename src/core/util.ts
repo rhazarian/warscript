@@ -26,7 +26,7 @@ namespace ns {
         if (typeof id == "number") {
             return id
         } else {
-            const [numid] = string.unpack(">I4", id)
+            const [numid] = string.unpack(">I4", id.padEnd(4, "\0"))
             return numid
         }
     }
