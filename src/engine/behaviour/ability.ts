@@ -135,6 +135,14 @@ export abstract class AbilityBehavior<
         return this.object
     }
 
+    public get unit(): Unit | undefined {
+        const owner = this.object.owner
+        if (owner instanceof Unit) {
+            return owner
+        }
+        return owner.owner
+    }
+
     protected resolveCurrentAbilityDependentValue<T extends boolean | number | string>(
         value: AbilityDependentValue<T>,
     ): T
