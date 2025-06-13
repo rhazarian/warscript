@@ -8,6 +8,7 @@ import {
     AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD,
 } from "../../standard/fields/ability"
 import { AttackType, DamageType, WeaponType } from "../../internal/unit+damage"
+import { CombatClassifications } from "../../object-data/auxiliary/combat-classification"
 
 export type DamageAbilityBehaviorParameters = {
     damagePerStrength?: AbilityDependentValue<number>
@@ -20,6 +21,8 @@ export type DamageAbilityBehaviorParameters = {
 
 export type DamageAreaAbilityBehaviorParameters = DamageAbilityBehaviorParameters & {
     maximumDamage?: AbilityDependentValue<number>
+    areaOfEffect?: AbilityDependentValue<number>
+    allowedTargetCombatClassifications?: AbilityDependentValue<CombatClassifications>
 }
 
 abstract class DamageAbilityBehavior<
@@ -119,11 +122,14 @@ abstract class DamageAreaAbilityBehavior extends DamageAbilityBehavior<DamageAre
         const targets = Unit.getAllowedTargetsInCollisionRange(
             caster,
             this.resolveCurrentAbilityDependentValue(
-                ALLOWED_TARGETS_ABILITY_COMBAT_CLASSIFICATIONS_LEVEL_FIELD,
+                parameters?.allowedTargetCombatClassifications ??
+                    ALLOWED_TARGETS_ABILITY_COMBAT_CLASSIFICATIONS_LEVEL_FIELD,
             ),
             x,
             y,
-            this.resolveCurrentAbilityDependentValue(AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD),
+            this.resolveCurrentAbilityDependentValue(
+                parameters?.areaOfEffect ?? AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD,
+            ),
         )
 
         let damage = this.calculateDamage(caster)
