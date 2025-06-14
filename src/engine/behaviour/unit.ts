@@ -4,6 +4,7 @@ import { DamageEvent, DamagingEvent, Unit } from "../internal/unit"
 import "../internal/unit+ability"
 import "../internal/unit-missile-launch"
 import { Item } from "../internal/item"
+import type { AbilityBehavior } from "./ability"
 
 export type UnitBehaviorConstructor<Args extends any[]> = new (
     unit: Unit,
@@ -17,6 +18,8 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
     public constructor(unit: Unit) {
         super(unit)
     }
+
+    public readonly sourceAbilityBehavior?: AbilityBehavior
 
     public get unit(): Unit {
         return this.object

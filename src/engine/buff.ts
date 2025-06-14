@@ -451,7 +451,7 @@ export type BuffConstructorParameters<AdditionalParameters extends BuffAdditiona
     resistanceType: BuffResistanceTypeParameterType,
     ...abilityOrParameters:
         | [
-              ability: Ability,
+              ability?: Ability,
               parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>,
           ]
         | [parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>],
@@ -665,7 +665,7 @@ export class Buff<
 
             polarity = resistanceTypeOrPolarity as BuffPolarityParameterType
             resistanceType = abilityOrParametersOrResistanceType as BuffResistanceTypeParameterType
-            if (parametersOrAbility instanceof Ability) {
+            if (parametersOrAbility instanceof Ability || parametersOrAbility == undefined) {
                 ability = parametersOrAbility
             } else {
                 ability = undefined
@@ -675,7 +675,10 @@ export class Buff<
             typeId = typeIdOrTypeIds
             polarity = polarityOrTypeIdSelectionPolicy as BuffPolarityParameterType
             resistanceType = resistanceTypeOrPolarity as BuffResistanceTypeParameterType
-            if (abilityOrParametersOrResistanceType instanceof Ability) {
+            if (
+                abilityOrParametersOrResistanceType instanceof Ability ||
+                abilityOrParametersOrResistanceType == undefined
+            ) {
                 ability = abilityOrParametersOrResistanceType
                 parameters = parametersOrAbility as BuffParameters &
                     Omit<AdditionalParameters, keyof BuffParameters>
@@ -687,7 +690,7 @@ export class Buff<
         }
         this.typeId = typeId
 
-        if (!(ability instanceof Ability)) {
+        if (!(ability instanceof Ability || ability == undefined)) {
             parameters = ability
             ability = undefined
         }

@@ -35,6 +35,7 @@ const tostring = _G.tostring
 const setUnitAnimation = SetUnitAnimation
 const setUnitAnimationWithRarity = SetUnitAnimationWithRarity
 const setUnitAnimationByIndex = SetUnitAnimationByIndex
+const resetUnitAnimation = ResetUnitAnimation
 const queueUnitAnimation = QueueUnitAnimation
 const getUnitIntegerField = BlzGetUnitIntegerField
 const getUnitRealField = BlzGetUnitRealField
@@ -986,6 +987,10 @@ export class Unit extends Handle<junit> {
         } else {
             setUnitAnimation(this.handle, animation)
         }
+    }
+
+    public resetAnimation(): void {
+        resetUnitAnimation(this.handle)
     }
 
     public queueAnimation(animation: string): void {

@@ -22,7 +22,7 @@ export class ApplyUnitBehaviorAbilityBehavior<T extends UnitBehavior> extends Ab
     public constructor(
         ability: Ability,
         private readonly unitBehaviorConstructor: new (unit: Unit) => T,
-        private readonly parameters?: UnitBehaviorParameters<T>
+        private readonly parameters?: UnitBehaviorParameters<T>,
     ) {
         super(ability)
         if (parameters != undefined) {
@@ -47,6 +47,9 @@ export class ApplyUnitBehaviorAbilityBehavior<T extends UnitBehavior> extends Ab
     public override onUnitGainAbility(unit: Unit): void {
         this.unitBehavior?.destroy()
         this.unitBehavior = new this.unitBehaviorConstructor(unit)
+        ;(
+            this.unitBehavior as { sourceAbilityBehavior: UnitBehavior["sourceAbilityBehavior"] }
+        ).sourceAbilityBehavior = this
         this.update()
     }
 
