@@ -19,7 +19,6 @@ import {
 } from "../../../standard/fields/ability"
 import { LinkedSet } from "../../../../utility/linked-set"
 import { Ability } from "../../../internal/ability"
-import { Sound3D, SoundPreset } from "../../../../core/types/sound"
 import { AnimationQualifier } from "../../auxiliary/animation-qualifier"
 
 const isChannelingAbilityTypeIds = new LuaSet<AbilityTypeId>()

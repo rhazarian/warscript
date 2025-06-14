@@ -42,7 +42,7 @@ import { LightningTypeId } from "./lightning-type"
 import { UnitTypeId } from "./unit-type"
 import { Upgrade, UpgradeId } from "./upgrade"
 import { SoundPresetId } from "./sound-preset"
-import { Sound3D, SoundPreset } from "../../../core/types/sound"
+import { Sound3D, SoundSettings } from "../../../core/types/sound"
 
 export type AbilityTypeId = ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol }
 
@@ -725,16 +725,16 @@ for (const [abilityTypeId, soundPresetId] of postcompile(
             EventListenerPriority.HIGHEST,
             (caster, ability, target) => {
                 if (target instanceof Unit) {
-                    Sound3D.playFromLabel(soundPresetId, SoundPreset.Ability, target)
+                    Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, target)
                 } else {
-                    Sound3D.playFromLabel(soundPresetId, SoundPreset.Ability, target.x, target.y)
+                    Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, target.x, target.y)
                 }
             },
         )
         Unit.abilityPointTargetChannelingStartEvent[abilityTypeId].addListener(
             EventListenerPriority.HIGHEST,
             (caster, ability, x, y) => {
-                Sound3D.playFromLabel(soundPresetId, SoundPreset.Ability, x, y)
+                Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, x, y)
             },
         )
     }
