@@ -1434,6 +1434,10 @@ export class Buff<
             }
         }
 
+        if (this[BuffPropertyKey.PROVIDES_INVULNERABILITY]) {
+            unit.decrementInvulnerabilityCounter()
+        }
+
         if (this[BuffPropertyKey.DISABLES_AUTO_ATTACK]) {
             unit.decrementDisableAutoAttackCounter()
         }
@@ -1444,6 +1448,11 @@ export class Buff<
             }
             unit.decrementStunCounter()
         }
+
+        if (this[BuffPropertyKey.TURNS_INTO_GHOST]) {
+            unit.decrementGhostCounter()
+        }
+
         if (this._abilityTypeIds != undefined) {
             for (const abilityTypeId of this._abilityTypeIds) {
                 unit.removeAbility(abilityTypeId)
