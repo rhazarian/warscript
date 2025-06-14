@@ -712,6 +712,8 @@ const enum UnitPropertyKey {
     DELAY_HEALTH_CHECKS_HEALTH_BONUS,
     PREVENT_DEATH_HEALTH_BONUS,
     IS_TEAM_GLOW_HIDDEN,
+    LAST_X,
+    LAST_Y,
 }
 
 const delayHealthChecksCallback = (unit: Unit): void => {
@@ -743,6 +745,8 @@ export class Unit extends Handle<junit> {
     private [UnitPropertyKey.DELAY_HEALTH_CHECKS_HEALTH_BONUS]?: number
     private [UnitPropertyKey.PREVENT_DEATH_HEALTH_BONUS]?: number
     private [UnitPropertyKey.IS_TEAM_GLOW_HIDDEN]?: true
+    private [UnitPropertyKey.LAST_X]?: number
+    private [UnitPropertyKey.LAST_Y]?: number
 
     private _owner?: Player
 
@@ -789,6 +793,9 @@ export class Unit extends Handle<junit> {
 
     protected override onDestroy(): HandleDestructor {
         const handle = this.handle
+
+        this[UnitPropertyKey.LAST_X] = getUnitX(handle)
+        this[UnitPropertyKey.LAST_Y] = getUnitY(handle)
 
         if (!this._owner) {
             this._owner = Player.of(getOwningPlayer(handle))
@@ -1237,7 +1244,7 @@ export class Unit extends Handle<junit> {
     }
 
     get x(): number {
-        return getUnitX(this.handle)
+        return this[UnitPropertyKey.LAST_X] ?? getUnitX(this.handle)
     }
 
     set x(v: number) {
@@ -1245,7 +1252,7 @@ export class Unit extends Handle<junit> {
     }
 
     get y(): number {
-        return getUnitY(this.handle)
+        return this[UnitPropertyKey.LAST_Y] ?? getUnitY(this.handle)
     }
 
     set y(v: number) {
