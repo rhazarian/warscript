@@ -145,6 +145,7 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           durationIncreaseOnAutoAttack?: NumberParameterValueType
           maximumRemainingDuration?: NumberParameterValueType
           maximumDuration?: NumberParameterValueType
+          turnsIntoGhost?: BooleanParameterValueType
           stuns?: BooleanParameterValueType
           ignoresStunImmunity?: BooleanParameterValueType
           providesStunImmunity?: BooleanParameterValueType
@@ -200,6 +201,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     durationIncreaseOnAutoAttack: true,
     maximumDuration: true,
     maximumRemainingDuration: true,
+    turnsIntoGhost: true,
     stuns: true,
     ignoresStunImmunity: true,
     providesStunImmunity: true,
@@ -278,6 +280,7 @@ const resolveAndSetNumberValue = <T extends string>(
 }
 
 const buffBooleanParameters = [
+    "turnsIntoGhost",
     "stuns",
     "ignoresStunImmunity",
     "disablesAutoAttack",
@@ -358,6 +361,7 @@ const enum BuffPropertyKey {
     DAMAGE_RECEIVED_EVENT_COUNT,
     MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT,
 
+    TURNS_INTO_GHOST,
     STUNS,
     IGNORES_STUN_IMMUNITY,
     DISABLES_AUTO_ATTACK,
@@ -572,6 +576,7 @@ export class Buff<
     private [BuffPropertyKey.MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT]?: number
     private [BuffPropertyKey.DAMAGE_RECEIVED_EVENT_COUNT]?: number
 
+    private [BuffPropertyKey.TURNS_INTO_GHOST]?: true
     private [BuffPropertyKey.STUNS]?: true
     private [BuffPropertyKey.IGNORES_STUN_IMMUNITY]?: true
     private [BuffPropertyKey.DISABLES_AUTO_ATTACK]?: true
@@ -1114,6 +1119,20 @@ export class Buff<
 
     public set armorIncrease(armorIncrease: number) {
         this.addOrUpdateOrRemoveUnitBonus(UnitBonusType.ARMOR, armorIncrease)
+    }
+
+    public get turnsIntoGhost(): boolean {
+        return this[BuffPropertyKey.TURNS_INTO_GHOST] ?? false
+    }
+
+    public set turnsIntoGhost(turnsIntoGhost: boolean) {
+        if (!turnsIntoGhost && this[BuffPropertyKey.TURNS_INTO_GHOST]) {
+            this.object.decrementGhostCounter()
+            this[BuffPropertyKey.TURNS_INTO_GHOST] = undefined
+        } else if (turnsIntoGhost && !this[BuffPropertyKey.TURNS_INTO_GHOST]) {
+            this.object.incrementGhostCounter()
+            this[BuffPropertyKey.TURNS_INTO_GHOST] = true
+        }
     }
 
     public get stuns(): boolean {
