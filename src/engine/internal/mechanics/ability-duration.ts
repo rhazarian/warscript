@@ -8,7 +8,10 @@ import {
 /** @internal For use by internal systems only. */
 export const getAbilityDuration = (ability: Ability, target?: Unit): number => {
     const level = ability.level
-    return target != undefined && target.hasClassification(UnitClassification.RESISTANT)
+    return target != undefined &&
+        (target.isHero ||
+            target.getField(UNIT_IF_LEVEL) >= 6 ||
+            target.hasClassification(UnitClassification.RESISTANT))
         ? DURATION_HERO_ABILITY_FLOAT_LEVEL_FIELD.getValue(ability, level)
         : DURATION_NORMAL_ABILITY_FLOAT_LEVEL_FIELD.getValue(ability, level)
 }
