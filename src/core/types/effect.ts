@@ -120,6 +120,8 @@ const setters = {
     roll: setSpecialEffectRollDegrees,
 }
 
+const setterProperties = ["scale", "color", "pitch", "roll"] as const
+
 const dummyPlayer = Player.neutralExtra
 
 const temporaryEffects: jeffect[] = []
@@ -214,7 +216,7 @@ export class Effect extends Handle<jeffect> {
     }*/
 
     public get color(): PlayerColor {
-        return this[EffectPropertyKey.COLOR] ?? PlayerColor.black
+        return this[EffectPropertyKey.COLOR] ?? PlayerColor.red
     }
 
     public set color(color: PlayerColor) {
@@ -250,19 +252,22 @@ export class Effect extends Handle<jeffect> {
 
     public static create<T extends Effect>(
         this: typeof Effect & (new (handle: jeffect) => T),
-        model: string,
-        pos: Vec2,
+        modelPath: string,
+        xOrWidget: number | Widget,
+        yOrAttachmentPoint?: number | string,
+        parameters?: EffectParameters,
     ): T {
-        return this.of(addSpecialEffect(model, pos.x, pos.y))
-    }
+        const effect = this.of(
+            addSpecialEffectInternal(modelPath, xOrWidget, yOrAttachmentPoint, parameters),
+        )
 
-    public static createTarget<T extends Effect>(
-        this: typeof Effect & (new (handle: jeffect) => T),
-        model: string,
-        target: Widget,
-        attachPoint: string,
-    ): T {
-        return this.of(addSpecialEffectTarget(model, target.handle, attachPoint))
+        if (parameters !== undefined) {
+            effect[EffectPropertyKey.COLOR] = parameters.color
+            effect[EffectPropertyKey.PITCH] = parameters.pitch
+            effect[EffectPropertyKey.ROLL] = parameters.roll
+        }
+
+        return effect
     }
 
     public static flash(
@@ -300,70 +305,46 @@ export class Effect extends Handle<jeffect> {
 
         flash(modelPath, xOrWidget, yOrOrAttachmentPoint, parametersOrDuration, parameters)
     }
-
-    public static flashTarget(
-        model: string,
-        target: Widget,
-        attachPoint: string,
-        duration?: number,
-    ): void {
-        const effect = addSpecialEffectTarget(model, target.handle, attachPoint)
-        if (effect != undefined) {
-            if (duration && duration > 0) {
-                ++temporaryEffectsCount
-                temporaryEffects[temporaryEffectsCount - 1] = effect
-                temporaryEffectsDurations[temporaryEffectsCount - 1] = duration
-            } else {
-                destroyEffect(effect)
-            }
-        }
-    }
 }
 
-const flash = (
+const addSpecialEffectInternal = (
     modelPath: string,
     xOrWidget: number | Widget,
-    yOrOrAttachmentPoint?: number | string,
-    duration?: number,
+    yOrAttachmentPoint?: number | string,
     parameters?: EffectParameters,
-): void => {
+): jeffect => {
     const coordinatesProvided = typeof xOrWidget == "number"
     const isPositional = coordinatesProvided || parameters?.detached == true
     const x = !isPositional ? 0 : coordinatesProvided ? xOrWidget : xOrWidget.x
-    const y = !isPositional
-        ? 0
-        : coordinatesProvided
-          ? (yOrOrAttachmentPoint as number)
-          : xOrWidget.y
+    const y = !isPositional ? 0 : coordinatesProvided ? (yOrAttachmentPoint as number) : xOrWidget.y
 
     const effect = isPositional
         ? addSpecialEffect(modelPath, x, y)
         : addSpecialEffectTarget(
               modelPath,
               xOrWidget.handle,
-              (yOrOrAttachmentPoint ?? "origin") as string,
+              (yOrAttachmentPoint ?? "origin") as string,
           )
-    if (
-        isPositional &&
-        !coordinatesProvided &&
-        parameters?.scale == undefined &&
-        xOrWidget instanceof Unit
-    ) {
-        setSpecialEffectScale(effect, xOrWidget.scale)
-    }
-    if (parameters != undefined) {
-        for (const [key, value] of pairs(parameters)) {
-            if (key != "zOffset" && key != "detached" && key != "scaleZOffset" && key != "delay") {
-                setters[key](effect, value as any)
+
+    if (parameters !== undefined) {
+        if (isPositional && parameters.scale == undefined && xOrWidget instanceof Unit) {
+            setSpecialEffectScale(effect, xOrWidget.scale)
+        }
+
+        for (const property of setterProperties) {
+            const value = parameters[property]
+            if (value !== undefined) {
+                setters[property](effect, value as any)
             }
         }
+
         if (isPositional && parameters.zOffset != undefined) {
             moveLocation(location, x, y)
             const z =
                 xOrWidget instanceof Unit
                     ? getLocationZ(location) + xOrWidget.flyHeight
                     : getLocationZ(location)
-            BlzSetSpecialEffectZ(
+            setSpecialEffectZ(
                 effect,
                 z +
                     parameters.zOffset *
@@ -371,6 +352,18 @@ const flash = (
             )
         }
     }
+
+    return effect
+}
+
+const flash = (
+    modelPath: string,
+    xOrWidget: number | Widget,
+    yOrAttachmentPoint?: number | string,
+    duration?: number,
+    parameters?: EffectParameters,
+): void => {
+    const effect = addSpecialEffectInternal(modelPath, xOrWidget, yOrAttachmentPoint, parameters)
     if (duration != undefined && duration > 0) {
         ++temporaryEffectsCount
         temporaryEffects[temporaryEffectsCount - 1] = effect

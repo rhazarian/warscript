@@ -11,8 +11,9 @@ import { TupleOf } from "../../../utility/types"
 import { AnimationName } from "../auxiliary/animation-name"
 import { AnimationQualifier } from "../auxiliary/animation-qualifier"
 import {
-    AttachmentPreset,
     AttachmentPresetInput,
+    EffectPresetWithParameters,
+    EffectPresetWithParametersInput,
     extractAttachmentPresetInputModelPath,
     extractAttachmentPresetInputNodeFQN,
     toAttachmentPreset,
@@ -50,11 +51,20 @@ const castAnimationFQNByAbilityTypeId = new LuaMap<AbilityTypeId, string>()
 
 const isButtonVisibleFalseAbilityTypes = new LuaSet<AbilityType>()
 
-const casterCastingEffectPresetsByAbilityTypeId = new LuaMap<AbilityTypeId, AttachmentPreset[]>()
+const casterCastingEffectPresetsByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    EffectPresetWithParameters[]
+>()
 
-const casterChannelingEffectPresetsByAbilityTypeId = new LuaMap<AbilityTypeId, AttachmentPreset[]>()
+const casterChannelingEffectPresetsByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    EffectPresetWithParameters[]
+>()
 
-const targetCastingEffectPresetsByAbilityTypeId = new LuaMap<AbilityTypeId, AttachmentPreset[]>()
+const targetCastingEffectPresetsByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    EffectPresetWithParameters[]
+>()
 
 const targetEffectSoundPresetByAbilityTypeId = new LuaMap<
     AbilityTypeId,
@@ -110,18 +120,20 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         this.setNumberField("abpy", buttonPositionY)
     }
 
-    public get casterCastingEffectPresets(): AttachmentPreset[] {
+    public get casterCastingEffectPresets(): EffectPresetWithParameters[] {
         return casterCastingEffectPresetsByAbilityTypeId.get(this.id) ?? []
     }
 
-    public set casterCastingEffectPresets(casterCastingEffectPresets: AttachmentPresetInput[]) {
+    public set casterCastingEffectPresets(
+        casterCastingEffectPresets: EffectPresetWithParametersInput[],
+    ) {
         casterCastingEffectPresetsByAbilityTypeId.set(
             this.id,
             map(casterCastingEffectPresets, toAttachmentPreset),
         )
     }
 
-    public get casterChannelingEffectPresets(): AttachmentPreset[] {
+    public get casterChannelingEffectPresets(): EffectPresetWithParameters[] {
         return casterChannelingEffectPresetsByAbilityTypeId.get(this.id) ?? []
     }
 
@@ -134,9 +146,9 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         )
     }
 
-    public get casterAttachmentPresets(): TupleOf<AttachmentPreset, 0 | 1 | 2> {
+    public get casterAttachmentPresets(): TupleOf<EffectPresetWithParameters, 0 | 1 | 2> {
         return this.getAttachmentPresetListField("acat", ["acap", "aca1"]) as TupleOf<
-            AttachmentPreset,
+            EffectPresetWithParameters,
             0 | 1 | 2
         >
     }
@@ -272,7 +284,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         this.setNumberField("amsp", missileMovementSpeed)
     }
 
-    public get specialAttachmentPreset(): AttachmentPreset | undefined {
+    public get specialAttachmentPreset(): EffectPresetWithParameters | undefined {
         return this.getAttachmentPresetField("asat", "aspt")
     }
 
@@ -280,7 +292,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         this.setAttachmentPresetField("asat", "aspt", specialAttachmentPreset)
     }
 
-    public get targetCastingEffectPresets(): AttachmentPreset[] {
+    public get targetCastingEffectPresets(): EffectPresetWithParameters[] {
         return targetCastingEffectPresetsByAbilityTypeId.get(this.id) ?? []
     }
 
@@ -291,11 +303,14 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         )
     }
 
-    public get targetEffectPresets(): TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6> {
+    public get targetEffectPresets(): TupleOf<
+        EffectPresetWithParameters,
+        0 | 1 | 2 | 3 | 4 | 5 | 6
+    > {
         return this.getAttachmentPresetListField(
             "atat",
             array(6, (i) => `ata${i}`),
-        ) as TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+        ) as TupleOf<EffectPresetWithParameters, 0 | 1 | 2 | 3 | 4 | 5 | 6>
     }
 
     public set targetEffectPresets(
@@ -309,11 +324,14 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         )
     }
 
-    public get targetEffectPresetsSD(): TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6> {
+    public get targetEffectPresetsSD(): TupleOf<
+        EffectPresetWithParameters,
+        0 | 1 | 2 | 3 | 4 | 5 | 6
+    > {
         return this.getAttachmentPresetListField(
             "atat:sd",
             array(6, (i) => `ata${i}:sd`),
-        ) as TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+        ) as TupleOf<EffectPresetWithParameters, 0 | 1 | 2 | 3 | 4 | 5 | 6>
     }
 
     public set targetEffectPresetsSD(
@@ -327,11 +345,14 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         )
     }
 
-    public get targetEffectPresetsHD(): TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6> {
+    public get targetEffectPresetsHD(): TupleOf<
+        EffectPresetWithParameters,
+        0 | 1 | 2 | 3 | 4 | 5 | 6
+    > {
         return this.getAttachmentPresetListField(
             "atat:hd",
             array(6, (i) => `ata${i}:hd`),
-        ) as TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+        ) as TupleOf<EffectPresetWithParameters, 0 | 1 | 2 | 3 | 4 | 5 | 6>
     }
 
     public set targetEffectPresetsHD(
@@ -765,7 +786,7 @@ const handleAbilityCastingStartEvent = (caster: Unit, ability: Ability): void =>
             if (attachmentPoint == undefined || attachmentPoint == "") {
                 attachmentPoint = "origin"
             }
-            effects[i - 1] = Effect.createTarget(effectModelPath, caster, attachmentPoint)
+            effects[i - 1] = Effect.create(effectModelPath, caster, attachmentPoint)
         }
     }
     casterCastingEffectsByCaster.set(caster, effects)
@@ -812,6 +833,13 @@ const casterChannelingEffectAttachmentPointsByAbilityTypeId = postcompile(() => 
     )
 })
 
+const casterChannelingEffectParametersByAbilityTypeId = postcompile(() => {
+    return mapValues(
+        casterChannelingEffectPresetsByAbilityTypeId,
+        (casterChannelingEffectPresets) => map(casterChannelingEffectPresets, "parameters"),
+    )
+})
+
 const casterChannelingEffectsByCaster = new LuaMap<Unit, Effect[]>()
 
 const handleAbilityChannelingStartEvent = (caster: Unit, ability: Ability): void => {
@@ -819,6 +847,7 @@ const handleAbilityChannelingStartEvent = (caster: Unit, ability: Ability): void
     const attachmentPoints = casterChannelingEffectAttachmentPointsByAbilityTypeId.get(
         ability.typeId,
     )
+    const parameters = casterChannelingEffectParametersByAbilityTypeId.get(ability.typeId)
     const effects: Effect[] = []
     if (effectModelPaths != undefined) {
         for (const i of $range(1, effectModelPaths.length)) {
@@ -827,7 +856,12 @@ const handleAbilityChannelingStartEvent = (caster: Unit, ability: Ability): void
             if (attachmentPoint == undefined || attachmentPoint == "") {
                 attachmentPoint = "origin"
             }
-            effects[i - 1] = Effect.createTarget(effectModelPath, caster, attachmentPoint)
+            effects[i - 1] = Effect.create(
+                effectModelPath,
+                caster,
+                attachmentPoint,
+                parameters && parameters[i - 1],
+            )
         }
     }
     casterChannelingEffectsByCaster.set(caster, effects)
