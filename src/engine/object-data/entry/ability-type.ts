@@ -16,7 +16,7 @@ import {
     EffectPresetWithParametersInput,
     extractAttachmentPresetInputModelPath,
     extractAttachmentPresetInputNodeFQN,
-    toAttachmentPreset,
+    toEffectPreset,
 } from "../auxiliary/attachment-preset"
 import {
     CombatClassifications,
@@ -129,7 +129,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     ) {
         casterCastingEffectPresetsByAbilityTypeId.set(
             this.id,
-            map(casterCastingEffectPresets, toAttachmentPreset),
+            map(casterCastingEffectPresets, toEffectPreset),
         )
     }
 
@@ -138,11 +138,11 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     public set casterChannelingEffectPresets(
-        casterChannelingEffectPresets: AttachmentPresetInput[],
+        casterChannelingEffectPresets: EffectPresetWithParametersInput[],
     ) {
         casterChannelingEffectPresetsByAbilityTypeId.set(
             this.id,
-            map(casterChannelingEffectPresets, toAttachmentPreset),
+            map(casterChannelingEffectPresets, toEffectPreset),
         )
     }
 
@@ -299,7 +299,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     public set targetCastingEffectPresets(targetCastingEffectPresets: AttachmentPresetInput[]) {
         targetCastingEffectPresetsByAbilityTypeId.set(
             this.id,
-            map(targetCastingEffectPresets, toAttachmentPreset),
+            map(targetCastingEffectPresets, toEffectPreset),
         )
     }
 
@@ -773,11 +773,18 @@ const casterCastingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
     )
 })
 
+const casterCastingEffectParametersByAbilityTypeId = postcompile(() => {
+    return mapValues(casterCastingEffectPresetsByAbilityTypeId, (casterCastingEffectPresets) =>
+        map(casterCastingEffectPresets, "parameters"),
+    )
+})
+
 const casterCastingEffectsByCaster = new LuaMap<Unit, Effect[]>()
 
 const handleAbilityCastingStartEvent = (caster: Unit, ability: Ability): void => {
     const effectModelPaths = casterCastingEffectModelPathsByAbilityTypeId.get(ability.typeId)
     const attachmentPoints = casterCastingEffectAttachmentPointsByAbilityTypeId.get(ability.typeId)
+    const parameters = casterCastingEffectParametersByAbilityTypeId.get(ability.typeId)
     const effects: Effect[] = []
     if (effectModelPaths != undefined) {
         for (const i of $range(1, effectModelPaths.length)) {
@@ -786,7 +793,12 @@ const handleAbilityCastingStartEvent = (caster: Unit, ability: Ability): void =>
             if (attachmentPoint == undefined || attachmentPoint == "") {
                 attachmentPoint = "origin"
             }
-            effects[i - 1] = Effect.create(effectModelPath, caster, attachmentPoint)
+            effects[i - 1] = Effect.create(
+                effectModelPath,
+                caster,
+                attachmentPoint,
+                parameters && parameters[i - 1],
+            )
         }
     }
     casterCastingEffectsByCaster.set(caster, effects)

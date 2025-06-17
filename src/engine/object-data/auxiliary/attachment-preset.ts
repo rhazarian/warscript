@@ -20,19 +20,20 @@ export type AttachmentPresetInput<T extends AttachmentPreset = AttachmentPreset>
 
 export type EffectPresetWithParametersInput = AttachmentPresetInput<EffectPresetWithParameters>
 
-export const toAttachmentPreset = (
-    attachmentPresetInput: AttachmentPresetInput,
-): AttachmentPreset => {
-    return typeof attachmentPresetInput == "string"
+export const toEffectPreset = (
+    effectPresetInput: EffectPresetWithParametersInput,
+): EffectPresetWithParameters => {
+    return typeof effectPresetInput == "string"
         ? {
-              modelPath: attachmentPresetInput,
+              modelPath: effectPresetInput,
               nodeName: ModelNodeName.ORIGIN,
               nodeQualifiers: [],
           }
         : {
-              modelPath: attachmentPresetInput.modelPath,
-              nodeName: attachmentPresetInput.nodeName,
-              nodeQualifiers: attachmentPresetInput.nodeQualifiers ?? [],
+              modelPath: effectPresetInput.modelPath,
+              nodeName: effectPresetInput.nodeName,
+              nodeQualifiers: effectPresetInput.nodeQualifiers ?? [],
+              parameters: effectPresetInput.parameters,
           }
 }
 
