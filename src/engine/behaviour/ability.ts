@@ -221,20 +221,27 @@ export abstract class AbilityBehavior<
     }
 
     protected flashSpecialEffect(
-        ...args: [...pointOrWidget: [x: number, y: number] | [widget: Widget], duration?: number]
+        ...args: [
+            ...pointOrWidget: [x: number, y: number] | [widget: Widget],
+            ...parametersOrDuration:
+                | [parameters?: EffectParameters]
+                | [duration?: number, parameters?: EffectParameters],
+        ]
     ): void
 
     protected flashSpecialEffect(
         xOrWidget: number | Widget,
-        yOrDuration?: number,
-        duration?: number,
+        yOrParametersOrDuration?: EffectParameters | number,
+        durationOrParameters?: number | EffectParameters,
+        parameters?: EffectParameters,
     ): void {
         if (typeof xOrWidget == "number") {
             Effect.flash(
                 SPECIAL_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
                 xOrWidget,
-                yOrDuration as number,
-                duration,
+                yOrParametersOrDuration as number,
+                durationOrParameters as number,
+                parameters,
             )
         } else {
             const attachmentPoint = SPECIAL_EFFECT_ATTACHMENT_POINT_STRING_FIELD.getValue(
@@ -244,7 +251,8 @@ export abstract class AbilityBehavior<
                 SPECIAL_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
                 xOrWidget,
                 attachmentPoint != "" ? attachmentPoint : "origin",
-                yOrDuration,
+                yOrParametersOrDuration as number,
+                durationOrParameters as EffectParameters,
             )
         }
     }
