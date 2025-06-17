@@ -15,7 +15,7 @@ export type EffectPresetWithParameters = AttachmentPreset & {
 }
 
 export type AttachmentPresetInput<T extends AttachmentPreset = AttachmentPreset> =
-    | Optional<T, "nodeQualifiers">
+    | Optional<T, "nodeName" | "nodeQualifiers">
     | string
 
 export type EffectPresetWithParametersInput = AttachmentPresetInput<EffectPresetWithParameters>
@@ -31,7 +31,7 @@ export const toEffectPreset = (
           }
         : {
               modelPath: effectPresetInput.modelPath,
-              nodeName: effectPresetInput.nodeName,
+              nodeName: effectPresetInput.nodeName ?? ModelNodeName.ORIGIN,
               nodeQualifiers: effectPresetInput.nodeQualifiers ?? [],
               parameters: effectPresetInput.parameters,
           }
