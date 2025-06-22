@@ -1,6 +1,7 @@
 import { Event, InitializingEvent } from "../../event"
 import { ObjectPool } from "../../util/objectPool"
 import { IllegalStateException } from "../../exception"
+import { AbstractDestroyable, Destructor } from "../../destroyable"
 
 const createTimer = CreateTimer
 const timerStart = TimerStart
@@ -41,7 +42,7 @@ const timerSafeCall = () => {
                 ...unpack(
                     timer as any,
                     TimerPropertyKey.ARGS_LENGTH + 1,
-                    TimerPropertyKey.ARGS_LENGTH + (timer[TimerPropertyKey.ARGS_LENGTH] ?? 0)
+                    TimerPropertyKey.ARGS_LENGTH + (timer[TimerPropertyKey.ARGS_LENGTH] ?? 0),
                 )
             )
         }
@@ -50,16 +51,13 @@ const timerSafeCall = () => {
 
 const enum TimerPropertyKey {
     HANDLE,
-    DESTROYED,
     DESTROY_ON_EXPIRATION,
     CALLBACK,
     ARGS_LENGTH,
 }
 
-export class Timer implements Destroyable {
+export class Timer extends AbstractDestroyable {
     private readonly [TimerPropertyKey.HANDLE]: jtimer
-
-    private [TimerPropertyKey.DESTROYED]?: true
 
     private [TimerPropertyKey.DESTROY_ON_EXPIRATION]?: true
 
@@ -67,6 +65,7 @@ export class Timer implements Destroyable {
     private [TimerPropertyKey.ARGS_LENGTH]?: number
 
     private constructor() {
+        super()
         this[TimerPropertyKey.HANDLE] = get()
         timerByHandleId.set(getHandleId(this[TimerPropertyKey.HANDLE]), this)
     }
@@ -90,6 +89,13 @@ export class Timer implements Destroyable {
         timerStart(this.handle, timeout, periodic, timerSafeCall)
     }
 
+    public override onDestroy(): Destructor {
+        const handle = this[TimerPropertyKey.HANDLE]
+        timerByHandleId.delete(getHandleId(handle))
+        release(handle)
+        return super.onDestroy()
+    }
+
     public get elapsed(): number {
         return timerGetElapsed(this[TimerPropertyKey.HANDLE])
     }
@@ -108,16 +114,6 @@ export class Timer implements Destroyable {
 
     public resume(): void {
         resumeTimer(this[TimerPropertyKey.HANDLE])
-    }
-
-    public destroy(): void {
-        if (this[TimerPropertyKey.DESTROYED]) {
-            throw new IllegalStateException("Double-destroy run for timer")
-        }
-        const handle = this[TimerPropertyKey.HANDLE]
-        timerByHandleId.delete(getHandleId(handle))
-        release(handle)
-        this[TimerPropertyKey.DESTROYED] = true
     }
 
     public static create(): Timer {
@@ -152,7 +148,7 @@ export class Timer implements Destroyable {
     public static counted(
         period: number,
         count: number,
-        callback: (this: void, timer: Timer) => void
+        callback: (this: void, timer: Timer) => void,
     ): Timer {
         const timer = Timer.create()
         if (count >= 1) {
@@ -186,18 +182,18 @@ export class Timer implements Destroyable {
                             true,
                             warpack.wrapSafeCall(() => {
                                 invoke(event)
-                            })
+                            }),
                         )
                         return timer
                     },
                     (timer) => {
                         release(timer)
-                    }
+                    },
                 )
                 rawset(this, key, event)
                 return event
             },
-        }
+        },
     )
 }
 
