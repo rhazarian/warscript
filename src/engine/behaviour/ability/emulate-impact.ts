@@ -5,6 +5,7 @@ import {
     MANA_COST_ABILITY_INTEGER_LEVEL_FIELD,
 } from "../../standard/fields/ability"
 import { max, MINIMUM_POSITIVE_NORMALIZED_FLOAT } from "../../../math"
+import { Sound3D, SoundSettings } from "../../../core/types/sound"
 
 export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
     protected emulateImpact(caster: Unit) {
@@ -23,6 +24,11 @@ export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
         this.ability.cooldownRemaining = max(cooldown, MINIMUM_POSITIVE_NORMALIZED_FLOAT)
 
         this.flashCasterEffect(caster)
+
+        const soundPresetId = this.ability.getField(ABILITY_SF_EFFECT_SOUND)
+        if (soundPresetId != "") {
+            Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, caster)
+        }
 
         AbilityBehavior.forAll(this.ability, "onImpact", caster)
     }
