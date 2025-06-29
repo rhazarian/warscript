@@ -148,6 +148,11 @@ const customSoundPresetDataByLabel = postcompile(() => {
     return customSoundPresetDataByLabel
 })
 
+/** @internal For use by internal systems only. */
+export const isSoundLabelCustom = (label: string): boolean => {
+    return customSoundPresetDataByLabel.has(label)
+}
+
 const createPresetSound = (fileName: string, preset: SoundSettings) => {
     const sound = createSound(
         fileName,
