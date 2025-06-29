@@ -43,7 +43,8 @@ import { LightningTypeId } from "./lightning-type"
 import { UnitTypeId } from "./unit-type"
 import { Upgrade, UpgradeId } from "./upgrade"
 import { SoundPresetId } from "./sound-preset"
-import { Sound3D, SoundSettings } from "../../../core/types/sound"
+import { isSoundLabelCustom, Sound3D, SoundSettings } from "../../../core/types/sound"
+import { EFFECT_SOUND_ABILITY_STRING_FIELD } from "../../standard/fields/ability"
 
 export type AbilityTypeId = ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol }
 
@@ -760,6 +761,13 @@ for (const [abilityTypeId, soundPresetId] of postcompile(
         )
     }
 }
+
+Unit.abilityChannelingStartEvent.addListener((caster, ability) => {
+    const soundPresetId = EFFECT_SOUND_ABILITY_STRING_FIELD.getValue(ability)
+    if (isSoundLabelCustom(soundPresetId)) {
+        Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, caster)
+    }
+})
 
 const casterCastingEffectModelPathsByAbilityTypeId = postcompile(() => {
     return mapValues(casterCastingEffectPresetsByAbilityTypeId, (casterCastingEffectPresets) =>
