@@ -44,7 +44,6 @@ import { UnitTypeId } from "./unit-type"
 import { Upgrade, UpgradeId } from "./upgrade"
 import { SoundPresetId } from "./sound-preset"
 import { isSoundLabelCustom, Sound3D, SoundSettings } from "../../../core/types/sound"
-import { EFFECT_SOUND_ABILITY_STRING_FIELD } from "../../standard/fields/ability"
 
 export type AbilityTypeId = ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol }
 
@@ -763,7 +762,7 @@ for (const [abilityTypeId, soundPresetId] of postcompile(
 }
 
 Unit.abilityChannelingStartEvent.addListener((caster, ability) => {
-    const soundPresetId = EFFECT_SOUND_ABILITY_STRING_FIELD.getValue(ability)
+    const soundPresetId = ability.getField(ABILITY_SF_EFFECT_SOUND)
     if (isSoundLabelCustom(soundPresetId)) {
         Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, caster)
     }
