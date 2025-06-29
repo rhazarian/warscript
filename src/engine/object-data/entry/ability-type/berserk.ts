@@ -9,7 +9,7 @@ export class BerserkAbilityType extends AbilityType {
     }
 
     public set movementSpeedIncreaseFactor(
-        movementSpeedIncreaseFactor: ObjectDataEntryLevelFieldValueSupplier<number>
+        movementSpeedIncreaseFactor: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
         this.setNumberLevelField("bsk1", movementSpeedIncreaseFactor)
     }
@@ -19,8 +19,18 @@ export class BerserkAbilityType extends AbilityType {
     }
 
     public set attackSpeedIncreaseFactor(
-        attackSpeedIncreaseFactor: ObjectDataEntryLevelFieldValueSupplier<number>
+        attackSpeedIncreaseFactor: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
         this.setNumberLevelField("bsk2", attackSpeedIncreaseFactor)
+    }
+
+    public get receivedDamageIncreaseFactor(): number[] {
+        return this.getNumberLevelField("bsk3")
+    }
+
+    public set receivedDamageIncreaseFactor(
+        receivedDamageIncreaseFactor: ObjectDataEntryLevelFieldValueSupplier<number>,
+    ) {
+        this.setNumberLevelField("bsk3", receivedDamageIncreaseFactor)
     }
 }
