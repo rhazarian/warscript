@@ -179,6 +179,7 @@ const [
                 )
                 applicatorAbilityType.attackSpeedIncreaseFactor = 0
                 applicatorAbilityType.movementSpeedIncreaseFactor = 0
+                applicatorAbilityType.receivedDamageIncreaseFactor = 0
                 applicatorAbilityType.buffTypeIds = [applicableBuffType.id]
                 if (applicatorAbilityType.levelCount > 1) {
                     multilevelPhysicalPositiveApplicatorAbilityTypes[
