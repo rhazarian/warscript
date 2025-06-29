@@ -163,6 +163,10 @@ const [
                 applicatorAbilityType.damagePerSecond = 0
                 applicatorAbilityType.movementSpeedDecreaseFactor = 0
                 applicatorAbilityType.attackSpeedDecreaseFactor = 0
+                applicatorAbilityType.isDamageStacking = false
+                applicatorAbilityType.isMovementSpeedFactorStacking = false
+                applicatorAbilityType.isAttackSpeedFactorStacking = false
+                applicatorAbilityType.isAbleToKill = false
                 applicatorAbilityType.buffTypeIds = [applicableBuffType.id, applicableBuffType.id]
                 applicatorAbilityTypeIdByApplicatorType.set(
                     ApplicatorType.PHYSICAL_NEGATIVE,
