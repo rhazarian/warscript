@@ -1,17 +1,22 @@
 import { array } from "../../../utility/arrays"
+import { implementReadonlyNumberIndexSupplier } from "../../../utility/reflection"
 import { TupleOf } from "../../../utility/types"
 
 import { AttachmentPreset, AttachmentPresetInput } from "../auxiliary/attachment-preset"
 import { Race } from "../auxiliary/race"
 import { SoundPresetName } from "../auxiliary/sound-preset-name"
-import { ObjectDataEntry, ObjectDataEntryId } from "../entry"
+import { ObjectDataEntry, ObjectDataEntryConstructor, ObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 
 import { LightningTypeId } from "./lightning-type"
 
 export type BuffTypeId = ObjectDataEntryId & number & { readonly __buffTypeId: unique symbol }
 
+export type StandardBuffTypeId = BuffTypeId & { readonly __standardBuffTypeId: unique symbol }
+
 export abstract class BuffType<Id extends BuffTypeId = BuffTypeId> extends ObjectDataEntry<Id> {
+    static readonly [id: StandardBuffTypeId]: ObjectDataEntryConstructor<BuffType>
+
     private static readonly idGenerator = new ObjectDataEntryIdGenerator(fourCC("B000"))
 
     protected static override generateId(): number {
@@ -192,13 +197,8 @@ export abstract class BuffType<Id extends BuffTypeId = BuffTypeId> extends Objec
         this.setStringField("fube", tooltipText)
     }
 }
-
-const makeBaseBuffType = (id: number): typeof BuffType => {
-    return class BaseBuffType<Id extends BuffTypeId = BuffTypeId> extends BuffType<Id> {
-        public static override readonly BASE_ID = id as BuffTypeId
+implementReadonlyNumberIndexSupplier(BuffType, (id) => {
+    return class extends BuffType {
+        public static override readonly BASE_ID = id
     }
-}
-
-export class AvatarBuffType extends makeBaseBuffType(fourCC("BHav")) {}
-export class DevotionAuraBuffType extends makeBaseBuffType(fourCC("BHad")) {}
-export class DivineShieldBuffType extends makeBaseBuffType(fourCC("BHds")) {}
+})
