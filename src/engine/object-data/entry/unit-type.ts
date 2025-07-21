@@ -8,7 +8,11 @@ import {
     combatClassificationsToStringArray,
     stringArrayToCombatClassifications,
 } from "../auxiliary/combat-classification"
-import { MovementType } from "../auxiliary/movement-type"
+import {
+    MovementType,
+    movementTypeToString,
+    stringToMovementType,
+} from "../auxiliary/movement-type"
 import { Race } from "../auxiliary/race"
 import { SoundSetName } from "../auxiliary/sound-set-name"
 import {
@@ -801,11 +805,11 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
     }
 
     public get movementType(): MovementType {
-        return this.getStringField("umvt") as MovementType
+        return stringToMovementType(this.getStringField("umvt"))
     }
 
     public set movementType(movementType: MovementType) {
-        this.setStringField("umvt", movementType)
+        this.setStringField("umvt", movementTypeToString(movementType))
     }
 
     // Pathing

@@ -28,6 +28,8 @@ import {
 import { forEach } from "../../utility/arrays"
 import { min } from "../../math"
 import { ignoreEventsItems } from "./unit/ignore-events-items"
+import { MovementType } from "../object-data/auxiliary/movement-type"
+import { UnitAttribute } from "../object-data/auxiliary/unit-attribute"
 
 const match = string.match
 const tostring = _G.tostring
@@ -1036,6 +1038,14 @@ export class Unit extends Handle<junit> {
         SetHeroXP(this.handle, v, false)
     }
 
+    public get primaryAttribute(): UnitAttribute {
+        return getUnitIntegerField(this.handle, UNIT_IF_PRIMARY_ATTRIBUTE) as UnitAttribute
+    }
+
+    public set primaryAttribute(primaryAttribute: UnitAttribute) {
+        setUnitIntegerField(this.handle, UNIT_IF_PRIMARY_ATTRIBUTE, primaryAttribute)
+    }
+
     public get strengthBase(): number {
         return getHeroStr(this.handle, false)
     }
@@ -1392,6 +1402,14 @@ export class Unit extends Handle<junit> {
 
     public get pathingCollisionRange(): number {
         return 16 * (min(math.idiv(getUnitCollisionSize(this.handle), 16), 3) + 1)
+    }
+
+    public get movementType(): MovementType {
+        return getUnitIntegerField(this.handle, UNIT_IF_MOVE_TYPE) as MovementType
+    }
+
+    public set movementType(movementType: MovementType) {
+        setUnitIntegerField(this.handle, UNIT_IF_MOVE_TYPE, movementType)
     }
 
     set pathing(v: boolean) {
