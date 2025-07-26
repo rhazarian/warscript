@@ -1,6 +1,19 @@
 import { Flatten, TupleOf } from "./types"
 
 const select = _G.select
+const setmetatable = _G.setmetatable
+
+const weakKeysMetatable = {
+    __mode: "k",
+} as const
+
+export const mutableLuaMap = <K extends AnyNotNil, V>(): LuaMap<K, V> => {
+    return new LuaMap()
+}
+
+export const mutableWeakLuaMap = <K extends AnyNotNil, V>(): LuaMap<K, V> => {
+    return setmetatable(new LuaMap(), weakKeysMetatable)
+}
 
 export const luaMapOf = <K extends AnyNotNil, V>(
     ...pairs: Flatten<
@@ -59,7 +72,7 @@ export const luaMapOf = <K extends AnyNotNil, V>(
 }
 
 export const luaMapInvert = <K extends AnyNotNil, V extends AnyNotNil>(
-    luaMap: LuaMap<K, V>
+    luaMap: LuaMap<K, V>,
 ): LuaMap<V, K> => {
     const invertLuaMap = new LuaMap<V, K>()
     for (const [key, value] of luaMap) {
@@ -70,11 +83,24 @@ export const luaMapInvert = <K extends AnyNotNil, V extends AnyNotNil>(
 
 export const mapValues = <K extends AnyNotNil, V1, V2>(
     luaMap: LuaMap<K, V1>,
-    transform: (value: V1) => V2
+    transform: (value: V1) => V2,
 ): LuaMap<K, V2> => {
     const result = new LuaMap<K, V2>()
     for (const [key, value] of luaMap) {
         result.set(key, transform(value))
     }
     return result
+}
+
+export const getOrPut = <K extends AnyNotNil, V>(
+    luaMap: LuaMap<K, V>,
+    key: K,
+    defaultValue: () => V,
+): V => {
+    let value = luaMap.get(key)
+    if (value == undefined) {
+        value = defaultValue()
+        luaMap.set(key, value)
+    }
+    return value
 }

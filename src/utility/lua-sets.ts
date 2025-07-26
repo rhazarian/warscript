@@ -1,5 +1,9 @@
 const select = _G.select
 
+export const mutableLuaSet = <T extends AnyNotNil>(): LuaSet<T> => {
+    return new LuaSet()
+}
+
 export const luaSetOf = <T extends AnyNotNil>(...elements: readonly T[]): LuaSet<T> => {
     const luaSet = new LuaSet<T>()
     for (const i of $range(1, select("#", ...elements))) {
@@ -23,7 +27,7 @@ export const luaSetOfNotNull = <T extends AnyNotNil>(
 
 export const luaSetIntersection = <T extends AnyNotNil>(
     firstLuaSet: ReadonlyLuaSet<T>,
-    secondLuaSet: ReadonlyLuaSet<T>
+    secondLuaSet: ReadonlyLuaSet<T>,
 ): LuaSet<T> => {
     const luaSet = new LuaSet<T>()
     for (const element of firstLuaSet) {
