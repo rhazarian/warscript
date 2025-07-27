@@ -11,7 +11,7 @@ import {
     ObjectDataEntryLevelFieldValueSupplier,
 } from "./object-data/entry"
 import { ObjectDataEntryIdGenerator } from "./object-data/utility/object-data-entry-id-generator"
-import { LinkedSet, mutableLuaSet } from "../utility/linked-set"
+import { LinkedSet, mutableLinkedSet } from "../utility/linked-set"
 import { getOrPut, mutableWeakLuaMap } from "../utility/lua-maps"
 
 export type ObjectFieldId = number & { readonly __objectDataEntryFieldId: unique symbol }
@@ -237,7 +237,7 @@ export abstract class ObjectField<
             modifiersByInstance = mutableWeakLuaMap()
             this.modifiersByInstance = modifiersByInstance
         }
-        if (getOrPut(modifiersByInstance, instance, mutableLuaSet).add(modifier)) {
+        if (getOrPut(modifiersByInstance, instance, mutableLinkedSet).add(modifier)) {
             let originalValueByInstance = this.originalValueByInstance
             if (originalValueByInstance == undefined) {
                 originalValueByInstance = mutableWeakLuaMap()

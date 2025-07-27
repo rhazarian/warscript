@@ -225,6 +225,10 @@ export const emptyLinkedSet = <T extends AnyNotNil>(): ReadonlyLinkedSet<T> => {
     return EMPTY_LINKED_SET as any
 }
 
+export const mutableLinkedSet = <T extends AnyNotNil>(): LinkedSet<T> => {
+    return new LinkedSet()
+}
+
 export const mutableLinkedSetOf = <T extends AnyNotNil>(
     ...elements: ReadonlyArray<T>
 ): LinkedSet<T> => {
