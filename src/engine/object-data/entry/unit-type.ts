@@ -27,7 +27,7 @@ import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-gene
 import type { AbilityTypeId } from "./ability-type"
 import type { UpgradeId } from "./upgrade"
 import { AnimationQualifier } from "../auxiliary/animation-qualifier"
-import { AttackType } from "../auxiliary/attack-type"
+import { AttackType, attackTypeToString, stringToAttackType } from "../auxiliary/attack-type"
 import { WarscriptConfig } from "../../../config"
 
 export type UnitTypeId = ObjectDataEntryId & number & { readonly __unitTypeId: unique symbol }
@@ -42,12 +42,12 @@ export class UnitTypeWeapon {
         private readonly index: 1 | 2,
     ) {}
 
-    public get attackType(): AttackType {
-        return this.unitType["getStringField"](`ua${this.index}t`) as AttackType
+    public get attackType(): AttackType | undefined {
+        return stringToAttackType(this.unitType["getStringField"](`ua${this.index}t`))
     }
 
-    public set attackType(attackType: AttackType) {
-        this.unitType["setStringField"](`ua${this.index}t`, attackType)
+    public set attackType(attackType: AttackType | undefined) {
+        this.unitType["setStringField"](`ua${this.index}t`, attackTypeToString(attackType))
     }
 
     public get backSwingDuration(): number {
