@@ -2301,7 +2301,7 @@ export class Unit extends Handle<junit> {
                                 {},
                                 {
                                     __index: data,
-                                    __newindex(key: keyof typeof damageSetters, value) {
+                                    __newindex(key: keyof typeof damageSetters, value: never) {
                                         damageSetters[key](value)
                                         data[key] = value
                                     },
@@ -2392,7 +2392,7 @@ export class Unit extends Handle<junit> {
                             {},
                             {
                                 __index: data,
-                                __newindex(key: keyof typeof damageSetters, value) {
+                                __newindex(key: keyof typeof damageSetters, value: never) {
                                     damageSetters[key](value)
                                     data[key] = value
                                 },
