@@ -1,8 +1,9 @@
 import { Ability } from "./ability"
 import { Unit } from "./unit"
-import { AttackType, DamageType } from "./unit+damage"
+import { DamageType } from "./unit+damage"
 
 import { Event, EventListener } from "../../event"
+import { AttackType } from "../object-data/auxiliary/attack-type"
 
 declare module "./unit" {
     namespace Unit {

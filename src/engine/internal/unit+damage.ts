@@ -2,22 +2,12 @@ import { Unit } from "./unit"
 import { Widget } from "../../core/types/widget"
 import { Player } from "../../core/types/player"
 import { dummyUnitId } from "../../objutil/dummy"
+import { AttackType, attackTypeToNative } from "../object-data/auxiliary/attack-type"
 
 const createUnit = CreateUnit
 const getOwningPlayer = GetOwningPlayer
 const showUnit = ShowUnit
 const unitDamageTarget = UnitDamageTarget
-
-export type AttackType = jattacktype
-export namespace AttackType {
-    export const SPELL = ATTACK_TYPE_NORMAL
-    export const NORMAL = ATTACK_TYPE_MELEE
-    export const PIERCE = ATTACK_TYPE_PIERCE
-    export const SIEGE = ATTACK_TYPE_SIEGE
-    export const MAGIC = ATTACK_TYPE_MAGIC
-    export const CHAOS = ATTACK_TYPE_CHAOS
-    export const HERO = ATTACK_TYPE_HERO
-}
 
 export type DamageType = jdamagetype
 export namespace DamageType {
@@ -82,7 +72,7 @@ declare module "./unit" {
             ranged?: boolean,
             attackType?: AttackType,
             damageType?: DamageType,
-            weaponType?: WeaponType
+            weaponType?: WeaponType,
         ): boolean
     }
 }
@@ -101,13 +91,13 @@ Unit.prototype.damageTarget = function (
     ranged = false,
     attackType = AttackType.SPELL,
     damageType = DamageType.MAGIC,
-    weaponType = WeaponType.UNKNOWN
+    weaponType = WeaponType.UNKNOWN,
 ): boolean {
     let handle = this.handle
     const targetHandle = target.handle
     if (!getOwningPlayer(handle)) {
         handle = dummies.get(
-            target instanceof Unit ? target.owner : this["_owner"] ?? Player.neutralAggressive
+            target instanceof Unit ? target.owner : (this["_owner"] ?? Player.neutralAggressive),
         )
     }
     return unitDamageTarget(
@@ -116,8 +106,8 @@ Unit.prototype.damageTarget = function (
         amount,
         attack,
         ranged,
-        attackType,
+        attackTypeToNative(attackType),
         damageType,
-        weaponType
+        weaponType,
     )
 }

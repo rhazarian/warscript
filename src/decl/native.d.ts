@@ -252,15 +252,18 @@ declare interface jitemtype extends jhandle {
 declare interface jtexttag extends jhandle {
     __jtexttag: never
 }
-declare interface jattacktype extends jhandle {
-    __jattacktype: never
-}
-declare interface jdamagetype extends jhandle {
-    __jdamagetype: never
-}
-declare interface jweapontype extends jhandle {
-    __jweapontype: never
-}
+declare type jattacktype = symbol &
+    jhandle & {
+        __jattacktype: never
+    }
+declare type jdamagetype = symbol &
+    jhandle & {
+        __jdamagetype: never
+    }
+declare type jweapontype = symbol &
+    jhandle & {
+        __jweapontype: never
+    }
 declare interface jsoundtype extends jhandle {
     __jsoundtype: never
 }
@@ -303,9 +306,10 @@ declare interface jtextaligntype extends jhandle {
 declare interface jframeeventtype extends jhandle {
     __jframeeventtype: never
 }
-declare type joskeytype = symbol & jhandle & {
-    __joskeytype: never
-}
+declare type joskeytype = symbol &
+    jhandle & {
+        __joskeytype: never
+    }
 declare interface jabilityintegerfield extends jhandle {
     __jabilityintegerfield: never
 }
@@ -2217,7 +2221,7 @@ declare function SetStartLocPrio(
     whichStartLoc: number,
     prioSlotIndex: number,
     otherStartLocIndex: number,
-    priority: jstartlocprio
+    priority: jstartlocprio,
 ): void
 declare function GetStartLocPrioSlot(whichStartLoc: number, prioSlotIndex: number): number
 declare function GetStartLocPrio(whichStartLoc: number, prioSlotIndex: number): jstartlocprio
@@ -2226,7 +2230,7 @@ declare function SetEnemyStartLocPrio(
     whichStartLoc: number,
     prioSlotIndex: number,
     otherStartLocIndex: number,
-    priority: jstartlocprio
+    priority: jstartlocprio,
 ): void
 declare function SetGameTypeSupported(whichGameType: jgametype, value: boolean): void
 declare function SetMapFlag(whichMapFlag: jmapflag, value: boolean): void
@@ -2256,17 +2260,17 @@ declare function SetPlayerAlliance(
     sourcePlayer: jplayer,
     otherPlayer: jplayer,
     whichAllianceSetting: jalliancetype,
-    value: boolean
+    value: boolean,
 ): void
 declare function SetPlayerTaxRate(
     sourcePlayer: jplayer,
     otherPlayer: jplayer,
     whichResource: jplayerstate,
-    rate: number
+    rate: number,
 ): void
 declare function SetPlayerRacePreference(
     whichPlayer: jplayer,
-    whichRacePreference: jracepreference
+    whichRacePreference: jracepreference,
 ): void
 declare function SetPlayerRaceSelectable(whichPlayer: jplayer, value: boolean): void
 declare function SetPlayerController(whichPlayer: jplayer, controlType: jmapcontrol): void
@@ -2281,7 +2285,7 @@ declare function GetPlayerSlotState(whichPlayer: jplayer): jplayerslotstate
 declare function GetPlayerTaxRate(
     sourcePlayer: jplayer,
     otherPlayer: jplayer,
-    whichResource: jplayerstate
+    whichResource: jplayerstate,
 ): number
 declare function IsPlayerRacePrefSet(whichPlayer: jplayer, pref: jracepreference): boolean
 declare function GetPlayerName(whichPlayer: jplayer): string
@@ -2291,7 +2295,7 @@ declare function TimerStart(
     whichTimer: jtimer,
     timeout: number,
     periodic: boolean,
-    handlerFunc?: () => void
+    handlerFunc?: () => void,
 ): void
 declare function TimerGetElapsed(whichTimer: jtimer): number
 declare function TimerGetRemaining(whichTimer: jtimer): number
@@ -2312,33 +2316,33 @@ declare function GroupEnumUnitsOfType(whichGroup: jgroup, unitname: string, filt
 declare function GroupEnumUnitsOfPlayer(
     whichGroup: jgroup,
     whichPlayer: jplayer,
-    filter: jboolexpr
+    filter: jboolexpr,
 ): void
 declare function GroupEnumUnitsOfTypeCounted(
     whichGroup: jgroup,
     unitname: string,
     filter: jboolexpr,
-    countLimit: number
+    countLimit: number,
 ): void
 declare function GroupEnumUnitsInRect(whichGroup: jgroup, r: jrect, filter: jboolexpr): void
 declare function GroupEnumUnitsInRectCounted(
     whichGroup: jgroup,
     r: jrect,
     filter: jboolexpr,
-    countLimit: number
+    countLimit: number,
 ): void
 declare function GroupEnumUnitsInRange(
     whichGroup: jgroup,
     x: number,
     y: number,
     radius: number,
-    filter: jboolexpr
+    filter: jboolexpr,
 ): void
 declare function GroupEnumUnitsInRangeOfLoc(
     whichGroup: jgroup,
     whichLocation: jlocation,
     radius: number,
-    filter: jboolexpr
+    filter: jboolexpr,
 ): void
 declare function GroupEnumUnitsInRangeCounted(
     whichGroup: jgroup,
@@ -2346,19 +2350,19 @@ declare function GroupEnumUnitsInRangeCounted(
     y: number,
     radius: number,
     filter: jboolexpr,
-    countLimit: number
+    countLimit: number,
 ): void
 declare function GroupEnumUnitsInRangeOfLocCounted(
     whichGroup: jgroup,
     whichLocation: jlocation,
     radius: number,
     filter: jboolexpr,
-    countLimit: number
+    countLimit: number,
 ): void
 declare function GroupEnumUnitsSelected(
     whichGroup: jgroup,
     whichPlayer: jplayer,
-    filter?: jboolexpr
+    filter?: jboolexpr,
 ): void
 declare function GroupImmediateOrder(whichGroup: jgroup, order: string): boolean
 declare function GroupImmediateOrderById(whichGroup: jgroup, order: number): boolean
@@ -2366,24 +2370,24 @@ declare function GroupPointOrder(whichGroup: jgroup, order: string, x: number, y
 declare function GroupPointOrderLoc(
     whichGroup: jgroup,
     order: string,
-    whichLocation: jlocation
+    whichLocation: jlocation,
 ): boolean
 declare function GroupPointOrderById(
     whichGroup: jgroup,
     order: number,
     x: number,
-    y: number
+    y: number,
 ): boolean
 declare function GroupPointOrderByIdLoc(
     whichGroup: jgroup,
     order: number,
-    whichLocation: jlocation
+    whichLocation: jlocation,
 ): boolean
 declare function GroupTargetOrder(whichGroup: jgroup, order: string, targetWidget: jwidget): boolean
 declare function GroupTargetOrderById(
     whichGroup: jgroup,
     order: number,
-    targetWidget: jwidget
+    targetWidget: jwidget,
 ): boolean
 declare function ForGroup(whichGroup: jgroup, callback?: () => void): void
 declare function FirstOfGroup(whichGroup: jgroup): junit
@@ -2397,7 +2401,7 @@ declare function ForceEnumPlayers(whichForce: jforce, filter: jboolexpr): void
 declare function ForceEnumPlayersCounted(
     whichForce: jforce,
     filter: jboolexpr,
-    countLimit: number
+    countLimit: number,
 ): void
 declare function ForceEnumAllies(whichForce: jforce, whichPlayer: jplayer, filter: jboolexpr): void
 declare function ForceEnumEnemies(whichForce: jforce, whichPlayer: jplayer, filter: jboolexpr): void
@@ -2410,7 +2414,7 @@ declare function SetRect(
     minx: number,
     miny: number,
     maxx: number,
-    maxy: number
+    maxy: number,
 ): void
 declare function SetRectFromLoc(whichRect: jrect, min: jlocation, max: jlocation): void
 declare function MoveRectTo(whichRect: jrect, newCenterX: number, newCenterY: number): void
@@ -2473,42 +2477,42 @@ declare function TriggerRegisterVariableEvent(
     whichTrigger: jtrigger,
     varName: string,
     opcode: jlimitop,
-    limitval: number
+    limitval: number,
 ): jevent
 declare function TriggerRegisterTimerEvent(
     whichTrigger: jtrigger,
     timeout: number,
-    periodic: boolean
+    periodic: boolean,
 ): jevent
 declare function TriggerRegisterTimerExpireEvent(whichTrigger: jtrigger, t: jtimer): jevent
 declare function TriggerRegisterGameStateEvent(
     whichTrigger: jtrigger,
     whichState: jgamestate,
     opcode: jlimitop,
-    limitval: number
+    limitval: number,
 ): jevent
 declare function TriggerRegisterDialogEvent(whichTrigger: jtrigger, whichDialog: jdialog): jevent
 declare function TriggerRegisterDialogButtonEvent(
     whichTrigger: jtrigger,
-    whichButton: jbutton
+    whichButton: jbutton,
 ): jevent
 declare function GetEventGameState(): jgamestate
 declare function TriggerRegisterGameEvent(
     whichTrigger: jtrigger,
-    whichGameEvent: jgameevent
+    whichGameEvent: jgameevent,
 ): jevent
 declare function GetWinningPlayer(): jplayer
 declare function TriggerRegisterEnterRegion(
     whichTrigger: jtrigger,
     whichRegion: jregion,
-    filter?: jboolexpr
+    filter?: jboolexpr,
 ): jevent
 declare function GetTriggeringRegion(): jregion
 declare function GetEnteringUnit(): junit
 declare function TriggerRegisterLeaveRegion(
     whichTrigger: jtrigger,
     whichRegion: jregion,
-    filter?: jboolexpr
+    filter?: jboolexpr,
 ): jevent
 declare function GetLeavingUnit(): junit
 declare function TriggerRegisterTrackableHitEvent(whichTrigger: jtrigger, t: jtrackable): jevent
@@ -2516,11 +2520,11 @@ declare function TriggerRegisterTrackableTrackEvent(whichTrigger: jtrigger, t: j
 declare function TriggerRegisterCommandEvent(
     whichTrigger: jtrigger,
     whichAbility: number,
-    order: string
+    order: string,
 ): jevent
 declare function TriggerRegisterUpgradeCommandEvent(
     whichTrigger: jtrigger,
-    whichUpgrade: number
+    whichUpgrade: number,
 ): jevent
 declare function GetTriggeringTrackable(): jtrackable
 declare function GetClickedButton(): jbutton
@@ -2533,14 +2537,14 @@ declare function GetSaveBasicFilename(): string
 declare function TriggerRegisterPlayerEvent(
     whichTrigger: jtrigger,
     whichPlayer: jplayer,
-    whichPlayerEvent: jplayerevent
+    whichPlayerEvent: jplayerevent,
 ): jevent
 declare function GetTriggerPlayer(): jplayer
 declare function TriggerRegisterPlayerUnitEvent(
     whichTrigger: jtrigger,
     whichPlayer: jplayer,
     whichPlayerUnitEvent: jplayerunitevent,
-    filter: jboolexpr
+    filter: jboolexpr,
 ): jevent
 declare function GetLevelingUnit(): junit
 declare function GetLearningUnit(): junit
@@ -2599,21 +2603,21 @@ declare function GetSpellTargetUnit(): junit | undefined
 declare function TriggerRegisterPlayerAllianceChange(
     whichTrigger: jtrigger,
     whichPlayer: jplayer,
-    whichAlliance: jalliancetype
+    whichAlliance: jalliancetype,
 ): jevent
 declare function TriggerRegisterPlayerStateEvent(
     whichTrigger: jtrigger,
     whichPlayer: jplayer,
     whichState: jplayerstate,
     opcode: jlimitop,
-    limitval: number
+    limitval: number,
 ): jevent
 declare function GetEventPlayerState(): jplayerstate
 declare function TriggerRegisterPlayerChatEvent(
     whichTrigger: jtrigger,
     whichPlayer: jplayer,
     chatMessageToDetect: string,
-    exactMatchOnly: boolean
+    exactMatchOnly: boolean,
 ): jevent
 declare function GetEventPlayerChatString(): string
 declare function GetEventPlayerChatStringMatched(): string
@@ -2624,13 +2628,13 @@ declare function TriggerRegisterUnitStateEvent(
     whichUnit: junit,
     whichState: junitstate,
     opcode: jlimitop,
-    limitval: number
+    limitval: number,
 ): jevent
 declare function GetEventUnitState(): junitstate
 declare function TriggerRegisterUnitEvent(
     whichTrigger: jtrigger,
     whichUnit: junit,
-    whichEvent: junitevent
+    whichEvent: junitevent,
 ): jevent
 declare function GetEventDamage(): number
 declare function GetEventDamageSource(): junit | undefined
@@ -2639,22 +2643,22 @@ declare function TriggerRegisterFilterUnitEvent(
     whichTrigger: jtrigger,
     whichUnit: junit,
     whichEvent: junitevent,
-    filter: jboolexpr
+    filter: jboolexpr,
 ): jevent
 declare function GetEventTargetUnit(): junit
 declare function TriggerRegisterUnitInRange(
     whichTrigger: jtrigger,
     whichUnit: junit,
     range: number,
-    filter: jboolexpr
+    filter: jboolexpr,
 ): jevent
 declare function TriggerAddCondition(
     whichTrigger: jtrigger,
-    condition: jboolexpr
+    condition: jboolexpr,
 ): jtriggercondition
 declare function TriggerRemoveCondition(
     whichTrigger: jtrigger,
-    whichCondition: jtriggercondition
+    whichCondition: jtriggercondition,
 ): void
 declare function TriggerClearConditions(whichTrigger: jtrigger): void
 declare function TriggerAddAction(whichTrigger: jtrigger, actionFunc?: () => void): jtriggeraction
@@ -2678,7 +2682,7 @@ declare function CreateDestructable(
     y: number,
     face: number,
     scale: number,
-    variation: number
+    variation: number,
 ): jdestructable
 declare function CreateDestructableZ(
     objectid: number,
@@ -2687,7 +2691,7 @@ declare function CreateDestructableZ(
     z: number,
     face: number,
     scale: number,
-    variation: number
+    variation: number,
 ): jdestructable
 declare function CreateDeadDestructable(
     objectid: number,
@@ -2695,7 +2699,7 @@ declare function CreateDeadDestructable(
     y: number,
     face: number,
     scale: number,
-    variation: number
+    variation: number,
 ): jdestructable
 declare function CreateDeadDestructableZ(
     objectid: number,
@@ -2704,13 +2708,17 @@ declare function CreateDeadDestructableZ(
     z: number,
     face: number,
     scale: number,
-    variation: number
+    variation: number,
 ): jdestructable
 declare function RemoveDestructable(d: jdestructable): void
 declare function KillDestructable(d: jdestructable): void
 declare function SetDestructableInvulnerable(d: jdestructable, flag: boolean): void
 declare function IsDestructableInvulnerable(d: jdestructable): boolean
-declare function EnumDestructablesInRect(r: jrect, filter?: jboolexpr, actionFunc?: () => void): void
+declare function EnumDestructablesInRect(
+    r: jrect,
+    filter?: jboolexpr,
+    actionFunc?: () => void,
+): void
 declare function GetDestructableTypeId(d: jdestructable): number
 declare function GetDestructableX(d: jdestructable): number
 declare function GetDestructableY(d: jdestructable): number
@@ -2758,32 +2766,38 @@ declare function GetItemCharges(whichItem: jitem): number
 declare function SetItemCharges(whichItem: jitem, charges: number): void
 declare function GetItemUserData(whichItem: jitem): number
 declare function SetItemUserData(whichItem: jitem, data: number): void
-declare function CreateUnit(id: jplayer, unitid: number, x: number, y: number, face: number): junit | null
+declare function CreateUnit(
+    id: jplayer,
+    unitid: number,
+    x: number,
+    y: number,
+    face: number,
+): junit | null
 declare function CreateUnitByName(
     whichPlayer: jplayer,
     unitname: string,
     x: number,
     y: number,
-    face: number
+    face: number,
 ): junit
 declare function CreateUnitAtLoc(
     id: jplayer,
     unitid: number,
     whichLocation: jlocation,
-    face: number
+    face: number,
 ): junit
 declare function CreateUnitAtLocByName(
     id: jplayer,
     unitname: string,
     whichLocation: jlocation,
-    face: number
+    face: number,
 ): junit
 declare function CreateCorpse(
     whichPlayer: jplayer,
     unitid: number,
     x: number,
     y: number,
-    face: number
+    face: number,
 ): junit
 declare function KillUnit(whichUnit: junit): void
 declare function RemoveUnit(whichUnit: junit): void
@@ -2815,7 +2829,7 @@ declare function SetUnitScale(
     whichUnit: junit,
     scaleX: number,
     scaleY: number,
-    scaleZ: number
+    scaleZ: number,
 ): void
 declare function SetUnitTimeScale(whichUnit: junit, timeScale: number): void
 declare function SetUnitBlendTime(whichUnit: junit, blendTime: number): void
@@ -2824,7 +2838,7 @@ declare function SetUnitVertexColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function QueueUnitAnimation(whichUnit: junit, whichAnimation: string): void
 declare function SetUnitAnimation(whichUnit: junit, whichAnimation: string): void
@@ -2832,12 +2846,12 @@ declare function SetUnitAnimationByIndex(whichUnit: junit, whichAnimation: numbe
 declare function SetUnitAnimationWithRarity(
     whichUnit: junit,
     whichAnimation: string,
-    rarity: jraritycontrol
+    rarity: jraritycontrol,
 ): void
 declare function AddUnitAnimationProperties(
     whichUnit: junit,
     animProperties: string,
-    add: boolean
+    add: boolean,
 ): void
 declare function SetUnitLookAt(
     whichUnit: junit,
@@ -2845,7 +2859,7 @@ declare function SetUnitLookAt(
     lookAtTarget: junit,
     offsetX: number,
     offsetY: number,
-    offsetZ: number
+    offsetZ: number,
 ): void
 declare function ResetUnitLookAt(whichUnit: junit): void
 declare function SetUnitRescuable(whichUnit: junit, byWhichPlayer: jplayer, flag: boolean): void
@@ -2898,7 +2912,7 @@ declare function UnitDropItemPoint(
     whichUnit: junit,
     whichItem: jitem,
     x: number,
-    y: number
+    y: number,
 ): boolean
 declare function UnitDropItemSlot(whichUnit: junit, whichItem: jitem, slot: number): boolean
 declare function UnitDropItemTarget(whichUnit: junit, whichItem: jitem, target: jwidget): boolean
@@ -2943,7 +2957,7 @@ declare function IsUnitInRangeXY(whichUnit: junit, x: number, y: number, distanc
 declare function IsUnitInRangeLoc(
     whichUnit: junit,
     whichLocation: jlocation,
-    distance: number
+    distance: number,
 ): boolean
 declare function IsUnitHidden(whichUnit: junit): boolean
 declare function IsUnitIllusion(whichUnit: junit): boolean
@@ -2960,12 +2974,12 @@ declare function UnitRemoveAbility(whichUnit: junit, abilityId: number): boolean
 declare function UnitMakeAbilityPermanent(
     whichUnit: junit,
     permanent: boolean,
-    abilityId: number
+    abilityId: number,
 ): boolean
 declare function UnitRemoveBuffs(
     whichUnit: junit,
     removePositive: boolean,
-    removeNegative: boolean
+    removeNegative: boolean,
 ): void
 declare function UnitRemoveBuffsEx(
     whichUnit: junit,
@@ -2975,7 +2989,7 @@ declare function UnitRemoveBuffsEx(
     physical: boolean,
     timedLife: boolean,
     aura: boolean,
-    autoDispel: boolean
+    autoDispel: boolean,
 ): void
 declare function UnitHasBuffsEx(
     whichUnit: junit,
@@ -2985,7 +2999,7 @@ declare function UnitHasBuffsEx(
     physical: boolean,
     timedLife: boolean,
     aura: boolean,
-    autoDispel: boolean
+    autoDispel: boolean,
 ): boolean
 declare function UnitCountBuffsEx(
     whichUnit: junit,
@@ -2995,7 +3009,7 @@ declare function UnitCountBuffsEx(
     physical: boolean,
     timedLife: boolean,
     aura: boolean,
-    autoDispel: boolean
+    autoDispel: boolean,
 ): number
 declare function UnitAddSleep(whichUnit: junit, add: boolean): void
 declare function UnitCanSleep(whichUnit: junit): boolean
@@ -3022,7 +3036,7 @@ declare function UnitDamagePoint(
     ranged: boolean,
     attackType: jattacktype,
     damageType: jdamagetype,
-    weaponType: jweapontype
+    weaponType: jweapontype,
 ): boolean
 declare function UnitDamageTarget(
     whichUnit: junit,
@@ -3032,7 +3046,7 @@ declare function UnitDamageTarget(
     ranged: boolean,
     attackType: jattacktype,
     damageType: jdamagetype,
-    weaponType: jweapontype
+    weaponType: jweapontype,
 ): boolean
 declare function IssueImmediateOrder(whichUnit: junit, order: string): boolean
 declare function IssueImmediateOrderById(whichUnit: junit, order: number): boolean
@@ -3040,104 +3054,144 @@ declare function IssuePointOrder(whichUnit: junit, order: string, x: number, y: 
 declare function IssuePointOrderLoc(
     whichUnit: junit,
     order: string,
-    whichLocation: jlocation
+    whichLocation: jlocation,
 ): boolean
 declare function IssuePointOrderById(whichUnit: junit, order: number, x: number, y: number): boolean
 declare function IssuePointOrderByIdLoc(
     whichUnit: junit,
     order: number,
-    whichLocation: jlocation
+    whichLocation: jlocation,
 ): boolean
 declare function IssueTargetOrder(whichUnit: junit, order: string, targetWidget: jwidget): boolean
 declare function IssueTargetOrderById(
     whichUnit: junit,
     order: number,
-    targetWidget: jwidget
+    targetWidget: jwidget,
 ): boolean
 declare function IssueInstantPointOrder(
     whichUnit: junit,
     order: string,
     x: number,
     y: number,
-    instantTargetWidget: jwidget
+    instantTargetWidget: jwidget,
 ): boolean
 declare function IssueInstantPointOrderById(
     whichUnit: junit,
     order: number,
     x: number,
     y: number,
-    instantTargetWidget: jwidget
+    instantTargetWidget: jwidget,
 ): boolean
 declare function IssueInstantTargetOrder(
     whichUnit: junit,
     order: string,
     targetWidget: jwidget,
-    instantTargetWidget: jwidget
+    instantTargetWidget: jwidget,
 ): boolean
 declare function IssueInstantTargetOrderById(
     whichUnit: junit,
     order: number,
     targetWidget: jwidget,
-    instantTargetWidget: jwidget
+    instantTargetWidget: jwidget,
 ): boolean
 declare function IssueBuildOrder(
     whichPeon: junit,
     unitToBuild: string,
     x: number,
-    y: number
+    y: number,
 ): boolean
 declare function IssueBuildOrderById(
     whichPeon: junit,
     unitId: number,
     x: number,
-    y: number
+    y: number,
 ): boolean
 declare function IssueNeutralImmediateOrder(
     forWhichPlayer: jplayer,
     neutralStructure: junit,
-    unitToBuild: string
+    unitToBuild: string,
 ): boolean
 declare function IssueNeutralImmediateOrderById(
     forWhichPlayer: jplayer,
     neutralStructure: junit,
-    unitId: number
+    unitId: number,
 ): boolean
 declare function IssueNeutralPointOrder(
     forWhichPlayer: jplayer,
     neutralStructure: junit,
     unitToBuild: string,
     x: number,
-    y: number
+    y: number,
 ): boolean
 declare function IssueNeutralPointOrderById(
     forWhichPlayer: jplayer,
     neutralStructure: junit,
     unitId: number,
     x: number,
-    y: number
+    y: number,
 ): boolean
 declare function IssueNeutralTargetOrder(
     forWhichPlayer: jplayer,
     neutralStructure: junit,
     unitToBuild: string,
-    target: jwidget
+    target: jwidget,
 ): boolean
 declare function IssueNeutralTargetOrderById(
     forWhichPlayer: jplayer,
     neutralStructure: junit,
     unitId: number,
-    target: jwidget
+    target: jwidget,
 ): boolean
 declare function GetUnitCurrentOrder(whichUnit: junit): number
 declare function BlzQueueImmediateOrderById(whichUnit: junit, order: number): boolean
-declare function BlzQueuePointOrderById(whichUnit: junit, order: number, x: number, y: number): boolean
-declare function BlzQueueTargetOrderById(whichUnit: junit, order: number, targetWidget: jwidget): boolean
-declare function BlzQueueInstantPointOrderById(whichUnit: junit, order: number, x: number, y: number, instantTargetWidget: jwidget): boolean
-declare function BlzQueueInstantTargetOrderById(whichUnit: junit, order: number, targetWidget: jwidget, instantTargetWidget: jwidget): boolean
-declare function BlzQueueBuildOrderById(whichPeon: junit, unitId: number, x: number, y: number): boolean
-declare function BlzQueueNeutralImmediateOrderById(forWhichPlayer: jplayer, neutralStructure: junit, unitId: number): boolean
-declare function BlzQueueNeutralPointOrderById(forWhichPlayer: jplayer, neutralStructure: junit, unitId: number, x: number, y: number): boolean
-declare function BlzQueueNeutralTargetOrderById(forWhichPlayer: jplayer, neutralStructure: junit, unitId: number, target: jwidget): boolean
+declare function BlzQueuePointOrderById(
+    whichUnit: junit,
+    order: number,
+    x: number,
+    y: number,
+): boolean
+declare function BlzQueueTargetOrderById(
+    whichUnit: junit,
+    order: number,
+    targetWidget: jwidget,
+): boolean
+declare function BlzQueueInstantPointOrderById(
+    whichUnit: junit,
+    order: number,
+    x: number,
+    y: number,
+    instantTargetWidget: jwidget,
+): boolean
+declare function BlzQueueInstantTargetOrderById(
+    whichUnit: junit,
+    order: number,
+    targetWidget: jwidget,
+    instantTargetWidget: jwidget,
+): boolean
+declare function BlzQueueBuildOrderById(
+    whichPeon: junit,
+    unitId: number,
+    x: number,
+    y: number,
+): boolean
+declare function BlzQueueNeutralImmediateOrderById(
+    forWhichPlayer: jplayer,
+    neutralStructure: junit,
+    unitId: number,
+): boolean
+declare function BlzQueueNeutralPointOrderById(
+    forWhichPlayer: jplayer,
+    neutralStructure: junit,
+    unitId: number,
+    x: number,
+    y: number,
+): boolean
+declare function BlzQueueNeutralTargetOrderById(
+    forWhichPlayer: jplayer,
+    neutralStructure: junit,
+    unitId: number,
+    target: jwidget,
+): boolean
 // returns the number of orders the unit currently has queued up
 declare function BlzGetUnitOrderCount(whichUnit: junit): number
 // clears either all orders or only queued up orders
@@ -3157,14 +3211,14 @@ declare function AddItemToStock(
     whichUnit: junit,
     itemId: number,
     currentStock: number,
-    stockMax: number
+    stockMax: number,
 ): void
 declare function AddUnitToAllStock(unitId: number, currentStock: number, stockMax: number): void
 declare function AddUnitToStock(
     whichUnit: junit,
     unitId: number,
     currentStock: number,
-    stockMax: number
+    stockMax: number,
 ): void
 declare function RemoveItemFromAllStock(itemId: number): void
 declare function RemoveItemFromStock(whichUnit: junit, itemId: number): void
@@ -3195,7 +3249,7 @@ declare function GetPlayerTypedUnitCount(
     whichPlayer: jplayer,
     unitName: string,
     includeIncomplete: boolean,
-    includeUpgrades: boolean
+    includeUpgrades: boolean,
 ): number
 declare function GetPlayerStructureCount(whichPlayer: jplayer, includeIncomplete: boolean): number
 declare function GetPlayerState(whichPlayer: jplayer, whichPlayerState: jplayerstate): number
@@ -3203,7 +3257,7 @@ declare function GetPlayerScore(whichPlayer: jplayer, whichPlayerScore: jplayers
 declare function GetPlayerAlliance(
     sourcePlayer: jplayer,
     otherPlayer: jplayer,
-    whichAllianceSetting: jalliancetype
+    whichAllianceSetting: jalliancetype,
 ): boolean
 declare function GetPlayerHandicap(whichPlayer: jplayer): number
 declare function GetPlayerHandicapXP(whichPlayer: jplayer): number
@@ -3216,36 +3270,36 @@ declare function SetPlayerHandicapDamage(whichPlayer: jplayer, handicap: number)
 declare function SetPlayerTechMaxAllowed(
     whichPlayer: jplayer,
     techid: number,
-    maximum: number
+    maximum: number,
 ): void
 declare function GetPlayerTechMaxAllowed(whichPlayer: jplayer, techid: number): number
 declare function AddPlayerTechResearched(whichPlayer: jplayer, techid: number, levels: number): void
 declare function SetPlayerTechResearched(
     whichPlayer: jplayer,
     techid: number,
-    setToLevel: number
+    setToLevel: number,
 ): void
 declare function GetPlayerTechResearched(
     whichPlayer: jplayer,
     techid: number,
-    specificonly: boolean
+    specificonly: boolean,
 ): boolean
 declare function GetPlayerTechCount(
     whichPlayer: jplayer,
     techid: number,
-    specificonly: boolean
+    specificonly: boolean,
 ): number
 declare function SetPlayerUnitsOwner(whichPlayer: jplayer, newOwner: number): void
 declare function CripplePlayer(whichPlayer: jplayer, toWhichPlayers: jforce, flag: boolean): void
 declare function SetPlayerAbilityAvailable(
     whichPlayer: jplayer,
     abilid: number,
-    avail: boolean
+    avail: boolean,
 ): void
 declare function SetPlayerState(
     whichPlayer: jplayer,
     whichPlayerState: jplayerstate,
-    value: number
+    value: number,
 ): void
 declare function RemovePlayer(whichPlayer: jplayer, gameResult: jplayergameresult): void
 declare function CachePlayerHeroData(whichPlayer: jplayer): void
@@ -3253,7 +3307,7 @@ declare function SetFogStateRect(
     forWhichPlayer: jplayer,
     whichState: jfogstate,
     where: jrect,
-    useSharedVision: boolean
+    useSharedVision: boolean,
 ): void
 declare function SetFogStateRadius(
     forWhichPlayer: jplayer,
@@ -3261,14 +3315,14 @@ declare function SetFogStateRadius(
     centerx: number,
     centerY: number,
     radius: number,
-    useSharedVision: boolean
+    useSharedVision: boolean,
 ): void
 declare function SetFogStateRadiusLoc(
     forWhichPlayer: jplayer,
     whichState: jfogstate,
     center: jlocation,
     radius: number,
-    useSharedVision: boolean
+    useSharedVision: boolean,
 ): void
 declare function FogMaskEnable(enable: boolean): void
 declare function IsFogMaskEnabled(): boolean
@@ -3279,7 +3333,7 @@ declare function CreateFogModifierRect(
     whichState: jfogstate,
     where: jrect,
     useSharedVision: boolean,
-    afterUnits: boolean
+    afterUnits: boolean,
 ): jfogmodifier
 declare function CreateFogModifierRadius(
     forWhichPlayer: jplayer,
@@ -3288,7 +3342,7 @@ declare function CreateFogModifierRadius(
     centerY: number,
     radius: number,
     useSharedVision: boolean,
-    afterUnits: boolean
+    afterUnits: boolean,
 ): jfogmodifier
 declare function CreateFogModifierRadiusLoc(
     forWhichPlayer: jplayer,
@@ -3296,7 +3350,7 @@ declare function CreateFogModifierRadiusLoc(
     center: jlocation,
     radius: number,
     useSharedVision: boolean,
-    afterUnits: boolean
+    afterUnits: boolean,
 ): jfogmodifier
 declare function DestroyFogModifier(whichFogModifier: jfogmodifier): void
 declare function FogModifierStart(whichFogModifier: jfogmodifier): void
@@ -3328,7 +3382,7 @@ declare function SetTutorialCleared(cleared: boolean): void
 declare function SetMissionAvailable(
     campaignNumber: number,
     missionNumber: number,
-    available: boolean
+    available: boolean,
 ): void
 declare function SetCampaignAvailable(campaignNumber: number, available: boolean): void
 declare function SetOpCinematicAvailable(campaignNumber: number, available: boolean): void
@@ -3347,7 +3401,7 @@ declare function DialogAddQuitButton(
     whichDialog: jdialog,
     doScoreScreen: boolean,
     buttonText: string,
-    hotkey: number
+    hotkey: number,
 ): jbutton
 declare function DialogDisplay(whichPlayer: jplayer, whichDialog: jdialog, flag: boolean): void
 declare function ReloadGameCachesFromDisk(): boolean
@@ -3357,26 +3411,26 @@ declare function StoreInteger(
     cache: jgamecache,
     missionKey: string,
     key: string,
-    value: number
+    value: number,
 ): void
 declare function StoreReal(cache: jgamecache, missionKey: string, key: string, value: number): void
 declare function StoreBoolean(
     cache: jgamecache,
     missionKey: string,
     key: string,
-    value: boolean
+    value: boolean,
 ): void
 declare function StoreUnit(
     cache: jgamecache,
     missionKey: string,
     key: string,
-    whichUnit: junit
+    whichUnit: junit,
 ): boolean
 declare function StoreString(
     cache: jgamecache,
     missionKey: string,
     key: string,
-    value: string
+    value: string,
 ): boolean
 declare function SyncStoredInteger(cache: jgamecache, missionKey: string, key: string): void
 declare function SyncStoredReal(cache: jgamecache, missionKey: string, key: string): void
@@ -3406,272 +3460,272 @@ declare function RestoreUnit(
     forWhichPlayer: jplayer,
     x: number,
     y: number,
-    facing: number
+    facing: number,
 ): junit
 declare function InitHashtable(): jhashtable
 declare function SaveInteger(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    value: number
+    value: number,
 ): void
 declare function SaveReal(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    value: number
+    value: number,
 ): void
 declare function SaveBoolean(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    value: boolean
+    value: boolean,
 ): void
 declare function SaveStr(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    value: string
+    value: string,
 ): boolean
 declare function SavePlayerHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichPlayer: jplayer
+    whichPlayer: jplayer,
 ): boolean
 declare function SaveWidgetHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichWidget: jwidget
+    whichWidget: jwidget,
 ): boolean
 declare function SaveDestructableHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichDestructable: jdestructable
+    whichDestructable: jdestructable,
 ): boolean
 declare function SaveItemHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichItem: jitem
+    whichItem: jitem,
 ): boolean
 declare function SaveUnitHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichUnit: junit
+    whichUnit: junit,
 ): boolean
 declare function SaveAbilityHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichAbility: jability
+    whichAbility: jability,
 ): boolean
 declare function SaveTimerHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichTimer: jtimer
+    whichTimer: jtimer,
 ): boolean
 declare function SaveTriggerHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichTrigger: jtrigger
+    whichTrigger: jtrigger,
 ): boolean
 declare function SaveTriggerConditionHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichTriggercondition: jtriggercondition
+    whichTriggercondition: jtriggercondition,
 ): boolean
 declare function SaveTriggerActionHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichTriggeraction: jtriggeraction
+    whichTriggeraction: jtriggeraction,
 ): boolean
 declare function SaveTriggerEventHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichEvent: jevent
+    whichEvent: jevent,
 ): boolean
 declare function SaveForceHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichForce: jforce
+    whichForce: jforce,
 ): boolean
 declare function SaveGroupHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichGroup: jgroup
+    whichGroup: jgroup,
 ): boolean
 declare function SaveLocationHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichLocation: jlocation
+    whichLocation: jlocation,
 ): boolean
 declare function SaveRectHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichRect: jrect
+    whichRect: jrect,
 ): boolean
 declare function SaveBooleanExprHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichBoolexpr: jboolexpr
+    whichBoolexpr: jboolexpr,
 ): boolean
 declare function SaveSoundHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichSound: jsound
+    whichSound: jsound,
 ): boolean
 declare function SaveEffectHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichEffect: jeffect
+    whichEffect: jeffect,
 ): boolean
 declare function SaveUnitPoolHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichUnitpool: junitpool
+    whichUnitpool: junitpool,
 ): boolean
 declare function SaveItemPoolHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichItempool: jitempool
+    whichItempool: jitempool,
 ): boolean
 declare function SaveQuestHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichQuest: jquest
+    whichQuest: jquest,
 ): boolean
 declare function SaveQuestItemHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichQuestitem: jquestitem
+    whichQuestitem: jquestitem,
 ): boolean
 declare function SaveDefeatConditionHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichDefeatcondition: jdefeatcondition
+    whichDefeatcondition: jdefeatcondition,
 ): boolean
 declare function SaveTimerDialogHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichTimerdialog: jtimerdialog
+    whichTimerdialog: jtimerdialog,
 ): boolean
 declare function SaveLeaderboardHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichLeaderboard: jleaderboard
+    whichLeaderboard: jleaderboard,
 ): boolean
 declare function SaveMultiboardHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichMultiboard: jmultiboard
+    whichMultiboard: jmultiboard,
 ): boolean
 declare function SaveMultiboardItemHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichMultiboarditem: jmultiboarditem
+    whichMultiboarditem: jmultiboarditem,
 ): boolean
 declare function SaveTrackableHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichTrackable: jtrackable
+    whichTrackable: jtrackable,
 ): boolean
 declare function SaveDialogHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichDialog: jdialog
+    whichDialog: jdialog,
 ): boolean
 declare function SaveButtonHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichButton: jbutton
+    whichButton: jbutton,
 ): boolean
 declare function SaveTextTagHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichTexttag: jtexttag
+    whichTexttag: jtexttag,
 ): boolean
 declare function SaveLightningHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichLightning: jlightning
+    whichLightning: jlightning,
 ): boolean
 declare function SaveImageHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichImage: jimage
+    whichImage: jimage,
 ): boolean
 declare function SaveUbersplatHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichUbersplat: jubersplat
+    whichUbersplat: jubersplat,
 ): boolean
 declare function SaveRegionHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichRegion: jregion
+    whichRegion: jregion,
 ): boolean
 declare function SaveFogStateHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichFogState: jfogstate
+    whichFogState: jfogstate,
 ): boolean
 declare function SaveFogModifierHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichFogModifier: jfogmodifier
+    whichFogModifier: jfogmodifier,
 ): boolean
 declare function SaveAgentHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichAgent: jagent
+    whichAgent: jagent,
 ): boolean
 declare function SaveHashtableHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichHashtable: jhashtable
+    whichHashtable: jhashtable,
 ): boolean
 declare function SaveFrameHandle(
     table: jhashtable,
     parentKey: number,
     childKey: number,
-    whichFrameHandle: jframehandle
+    whichFrameHandle: jframehandle,
 ): boolean
 declare function LoadInteger(table: jhashtable, parentKey: number, childKey: number): number
 declare function LoadReal(table: jhashtable, parentKey: number, childKey: number): number
@@ -3682,7 +3736,7 @@ declare function LoadWidgetHandle(table: jhashtable, parentKey: number, childKey
 declare function LoadDestructableHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jdestructable
 declare function LoadItemHandle(table: jhashtable, parentKey: number, childKey: number): jitem
 declare function LoadUnitHandle(table: jhashtable, parentKey: number, childKey: number): junit
@@ -3692,78 +3746,78 @@ declare function LoadTriggerHandle(table: jhashtable, parentKey: number, childKe
 declare function LoadTriggerConditionHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jtriggercondition
 declare function LoadTriggerActionHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jtriggeraction
 declare function LoadTriggerEventHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jevent
 declare function LoadForceHandle(table: jhashtable, parentKey: number, childKey: number): jforce
 declare function LoadGroupHandle(table: jhashtable, parentKey: number, childKey: number): jgroup
 declare function LoadLocationHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jlocation
 declare function LoadRectHandle(table: jhashtable, parentKey: number, childKey: number): jrect
 declare function LoadBooleanExprHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jboolexpr
 declare function LoadSoundHandle(table: jhashtable, parentKey: number, childKey: number): jsound
 declare function LoadEffectHandle(table: jhashtable, parentKey: number, childKey: number): jeffect
 declare function LoadUnitPoolHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): junitpool
 declare function LoadItemPoolHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jitempool
 declare function LoadQuestHandle(table: jhashtable, parentKey: number, childKey: number): jquest
 declare function LoadQuestItemHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jquestitem
 declare function LoadDefeatConditionHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jdefeatcondition
 declare function LoadTimerDialogHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jtimerdialog
 declare function LoadLeaderboardHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jleaderboard
 declare function LoadMultiboardHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jmultiboard
 declare function LoadMultiboardItemHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jmultiboarditem
 declare function LoadTrackableHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jtrackable
 declare function LoadDialogHandle(table: jhashtable, parentKey: number, childKey: number): jdialog
 declare function LoadButtonHandle(table: jhashtable, parentKey: number, childKey: number): jbutton
@@ -3771,34 +3825,34 @@ declare function LoadTextTagHandle(table: jhashtable, parentKey: number, childKe
 declare function LoadLightningHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jlightning
 declare function LoadImageHandle(table: jhashtable, parentKey: number, childKey: number): jimage
 declare function LoadUbersplatHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jubersplat
 declare function LoadRegionHandle(table: jhashtable, parentKey: number, childKey: number): jregion
 declare function LoadFogStateHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jfogstate
 declare function LoadFogModifierHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jfogmodifier
 declare function LoadHashtableHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jhashtable
 declare function LoadFrameHandle(
     table: jhashtable,
     parentKey: number,
-    childKey: number
+    childKey: number,
 ): jframehandle
 declare function HaveSavedInteger(table: jhashtable, parentKey: number, childKey: number): boolean
 declare function HaveSavedReal(table: jhashtable, parentKey: number, childKey: number): boolean
@@ -3823,7 +3877,7 @@ declare function PlaceRandomUnit(
     forWhichPlayer: jplayer,
     x: number,
     y: number,
-    facing: number
+    facing: number,
 ): junit
 declare function CreateItemPool(): jitempool
 declare function DestroyItemPool(whichItemPool: jitempool): void
@@ -3845,7 +3899,7 @@ declare function SetTerrainFogEx(
     density: number,
     red: number,
     green: number,
-    blue: number
+    blue: number,
 ): void
 declare function DisplayTextToPlayer(toPlayer: jplayer, x: number, y: number, message: string): void
 declare function DisplayTimedTextToPlayer(
@@ -3853,14 +3907,14 @@ declare function DisplayTimedTextToPlayer(
     x: number,
     y: number,
     duration: number,
-    message: string
+    message: string,
 ): void
 declare function DisplayTimedTextFromPlayer(
     toPlayer: jplayer,
     x: number,
     y: number,
     duration: number,
-    message: string
+    message: string,
 ): void
 declare function ClearTextMessages(): void
 declare function SetDayNightModels(terrainDNCFile: string, unitDNCFile: string): void
@@ -3878,14 +3932,14 @@ declare function UnitAddIndicator(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function AddIndicator(
     whichWidget: jwidget,
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function PingMinimap(x: number, y: number, duration: number): void
 declare function PingMinimapEx(
@@ -3895,7 +3949,7 @@ declare function PingMinimapEx(
     red: number,
     green: number,
     blue: number,
-    extraEffects: boolean
+    extraEffects: boolean,
 ): void
 declare function CreateMinimapIconOnUnit(
     whichUnit: junit,
@@ -3903,7 +3957,7 @@ declare function CreateMinimapIconOnUnit(
     green: number,
     blue: number,
     pingPath: string,
-    fogVisibility: jfogstate
+    fogVisibility: jfogstate,
 ): jminimapicon
 declare function CreateMinimapIconAtLoc(
     where: jlocation,
@@ -3911,7 +3965,7 @@ declare function CreateMinimapIconAtLoc(
     green: number,
     blue: number,
     pingPath: string,
-    fogVisibility: jfogstate
+    fogVisibility: jfogstate,
 ): jminimapicon
 declare function CreateMinimapIcon(
     x: number,
@@ -3920,14 +3974,14 @@ declare function CreateMinimapIcon(
     green: number,
     blue: number,
     pingPath: string,
-    fogVisibility: jfogstate
+    fogVisibility: jfogstate,
 ): jminimapicon
 declare function SkinManagerGetLocalPath(key: string): string
 declare function DestroyMinimapIcon(pingId: jminimapicon): void
 declare function SetMinimapIconVisible(whichMinimapIcon: jminimapicon, visible: boolean): void
 declare function SetMinimapIconOrphanDestroy(
     whichMinimapIcon: jminimapicon,
-    doDestroy: boolean
+    doDestroy: boolean,
 ): void
 declare function EnableOcclusion(flag: boolean): void
 declare function SetIntroShotText(introText: string): void
@@ -3950,7 +4004,7 @@ declare function SetTextTagColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function SetTextTagVelocity(t: jtexttag, xvel: number, yvel: number): void
 declare function SetTextTagVisibility(t: jtexttag, flag: boolean): void
@@ -3972,7 +4026,7 @@ declare function CreateTrackable(
     trackableModelPath: string,
     x: number,
     y: number,
-    facing: number
+    facing: number,
 ): jtrackable
 declare function CreateQuest(): jquest
 declare function DestroyQuest(whichQuest: jquest): void
@@ -3997,7 +4051,7 @@ declare function CreateDefeatCondition(): jdefeatcondition
 declare function DestroyDefeatCondition(whichCondition: jdefeatcondition): void
 declare function DefeatConditionSetDescription(
     whichCondition: jdefeatcondition,
-    description: string
+    description: string,
 ): void
 declare function FlashQuestDialogButton(): void
 declare function ForceQuestDialogUpdate(): void
@@ -4009,21 +4063,21 @@ declare function TimerDialogSetTitleColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function TimerDialogSetTimeColor(
     whichDialog: jtimerdialog,
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function TimerDialogSetSpeed(whichDialog: jtimerdialog, speedMultFactor: number): void
 declare function TimerDialogDisplay(whichDialog: jtimerdialog, display: boolean): void
 declare function IsTimerDialogDisplayed(whichDialog: jtimerdialog): boolean
 declare function TimerDialogSetRealTimeRemaining(
     whichDialog: jtimerdialog,
-    timeRemaining: number
+    timeRemaining: number,
 ): void
 declare function CreateLeaderboard(): jleaderboard
 declare function DestroyLeaderboard(lb: jleaderboard): void
@@ -4035,7 +4089,7 @@ declare function LeaderboardAddItem(
     lb: jleaderboard,
     label: string,
     value: number,
-    p: jplayer
+    p: jplayer,
 ): void
 declare function LeaderboardRemoveItem(lb: jleaderboard, index: number): void
 declare function LeaderboardRemovePlayerItem(lb: jleaderboard, p: jplayer): void
@@ -4054,21 +4108,21 @@ declare function LeaderboardSetLabelColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function LeaderboardSetValueColor(
     lb: jleaderboard,
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function LeaderboardSetStyle(
     lb: jleaderboard,
     showLabel: boolean,
     showNames: boolean,
     showValues: boolean,
-    showIcons: boolean
+    showIcons: boolean,
 ): void
 declare function LeaderboardSetItemValue(lb: jleaderboard, whichItem: number, val: number): void
 declare function LeaderboardSetItemLabel(lb: jleaderboard, whichItem: number, val: string): void
@@ -4077,7 +4131,7 @@ declare function LeaderboardSetItemStyle(
     whichItem: number,
     showLabel: boolean,
     showValue: boolean,
-    showIcon: boolean
+    showIcon: boolean,
 ): void
 declare function LeaderboardSetItemLabelColor(
     lb: jleaderboard,
@@ -4085,7 +4139,7 @@ declare function LeaderboardSetItemLabelColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function LeaderboardSetItemValueColor(
     lb: jleaderboard,
@@ -4093,7 +4147,7 @@ declare function LeaderboardSetItemValueColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function CreateMultiboard(): jmultiboard
 declare function DestroyMultiboard(lb: jmultiboard): void
@@ -4109,7 +4163,7 @@ declare function MultiboardSetTitleTextColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function MultiboardGetRowCount(lb: jmultiboard): number
 declare function MultiboardGetColumnCount(lb: jmultiboard): number
@@ -4118,7 +4172,7 @@ declare function MultiboardSetRowCount(lb: jmultiboard, count: number): void
 declare function MultiboardSetItemsStyle(
     lb: jmultiboard,
     showValues: boolean,
-    showIcons: boolean
+    showIcons: boolean,
 ): void
 declare function MultiboardSetItemsValue(lb: jmultiboard, value: string): void
 declare function MultiboardSetItemsValueColor(
@@ -4126,7 +4180,7 @@ declare function MultiboardSetItemsValueColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function MultiboardSetItemsWidth(lb: jmultiboard, width: number): void
 declare function MultiboardSetItemsIcon(lb: jmultiboard, iconPath: string): void
@@ -4135,7 +4189,7 @@ declare function MultiboardReleaseItem(mbi: jmultiboarditem): void
 declare function MultiboardSetItemStyle(
     mbi: jmultiboarditem,
     showValue: boolean,
-    showIcon: boolean
+    showIcon: boolean,
 ): void
 declare function MultiboardSetItemValue(mbi: jmultiboarditem, val: string): void
 declare function MultiboardSetItemValueColor(
@@ -4143,7 +4197,7 @@ declare function MultiboardSetItemValueColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function MultiboardSetItemWidth(mbi: jmultiboarditem, width: number): void
 declare function MultiboardSetItemIcon(mbi: jmultiboarditem, iconFileName: string): void
@@ -4158,7 +4212,7 @@ declare function SetCameraBounds(
     x3: number,
     y3: number,
     x4: number,
-    y4: number
+    y4: number,
 ): void
 declare function StopCamera(): void
 declare function ResetToGameCamera(duration: number): void
@@ -4169,14 +4223,14 @@ declare function PanCameraToTimedWithZ(
     x: number,
     y: number,
     zOffsetDest: number,
-    duration: number
+    duration: number,
 ): void
 declare function SetCinematicCamera(cameraModelFile: string): void
 declare function SetCameraRotateMode(
     x: number,
     y: number,
     radiansToSweep: number,
-    duration: number
+    duration: number,
 ): void
 declare function SetCameraField(whichField: jcamerafield, value: number, duration: number): void
 declare function AdjustCameraField(whichField: jcamerafield, offset: number, duration: number): void
@@ -4184,7 +4238,7 @@ declare function SetCameraTargetController(
     whichUnit: junit,
     xoffset: number,
     yoffset: number,
-    inheritOrientation: boolean
+    inheritOrientation: boolean,
 ): void
 declare function SetCameraOrientController(whichUnit: junit, xoffset: number, yoffset: number): void
 declare function CreateCameraSetup(): jcamerasetup
@@ -4192,14 +4246,14 @@ declare function CameraSetupSetField(
     whichSetup: jcamerasetup,
     whichField: jcamerafield,
     value: number,
-    duration: number
+    duration: number,
 ): void
 declare function CameraSetupGetField(whichSetup: jcamerasetup, whichField: jcamerafield): number
 declare function CameraSetupSetDestPosition(
     whichSetup: jcamerasetup,
     x: number,
     y: number,
-    duration: number
+    duration: number,
 ): void
 declare function CameraSetupGetDestPositionLoc(whichSetup: jcamerasetup): jlocation
 declare function CameraSetupGetDestPositionX(whichSetup: jcamerasetup): number
@@ -4209,12 +4263,12 @@ declare function CameraSetupApplyWithZ(whichSetup: jcamerasetup, zDestOffset: nu
 declare function CameraSetupApplyForceDuration(
     whichSetup: jcamerasetup,
     doPan: boolean,
-    forceDuration: number
+    forceDuration: number,
 ): void
 declare function CameraSetupApplyForceDurationWithZ(
     whichSetup: jcamerasetup,
     zDestOffset: number,
-    forceDuration: number
+    forceDuration: number,
 ): void
 declare function BlzCameraSetupSetLabel(whichSetup: jcamerasetup, label: string): void
 declare function BlzCameraSetupGetLabel(whichSetup: jcamerasetup): string
@@ -4234,13 +4288,13 @@ declare function SetCineFilterStartColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function SetCineFilterEndColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function SetCineFilterDuration(duration: number): void
 declare function DisplayCineFilter(flag: boolean): void
@@ -4251,7 +4305,7 @@ declare function SetCinematicScene(
     speakerTitle: string,
     text: string,
     sceneDuration: number,
-    voiceoverDuration: number
+    voiceoverDuration: number,
 ): void
 declare function EndCinematicScene(): void
 declare function ForceCinematicSubtitles(flag: boolean): void
@@ -4278,7 +4332,7 @@ declare function CreateSound(
     stopwhenoutofrange: boolean,
     fadeInRate: number,
     fadeOutRate: number,
-    eaxSetting: string
+    eaxSetting: string,
 ): jsound
 declare function CreateSoundFilenameWithLabel(
     fileName: string,
@@ -4287,7 +4341,7 @@ declare function CreateSoundFilenameWithLabel(
     stopwhenoutofrange: boolean,
     fadeInRate: number,
     fadeOutRate: number,
-    SLKEntryName: string
+    SLKEntryName: string,
 ): jsound
 declare function CreateSoundFromLabel(
     soundLabel: string,
@@ -4295,12 +4349,12 @@ declare function CreateSoundFromLabel(
     is3D: boolean,
     stopwhenoutofrange: boolean,
     fadeInRate: number,
-    fadeOutRate: number
+    fadeOutRate: number,
 ): jsound
 declare function CreateMIDISound(
     soundLabel: string,
     fadeInRate: number,
-    fadeOutRate: number
+    fadeOutRate: number,
 ): jsound
 declare function SetSoundParamsFromLabel(soundHandle: jsound, soundLabel: string): void
 declare function SetSoundDistanceCutoff(soundHandle: jsound, cutoff: number): void
@@ -4313,7 +4367,7 @@ declare function SetSoundConeAngles(
     soundHandle: jsound,
     inside: number,
     outside: number,
-    outsideVolume: number
+    outsideVolume: number,
 ): void
 declare function SetSoundConeOrientation(soundHandle: jsound, x: number, y: number, z: number): void
 declare function SetSoundPosition(soundHandle: jsound, x: number, y: number, z: number): void
@@ -4345,19 +4399,19 @@ declare function RegisterStackedSound(
     soundHandle: jsound,
     byPosition: boolean,
     rectwidth: number,
-    rectheight: number
+    rectheight: number,
 ): void
 declare function UnregisterStackedSound(
     soundHandle: jsound,
     byPosition: boolean,
     rectwidth: number,
-    rectheight: number
+    rectheight: number,
 ): void
 declare function SetSoundFacialAnimationLabel(soundHandle: jsound, animationLabel: string): boolean
 declare function SetSoundFacialAnimationGroupLabel(soundHandle: jsound, groupLabel: string): boolean
 declare function SetSoundFacialAnimationSetFilepath(
     soundHandle: jsound,
-    animationSetFilepath: string
+    animationSetFilepath: string,
 ): boolean
 declare function SetDialogueSpeakerNameKey(soundHandle: jsound, speakerName: string): boolean
 declare function GetDialogueSpeakerNameKey(soundHandle: jsound): string
@@ -4372,7 +4426,7 @@ declare function TerrainDeformCrater(
     radius: number,
     depth: number,
     duration: number,
-    permanent: boolean
+    permanent: boolean,
 ): jterraindeformation
 declare function TerrainDeformRipple(
     x: number,
@@ -4384,7 +4438,7 @@ declare function TerrainDeformRipple(
     spaceWaves: number,
     timeWaves: number,
     radiusStartPct: number,
-    limitNeg: boolean
+    limitNeg: boolean,
 ): jterraindeformation
 declare function TerrainDeformWave(
     x: number,
@@ -4396,7 +4450,7 @@ declare function TerrainDeformWave(
     radius: number,
     depth: number,
     trailTime: number,
-    count: number
+    count: number,
 ): jterraindeformation
 declare function TerrainDeformRandom(
     x: number,
@@ -4405,7 +4459,7 @@ declare function TerrainDeformRandom(
     minDelta: number,
     maxDelta: number,
     duration: number,
-    updateInterval: number
+    updateInterval: number,
 ): jterraindeformation
 declare function TerrainDeformStop(deformation: jterraindeformation, duration: number): void
 declare function TerrainDeformStopAll(): void
@@ -4414,34 +4468,34 @@ declare function AddSpecialEffectLoc(modelName: string, where: jlocation): jeffe
 declare function AddSpecialEffectTarget(
     modelName: string,
     targetWidget: jwidget,
-    attachPointName: string
+    attachPointName: string,
 ): jeffect
 declare function DestroyEffect(whichEffect: jeffect): void
 declare function AddSpellEffect(
     abilityString: string,
     t: jeffecttype,
     x: number,
-    y: number
+    y: number,
 ): jeffect
 declare function AddSpellEffectLoc(abilityString: string, t: jeffecttype, where: jlocation): jeffect
 declare function AddSpellEffectById(
     abilityId: number,
     t: jeffecttype,
     x: number,
-    y: number
+    y: number,
 ): jeffect
 declare function AddSpellEffectByIdLoc(abilityId: number, t: jeffecttype, where: jlocation): jeffect
 declare function AddSpellEffectTarget(
     modelName: string,
     t: jeffecttype,
     targetWidget: jwidget,
-    attachPoint: string
+    attachPoint: string,
 ): jeffect
 declare function AddSpellEffectTargetById(
     abilityId: number,
     t: jeffecttype,
     targetWidget: jwidget,
-    attachPoint: string
+    attachPoint: string,
 ): jeffect
 declare function AddLightning(
     codeName: string,
@@ -4449,7 +4503,7 @@ declare function AddLightning(
     x1: number,
     y1: number,
     x2: number,
-    y2: number
+    y2: number,
 ): jlightning
 declare function AddLightningEx(
     codeName: string,
@@ -4459,7 +4513,7 @@ declare function AddLightningEx(
     z1: number,
     x2: number,
     y2: number,
-    z2: number
+    z2: number,
 ): jlightning
 declare function DestroyLightning(whichBolt: jlightning): boolean
 declare function MoveLightning(
@@ -4468,7 +4522,7 @@ declare function MoveLightning(
     x1: number,
     y1: number,
     x2: number,
-    y2: number
+    y2: number,
 ): boolean
 declare function MoveLightningEx(
     whichBolt: jlightning,
@@ -4478,7 +4532,7 @@ declare function MoveLightningEx(
     z1: number,
     x2: number,
     y2: number,
-    z2: number
+    z2: number,
 ): boolean
 declare function GetLightningColorA(whichBolt: jlightning): number
 declare function GetLightningColorR(whichBolt: jlightning): number
@@ -4489,7 +4543,7 @@ declare function SetLightningColor(
     r: number,
     g: number,
     b: number,
-    a: number
+    a: number,
 ): boolean
 declare function GetAbilityEffect(abilityString: string, t: jeffecttype, index: number): string
 declare function GetAbilityEffectById(abilityId: number, t: jeffecttype, index: number): string
@@ -4506,7 +4560,7 @@ declare function SetTerrainType(
     terrainType: number,
     variation: number,
     area: number,
-    shape: number
+    shape: number,
 ): void
 declare function IsTerrainPathable(x: number, y: number, t: jpathingtype): boolean
 declare function SetTerrainPathable(x: number, y: number, t: jpathingtype, flag: boolean): void
@@ -4521,7 +4575,7 @@ declare function CreateImage(
     originX: number,
     originY: number,
     originZ: number,
-    imageType: number
+    imageType: number,
 ): jimage
 declare function DestroyImage(whichImage: jimage): void
 declare function ShowImage(whichImage: jimage, flag: boolean): void
@@ -4532,7 +4586,7 @@ declare function SetImageColor(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function SetImageRender(whichImage: jimage, flag: boolean): void
 declare function SetImageRenderAlways(whichImage: jimage, flag: boolean): void
@@ -4547,7 +4601,7 @@ declare function CreateUbersplat(
     blue: number,
     alpha: number,
     forcePaused: boolean,
-    noBirthTime: boolean
+    noBirthTime: boolean,
 ): jubersplat
 declare function DestroyUbersplat(whichSplat: jubersplat): void
 declare function ResetUbersplat(whichSplat: jubersplat): void
@@ -4560,20 +4614,20 @@ declare function SetBlight(
     x: number,
     y: number,
     radius: number,
-    addBlight: boolean
+    addBlight: boolean,
 ): void
 declare function SetBlightRect(whichPlayer: jplayer, r: jrect, addBlight: boolean): void
 declare function SetBlightPoint(
     whichPlayer: jplayer,
     x: number,
     y: number,
-    addBlight: boolean
+    addBlight: boolean,
 ): void
 declare function SetBlightLoc(
     whichPlayer: jplayer,
     whichLocation: jlocation,
     radius: number,
-    addBlight: boolean
+    addBlight: boolean,
 ): void
 declare function CreateBlightedGoldmine(id: jplayer, x: number, y: number, face: number): junit
 declare function IsPointBlighted(x: number, y: number): boolean
@@ -4584,13 +4638,13 @@ declare function SetDoodadAnimation(
     doodadID: number,
     nearestOnly: boolean,
     animName: string,
-    animRandom: boolean
+    animRandom: boolean,
 ): void
 declare function SetDoodadAnimationRect(
     r: jrect,
     doodadID: number,
     animName: string,
-    animRandom: boolean
+    animRandom: boolean,
 ): void
 declare function StartMeleeAI(num: jplayer, script: string): void
 declare function StartCampaignAI(num: jplayer, script: string): void
@@ -4625,27 +4679,27 @@ declare function BlzSetAbilityTooltip(abilCode: number, tooltip: string, level: 
 declare function BlzSetAbilityActivatedTooltip(
     abilCode: number,
     tooltip: string,
-    level: number
+    level: number,
 ): void
 declare function BlzSetAbilityExtendedTooltip(
     abilCode: number,
     extendedTooltip: string,
-    level: number
+    level: number,
 ): void
 declare function BlzSetAbilityActivatedExtendedTooltip(
     abilCode: number,
     extendedTooltip: string,
-    level: number
+    level: number,
 ): void
 declare function BlzSetAbilityResearchTooltip(
     abilCode: number,
     researchTooltip: string,
-    level: number
+    level: number,
 ): void
 declare function BlzSetAbilityResearchExtendedTooltip(
     abilCode: number,
     researchExtendedTooltip: string,
-    level: number
+    level: number,
 ): void
 declare function BlzGetAbilityTooltip(abilCode: number, level: number): string
 declare function BlzGetAbilityActivatedTooltip(abilCode: number, level: number): string
@@ -4684,13 +4738,13 @@ declare function BlzGetUnitBaseDamage(whichUnit: junit, weaponIndex: number): nu
 declare function BlzSetUnitBaseDamage(
     whichUnit: junit,
     baseDamage: number,
-    weaponIndex: number
+    weaponIndex: number,
 ): void
 declare function BlzGetUnitDiceNumber(whichUnit: junit, weaponIndex: number): number
 declare function BlzSetUnitDiceNumber(
     whichUnit: junit,
     diceNumber: number,
-    weaponIndex: number
+    weaponIndex: number,
 ): void
 declare function BlzGetUnitDiceSides(whichUnit: junit, weaponIndex: number): number
 declare function BlzSetUnitDiceSides(whichUnit: junit, diceSides: number, weaponIndex: number): void
@@ -4698,7 +4752,7 @@ declare function BlzGetUnitAttackCooldown(whichUnit: junit, weaponIndex: number)
 declare function BlzSetUnitAttackCooldown(
     whichUnit: junit,
     cooldown: number,
-    weaponIndex: number
+    weaponIndex: number,
 ): void
 declare function BlzGetHeroPrimaryStat(whichUnit: junit): number
 declare function BlzSetHeroPrimaryStat(whichUnit: junit, value: number): void
@@ -4707,7 +4761,7 @@ declare function BlzSetSpecialEffectColor(
     whichEffect: jeffect,
     r: number,
     g: number,
-    b: number
+    b: number,
 ): void
 declare function BlzSetSpecialEffectAlpha(whichEffect: jeffect, alpha: number): void
 declare function BlzSetSpecialEffectScale(whichEffect: jeffect, scale: number): void
@@ -4715,7 +4769,7 @@ declare function BlzSetSpecialEffectPosition(
     whichEffect: jeffect,
     x: number,
     y: number,
-    z: number
+    z: number,
 ): void
 declare function BlzSetSpecialEffectHeight(whichEffect: jeffect, height: number): void
 declare function BlzSetSpecialEffectTimeScale(whichEffect: jeffect, timeScale: number): void
@@ -4724,7 +4778,7 @@ declare function BlzSetSpecialEffectOrientation(
     whichEffect: jeffect,
     yaw: number,
     pitch: number,
-    roll: number
+    roll: number,
 ): void
 declare function BlzSetSpecialEffectYaw(whichEffect: jeffect, yaw: number): void
 declare function BlzSetSpecialEffectPitch(whichEffect: jeffect, pitch: number): void
@@ -4739,17 +4793,17 @@ declare function BlzGetLocalSpecialEffectZ(whichEffect: jeffect): number
 declare function BlzSpecialEffectClearSubAnimations(whichEffect: jeffect): void
 declare function BlzSpecialEffectRemoveSubAnimation(
     whichEffect: jeffect,
-    whichSubAnim: jsubanimtype
+    whichSubAnim: jsubanimtype,
 ): void
 declare function BlzSpecialEffectAddSubAnimation(
     whichEffect: jeffect,
-    whichSubAnim: jsubanimtype
+    whichSubAnim: jsubanimtype,
 ): void
 declare function BlzPlaySpecialEffect(whichEffect: jeffect, whichAnim: janimtype): void
 declare function BlzPlaySpecialEffectWithTimeScale(
     whichEffect: jeffect,
     whichAnim: janimtype,
-    timeScale: number
+    timeScale: number,
 ): void
 declare function BlzGetAnimName(whichAnim: janimtype): string
 declare function BlzGetUnitArmor(whichUnit: junit): number
@@ -4759,7 +4813,7 @@ declare function BlzUnitDisableAbility(
     whichUnit: junit,
     abilId: number,
     flag: boolean,
-    hideUI: boolean
+    hideUI: boolean,
 ): void
 declare function BlzUnitCancelTimedLife(whichUnit: junit): void
 declare function BlzIsUnitSelectable(whichUnit: junit): boolean
@@ -4772,7 +4826,7 @@ declare function BlzSetUnitAbilityCooldown(
     whichUnit: junit,
     abilId: number,
     level: number,
-    cooldown: number
+    cooldown: number,
 ): void
 declare function BlzGetUnitAbilityCooldown(whichUnit: junit, abilId: number, level: number): number
 declare function BlzGetUnitAbilityCooldownRemaining(whichUnit: junit, abilId: number): number
@@ -4780,20 +4834,20 @@ declare function BlzEndUnitAbilityCooldown(whichUnit: junit, abilCode: number): 
 declare function BlzStartUnitAbilityCooldown(
     whichUnit: junit,
     abilCode: number,
-    cooldown: number
+    cooldown: number,
 ): void
 declare function BlzGetUnitAbilityManaCost(whichUnit: junit, abilId: number, level: number): number
 declare function BlzSetUnitAbilityManaCost(
     whichUnit: junit,
     abilId: number,
     level: number,
-    manaCost: number
+    manaCost: number,
 ): void
 declare function BlzGetLocalUnitZ(whichUnit: junit): number
 declare function BlzDecPlayerTechResearched(
     whichPlayer: jplayer,
     techid: number,
-    levels: number
+    levels: number,
 ): void
 declare function BlzSetEventDamage(damage: number): void
 declare function BlzGetEventDamageTarget(): junit
@@ -4812,7 +4866,7 @@ declare function RequestExtraIntegerData(
     param3: boolean,
     param4: number,
     param5: number,
-    param6: number
+    param6: number,
 ): number
 declare function RequestExtraBooleanData(
     dataType: number,
@@ -4822,7 +4876,7 @@ declare function RequestExtraBooleanData(
     param3: boolean,
     param4: number,
     param5: number,
-    param6: number
+    param6: number,
 ): boolean
 declare function RequestExtraStringData(
     dataType: number,
@@ -4832,7 +4886,7 @@ declare function RequestExtraStringData(
     param3: boolean,
     param4: number,
     param5: number,
-    param6: number
+    param6: number,
 ): string
 declare function RequestExtraRealData(
     dataType: number,
@@ -4842,7 +4896,7 @@ declare function RequestExtraRealData(
     param3: boolean,
     param4: number,
     param5: number,
-    param6: number
+    param6: number,
 ): number
 declare function BlzGetUnitZ(whichUnit: junit): number
 declare function BlzEnableSelections(enableSelection: boolean, enableSelectionCircle: boolean): void
@@ -4854,7 +4908,7 @@ declare function BlzCameraSetupApplyForceDurationSmooth(
     forcedDuration: number,
     easeInDuration: number,
     easeOutDuration: number,
-    smoothFactor: number
+    smoothFactor: number,
 ): void
 declare function BlzEnableTargetIndicator(enable: boolean): void
 declare function BlzIsTargetIndicatorEnabled(): boolean
@@ -4872,19 +4926,19 @@ declare function BlzCreateFrame(
     name: string,
     owner: jframehandle,
     priority: number,
-    createContext: number
+    createContext: number,
 ): jframehandle
 declare function BlzCreateSimpleFrame(
     name: string,
     owner: jframehandle,
-    createContext: number
+    createContext: number,
 ): jframehandle
 declare function BlzCreateFrameByType(
     typeName: string,
     name: string,
     owner: jframehandle,
     inherits: string,
-    createContext: number
+    createContext: number,
 ): jframehandle
 declare function BlzDestroyFrame(frame: jframehandle): void
 declare function BlzFrameSetPoint(
@@ -4893,13 +4947,13 @@ declare function BlzFrameSetPoint(
     relative: jframehandle,
     relativePoint: jframepointtype,
     x: number,
-    y: number
+    y: number,
 ): void
 declare function BlzFrameSetAbsPoint(
     frame: jframehandle,
     point: jframepointtype,
     x: number,
-    y: number
+    y: number,
 ): void
 declare function BlzFrameClearAllPoints(frame: jframehandle): void
 declare function BlzFrameSetAllPoints(frame: jframehandle, relative: jframehandle): void
@@ -4923,13 +4977,13 @@ declare function BlzFrameGetAlpha(frame: jframehandle): number
 declare function BlzFrameSetSpriteAnimate(
     frame: jframehandle,
     primaryProp: number,
-    flags: number
+    flags: number,
 ): void
 declare function BlzFrameSetTexture(
     frame: jframehandle,
     texFile: string,
     flag: number,
-    blend: boolean
+    blend: boolean,
 ): void
 declare function BlzFrameSetScale(frame: jframehandle, scale: number): void
 declare function BlzFrameSetTooltip(frame: jframehandle, tooltip: jframehandle): void
@@ -4939,7 +4993,7 @@ declare function BlzFrameGetValue(frame: jframehandle): number
 declare function BlzFrameSetMinMaxValue(
     frame: jframehandle,
     minValue: number,
-    maxValue: number
+    maxValue: number,
 ): void
 declare function BlzFrameSetStepSize(frame: jframehandle, stepSize: number): void
 declare function BlzFrameSetSize(frame: jframehandle, width: number, height: number): void
@@ -4955,17 +5009,17 @@ declare function BlzFrameSetFont(
     frame: jframehandle,
     fileName: string,
     height: number,
-    flags: number
+    flags: number,
 ): void
 declare function BlzFrameSetTextAlignment(
     frame: jframehandle,
     vert: jtextaligntype,
-    horz: jtextaligntype
+    horz: jtextaligntype,
 ): void
 declare function BlzTriggerRegisterFrameEvent(
     whichTrigger: jtrigger,
     frame: jframehandle,
-    eventId: jframeeventtype
+    eventId: jframeeventtype,
 ): jevent
 declare function BlzGetTriggerFrame(): jframehandle
 declare function BlzGetTriggerFrameEvent(): jframeeventtype
@@ -4975,7 +5029,7 @@ declare function BlzTriggerRegisterPlayerSyncEvent(
     whichTrigger: jtrigger,
     whichPlayer: jplayer,
     prefix: string,
-    fromServer: boolean
+    fromServer: boolean,
 ): jevent
 declare function BlzSendSyncData(prefix: string, data: string): boolean
 declare function BlzGetTriggerSyncPrefix(): string
@@ -4985,7 +5039,7 @@ declare function BlzTriggerRegisterPlayerKeyEvent(
     whichPlayer: jplayer,
     key: joskeytype,
     metaKey: number,
-    keyDown: boolean
+    keyDown: boolean,
 ): jevent
 declare function BlzGetTriggerPlayerKey(): joskeytype
 declare function BlzGetTriggerPlayerMetaKey(): number
@@ -5003,7 +5057,7 @@ declare function BlzSetSpecialEffectMatrixScale(
     whichEffect: jeffect,
     x: number,
     y: number,
-    z: number
+    z: number,
 ): void
 declare function BlzResetSpecialEffectMatrix(whichEffect: jeffect): void
 declare function BlzGetAbilityId(ability: jability): number
@@ -5012,7 +5066,7 @@ declare function BlzGetUnitAbilityByIndex(whichUnit: junit, index: number): jabi
 declare function BlzDisplayChatMessage(
     whichPlayer: jplayer,
     recipient: number,
-    message: string
+    message: string,
 ): void
 declare function BlzPauseUnitEx(whichUnit: junit, flag: boolean): void
 declare function BlzSetUnitFacingEx(whichUnit: junit, facingAngle: number): void
@@ -5025,183 +5079,183 @@ declare function BlzBitAnd(x: number, y: number): number
 declare function BlzBitXor(x: number, y: number): number
 declare function BlzGetAbilityBooleanField(
     whichAbility: jability,
-    whichField: jabilitybooleanfield
+    whichField: jabilitybooleanfield,
 ): boolean
 declare function BlzGetAbilityIntegerField(
     whichAbility: jability,
-    whichField: jabilityintegerfield
+    whichField: jabilityintegerfield,
 ): number
 declare function BlzGetAbilityRealField(
     whichAbility: jability,
-    whichField: jabilityrealfield
+    whichField: jabilityrealfield,
 ): number
 declare function BlzGetAbilityStringField(
     whichAbility: jability,
-    whichField: jabilitystringfield
+    whichField: jabilitystringfield,
 ): string
 declare function BlzGetAbilityBooleanLevelField(
     whichAbility: jability,
     whichField: jabilitybooleanlevelfield,
-    level: number
+    level: number,
 ): boolean
 declare function BlzGetAbilityIntegerLevelField(
     whichAbility: jability,
     whichField: jabilityintegerlevelfield,
-    level: number
+    level: number,
 ): number
 declare function BlzGetAbilityRealLevelField(
     whichAbility: jability,
     whichField: jabilityreallevelfield,
-    level: number
+    level: number,
 ): number
 declare function BlzGetAbilityStringLevelField(
     whichAbility: jability,
     whichField: jabilitystringlevelfield,
-    level: number
+    level: number,
 ): string
 declare function BlzGetAbilityBooleanLevelArrayField(
     whichAbility: jability,
     whichField: jabilitybooleanlevelarrayfield,
     level: number,
-    index: number
+    index: number,
 ): boolean
 declare function BlzGetAbilityIntegerLevelArrayField(
     whichAbility: jability,
     whichField: jabilityintegerlevelarrayfield,
     level: number,
-    index: number
+    index: number,
 ): number
 declare function BlzGetAbilityRealLevelArrayField(
     whichAbility: jability,
     whichField: jabilityreallevelarrayfield,
     level: number,
-    index: number
+    index: number,
 ): number
 declare function BlzGetAbilityStringLevelArrayField(
     whichAbility: jability,
     whichField: jabilitystringlevelarrayfield,
     level: number,
-    index: number
+    index: number,
 ): string
 declare function BlzSetAbilityBooleanField(
     whichAbility: jability,
     whichField: jabilitybooleanfield,
-    value: boolean
+    value: boolean,
 ): boolean
 declare function BlzSetAbilityIntegerField(
     whichAbility: jability,
     whichField: jabilityintegerfield,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetAbilityRealField(
     whichAbility: jability,
     whichField: jabilityrealfield,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetAbilityStringField(
     whichAbility: jability,
     whichField: jabilitystringfield,
-    value: string
+    value: string,
 ): boolean
 declare function BlzSetAbilityBooleanLevelField(
     whichAbility: jability,
     whichField: jabilitybooleanlevelfield,
     level: number,
-    value: boolean
+    value: boolean,
 ): boolean
 declare function BlzSetAbilityIntegerLevelField(
     whichAbility: jability,
     whichField: jabilityintegerlevelfield,
     level: number,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetAbilityRealLevelField(
     whichAbility: jability,
     whichField: jabilityreallevelfield,
     level: number,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetAbilityStringLevelField(
     whichAbility: jability,
     whichField: jabilitystringlevelfield,
     level: number,
-    value: string
+    value: string,
 ): boolean
 declare function BlzSetAbilityBooleanLevelArrayField(
     whichAbility: jability,
     whichField: jabilitybooleanlevelarrayfield,
     level: number,
     index: number,
-    value: boolean
+    value: boolean,
 ): boolean
 declare function BlzSetAbilityIntegerLevelArrayField(
     whichAbility: jability,
     whichField: jabilityintegerlevelarrayfield,
     level: number,
     index: number,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetAbilityRealLevelArrayField(
     whichAbility: jability,
     whichField: jabilityreallevelarrayfield,
     level: number,
     index: number,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetAbilityStringLevelArrayField(
     whichAbility: jability,
     whichField: jabilitystringlevelarrayfield,
     level: number,
     index: number,
-    value: string
+    value: string,
 ): boolean
 declare function BlzAddAbilityBooleanLevelArrayField(
     whichAbility: jability,
     whichField: jabilitybooleanlevelarrayfield,
     level: number,
-    value: boolean
+    value: boolean,
 ): boolean
 declare function BlzAddAbilityIntegerLevelArrayField(
     whichAbility: jability,
     whichField: jabilityintegerlevelarrayfield,
     level: number,
-    value: number
+    value: number,
 ): boolean
 declare function BlzAddAbilityRealLevelArrayField(
     whichAbility: jability,
     whichField: jabilityreallevelarrayfield,
     level: number,
-    value: number
+    value: number,
 ): boolean
 declare function BlzAddAbilityStringLevelArrayField(
     whichAbility: jability,
     whichField: jabilitystringlevelarrayfield,
     level: number,
-    value: string
+    value: string,
 ): boolean
 declare function BlzRemoveAbilityBooleanLevelArrayField(
     whichAbility: jability,
     whichField: jabilitybooleanlevelarrayfield,
     level: number,
-    value: boolean
+    value: boolean,
 ): boolean
 declare function BlzRemoveAbilityIntegerLevelArrayField(
     whichAbility: jability,
     whichField: jabilityintegerlevelarrayfield,
     level: number,
-    value: number
+    value: number,
 ): boolean
 declare function BlzRemoveAbilityRealLevelArrayField(
     whichAbility: jability,
     whichField: jabilityreallevelarrayfield,
     level: number,
-    value: number
+    value: number,
 ): boolean
 declare function BlzRemoveAbilityStringLevelArrayField(
     whichAbility: jability,
     whichField: jabilitystringlevelarrayfield,
     level: number,
-    value: string
+    value: string,
 ): boolean
 declare function BlzGetItemAbilityByIndex(whichItem: jitem, index: number): jability | null
 declare function BlzGetItemAbility(whichItem: jitem, abilCode: number): jability | null
@@ -5213,22 +5267,22 @@ declare function BlzGetItemStringField(whichItem: jitem, whichField: jitemstring
 declare function BlzSetItemBooleanField(
     whichItem: jitem,
     whichField: jitembooleanfield,
-    value: boolean
+    value: boolean,
 ): boolean
 declare function BlzSetItemIntegerField(
     whichItem: jitem,
     whichField: jitemintegerfield,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetItemRealField(
     whichItem: jitem,
     whichField: jitemrealfield,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetItemStringField(
     whichItem: jitem,
     whichField: jitemstringfield,
-    value: string
+    value: string,
 ): boolean
 declare function BlzItemRemoveAbility(whichItem: jitem, abilCode: number): boolean
 declare function BlzGetUnitBooleanField(whichUnit: junit, whichField: junitbooleanfield): boolean
@@ -5238,66 +5292,66 @@ declare function BlzGetUnitStringField(whichUnit: junit, whichField: junitstring
 declare function BlzSetUnitBooleanField(
     whichUnit: junit,
     whichField: junitbooleanfield,
-    value: boolean
+    value: boolean,
 ): boolean
 declare function BlzSetUnitIntegerField(
     whichUnit: junit,
     whichField: junitintegerfield,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetUnitRealField(
     whichUnit: junit,
     whichField: junitrealfield,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetUnitStringField(
     whichUnit: junit,
     whichField: junitstringfield,
-    value: string
+    value: string,
 ): boolean
 declare function BlzGetUnitWeaponBooleanField(
     whichUnit: junit,
     whichField: junitweaponbooleanfield,
-    index: number
+    index: number,
 ): boolean
 declare function BlzGetUnitWeaponIntegerField(
     whichUnit: junit,
     whichField: junitweaponintegerfield,
-    index: number
+    index: number,
 ): number
 declare function BlzGetUnitWeaponRealField(
     whichUnit: junit,
     whichField: junitweaponrealfield,
-    index: number
+    index: number,
 ): number
 declare function BlzGetUnitWeaponStringField(
     whichUnit: junit,
     whichField: junitweaponstringfield,
-    index: number
+    index: number,
 ): string
 declare function BlzSetUnitWeaponBooleanField(
     whichUnit: junit,
     whichField: junitweaponbooleanfield,
     index: number,
-    value: boolean
+    value: boolean,
 ): boolean
 declare function BlzSetUnitWeaponIntegerField(
     whichUnit: junit,
     whichField: junitweaponintegerfield,
     index: number,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetUnitWeaponRealField(
     whichUnit: junit,
     whichField: junitweaponrealfield,
     index: number,
-    value: number
+    value: number,
 ): boolean
 declare function BlzSetUnitWeaponStringField(
     whichUnit: junit,
     whichField: junitweaponstringfield,
     index: number,
-    value: string
+    value: string,
 ): boolean
 declare function BlzGetUnitSkin(whichUnit: junit): number
 declare function BlzGetItemSkin(whichItem: jitem): number
@@ -5310,7 +5364,7 @@ declare function BlzCreateUnitWithSkin(
     x: number,
     y: number,
     face: number,
-    skinId: number
+    skinId: number,
 ): junit
 declare function BlzCreateDestructableWithSkin(
     objectid: number,
@@ -5319,7 +5373,7 @@ declare function BlzCreateDestructableWithSkin(
     face: number,
     scale: number,
     variation: number,
-    skinId: number
+    skinId: number,
 ): jdestructable
 declare function BlzCreateDestructableZWithSkin(
     objectid: number,
@@ -5329,7 +5383,7 @@ declare function BlzCreateDestructableZWithSkin(
     face: number,
     scale: number,
     variation: number,
-    skinId: number
+    skinId: number,
 ): jdestructable
 declare function BlzCreateDeadDestructableWithSkin(
     objectid: number,
@@ -5338,7 +5392,7 @@ declare function BlzCreateDeadDestructableWithSkin(
     face: number,
     scale: number,
     variation: number,
-    skinId: number
+    skinId: number,
 ): jdestructable
 declare function BlzCreateDeadDestructableZWithSkin(
     objectid: number,
@@ -5348,7 +5402,7 @@ declare function BlzCreateDeadDestructableZWithSkin(
     face: number,
     scale: number,
     variation: number,
-    skinId: number
+    skinId: number,
 ): jdestructable
 declare function BlzGetPlayerTownHallCount(whichPlayer: jplayer): number
 declare const bj_PI: number
@@ -5678,176 +5732,176 @@ declare const bj_ELEVATOR_WALL_TYPE_EAST: number
 declare const bj_ELEVATOR_WALL_TYPE_NORTH: number
 declare const bj_ELEVATOR_WALL_TYPE_SOUTH: number
 declare const bj_ELEVATOR_WALL_TYPE_WEST: number
-declare var bj_FORCE_ALL_PLAYERS: jforce
-declare var bj_FORCE_PLAYER: jforce[]
-declare var bj_MELEE_MAX_TWINKED_HEROES: number
-declare var bj_mapInitialPlayableArea: jrect
-declare var bj_mapInitialCameraBounds: jrect
-declare var bj_forLoopAIndex: number
-declare var bj_forLoopBIndex: number
-declare var bj_forLoopAIndexEnd: number
-declare var bj_forLoopBIndexEnd: number
-declare var bj_slotControlReady: boolean
-declare var bj_slotControlUsed: boolean[]
-declare var bj_slotControl: jmapcontrol[]
-declare var bj_gameStartedTimer: jtimer
-declare var bj_gameStarted: boolean
-declare var bj_volumeGroupsTimer: jtimer
-declare var bj_isSinglePlayer: boolean
-declare var bj_dncSoundsDay: jtrigger
-declare var bj_dncSoundsNight: jtrigger
-declare var bj_dayAmbientSound: jsound
-declare var bj_nightAmbientSound: jsound
-declare var bj_dncSoundsDawn: jtrigger
-declare var bj_dncSoundsDusk: jtrigger
-declare var bj_dawnSound: jsound
-declare var bj_duskSound: jsound
-declare var bj_useDawnDuskSounds: boolean
-declare var bj_dncIsDaytime: boolean
-declare var bj_rescueSound: jsound
-declare var bj_questDiscoveredSound: jsound
-declare var bj_questUpdatedSound: jsound
-declare var bj_questCompletedSound: jsound
-declare var bj_questFailedSound: jsound
-declare var bj_questHintSound: jsound
-declare var bj_questSecretSound: jsound
-declare var bj_questItemAcquiredSound: jsound
-declare var bj_questWarningSound: jsound
-declare var bj_victoryDialogSound: jsound
-declare var bj_defeatDialogSound: jsound
-declare var bj_stockItemPurchased: jtrigger
-declare var bj_stockUpdateTimer: jtimer
-declare var bj_stockAllowedPermanent: boolean[]
-declare var bj_stockAllowedCharged: boolean[]
-declare var bj_stockAllowedArtifact: boolean[]
-declare var bj_stockPickedItemLevel: number
-declare var bj_stockPickedItemType: jitemtype
-declare var bj_meleeVisibilityTrained: jtrigger
-declare var bj_meleeVisibilityIsDay: boolean
-declare var bj_meleeGrantHeroItems: boolean
-declare var bj_meleeNearestMineToLoc: jlocation
-declare var bj_meleeNearestMine: junit
-declare var bj_meleeNearestMineDist: number
-declare var bj_meleeGameOver: boolean
-declare var bj_meleeDefeated: boolean[]
-declare var bj_meleeVictoried: boolean[]
-declare var bj_ghoul: junit[]
-declare var bj_crippledTimer: jtimer[]
-declare var bj_crippledTimerWindows: jtimerdialog[]
-declare var bj_playerIsCrippled: boolean[]
-declare var bj_playerIsExposed: boolean[]
-declare var bj_finishSoonAllExposed: boolean
-declare var bj_finishSoonTimerDialog: jtimerdialog
-declare var bj_meleeTwinkedHeroes: number[]
-declare var bj_rescueUnitBehavior: jtrigger
-declare var bj_rescueChangeColorUnit: boolean
-declare var bj_rescueChangeColorBldg: boolean
-declare var bj_cineSceneEndingTimer: jtimer
-declare var bj_cineSceneLastSound: jsound
-declare var bj_cineSceneBeingSkipped: jtrigger
-declare var bj_cineModePriorSpeed: jgamespeed
-declare var bj_cineModePriorFogSetting: boolean
-declare var bj_cineModePriorMaskSetting: boolean
-declare var bj_cineModeAlreadyIn: boolean
-declare var bj_cineModePriorDawnDusk: boolean
-declare var bj_cineModeSavedSeed: number
-declare var bj_cineFadeFinishTimer: jtimer
-declare var bj_cineFadeContinueTimer: jtimer
-declare var bj_cineFadeContinueRed: number
-declare var bj_cineFadeContinueGreen: number
-declare var bj_cineFadeContinueBlue: number
-declare var bj_cineFadeContinueTrans: number
-declare var bj_cineFadeContinueDuration: number
-declare var bj_cineFadeContinueTex: string
-declare var bj_queuedExecTotal: number
-declare var bj_queuedExecTriggers: jtrigger[]
-declare var bj_queuedExecUseConds: boolean[]
-declare var bj_queuedExecTimeoutTimer: jtimer
-declare var bj_queuedExecTimeout: jtrigger
-declare var bj_destInRegionDiesCount: number
-declare var bj_destInRegionDiesTrig: jtrigger
-declare var bj_groupCountUnits: number
-declare var bj_forceCountPlayers: number
-declare var bj_groupEnumTypeId: number
-declare var bj_groupEnumOwningPlayer: jplayer
-declare var bj_groupAddGroupDest: jgroup
-declare var bj_groupRemoveGroupDest: jgroup
-declare var bj_groupRandomConsidered: number
-declare var bj_groupRandomCurrentPick: junit
-declare var bj_groupLastCreatedDest: jgroup
-declare var bj_randomSubGroupGroup: jgroup
-declare var bj_randomSubGroupWant: number
-declare var bj_randomSubGroupTotal: number
-declare var bj_randomSubGroupChance: number
-declare var bj_destRandomConsidered: number
-declare var bj_destRandomCurrentPick: jdestructable
-declare var bj_elevatorWallBlocker: jdestructable
-declare var bj_elevatorNeighbor: jdestructable
-declare var bj_itemRandomConsidered: number
-declare var bj_itemRandomCurrentPick: jitem
-declare var bj_forceRandomConsidered: number
-declare var bj_forceRandomCurrentPick: jplayer
-declare var bj_makeUnitRescuableUnit: junit
-declare var bj_makeUnitRescuableFlag: boolean
-declare var bj_pauseAllUnitsFlag: boolean
-declare var bj_enumDestructableCenter: jlocation
-declare var bj_enumDestructableRadius: number
-declare var bj_setPlayerTargetColor: jplayercolor
-declare var bj_isUnitGroupDeadResult: boolean
-declare var bj_isUnitGroupEmptyResult: boolean
-declare var bj_isUnitGroupInRectResult: boolean
-declare var bj_isUnitGroupInRectRect: jrect
-declare var bj_changeLevelShowScores: boolean
-declare var bj_changeLevelMapName: string
-declare var bj_suspendDecayFleshGroup: jgroup
-declare var bj_suspendDecayBoneGroup: jgroup
-declare var bj_delayedSuspendDecayTimer: jtimer
-declare var bj_delayedSuspendDecayTrig: jtrigger
-declare var bj_livingPlayerUnitsTypeId: number
-declare var bj_lastDyingWidget: jwidget
-declare var bj_randDistCount: number
-declare var bj_randDistID: number[]
-declare var bj_randDistChance: number[]
-declare var bj_lastCreatedUnit: junit
-declare var bj_lastCreatedItem: jitem
-declare var bj_lastRemovedItem: jitem
-declare var bj_lastHauntedGoldMine: junit
-declare var bj_lastCreatedDestructable: jdestructable
-declare var bj_lastCreatedGroup: jgroup
-declare var bj_lastCreatedFogModifier: jfogmodifier
-declare var bj_lastCreatedEffect: jeffect
-declare var bj_lastCreatedWeatherEffect: jweathereffect
-declare var bj_lastCreatedTerrainDeformation: jterraindeformation
-declare var bj_lastCreatedQuest: jquest
-declare var bj_lastCreatedQuestItem: jquestitem
-declare var bj_lastCreatedDefeatCondition: jdefeatcondition
-declare var bj_lastStartedTimer: jtimer
-declare var bj_lastCreatedTimerDialog: jtimerdialog
-declare var bj_lastCreatedLeaderboard: jleaderboard
-declare var bj_lastCreatedMultiboard: jmultiboard
-declare var bj_lastPlayedSound: jsound
-declare var bj_lastPlayedMusic: string
-declare var bj_lastTransmissionDuration: number
-declare var bj_lastCreatedGameCache: jgamecache
-declare var bj_lastCreatedHashtable: jhashtable
-declare var bj_lastLoadedUnit: junit
-declare var bj_lastCreatedButton: jbutton
-declare var bj_lastReplacedUnit: junit
-declare var bj_lastCreatedTextTag: jtexttag
-declare var bj_lastCreatedLightning: jlightning
-declare var bj_lastCreatedImage: jimage
-declare var bj_lastCreatedUbersplat: jubersplat
-declare var bj_lastCreatedMinimapIcon: jminimapicon
-declare var bj_lastCreatedCommandButtonEffect: jcommandbuttoneffect
-declare var filterIssueHauntOrderAtLocBJ: jboolexpr
-declare var filterEnumDestructablesInCircleBJ: jboolexpr
-declare var filterGetUnitsInRectOfPlayer: jboolexpr
-declare var filterGetUnitsOfTypeIdAll: jboolexpr
-declare var filterGetUnitsOfPlayerAndTypeId: jboolexpr
-declare var filterMeleeTrainedUnitIsHeroBJ: jboolexpr
-declare var filterLivingPlayerUnitsOfTypeId: jboolexpr
-declare var bj_wantDestroyGroup: boolean
-declare var bj_lastInstObjFuncSuccessful: boolean
+declare let bj_FORCE_ALL_PLAYERS: jforce
+declare let bj_FORCE_PLAYER: jforce[]
+declare let bj_MELEE_MAX_TWINKED_HEROES: number
+declare let bj_mapInitialPlayableArea: jrect
+declare let bj_mapInitialCameraBounds: jrect
+declare let bj_forLoopAIndex: number
+declare let bj_forLoopBIndex: number
+declare let bj_forLoopAIndexEnd: number
+declare let bj_forLoopBIndexEnd: number
+declare let bj_slotControlReady: boolean
+declare let bj_slotControlUsed: boolean[]
+declare let bj_slotControl: jmapcontrol[]
+declare let bj_gameStartedTimer: jtimer
+declare let bj_gameStarted: boolean
+declare let bj_volumeGroupsTimer: jtimer
+declare let bj_isSinglePlayer: boolean
+declare let bj_dncSoundsDay: jtrigger
+declare let bj_dncSoundsNight: jtrigger
+declare let bj_dayAmbientSound: jsound
+declare let bj_nightAmbientSound: jsound
+declare let bj_dncSoundsDawn: jtrigger
+declare let bj_dncSoundsDusk: jtrigger
+declare let bj_dawnSound: jsound
+declare let bj_duskSound: jsound
+declare let bj_useDawnDuskSounds: boolean
+declare let bj_dncIsDaytime: boolean
+declare let bj_rescueSound: jsound
+declare let bj_questDiscoveredSound: jsound
+declare let bj_questUpdatedSound: jsound
+declare let bj_questCompletedSound: jsound
+declare let bj_questFailedSound: jsound
+declare let bj_questHintSound: jsound
+declare let bj_questSecretSound: jsound
+declare let bj_questItemAcquiredSound: jsound
+declare let bj_questWarningSound: jsound
+declare let bj_victoryDialogSound: jsound
+declare let bj_defeatDialogSound: jsound
+declare let bj_stockItemPurchased: jtrigger
+declare let bj_stockUpdateTimer: jtimer
+declare let bj_stockAllowedPermanent: boolean[]
+declare let bj_stockAllowedCharged: boolean[]
+declare let bj_stockAllowedArtifact: boolean[]
+declare let bj_stockPickedItemLevel: number
+declare let bj_stockPickedItemType: jitemtype
+declare let bj_meleeVisibilityTrained: jtrigger
+declare let bj_meleeVisibilityIsDay: boolean
+declare let bj_meleeGrantHeroItems: boolean
+declare let bj_meleeNearestMineToLoc: jlocation
+declare let bj_meleeNearestMine: junit
+declare let bj_meleeNearestMineDist: number
+declare let bj_meleeGameOver: boolean
+declare let bj_meleeDefeated: boolean[]
+declare let bj_meleeVictoried: boolean[]
+declare let bj_ghoul: junit[]
+declare let bj_crippledTimer: jtimer[]
+declare let bj_crippledTimerWindows: jtimerdialog[]
+declare let bj_playerIsCrippled: boolean[]
+declare let bj_playerIsExposed: boolean[]
+declare let bj_finishSoonAllExposed: boolean
+declare let bj_finishSoonTimerDialog: jtimerdialog
+declare let bj_meleeTwinkedHeroes: number[]
+declare let bj_rescueUnitBehavior: jtrigger
+declare let bj_rescueChangeColorUnit: boolean
+declare let bj_rescueChangeColorBldg: boolean
+declare let bj_cineSceneEndingTimer: jtimer
+declare let bj_cineSceneLastSound: jsound
+declare let bj_cineSceneBeingSkipped: jtrigger
+declare let bj_cineModePriorSpeed: jgamespeed
+declare let bj_cineModePriorFogSetting: boolean
+declare let bj_cineModePriorMaskSetting: boolean
+declare let bj_cineModeAlreadyIn: boolean
+declare let bj_cineModePriorDawnDusk: boolean
+declare let bj_cineModeSavedSeed: number
+declare let bj_cineFadeFinishTimer: jtimer
+declare let bj_cineFadeContinueTimer: jtimer
+declare let bj_cineFadeContinueRed: number
+declare let bj_cineFadeContinueGreen: number
+declare let bj_cineFadeContinueBlue: number
+declare let bj_cineFadeContinueTrans: number
+declare let bj_cineFadeContinueDuration: number
+declare let bj_cineFadeContinueTex: string
+declare let bj_queuedExecTotal: number
+declare let bj_queuedExecTriggers: jtrigger[]
+declare let bj_queuedExecUseConds: boolean[]
+declare let bj_queuedExecTimeoutTimer: jtimer
+declare let bj_queuedExecTimeout: jtrigger
+declare let bj_destInRegionDiesCount: number
+declare let bj_destInRegionDiesTrig: jtrigger
+declare let bj_groupCountUnits: number
+declare let bj_forceCountPlayers: number
+declare let bj_groupEnumTypeId: number
+declare let bj_groupEnumOwningPlayer: jplayer
+declare let bj_groupAddGroupDest: jgroup
+declare let bj_groupRemoveGroupDest: jgroup
+declare let bj_groupRandomConsidered: number
+declare let bj_groupRandomCurrentPick: junit
+declare let bj_groupLastCreatedDest: jgroup
+declare let bj_randomSubGroupGroup: jgroup
+declare let bj_randomSubGroupWant: number
+declare let bj_randomSubGroupTotal: number
+declare let bj_randomSubGroupChance: number
+declare let bj_destRandomConsidered: number
+declare let bj_destRandomCurrentPick: jdestructable
+declare let bj_elevatorWallBlocker: jdestructable
+declare let bj_elevatorNeighbor: jdestructable
+declare let bj_itemRandomConsidered: number
+declare let bj_itemRandomCurrentPick: jitem
+declare let bj_forceRandomConsidered: number
+declare let bj_forceRandomCurrentPick: jplayer
+declare let bj_makeUnitRescuableUnit: junit
+declare let bj_makeUnitRescuableFlag: boolean
+declare let bj_pauseAllUnitsFlag: boolean
+declare let bj_enumDestructableCenter: jlocation
+declare let bj_enumDestructableRadius: number
+declare let bj_setPlayerTargetColor: jplayercolor
+declare let bj_isUnitGroupDeadResult: boolean
+declare let bj_isUnitGroupEmptyResult: boolean
+declare let bj_isUnitGroupInRectResult: boolean
+declare let bj_isUnitGroupInRectRect: jrect
+declare let bj_changeLevelShowScores: boolean
+declare let bj_changeLevelMapName: string
+declare let bj_suspendDecayFleshGroup: jgroup
+declare let bj_suspendDecayBoneGroup: jgroup
+declare let bj_delayedSuspendDecayTimer: jtimer
+declare let bj_delayedSuspendDecayTrig: jtrigger
+declare let bj_livingPlayerUnitsTypeId: number
+declare let bj_lastDyingWidget: jwidget
+declare let bj_randDistCount: number
+declare let bj_randDistID: number[]
+declare let bj_randDistChance: number[]
+declare let bj_lastCreatedUnit: junit
+declare let bj_lastCreatedItem: jitem
+declare let bj_lastRemovedItem: jitem
+declare let bj_lastHauntedGoldMine: junit
+declare let bj_lastCreatedDestructable: jdestructable
+declare let bj_lastCreatedGroup: jgroup
+declare let bj_lastCreatedFogModifier: jfogmodifier
+declare let bj_lastCreatedEffect: jeffect
+declare let bj_lastCreatedWeatherEffect: jweathereffect
+declare let bj_lastCreatedTerrainDeformation: jterraindeformation
+declare let bj_lastCreatedQuest: jquest
+declare let bj_lastCreatedQuestItem: jquestitem
+declare let bj_lastCreatedDefeatCondition: jdefeatcondition
+declare let bj_lastStartedTimer: jtimer
+declare let bj_lastCreatedTimerDialog: jtimerdialog
+declare let bj_lastCreatedLeaderboard: jleaderboard
+declare let bj_lastCreatedMultiboard: jmultiboard
+declare let bj_lastPlayedSound: jsound
+declare let bj_lastPlayedMusic: string
+declare let bj_lastTransmissionDuration: number
+declare let bj_lastCreatedGameCache: jgamecache
+declare let bj_lastCreatedHashtable: jhashtable
+declare let bj_lastLoadedUnit: junit
+declare let bj_lastCreatedButton: jbutton
+declare let bj_lastReplacedUnit: junit
+declare let bj_lastCreatedTextTag: jtexttag
+declare let bj_lastCreatedLightning: jlightning
+declare let bj_lastCreatedImage: jimage
+declare let bj_lastCreatedUbersplat: jubersplat
+declare let bj_lastCreatedMinimapIcon: jminimapicon
+declare let bj_lastCreatedCommandButtonEffect: jcommandbuttoneffect
+declare let filterIssueHauntOrderAtLocBJ: jboolexpr
+declare let filterEnumDestructablesInCircleBJ: jboolexpr
+declare let filterGetUnitsInRectOfPlayer: jboolexpr
+declare let filterGetUnitsOfTypeIdAll: jboolexpr
+declare let filterGetUnitsOfPlayerAndTypeId: jboolexpr
+declare let filterMeleeTrainedUnitIsHeroBJ: jboolexpr
+declare let filterLivingPlayerUnitsOfTypeId: jboolexpr
+declare let bj_wantDestroyGroup: boolean
+declare let bj_lastInstObjFuncSuccessful: boolean
 declare function BJDebugMsg(msg: string): void
 declare function RMinBJ(a: number, b: number): number
 declare function RMaxBJ(a: number, b: number): number
@@ -5920,7 +5974,7 @@ declare function CameraSetupApplyForPlayer(
     doPan: boolean,
     whichSetup: jcamerasetup,
     whichPlayer: jplayer,
-    duration: number
+    duration: number,
 ): void
 declare function CameraSetupApplyForPlayerSmooth(
     doPan: boolean,
@@ -5929,21 +5983,21 @@ declare function CameraSetupApplyForPlayerSmooth(
     forcedDuration: number,
     easeInDuration: number,
     easeOutDuration: number,
-    smoothFactor: number
+    smoothFactor: number,
 ): void
 declare function CameraSetupGetFieldSwap(whichField: jcamerafield, whichSetup: jcamerasetup): number
 declare function SetCameraFieldForPlayer(
     whichPlayer: jplayer,
     whichField: jcamerafield,
     value: number,
-    duration: number
+    duration: number,
 ): void
 declare function SetCameraTargetControllerNoZForPlayer(
     whichPlayer: jplayer,
     whichUnit: junit,
     xoffset: number,
     yoffset: number,
-    inheritOrientation: boolean
+    inheritOrientation: boolean,
 ): void
 declare function SetCameraPositionForPlayer(whichPlayer: jplayer, x: number, y: number): void
 declare function SetCameraPositionLocForPlayer(whichPlayer: jplayer, loc: jlocation): void
@@ -5951,7 +6005,7 @@ declare function RotateCameraAroundLocBJ(
     degrees: number,
     loc: jlocation,
     whichPlayer: jplayer,
-    duration: number
+    duration: number,
 ): void
 declare function PanCameraToForPlayer(whichPlayer: jplayer, x: number, y: number): void
 declare function PanCameraToLocForPlayer(whichPlayer: jplayer, loc: jlocation): void
@@ -5959,18 +6013,18 @@ declare function PanCameraToTimedForPlayer(
     whichPlayer: jplayer,
     x: number,
     y: number,
-    duration: number
+    duration: number,
 ): void
 declare function PanCameraToTimedLocForPlayer(
     whichPlayer: jplayer,
     loc: jlocation,
-    duration: number
+    duration: number,
 ): void
 declare function PanCameraToTimedLocWithZForPlayer(
     whichPlayer: jplayer,
     loc: jlocation,
     zOffset: number,
-    duration: number
+    duration: number,
 ): void
 declare function SmartCameraPanBJ(whichPlayer: jplayer, loc: jlocation, duration: number): void
 declare function SetCinematicCameraForPlayer(whichPlayer: jplayer, cameraModelFile: string): void
@@ -5978,12 +6032,12 @@ declare function ResetToGameCameraForPlayer(whichPlayer: jplayer, duration: numb
 declare function CameraSetSourceNoiseForPlayer(
     whichPlayer: jplayer,
     magnitude: number,
-    velocity: number
+    velocity: number,
 ): void
 declare function CameraSetTargetNoiseForPlayer(
     whichPlayer: jplayer,
     magnitude: number,
-    velocity: number
+    velocity: number,
 ): void
 declare function CameraSetEQNoiseForPlayer(whichPlayer: jplayer, magnitude: number): void
 declare function CameraClearNoiseForPlayer(whichPlayer: jplayer): void
@@ -5998,7 +6052,7 @@ declare function AdjustCameraBoundsBJ(
     dxWest: number,
     dxEast: number,
     dyNorth: number,
-    dySouth: number
+    dySouth: number,
 ): void
 declare function AdjustCameraBoundsForPlayerBJ(
     adjustMethod: number,
@@ -6006,7 +6060,7 @@ declare function AdjustCameraBoundsForPlayerBJ(
     dxWest: number,
     dxEast: number,
     dyNorth: number,
-    dySouth: number
+    dySouth: number,
 ): void
 declare function SetCameraQuickPositionForPlayer(whichPlayer: jplayer, x: number, y: number): void
 declare function SetCameraQuickPositionLocForPlayer(whichPlayer: jplayer, loc: jlocation): void
@@ -6016,7 +6070,7 @@ declare function SetCameraOrientControllerForPlayerBJ(
     whichPlayer: jplayer,
     whichUnit: junit,
     xoffset: number,
-    yoffset: number
+    yoffset: number,
 ): void
 declare function CameraSetSmoothingFactorBJ(factor: number): void
 declare function CameraResetSmoothingFactorBJ(): void
@@ -6032,40 +6086,40 @@ declare function TriggerRegisterTimerExpireEventBJ(trig: jtrigger, t: jtimer): j
 declare function TriggerRegisterPlayerUnitEventSimple(
     trig: jtrigger,
     whichPlayer: jplayer,
-    whichEvent: jplayerunitevent
+    whichEvent: jplayerunitevent,
 ): jevent
 declare function TriggerRegisterAnyUnitEventBJ(trig: jtrigger, whichEvent: jplayerunitevent): void
 declare function TriggerRegisterPlayerSelectionEventBJ(
     trig: jtrigger,
     whichPlayer: jplayer,
-    selected: boolean
+    selected: boolean,
 ): jevent
 declare function TriggerRegisterPlayerKeyEventBJ(
     trig: jtrigger,
     whichPlayer: jplayer,
     keType: number,
-    keKey: number
+    keKey: number,
 ): jevent
 declare function TriggerRegisterPlayerMouseEventBJ(
     trig: jtrigger,
     whichPlayer: jplayer,
-    meType: number
+    meType: number,
 ): jevent
 declare function TriggerRegisterPlayerEventVictory(trig: jtrigger, whichPlayer: jplayer): jevent
 declare function TriggerRegisterPlayerEventDefeat(trig: jtrigger, whichPlayer: jplayer): jevent
 declare function TriggerRegisterPlayerEventLeave(trig: jtrigger, whichPlayer: jplayer): jevent
 declare function TriggerRegisterPlayerEventAllianceChanged(
     trig: jtrigger,
-    whichPlayer: jplayer
+    whichPlayer: jplayer,
 ): jevent
 declare function TriggerRegisterPlayerEventEndCinematic(
     trig: jtrigger,
-    whichPlayer: jplayer
+    whichPlayer: jplayer,
 ): jevent
 declare function TriggerRegisterGameStateEventTimeOfDay(
     trig: jtrigger,
     opcode: jlimitop,
-    limitval: number
+    limitval: number,
 ): jevent
 declare function TriggerRegisterEnterRegionSimple(trig: jtrigger, whichRegion: jregion): jevent
 declare function TriggerRegisterLeaveRegionSimple(trig: jtrigger, whichRegion: jregion): jevent
@@ -6075,24 +6129,24 @@ declare function TriggerRegisterDistanceBetweenUnits(
     trig: jtrigger,
     whichUnit: junit,
     condition: jboolexpr,
-    range: number
+    range: number,
 ): jevent
 declare function TriggerRegisterUnitInRangeSimple(
     trig: jtrigger,
     range: number,
-    whichUnit: junit
+    whichUnit: junit,
 ): jevent
 declare function TriggerRegisterUnitLifeEvent(
     trig: jtrigger,
     whichUnit: junit,
     opcode: jlimitop,
-    limitval: number
+    limitval: number,
 ): jevent
 declare function TriggerRegisterUnitManaEvent(
     trig: jtrigger,
     whichUnit: junit,
     opcode: jlimitop,
-    limitval: number
+    limitval: number,
 ): jevent
 declare function TriggerRegisterDialogEventBJ(trig: jtrigger, whichDialog: jdialog): jevent
 declare function TriggerRegisterShowSkillEventBJ(trig: jtrigger): jevent
@@ -6113,7 +6167,7 @@ declare function TerrainDeformationCraterBJ(
     permanent: boolean,
     where: jlocation,
     radius: number,
-    depth: number
+    depth: number,
 ): jterraindeformation
 declare function TerrainDeformationRippleBJ(
     duration: number,
@@ -6123,7 +6177,7 @@ declare function TerrainDeformationRippleBJ(
     endRadius: number,
     depth: number,
     wavePeriod: number,
-    waveWidth: number
+    waveWidth: number,
 ): jterraindeformation
 declare function TerrainDeformationWaveBJ(
     duration: number,
@@ -6131,7 +6185,7 @@ declare function TerrainDeformationWaveBJ(
     target: jlocation,
     radius: number,
     depth: number,
-    trailDelay: number
+    trailDelay: number,
 ): jterraindeformation
 declare function TerrainDeformationRandomBJ(
     duration: number,
@@ -6139,7 +6193,7 @@ declare function TerrainDeformationRandomBJ(
     radius: number,
     minDelta: number,
     maxDelta: number,
-    updateInterval: number
+    updateInterval: number,
 ): jterraindeformation
 declare function TerrainDeformationStopBJ(deformation: jterraindeformation, duration: number): void
 declare function GetLastCreatedTerrainDeformation(): jterraindeformation
@@ -6148,7 +6202,7 @@ declare function DestroyLightningBJ(whichBolt: jlightning): boolean
 declare function MoveLightningLoc(
     whichBolt: jlightning,
     where1: jlocation,
-    where2: jlocation
+    where2: jlocation,
 ): boolean
 declare function GetLightningColorABJ(whichBolt: jlightning): number
 declare function GetLightningColorRBJ(whichBolt: jlightning): number
@@ -6159,7 +6213,7 @@ declare function SetLightningColorBJ(
     r: number,
     g: number,
     b: number,
-    a: number
+    a: number,
 ): boolean
 declare function GetLastCreatedLightningBJ(): jlightning
 declare function GetAbilityEffectBJ(abilcode: number, t: jeffecttype, index: number): string
@@ -6172,7 +6226,7 @@ declare function SetTerrainTypeBJ(
     terrainType: number,
     variation: number,
     area: number,
-    shape: number
+    shape: number,
 ): void
 declare function IsTerrainPathableBJ(where: jlocation, t: jpathingtype): boolean
 declare function SetTerrainPathableBJ(where: jlocation, t: jpathingtype, flag: boolean): void
@@ -6180,33 +6234,33 @@ declare function SetWaterBaseColorBJ(
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function CreateFogModifierRectSimple(
     whichPlayer: jplayer,
     whichFogState: jfogstate,
     r: jrect,
-    afterUnits: boolean
+    afterUnits: boolean,
 ): jfogmodifier
 declare function CreateFogModifierRadiusLocSimple(
     whichPlayer: jplayer,
     whichFogState: jfogstate,
     center: jlocation,
     radius: number,
-    afterUnits: boolean
+    afterUnits: boolean,
 ): jfogmodifier
 declare function CreateFogModifierRectBJ(
     enabled: boolean,
     whichPlayer: jplayer,
     whichFogState: jfogstate,
-    r: jrect
+    r: jrect,
 ): jfogmodifier
 declare function CreateFogModifierRadiusLocBJ(
     enabled: boolean,
     whichPlayer: jplayer,
     whichFogState: jfogstate,
     center: jlocation,
-    radius: number
+    radius: number,
 ): jfogmodifier
 declare function GetLastCreatedFogModifier(): jfogmodifier
 declare function FogEnableOn(): void
@@ -6221,27 +6275,27 @@ declare function SetTerrainFogExBJ(
     density: number,
     red: number,
     green: number,
-    blue: number
+    blue: number,
 ): void
 declare function ResetTerrainFogBJ(): void
 declare function SetDoodadAnimationBJ(
     animName: string,
     doodadID: number,
     radius: number,
-    center: jlocation
+    center: jlocation,
 ): void
 declare function SetDoodadAnimationRectBJ(animName: string, doodadID: number, r: jrect): void
 declare function AddUnitAnimationPropertiesBJ(
     add: boolean,
     animProperties: string,
-    whichUnit: junit
+    whichUnit: junit,
 ): void
 declare function CreateImageBJ(
     file: string,
     size: number,
     where: jlocation,
     zOffset: number,
-    imageType: number
+    imageType: number,
 ): jimage
 declare function ShowImageBJ(flag: boolean, whichImage: jimage): void
 declare function SetImagePositionBJ(whichImage: jimage, where: jlocation, zOffset: number): void
@@ -6250,7 +6304,7 @@ declare function SetImageColorBJ(
     red: number,
     green: number,
     blue: number,
-    alpha: number
+    alpha: number,
 ): void
 declare function GetLastCreatedImage(): jimage
 declare function CreateUbersplatBJ(
@@ -6261,7 +6315,7 @@ declare function CreateUbersplatBJ(
     blue: number,
     alpha: number,
     forcePaused: boolean,
-    noBirthTime: boolean
+    noBirthTime: boolean,
 ): jubersplat
 declare function ShowUbersplatBJ(flag: boolean, whichSplat: jubersplat): void
 declare function GetLastCreatedUbersplat(): jubersplat
@@ -6272,7 +6326,7 @@ declare function CreateMinimapIconOnUnitBJ(
     green: number,
     blue: number,
     pingPath: string,
-    fogVisibility: jfogstate
+    fogVisibility: jfogstate,
 ): jminimapicon
 declare function CreateMinimapIconAtLocBJ(
     where: jlocation,
@@ -6280,7 +6334,7 @@ declare function CreateMinimapIconAtLocBJ(
     green: number,
     blue: number,
     pingPath: string,
-    fogVisibility: jfogstate
+    fogVisibility: jfogstate,
 ): jminimapicon
 declare function CreateMinimapIconBJ(
     x: number,
@@ -6289,7 +6343,7 @@ declare function CreateMinimapIconBJ(
     green: number,
     blue: number,
     pingPath: string,
-    fogVisibility: jfogstate
+    fogVisibility: jfogstate,
 ): jminimapicon
 declare function CampaignMinimapIconUnitBJ(whichUnit: junit, style: number): void
 declare function CampaignMinimapIconLocBJ(where: jlocation, style: number): void
@@ -6305,30 +6359,30 @@ declare function SetSoundConeAnglesBJ(
     soundHandle: jsound,
     inside: number,
     outside: number,
-    outsideVolumePercent: number
+    outsideVolumePercent: number,
 ): void
 declare function KillSoundWhenDoneBJ(soundHandle: jsound): void
 declare function PlaySoundAtPointBJ(
     soundHandle: jsound,
     volumePercent: number,
     loc: jlocation,
-    z: number
+    z: number,
 ): void
 declare function PlaySoundOnUnitBJ(
     soundHandle: jsound,
     volumePercent: number,
-    whichUnit: junit
+    whichUnit: junit,
 ): void
 declare function PlaySoundFromOffsetBJ(
     soundHandle: jsound,
     volumePercent: number,
-    startingOffset: number
+    startingOffset: number,
 ): void
 declare function PlayMusicBJ(musicFileName: string): void
 declare function PlayMusicExBJ(
     musicFileName: string,
     startingOffset: number,
-    fadeInTime: number
+    fadeInTime: number,
 ): void
 declare function SetMusicOffsetBJ(newOffset: number): void
 declare function PlayThematicMusicBJ(musicName: string): void
@@ -6359,7 +6413,7 @@ declare function StartSoundForPlayerBJ(whichPlayer: jplayer, soundHandle: jsound
 declare function VolumeGroupSetVolumeForPlayerBJ(
     whichPlayer: jplayer,
     vgroup: jvolumegroup,
-    scale: number
+    scale: number,
 ): void
 declare function EnableDawnDusk(flag: boolean): void
 declare function IsDawnDuskEnabled(): boolean
@@ -6369,7 +6423,7 @@ declare function AddSpecialEffectLocBJ(where: jlocation, modelName: string): jef
 declare function AddSpecialEffectTargetUnitBJ(
     attachPointName: string,
     targetWidget: jwidget,
-    modelName: string
+    modelName: string,
 ): jeffect
 declare function DestroyEffectBJ(whichEffect: jeffect): void
 declare function GetLastCreatedEffectBJ(): jeffect
@@ -6390,7 +6444,7 @@ declare function IncUnitAbilityLevelSwapped(abilcode: number, whichUnit: junit):
 declare function SetUnitAbilityLevelSwapped(
     abilcode: number,
     whichUnit: junit,
-    level: number
+    level: number,
 ): number
 declare function GetUnitAbilityLevelSwapped(abilcode: number, whichUnit: junit): number
 declare function UnitHasBuffBJ(whichUnit: junit, buffcode: number): boolean
@@ -6419,18 +6473,18 @@ declare function ModifyHeroStat(
     whichStat: number,
     whichHero: junit,
     modifyMethod: number,
-    value: number
+    value: number,
 ): void
 declare function ModifyHeroSkillPoints(
     whichHero: junit,
     modifyMethod: number,
-    value: number
+    value: number,
 ): boolean
 declare function UnitDropItemPointBJ(
     whichUnit: junit,
     whichItem: jitem,
     x: number,
-    y: number
+    y: number,
 ): boolean
 declare function UnitDropItemPointLoc(whichUnit: junit, whichItem: jitem, loc: jlocation): boolean
 declare function UnitDropItemSlotBJ(whichUnit: junit, whichItem: jitem, slot: number): boolean
@@ -6438,7 +6492,7 @@ declare function UnitDropItemTargetBJ(whichUnit: junit, whichItem: jitem, target
 declare function UnitUseItemDestructable(
     whichUnit: junit,
     whichItem: jitem,
-    target: jwidget
+    target: jwidget,
 ): boolean
 declare function UnitUseItemPointLoc(whichUnit: junit, whichItem: jitem, loc: jlocation): boolean
 declare function UnitItemInSlotBJ(whichUnit: junit, itemSlot: number): jitem
@@ -6474,7 +6528,7 @@ declare function CreateUnitAtLocSaveLast(
     id: jplayer,
     unitid: number,
     loc: jlocation,
-    face: number
+    face: number,
 ): junit
 declare function GetLastCreatedUnit(): junit
 declare function CreateNUnitsAtLoc(
@@ -6482,14 +6536,14 @@ declare function CreateNUnitsAtLoc(
     unitId: number,
     whichPlayer: jplayer,
     loc: jlocation,
-    face: number
+    face: number,
 ): jgroup
 declare function CreateNUnitsAtLocFacingLocBJ(
     count: number,
     unitId: number,
     whichPlayer: jplayer,
     loc: jlocation,
-    lookAt: jlocation
+    lookAt: jlocation,
 ): jgroup
 declare function GetLastCreatedGroupEnum(): void
 declare function GetLastCreatedGroup(): jgroup
@@ -6505,13 +6559,13 @@ declare function CreatePermanentCorpseLocBJ(
     unitid: number,
     whichPlayer: jplayer,
     loc: jlocation,
-    facing: number
+    facing: number,
 ): junit
 declare function GetUnitStateSwap(whichState: junitstate, whichUnit: junit): number
 declare function GetUnitStatePercent(
     whichUnit: junit,
     whichState: junitstate,
-    whichMaxState: junitstate
+    whichMaxState: junitstate,
 ): number
 declare function GetUnitLifePercent(whichUnit: junit): number
 declare function GetUnitManaPercent(whichUnit: junit): number
@@ -6577,14 +6631,14 @@ declare function UnitRemoveBuffsExBJ(
     resist: number,
     whichUnit: junit,
     bTLife: boolean,
-    bAura: boolean
+    bAura: boolean,
 ): void
 declare function UnitCountBuffsExBJ(
     polarity: number,
     resist: number,
     whichUnit: junit,
     bTLife: boolean,
-    bAura: boolean
+    bAura: boolean,
 ): number
 declare function UnitRemoveAbilityBJ(abilityId: number, whichUnit: junit): boolean
 declare function UnitAddAbilityBJ(abilityId: number, whichUnit: junit): boolean
@@ -6593,7 +6647,7 @@ declare function UnitAddTypeBJ(whichType: junittype, whichUnit: junit): boolean
 declare function UnitMakeAbilityPermanentBJ(
     permanent: boolean,
     abilityId: number,
-    whichUnit: junit
+    whichUnit: junit,
 ): boolean
 declare function SetUnitExplodedBJ(whichUnit: junit, exploded: boolean): void
 declare function ExplodeUnitBJ(whichUnit: junit): void
@@ -6608,19 +6662,19 @@ declare function SetUnitPositionLocFacingBJ(whichUnit: junit, loc: jlocation, fa
 declare function SetUnitPositionLocFacingLocBJ(
     whichUnit: junit,
     loc: jlocation,
-    lookAt: jlocation
+    lookAt: jlocation,
 ): void
 declare function AddItemToStockBJ(
     itemId: number,
     whichUnit: junit,
     currentStock: number,
-    stockMax: number
+    stockMax: number,
 ): void
 declare function AddUnitToStockBJ(
     unitId: number,
     whichUnit: junit,
     currentStock: number,
-    stockMax: number
+    stockMax: number,
 ): void
 declare function RemoveItemFromStockBJ(itemId: number, whichUnit: junit): void
 declare function RemoveUnitFromStockBJ(unitId: number, whichUnit: junit): void
@@ -6632,28 +6686,28 @@ declare function UnitDamagePointLoc(
     loc: jlocation,
     amount: number,
     whichAttack: jattacktype,
-    whichDamage: jdamagetype
+    whichDamage: jdamagetype,
 ): boolean
 declare function UnitDamageTargetBJ(
     whichUnit: junit,
     target: junit,
     amount: number,
     whichAttack: jattacktype,
-    whichDamage: jdamagetype
+    whichDamage: jdamagetype,
 ): boolean
 declare function CreateDestructableLoc(
     objectid: number,
     loc: jlocation,
     facing: number,
     scale: number,
-    variation: number
+    variation: number,
 ): jdestructable
 declare function CreateDeadDestructableLocBJ(
     objectid: number,
     loc: jlocation,
     facing: number,
     scale: number,
-    variation: number
+    variation: number,
 ): jdestructable
 declare function GetLastCreatedDestructable(): jdestructable
 declare function ShowDestructableBJ(flag: boolean, d: jdestructable): void
@@ -6670,7 +6724,7 @@ declare function RandomDestructableInRectSimpleBJ(r: jrect): jdestructable
 declare function EnumDestructablesInCircleBJ(
     radius: number,
     loc: jlocation,
-    actionFunc?: () => void
+    actionFunc?: () => void,
 ): void
 declare function SetDestructableLifePercentBJ(d: jdestructable, percent: number): void
 declare function SetDestructableMaxLifeBJ(d: jdestructable, max: number): void
@@ -6687,7 +6741,7 @@ declare function ChangeElevatorWallBlocker(
     x: number,
     y: number,
     facing: number,
-    open: boolean
+    open: boolean,
 ): void
 declare function ChangeElevatorWalls(open: boolean, walls: number, d: jdestructable): void
 declare function WaygateActivateBJ(activate: boolean, waygate: junit): void
@@ -6713,7 +6767,7 @@ declare function ForcePickRandomPlayer(whichForce: jforce): jplayer
 declare function EnumUnitsSelected(
     whichPlayer: jplayer,
     enumFilter: jboolexpr,
-    enumAction?: () => void
+    enumAction?: () => void,
 ): void
 declare function GetUnitsInRectMatching(r: jrect, filter: jboolexpr): jgroup
 declare function GetUnitsInRectAll(r: jrect): jgroup
@@ -6722,7 +6776,7 @@ declare function GetUnitsInRectOfPlayer(r: jrect, whichPlayer: jplayer): jgroup
 declare function GetUnitsInRangeOfLocMatching(
     radius: number,
     whichLocation: jlocation,
-    filter: jboolexpr
+    filter: jboolexpr,
 ): jgroup
 declare function GetUnitsInRangeOfLocAll(radius: number, whichLocation: jlocation): jgroup
 declare function GetUnitsOfTypeIdAllFilter(): boolean
@@ -6752,45 +6806,45 @@ declare function SetUnitScalePercent(
     whichUnit: junit,
     percentScaleX: number,
     percentScaleY: number,
-    percentScaleZ: number
+    percentScaleZ: number,
 ): void
 declare function SetUnitVertexColorBJ(
     whichUnit: junit,
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function UnitAddIndicatorBJ(
     whichUnit: junit,
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function DestructableAddIndicatorBJ(
     whichDestructable: jdestructable,
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function ItemAddIndicatorBJ(
     whichItem: jitem,
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function SetUnitFacingToFaceLocTimed(
     whichUnit: junit,
     target: jlocation,
-    duration: number
+    duration: number,
 ): void
 declare function SetUnitFacingToFaceUnitTimed(
     whichUnit: junit,
     target: junit,
-    duration: number
+    duration: number,
 ): void
 declare function QueueUnitAnimationBJ(whichUnit: junit, whichAnimation: string): void
 declare function SetDestructableAnimationBJ(d: jdestructable, whichAnimation: string): void
@@ -6802,7 +6856,7 @@ declare function DialogAddButtonBJ(whichDialog: jdialog, buttonText: string): jb
 declare function DialogAddButtonWithHotkeyBJ(
     whichDialog: jdialog,
     buttonText: string,
-    hotkey: number
+    hotkey: number,
 ): jbutton
 declare function DialogClearBJ(whichDialog: jdialog): void
 declare function GetLastCreatedButtonBJ(): jbutton
@@ -6812,37 +6866,37 @@ declare function SetPlayerAllianceBJ(
     sourcePlayer: jplayer,
     whichAllianceSetting: jalliancetype,
     value: boolean,
-    otherPlayer: jplayer
+    otherPlayer: jplayer,
 ): void
 declare function SetPlayerAllianceStateAllyBJ(
     sourcePlayer: jplayer,
     otherPlayer: jplayer,
-    flag: boolean
+    flag: boolean,
 ): void
 declare function SetPlayerAllianceStateVisionBJ(
     sourcePlayer: jplayer,
     otherPlayer: jplayer,
-    flag: boolean
+    flag: boolean,
 ): void
 declare function SetPlayerAllianceStateControlBJ(
     sourcePlayer: jplayer,
     otherPlayer: jplayer,
-    flag: boolean
+    flag: boolean,
 ): void
 declare function SetPlayerAllianceStateFullControlBJ(
     sourcePlayer: jplayer,
     otherPlayer: jplayer,
-    flag: boolean
+    flag: boolean,
 ): void
 declare function SetPlayerAllianceStateBJ(
     sourcePlayer: jplayer,
     otherPlayer: jplayer,
-    allianceState: number
+    allianceState: number,
 ): void
 declare function SetForceAllianceStateBJ(
     sourceForce: jforce,
     targetForce: jforce,
-    allianceState: number
+    allianceState: number,
 ): void
 declare function PlayersAreCoAllied(playerA: jplayer, playerB: jplayer): boolean
 declare function ShareEverythingWithTeamAI(whichPlayer: jplayer): void
@@ -6859,7 +6913,7 @@ declare function GameOverDialogBJ(whichPlayer: jplayer, leftGame: boolean): void
 declare function RemovePlayerPreserveUnitsBJ(
     whichPlayer: jplayer,
     gameResult: jplayergameresult,
-    leftGame: boolean
+    leftGame: boolean,
 ): void
 declare function CustomVictoryOkBJ(): void
 declare function CustomVictoryQuitBJ(): void
@@ -6868,7 +6922,7 @@ declare function CustomVictorySkipBJ(whichPlayer: jplayer): void
 declare function CustomVictoryBJ(
     whichPlayer: jplayer,
     showDialog: boolean,
-    showScores: boolean
+    showScores: boolean,
 ): void
 declare function CustomDefeatRestartBJ(): void
 declare function CustomDefeatReduceDifficultyBJ(): void
@@ -6882,7 +6936,7 @@ declare function CreateQuestBJ(
     questType: number,
     title: string,
     description: string,
-    iconPath: string
+    iconPath: string,
 ): jquest
 declare function DestroyQuestBJ(whichQuest: jquest): void
 declare function QuestSetEnabledBJ(enabled: boolean, whichQuest: jquest): void
@@ -6900,7 +6954,7 @@ declare function CreateDefeatConditionBJ(description: string): jdefeatcondition
 declare function DestroyDefeatConditionBJ(whichCondition: jdefeatcondition): void
 declare function DefeatConditionSetDescriptionBJ(
     whichCondition: jdefeatcondition,
-    description: string
+    description: string,
 ): void
 declare function GetLastCreatedDefeatConditionBJ(): jdefeatcondition
 declare function FlashQuestDialogButtonBJ(): void
@@ -6918,20 +6972,20 @@ declare function TimerDialogSetTitleColorBJ(
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function TimerDialogSetTimeColorBJ(
     td: jtimerdialog,
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function TimerDialogSetSpeedBJ(td: jtimerdialog, speedMultFactor: number): void
 declare function TimerDialogDisplayForPlayerBJ(
     show: boolean,
     td: jtimerdialog,
-    whichPlayer: jplayer
+    whichPlayer: jplayer,
 ): void
 declare function TimerDialogDisplayBJ(show: boolean, td: jtimerdialog): void
 declare function GetLastCreatedTimerDialogBJ(): jtimerdialog
@@ -6939,19 +6993,19 @@ declare function LeaderboardResizeBJ(lb: jleaderboard): void
 declare function LeaderboardSetPlayerItemValueBJ(
     whichPlayer: jplayer,
     lb: jleaderboard,
-    val: number
+    val: number,
 ): void
 declare function LeaderboardSetPlayerItemLabelBJ(
     whichPlayer: jplayer,
     lb: jleaderboard,
-    val: string
+    val: string,
 ): void
 declare function LeaderboardSetPlayerItemStyleBJ(
     whichPlayer: jplayer,
     lb: jleaderboard,
     showLabel: boolean,
     showValue: boolean,
-    showIcon: boolean
+    showIcon: boolean,
 ): void
 declare function LeaderboardSetPlayerItemLabelColorBJ(
     whichPlayer: jplayer,
@@ -6959,7 +7013,7 @@ declare function LeaderboardSetPlayerItemLabelColorBJ(
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function LeaderboardSetPlayerItemValueColorBJ(
     whichPlayer: jplayer,
@@ -6967,21 +7021,21 @@ declare function LeaderboardSetPlayerItemValueColorBJ(
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function LeaderboardSetLabelColorBJ(
     lb: jleaderboard,
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function LeaderboardSetValueColorBJ(
     lb: jleaderboard,
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function LeaderboardSetLabelBJ(lb: jleaderboard, label: string): void
 declare function LeaderboardSetStyleBJ(
@@ -6989,7 +7043,7 @@ declare function LeaderboardSetStyleBJ(
     showLabel: boolean,
     showNames: boolean,
     showValues: boolean,
-    showIcons: boolean
+    showIcons: boolean,
 ): void
 declare function LeaderboardGetItemCountBJ(lb: jleaderboard): number
 declare function LeaderboardHasPlayerItemBJ(lb: jleaderboard, whichPlayer: jplayer): boolean
@@ -7001,13 +7055,13 @@ declare function LeaderboardAddItemBJ(
     whichPlayer: jplayer,
     lb: jleaderboard,
     label: string,
-    value: number
+    value: number,
 ): void
 declare function LeaderboardRemovePlayerItemBJ(whichPlayer: jplayer, lb: jleaderboard): void
 declare function LeaderboardSortItemsBJ(
     lb: jleaderboard,
     sortType: number,
-    ascending: boolean
+    ascending: boolean,
 ): void
 declare function LeaderboardSortItemsByPlayerBJ(lb: jleaderboard, ascending: boolean): void
 declare function LeaderboardSortItemsByLabelBJ(lb: jleaderboard, ascending: boolean): void
@@ -7025,7 +7079,7 @@ declare function MultiboardSetTitleTextColorBJ(
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function MultiboardAllowDisplayBJ(flag: boolean): void
 declare function MultiboardSetItemStyleBJ(
@@ -7033,13 +7087,13 @@ declare function MultiboardSetItemStyleBJ(
     col: number,
     row: number,
     showValue: boolean,
-    showIcon: boolean
+    showIcon: boolean,
 ): void
 declare function MultiboardSetItemValueBJ(
     mb: jmultiboard,
     col: number,
     row: number,
-    val: string
+    val: string,
 ): void
 declare function MultiboardSetItemColorBJ(
     mb: jmultiboard,
@@ -7048,19 +7102,19 @@ declare function MultiboardSetItemColorBJ(
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function MultiboardSetItemWidthBJ(
     mb: jmultiboard,
     col: number,
     row: number,
-    width: number
+    width: number,
 ): void
 declare function MultiboardSetItemIconBJ(
     mb: jmultiboard,
     col: number,
     row: number,
-    iconFileName: string
+    iconFileName: string,
 ): void
 declare function TextTagSize2Height(size: number): number
 declare function TextTagSpeed2Velocity(speed: number): number
@@ -7069,7 +7123,7 @@ declare function SetTextTagColorBJ(
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): void
 declare function SetTextTagVelocityBJ(tt: jtexttag, speed: number, angle: number): void
 declare function SetTextTagTextBJ(tt: jtexttag, s: string, size: number): void
@@ -7088,7 +7142,7 @@ declare function CreateTextTagLocBJ(
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): jtexttag
 declare function CreateTextTagUnitBJ(
     s: string,
@@ -7098,7 +7152,7 @@ declare function CreateTextTagUnitBJ(
     red: number,
     green: number,
     blue: number,
-    transparency: number
+    transparency: number,
 ): jtexttag
 declare function DestroyTextTagBJ(tt: jtexttag): void
 declare function ShowTextTagForceBJ(show: boolean, tt: jtexttag, whichForce: jforce): void
@@ -7113,19 +7167,19 @@ declare function PingMinimapForForce(
     whichForce: jforce,
     x: number,
     y: number,
-    duration: number
+    duration: number,
 ): void
 declare function PingMinimapLocForForce(whichForce: jforce, loc: jlocation, duration: number): void
 declare function PingMinimapForPlayer(
     whichPlayer: jplayer,
     x: number,
     y: number,
-    duration: number
+    duration: number,
 ): void
 declare function PingMinimapLocForPlayer(
     whichPlayer: jplayer,
     loc: jlocation,
-    duration: number
+    duration: number,
 ): void
 declare function PingMinimapForForceEx(
     whichForce: jforce,
@@ -7135,7 +7189,7 @@ declare function PingMinimapForForceEx(
     style: number,
     red: number,
     green: number,
-    blue: number
+    blue: number,
 ): void
 declare function PingMinimapLocForForceEx(
     whichForce: jforce,
@@ -7144,7 +7198,7 @@ declare function PingMinimapLocForForceEx(
     style: number,
     red: number,
     green: number,
-    blue: number
+    blue: number,
 ): void
 declare function EnableWorldFogBoundaryBJ(enable: boolean, f: jforce): void
 declare function EnableOcclusionBJ(enable: boolean, f: jforce): void
@@ -7157,17 +7211,17 @@ declare function SetCinematicSceneBJ(
     speakerTitle: string,
     text: string,
     sceneDuration: number,
-    voiceoverDuration: number
+    voiceoverDuration: number,
 ): void
 declare function GetTransmissionDuration(
     soundHandle: jsound,
     timeType: number,
-    timeVal: number
+    timeVal: number,
 ): number
 declare function WaitTransmissionDuration(
     soundHandle: jsound,
     timeType: number,
-    timeVal: number
+    timeVal: number,
 ): void
 declare function DoTransmissionBasicsXYBJ(
     unitId: number,
@@ -7177,7 +7231,7 @@ declare function DoTransmissionBasicsXYBJ(
     soundHandle: jsound,
     unitName: string,
     message: string,
-    duration: number
+    duration: number,
 ): void
 declare function TransmissionFromUnitWithNameBJ(
     toForce: jforce,
@@ -7187,7 +7241,7 @@ declare function TransmissionFromUnitWithNameBJ(
     message: string,
     timeType: number,
     timeVal: number,
-    wait: boolean
+    wait: boolean,
 ): void
 declare function PlayDialogueFromSpeakerEx(
     toForce: jforce,
@@ -7196,7 +7250,7 @@ declare function PlayDialogueFromSpeakerEx(
     soundHandle: jsound,
     timeType: number,
     timeVal: number,
-    wait: boolean
+    wait: boolean,
 ): boolean
 declare function PlayDialogueFromSpeakerTypeEx(
     toForce: jforce,
@@ -7206,7 +7260,7 @@ declare function PlayDialogueFromSpeakerTypeEx(
     soundHandle: jsound,
     timeType: number,
     timeVal: number,
-    wait: boolean
+    wait: boolean,
 ): boolean
 declare function TransmissionFromUnitTypeWithNameBJ(
     toForce: jforce,
@@ -7218,14 +7272,14 @@ declare function TransmissionFromUnitTypeWithNameBJ(
     message: string,
     timeType: number,
     timeVal: number,
-    wait: boolean
+    wait: boolean,
 ): void
 declare function GetLastTransmissionDurationBJ(): number
 declare function ForceCinematicSubtitlesBJ(flag: boolean): void
 declare function CinematicModeExBJ(
     cineMode: boolean,
     forForce: jforce,
-    interfaceFadeTime: number
+    interfaceFadeTime: number,
 ): void
 declare function CinematicModeBJ(cineMode: boolean, forForce: jforce): void
 declare function DisplayCineFilterBJ(flag: boolean): void
@@ -7236,7 +7290,7 @@ declare function CinematicFadeCommonBJ(
     duration: number,
     tex: string,
     startTrans: number,
-    endTrans: number
+    endTrans: number,
 ): void
 declare function FinishCinematicFadeBJ(): void
 declare function FinishCinematicFadeAfterBJ(duration: number): void
@@ -7247,7 +7301,7 @@ declare function ContinueCinematicFadeAfterBJ(
     green: number,
     blue: number,
     trans: number,
-    tex: string
+    tex: string,
 ): void
 declare function AbortCinematicFadeBJ(): void
 declare function CinematicFadeBJ(
@@ -7257,7 +7311,7 @@ declare function CinematicFadeBJ(
     red: number,
     green: number,
     blue: number,
-    trans: number
+    trans: number,
 ): void
 declare function CinematicFilterGenericBJ(
     duration: number,
@@ -7270,7 +7324,7 @@ declare function CinematicFilterGenericBJ(
     red1: number,
     green1: number,
     blue1: number,
-    trans1: number
+    trans1: number,
 ): void
 declare function RescueUnitBJ(whichUnit: junit, rescuer: jplayer, changeColor: boolean): void
 declare function TriggerActionUnitRescuedBJ(): void
@@ -7281,18 +7335,18 @@ declare function MakeUnitRescuableToForceBJEnum(): void
 declare function MakeUnitRescuableToForceBJ(
     whichUnit: junit,
     isRescuable: boolean,
-    whichForce: jforce
+    whichForce: jforce,
 ): void
 declare function InitRescuableBehaviorBJ(): void
 declare function SetPlayerTechResearchedSwap(
     techid: number,
     levels: number,
-    whichPlayer: jplayer
+    whichPlayer: jplayer,
 ): void
 declare function SetPlayerTechMaxAllowedSwap(
     techid: number,
     maximum: number,
-    whichPlayer: jplayer
+    whichPlayer: jplayer,
 ): void
 declare function SetPlayerMaxHeroesAllowed(maximum: number, whichPlayer: jplayer): void
 declare function GetPlayerTechCountSimple(techid: number, whichPlayer: jplayer): number
@@ -7300,7 +7354,7 @@ declare function GetPlayerTechMaxAllowedSwap(techid: number, whichPlayer: jplaye
 declare function SetPlayerAbilityAvailableBJ(
     avail: boolean,
     abilid: number,
-    whichPlayer: jplayer
+    whichPlayer: jplayer,
 ): void
 declare function SetCampaignMenuRaceBJ(campaignNumber: number): void
 declare function SetMissionAvailableBJ(available: boolean, missionIndex: number): void
@@ -7315,284 +7369,284 @@ declare function StoreRealBJ(
     value: number,
     key: string,
     missionKey: string,
-    cache: jgamecache
+    cache: jgamecache,
 ): void
 declare function StoreIntegerBJ(
     value: number,
     key: string,
     missionKey: string,
-    cache: jgamecache
+    cache: jgamecache,
 ): void
 declare function StoreBooleanBJ(
     value: boolean,
     key: string,
     missionKey: string,
-    cache: jgamecache
+    cache: jgamecache,
 ): void
 declare function StoreStringBJ(
     value: string,
     key: string,
     missionKey: string,
-    cache: jgamecache
+    cache: jgamecache,
 ): boolean
 declare function StoreUnitBJ(
     whichUnit: junit,
     key: string,
     missionKey: string,
-    cache: jgamecache
+    cache: jgamecache,
 ): boolean
 declare function SaveRealBJ(value: number, key: number, missionKey: number, table: jhashtable): void
 declare function SaveIntegerBJ(
     value: number,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): void
 declare function SaveBooleanBJ(
     value: boolean,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): void
 declare function SaveStringBJ(
     value: string,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SavePlayerHandleBJ(
     whichPlayer: jplayer,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveWidgetHandleBJ(
     whichWidget: jwidget,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveDestructableHandleBJ(
     whichDestructable: jdestructable,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveItemHandleBJ(
     whichItem: jitem,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveUnitHandleBJ(
     whichUnit: junit,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveAbilityHandleBJ(
     whichAbility: jability,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveTimerHandleBJ(
     whichTimer: jtimer,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveTriggerHandleBJ(
     whichTrigger: jtrigger,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveTriggerConditionHandleBJ(
     whichTriggercondition: jtriggercondition,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveTriggerActionHandleBJ(
     whichTriggeraction: jtriggeraction,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveTriggerEventHandleBJ(
     whichEvent: jevent,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveForceHandleBJ(
     whichForce: jforce,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveGroupHandleBJ(
     whichGroup: jgroup,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveLocationHandleBJ(
     whichLocation: jlocation,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveRectHandleBJ(
     whichRect: jrect,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveBooleanExprHandleBJ(
     whichBoolexpr: jboolexpr,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveSoundHandleBJ(
     whichSound: jsound,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveEffectHandleBJ(
     whichEffect: jeffect,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveUnitPoolHandleBJ(
     whichUnitpool: junitpool,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveItemPoolHandleBJ(
     whichItempool: jitempool,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveQuestHandleBJ(
     whichQuest: jquest,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveQuestItemHandleBJ(
     whichQuestitem: jquestitem,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveDefeatConditionHandleBJ(
     whichDefeatcondition: jdefeatcondition,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveTimerDialogHandleBJ(
     whichTimerdialog: jtimerdialog,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveLeaderboardHandleBJ(
     whichLeaderboard: jleaderboard,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveMultiboardHandleBJ(
     whichMultiboard: jmultiboard,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveMultiboardItemHandleBJ(
     whichMultiboarditem: jmultiboarditem,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveTrackableHandleBJ(
     whichTrackable: jtrackable,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveDialogHandleBJ(
     whichDialog: jdialog,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveButtonHandleBJ(
     whichButton: jbutton,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveTextTagHandleBJ(
     whichTexttag: jtexttag,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveLightningHandleBJ(
     whichLightning: jlightning,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveImageHandleBJ(
     whichImage: jimage,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveUbersplatHandleBJ(
     whichUbersplat: jubersplat,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveRegionHandleBJ(
     whichRegion: jregion,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveFogStateHandleBJ(
     whichFogState: jfogstate,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveFogModifierHandleBJ(
     whichFogModifier: jfogmodifier,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveAgentHandleBJ(
     whichAgent: jagent,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function SaveHashtableHandleBJ(
     whichHashtable: jhashtable,
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function GetStoredRealBJ(key: string, missionKey: string, cache: jgamecache): number
 declare function GetStoredIntegerBJ(key: string, missionKey: string, cache: jgamecache): number
@@ -7607,7 +7661,7 @@ declare function LoadWidgetHandleBJ(key: number, missionKey: number, table: jhas
 declare function LoadDestructableHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jdestructable
 declare function LoadItemHandleBJ(key: number, missionKey: number, table: jhashtable): jitem
 declare function LoadUnitHandleBJ(key: number, missionKey: number, table: jhashtable): junit
@@ -7617,17 +7671,17 @@ declare function LoadTriggerHandleBJ(key: number, missionKey: number, table: jha
 declare function LoadTriggerConditionHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jtriggercondition
 declare function LoadTriggerActionHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jtriggeraction
 declare function LoadTriggerEventHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jevent
 declare function LoadForceHandleBJ(key: number, missionKey: number, table: jhashtable): jforce
 declare function LoadGroupHandleBJ(key: number, missionKey: number, table: jhashtable): jgroup
@@ -7636,7 +7690,7 @@ declare function LoadRectHandleBJ(key: number, missionKey: number, table: jhasht
 declare function LoadBooleanExprHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jboolexpr
 declare function LoadSoundHandleBJ(key: number, missionKey: number, table: jhashtable): jsound
 declare function LoadEffectHandleBJ(key: number, missionKey: number, table: jhashtable): jeffect
@@ -7646,37 +7700,37 @@ declare function LoadQuestHandleBJ(key: number, missionKey: number, table: jhash
 declare function LoadQuestItemHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jquestitem
 declare function LoadDefeatConditionHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jdefeatcondition
 declare function LoadTimerDialogHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jtimerdialog
 declare function LoadLeaderboardHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jleaderboard
 declare function LoadMultiboardHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jmultiboard
 declare function LoadMultiboardItemHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jmultiboarditem
 declare function LoadTrackableHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jtrackable
 declare function LoadDialogHandleBJ(key: number, missionKey: number, table: jhashtable): jdialog
 declare function LoadButtonHandleBJ(key: number, missionKey: number, table: jhashtable): jbutton
@@ -7684,25 +7738,25 @@ declare function LoadTextTagHandleBJ(key: number, missionKey: number, table: jha
 declare function LoadLightningHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jlightning
 declare function LoadImageHandleBJ(key: number, missionKey: number, table: jhashtable): jimage
 declare function LoadUbersplatHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jubersplat
 declare function LoadRegionHandleBJ(key: number, missionKey: number, table: jhashtable): jregion
 declare function LoadFogStateHandleBJ(key: number, missionKey: number, table: jhashtable): jfogstate
 declare function LoadFogModifierHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jfogmodifier
 declare function LoadHashtableHandleBJ(
     key: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): jhashtable
 declare function RestoreUnitLocFacingAngleBJ(
     key: string,
@@ -7710,7 +7764,7 @@ declare function RestoreUnitLocFacingAngleBJ(
     cache: jgamecache,
     forWhichPlayer: jplayer,
     loc: jlocation,
-    facing: number
+    facing: number,
 ): junit
 declare function RestoreUnitLocFacingPointBJ(
     key: string,
@@ -7718,7 +7772,7 @@ declare function RestoreUnitLocFacingPointBJ(
     cache: jgamecache,
     forWhichPlayer: jplayer,
     loc: jlocation,
-    lookAt: jlocation
+    lookAt: jlocation,
 ): junit
 declare function GetLastRestoredUnitBJ(): junit
 declare function FlushGameCacheBJ(cache: jgamecache): void
@@ -7729,13 +7783,13 @@ declare function HaveStoredValue(
     key: string,
     valueType: number,
     missionKey: string,
-    cache: jgamecache
+    cache: jgamecache,
 ): boolean
 declare function HaveSavedValue(
     key: number,
     valueType: number,
     missionKey: number,
-    table: jhashtable
+    table: jhashtable,
 ): boolean
 declare function ShowCustomCampaignButton(show: boolean, whichButton: number): void
 declare function IsCustomCampaignButtonVisibile(whichButton: number): boolean
@@ -7744,12 +7798,12 @@ declare function LoadGameBJ(loadFileName: string, doScoreScreen: boolean): void
 declare function SaveAndChangeLevelBJ(
     saveFileName: string,
     newLevel: string,
-    doScoreScreen: boolean
+    doScoreScreen: boolean,
 ): void
 declare function SaveAndLoadGameBJ(
     saveFileName: string,
     loadFileName: string,
-    doScoreScreen: boolean
+    doScoreScreen: boolean,
 ): void
 declare function RenameSaveDirectoryBJ(sourceDirName: string, destDirName: string): boolean
 declare function RemoveSaveDirectoryBJ(sourceDirName: string): boolean
@@ -7764,33 +7818,33 @@ declare function GetFadeFromSecondsAsReal(seconds: number): number
 declare function AdjustPlayerStateSimpleBJ(
     whichPlayer: jplayer,
     whichPlayerState: jplayerstate,
-    delta: number
+    delta: number,
 ): void
 declare function AdjustPlayerStateBJ(
     delta: number,
     whichPlayer: jplayer,
-    whichPlayerState: jplayerstate
+    whichPlayerState: jplayerstate,
 ): void
 declare function SetPlayerStateBJ(
     whichPlayer: jplayer,
     whichPlayerState: jplayerstate,
-    value: number
+    value: number,
 ): void
 declare function SetPlayerFlagBJ(
     whichPlayerFlag: jplayerstate,
     flag: boolean,
-    whichPlayer: jplayer
+    whichPlayer: jplayer,
 ): void
 declare function SetPlayerTaxRateBJ(
     rate: number,
     whichResource: jplayerstate,
     sourcePlayer: jplayer,
-    otherPlayer: jplayer
+    otherPlayer: jplayer,
 ): void
 declare function GetPlayerTaxRateBJ(
     whichResource: jplayerstate,
     sourcePlayer: jplayer,
-    otherPlayer: jplayer
+    otherPlayer: jplayer,
 ): number
 declare function IsPlayerFlagSetBJ(whichPlayerFlag: jplayerstate, whichPlayer: jplayer): boolean
 declare function AddResourceAmountBJ(delta: number, whichUnit: junit): void
@@ -7806,12 +7860,12 @@ declare function SetPlayerColorBJEnum(): void
 declare function SetPlayerColorBJ(
     whichPlayer: jplayer,
     color: jplayercolor,
-    changeExisting: boolean
+    changeExisting: boolean,
 ): void
 declare function SetPlayerUnitAvailableBJ(
     unitId: number,
     allowed: boolean,
-    whichPlayer: jplayer
+    whichPlayer: jplayer,
 ): void
 declare function LockGameSpeedBJ(): void
 declare function UnlockGameSpeedBJ(): void
@@ -7819,39 +7873,39 @@ declare function IssueTargetOrderBJ(whichUnit: junit, order: string, targetWidge
 declare function IssuePointOrderLocBJ(
     whichUnit: junit,
     order: string,
-    whichLocation: jlocation
+    whichLocation: jlocation,
 ): boolean
 declare function IssueTargetDestructableOrder(
     whichUnit: junit,
     order: string,
-    targetWidget: jwidget
+    targetWidget: jwidget,
 ): boolean
 declare function IssueTargetItemOrder(
     whichUnit: junit,
     order: string,
-    targetWidget: jwidget
+    targetWidget: jwidget,
 ): boolean
 declare function IssueImmediateOrderBJ(whichUnit: junit, order: string): boolean
 declare function GroupTargetOrderBJ(
     whichGroup: jgroup,
     order: string,
-    targetWidget: jwidget
+    targetWidget: jwidget,
 ): boolean
 declare function GroupPointOrderLocBJ(
     whichGroup: jgroup,
     order: string,
-    whichLocation: jlocation
+    whichLocation: jlocation,
 ): boolean
 declare function GroupImmediateOrderBJ(whichGroup: jgroup, order: string): boolean
 declare function GroupTargetDestructableOrder(
     whichGroup: jgroup,
     order: string,
-    targetWidget: jwidget
+    targetWidget: jwidget,
 ): boolean
 declare function GroupTargetItemOrder(
     whichGroup: jgroup,
     order: string,
-    targetWidget: jwidget
+    targetWidget: jwidget,
 ): boolean
 declare function GetDyingDestructable(): jdestructable
 declare function SetUnitRallyPoint(whichUnit: junit, targPos: jlocation): void
@@ -7863,7 +7917,7 @@ declare function SetBlightRadiusLocBJ(
     addBlight: boolean,
     whichPlayer: jplayer,
     loc: jlocation,
-    radius: number
+    radius: number,
 ): void
 declare function GetAbilityName(abilcode: number): string
 declare function MeleeStartingVisibility(): void
@@ -7871,7 +7925,7 @@ declare function MeleeStartingResources(): void
 declare function ReducePlayerTechMaxAllowed(
     whichPlayer: jplayer,
     techId: number,
-    limit: number
+    limit: number,
 ): void
 declare function MeleeStartingHeroLimit(): void
 declare function MeleeTrainedUnitIsHeroBJFilter(): boolean
@@ -7890,13 +7944,13 @@ declare function MeleeRandomHeroLoc(
     id2: number,
     id3: number,
     id4: number,
-    loc: jlocation
+    loc: jlocation,
 ): junit
 declare function MeleeGetProjectedLoc(
     src: jlocation,
     targ: jlocation,
     distance: number,
-    deltaAngle: number
+    deltaAngle: number,
 ): jlocation
 declare function MeleeGetNearestValueWithin(val: number, minVal: number, maxVal: number): number
 declare function MeleeGetLocWithinRect(src: jlocation, r: jrect): jlocation
@@ -7905,42 +7959,42 @@ declare function MeleeStartingUnitsHuman(
     startLoc: jlocation,
     doHeroes: boolean,
     doCamera: boolean,
-    doPreload: boolean
+    doPreload: boolean,
 ): void
 declare function MeleeStartingUnitsOrc(
     whichPlayer: jplayer,
     startLoc: jlocation,
     doHeroes: boolean,
     doCamera: boolean,
-    doPreload: boolean
+    doPreload: boolean,
 ): void
 declare function MeleeStartingUnitsUndead(
     whichPlayer: jplayer,
     startLoc: jlocation,
     doHeroes: boolean,
     doCamera: boolean,
-    doPreload: boolean
+    doPreload: boolean,
 ): void
 declare function MeleeStartingUnitsNightElf(
     whichPlayer: jplayer,
     startLoc: jlocation,
     doHeroes: boolean,
     doCamera: boolean,
-    doPreload: boolean
+    doPreload: boolean,
 ): void
 declare function MeleeStartingUnitsUnknownRace(
     whichPlayer: jplayer,
     startLoc: jlocation,
     doHeroes: boolean,
     doCamera: boolean,
-    doPreload: boolean
+    doPreload: boolean,
 ): void
 declare function MeleeStartingUnits(): void
 declare function MeleeStartingUnitsForPlayer(
     whichRace: jrace,
     whichPlayer: jplayer,
     loc: jlocation,
-    doHeroes: boolean
+    doHeroes: boolean,
 ): void
 declare function PickMeleeAI(num: jplayer, s1: string, s2: string, s3: string): void
 declare function MeleeStartingAI(): void
@@ -8013,186 +8067,186 @@ declare function BlzIsLastInstanceObjectFunctionSuccessful(): boolean
 declare function BlzSetAbilityBooleanFieldBJ(
     whichAbility: jability,
     whichField: jabilitybooleanfield,
-    value: boolean
+    value: boolean,
 ): void
 declare function BlzSetAbilityIntegerFieldBJ(
     whichAbility: jability,
     whichField: jabilityintegerfield,
-    value: number
+    value: number,
 ): void
 declare function BlzSetAbilityRealFieldBJ(
     whichAbility: jability,
     whichField: jabilityrealfield,
-    value: number
+    value: number,
 ): void
 declare function BlzSetAbilityStringFieldBJ(
     whichAbility: jability,
     whichField: jabilitystringfield,
-    value: string
+    value: string,
 ): void
 declare function BlzSetAbilityBooleanLevelFieldBJ(
     whichAbility: jability,
     whichField: jabilitybooleanlevelfield,
     level: number,
-    value: boolean
+    value: boolean,
 ): void
 declare function BlzSetAbilityIntegerLevelFieldBJ(
     whichAbility: jability,
     whichField: jabilityintegerlevelfield,
     level: number,
-    value: number
+    value: number,
 ): void
 declare function BlzSetAbilityRealLevelFieldBJ(
     whichAbility: jability,
     whichField: jabilityreallevelfield,
     level: number,
-    value: number
+    value: number,
 ): void
 declare function BlzSetAbilityStringLevelFieldBJ(
     whichAbility: jability,
     whichField: jabilitystringlevelfield,
     level: number,
-    value: string
+    value: string,
 ): void
 declare function BlzSetAbilityBooleanLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilitybooleanlevelarrayfield,
     level: number,
     index: number,
-    value: boolean
+    value: boolean,
 ): void
 declare function BlzSetAbilityIntegerLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilityintegerlevelarrayfield,
     level: number,
     index: number,
-    value: number
+    value: number,
 ): void
 declare function BlzSetAbilityRealLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilityreallevelarrayfield,
     level: number,
     index: number,
-    value: number
+    value: number,
 ): void
 declare function BlzSetAbilityStringLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilitystringlevelarrayfield,
     level: number,
     index: number,
-    value: string
+    value: string,
 ): void
 declare function BlzAddAbilityBooleanLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilitybooleanlevelarrayfield,
     level: number,
-    value: boolean
+    value: boolean,
 ): void
 declare function BlzAddAbilityIntegerLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilityintegerlevelarrayfield,
     level: number,
-    value: number
+    value: number,
 ): void
 declare function BlzAddAbilityRealLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilityreallevelarrayfield,
     level: number,
-    value: number
+    value: number,
 ): void
 declare function BlzAddAbilityStringLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilitystringlevelarrayfield,
     level: number,
-    value: string
+    value: string,
 ): void
 declare function BlzRemoveAbilityBooleanLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilitybooleanlevelarrayfield,
     level: number,
-    value: boolean
+    value: boolean,
 ): void
 declare function BlzRemoveAbilityIntegerLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilityintegerlevelarrayfield,
     level: number,
-    value: number
+    value: number,
 ): void
 declare function BlzRemoveAbilityRealLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilityreallevelarrayfield,
     level: number,
-    value: number
+    value: number,
 ): void
 declare function BlzRemoveAbilityStringLevelArrayFieldBJ(
     whichAbility: jability,
     whichField: jabilitystringlevelarrayfield,
     level: number,
-    value: string
+    value: string,
 ): void
 declare function BlzItemAddAbilityBJ(whichItem: jitem, abilCode: number): void
 declare function BlzItemRemoveAbilityBJ(whichItem: jitem, abilCode: number): void
 declare function BlzSetItemBooleanFieldBJ(
     whichItem: jitem,
     whichField: jitembooleanfield,
-    value: boolean
+    value: boolean,
 ): void
 declare function BlzSetItemIntegerFieldBJ(
     whichItem: jitem,
     whichField: jitemintegerfield,
-    value: number
+    value: number,
 ): void
 declare function BlzSetItemRealFieldBJ(
     whichItem: jitem,
     whichField: jitemrealfield,
-    value: number
+    value: number,
 ): void
 declare function BlzSetItemStringFieldBJ(
     whichItem: jitem,
     whichField: jitemstringfield,
-    value: string
+    value: string,
 ): void
 declare function BlzSetUnitBooleanFieldBJ(
     whichUnit: junit,
     whichField: junitbooleanfield,
-    value: boolean
+    value: boolean,
 ): void
 declare function BlzSetUnitIntegerFieldBJ(
     whichUnit: junit,
     whichField: junitintegerfield,
-    value: number
+    value: number,
 ): void
 declare function BlzSetUnitRealFieldBJ(
     whichUnit: junit,
     whichField: junitrealfield,
-    value: number
+    value: number,
 ): void
 declare function BlzSetUnitStringFieldBJ(
     whichUnit: junit,
     whichField: junitstringfield,
-    value: string
+    value: string,
 ): void
 declare function BlzSetUnitWeaponBooleanFieldBJ(
     whichUnit: junit,
     whichField: junitweaponbooleanfield,
     index: number,
-    value: boolean
+    value: boolean,
 ): void
 declare function BlzSetUnitWeaponIntegerFieldBJ(
     whichUnit: junit,
     whichField: junitweaponintegerfield,
     index: number,
-    value: number
+    value: number,
 ): void
 declare function BlzSetUnitWeaponRealFieldBJ(
     whichUnit: junit,
     whichField: junitweaponrealfield,
     index: number,
-    value: number
+    value: number,
 ): void
 declare function BlzSetUnitWeaponStringFieldBJ(
     whichUnit: junit,
     whichField: junitweaponstringfield,
     index: number,
-    value: string
+    value: string,
 ): void

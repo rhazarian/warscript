@@ -8,6 +8,7 @@ import { doAbilityAction } from "./item/ability"
 import { DUMMY_ITEM_ID } from "./object-data/dummy-item"
 import { SLOT_FILLER_ITEM_TYPE_ID } from "./unit/add-item-to-slot"
 import { distance } from "../../math/vec2"
+import type { ItemTypeId } from "../object-data/entry/item-type"
 
 const itemAddAbility = BlzItemAddAbility
 const itemRemoveAbility = BlzItemRemoveAbility
@@ -123,8 +124,8 @@ export class Item extends Handle<jitem> {
         return this.of(BlzCreateItemWithSkin(id, x, y, skinId ?? id))
     }
 
-    public get typeId(): number {
-        return GetItemTypeId(this.handle)
+    public get typeId(): ItemTypeId {
+        return GetItemTypeId(this.handle) as ItemTypeId
     }
 
     public set skinId(v: number) {

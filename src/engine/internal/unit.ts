@@ -30,6 +30,11 @@ import { min } from "../../math"
 import { ignoreEventsItems } from "./unit/ignore-events-items"
 import { MovementType } from "../object-data/auxiliary/movement-type"
 import { UnitAttribute } from "../object-data/auxiliary/unit-attribute"
+import {
+    AttackType,
+    attackTypeToNative,
+    nativeToAttackType,
+} from "../object-data/auxiliary/attack-type"
 
 const match = string.match
 const tostring = _G.tostring
@@ -380,7 +385,7 @@ type Collector<T extends any[]> = () => LuaMultiReturn<T>
 
 export interface DamagingEvent {
     amount: number
-    attackType: jattacktype
+    attackType: AttackType
     damageType: jdamagetype
     weaponType: jweapontype
     readonly isAttack: boolean
@@ -431,7 +436,9 @@ function damageEventPreventDeath<P extends any[]>(
 
 const damageSetters = {
     amount: BlzSetEventDamage,
-    attackType: BlzSetEventAttackType,
+    attackType: (attackType: AttackType): boolean => {
+        return BlzSetEventAttackType(attackTypeToNative(attackType))
+    },
     damageType: BlzSetEventDamageType,
     weaponType: BlzSetEventWeaponType,
 }
@@ -2253,7 +2260,7 @@ export class Unit extends Handle<junit> {
                     const target = BlzGetEventDamageTarget()
                     const data = {
                         amount: GetEventDamage(),
-                        attackType: BlzGetEventAttackType(),
+                        attackType: nativeToAttackType(BlzGetEventAttackType()),
                         damageType: BlzGetEventDamageType(),
                         weaponType: BlzGetEventWeaponType(),
                         isAttack: BlzGetEventIsAttack(),
@@ -2335,7 +2342,7 @@ export class Unit extends Handle<junit> {
                                                 data.amount,
                                                 true,
                                                 true,
-                                                data.attackType,
+                                                attackTypeToNative(data.attackType),
                                                 data.damageType,
                                                 data.weaponType,
                                             )
@@ -2373,7 +2380,7 @@ export class Unit extends Handle<junit> {
                         }
                         const data: InternalDamageEvent = {
                             amount: GetEventDamage(),
-                            attackType: BlzGetEventAttackType(),
+                            attackType: nativeToAttackType(BlzGetEventAttackType()),
                             damageType: BlzGetEventDamageType(),
                             weaponType: BlzGetEventWeaponType(),
                             isAttack: BlzGetEventIsAttack(),

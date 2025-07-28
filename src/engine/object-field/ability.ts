@@ -251,11 +251,11 @@ export abstract class AbilityLevelField<
         return Ability
     }
 
-    protected getLevelCount(entry: AbilityType | Ability): number {
+    protected override getLevelCount(entry: AbilityType | Ability): number {
         return entry.levelCount
     }
 
-    protected getObjectDataEntryId(instance: Ability): AbilityTypeId {
+    protected override getObjectDataEntryId(instance: Ability): AbilityTypeId {
         return instance.typeId
     }
 
@@ -263,7 +263,7 @@ export abstract class AbilityLevelField<
         return instance.hasField(this.nativeField)
     }
 
-    public static get valueChangeEvent(): ObjectLevelFieldValueChangeEvent<
+    public static override get valueChangeEvent(): ObjectLevelFieldValueChangeEvent<
         ReadonlyObjectLevelFieldType<AbilityLevelField>
     > {
         return this.getOrCreateValueChangeEvent()
@@ -307,7 +307,7 @@ export abstract class AbilityNumberLevelField<
         return 0
     }
 
-    public static get valueChangeEvent(): ObjectLevelFieldValueChangeEvent<AbilityNumberLevelField> {
+    public static override get valueChangeEvent(): ObjectLevelFieldValueChangeEvent<AbilityNumberLevelField> {
         return this.getOrCreateValueChangeEvent()
     }
 }
@@ -438,7 +438,9 @@ export abstract class AbilityEnumLevelField<T extends number> extends AbilityLev
         return instance.setField(this.nativeField, level, value)
     }
 
-    public static get valueChangeEvent(): ObjectLevelFieldValueChangeEvent<AbilityBooleanLevelField> {
+    public static get valueChangeEvent(): ObjectLevelFieldValueChangeEvent<
+        AbilityEnumLevelField<number>
+    > {
         return this.getOrCreateValueChangeEvent()
     }
 }

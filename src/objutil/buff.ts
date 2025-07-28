@@ -2,22 +2,19 @@ import { ObjectDefinition } from "./object"
 import {
     AbilityDefinition,
     AbilityDefinitionCripple,
-    AbilityDefinitionCriticalStrike,
     AbilityDefinitionHealingSalve,
     AbilityDefinitionInnerFire,
-    AbilityDefinitionParasite,
     AbilityDefinitionSearingArrows,
-    AbilityDefinitionSleep,
-    AbilityDefinitionSlowAura,
     AbilityDefinitionSlowPoison,
 } from "./ability"
-import { AttackType, DamageType, Unit } from "../core/types/unit"
+import { DamageType, Unit } from "../core/types/unit"
 import { InstantDummyCaster } from "../core/dummy"
 
 import * as idgen from "./idgen"
 import { Timer } from "../core/types/timer"
 import { IllegalStateException } from "../exception"
 import { AbilityTypeId } from "../engine/object-data/entry/ability-type"
+import { AttackType } from "../engine/object-data/auxiliary/attack-type"
 
 const assert = _G.assert
 const pairs = _G.pairs
@@ -110,32 +107,35 @@ export class BuffDefinition extends ObjectDefinition {
                                                 ...(
                                                     | [
                                                           ArtInput,
-                                                          ...([ArtInput, ...([ArtInput] | [])] | [])
+                                                          ...(
+                                                              | [ArtInput, ...([ArtInput] | [])]
+                                                              | []
+                                                          ),
                                                       ]
                                                     | []
-                                                )
+                                                ),
                                             ]
                                           | []
-                                      )
+                                      ),
                                   ]
                                 | []
-                            )
+                            ),
                         ]
                       | []
-                  )
-              ]
+                  ),
+              ],
     ) {
         if (Array.isArray(v)) {
             this.setStringField(
                 "ftat",
-                v.map((art) => (typeof art == "string" ? art : art.model)).join(",")
+                v.map((art) => (typeof art == "string" ? art : art.model)).join(","),
             )
             let attachmentPoints = v.map((art) =>
-                typeof art == "string" ? "origin" : art.attachmentPoint
+                typeof art == "string" ? "origin" : art.attachmentPoint,
             )
             if (
                 attachmentPoints.filter(
-                    (attachmentPoint) => attachmentPoint == "origin" || attachmentPoint == ""
+                    (attachmentPoint) => attachmentPoint == "origin" || attachmentPoint == "",
                 ).length == attachmentPoints.length
             ) {
                 attachmentPoints = []
@@ -161,10 +161,10 @@ export class BuffDefinition extends ObjectDefinition {
                   ...(
                       | [Art, ...([Art, ...([Art, ...([Art, ...([Art] | [])] | [])] | [])] | [])]
                       | []
-                  )
+                  ),
               ]
             | []
-        )
+        ),
     ] {
         const models = this.getStringField("ftat").split(",")
         const arts: Art[] = []
@@ -229,16 +229,19 @@ export class BuffDefinition extends ObjectDefinition {
     public static create<T extends BuffDefinition>(
         this: new (object: WarObject) => T,
         baseId: string | number,
-        id?: string | number
+        id?: string | number,
     ): T {
         return new this(
-            currentMap!.objects.buff.newObject(id ? util.id2s(id) : idgen.buff(), util.id2s(baseId))
+            currentMap!.objects.buff.newObject(
+                id ? util.id2s(id) : idgen.buff(),
+                util.id2s(baseId),
+            ),
         )
     }
 
     public static of<T extends BuffDefinition>(
         this: new (object: WarObject) => T,
-        id: string | number
+        id: string | number,
     ): T {
         return new this(currentMap!.objects.buff.getObject(util.id2s(id)))
     }
@@ -247,7 +250,7 @@ export class BuffDefinition extends ObjectDefinition {
         this: void,
         derived: new (object: WarObject) => T,
         baseId: string | number,
-        id?: string | number
+        id?: string | number,
     ): T {
         return BuffDefinition.create.call<
             { new (object: WarObject): T },
@@ -390,8 +393,8 @@ export class BuffPreset extends BuffDefinition implements Compiletime<BuffPreset
                 ? this.createInnerFireAbility()
                 : this.createHealingSaveAbility()
             : this.magic
-            ? this.createCrippleAbility()
-            : this.createSlowPoisonAbility()
+              ? this.createCrippleAbility()
+              : this.createSlowPoisonAbility()
         ability.manaCost = 0
         ability.cooldown = 0
         ability.durationNormal = 0
@@ -447,7 +450,7 @@ export class BuffPreset extends BuffDefinition implements Compiletime<BuffPreset
     public static create<T extends BuffDefinition>(
         this: new (object: WarObject) => T,
         baseId?: string | number,
-        id?: string | number
+        id?: string | number,
     ): T {
         return BuffDefinition.createDerived(this, baseId ?? "BHbz", id)
     }
@@ -484,7 +487,7 @@ export abstract class Buff implements Destroyable {
         public readonly source = unit,
         public readonly duration = 0,
         public readonly level = 0,
-        private readonly preset?: BuffPresetData
+        private readonly preset?: BuffPresetData,
     ) {
         if (!unit.isAlive) {
             throw IllegalBuffTargetException
@@ -496,7 +499,7 @@ export abstract class Buff implements Destroyable {
             instance.destroy()
             if (!instance.destroyed) {
                 throw new IllegalStateException(
-                    `Cannot destroy previous ${this.constructor.name} buff instance on ${unit}`
+                    `Cannot destroy previous ${this.constructor.name} buff instance on ${unit}`,
                 )
             }
         }
@@ -523,9 +526,9 @@ export abstract class Buff implements Destroyable {
                         ? orderId("innerfire")
                         : 852609
                     : preset.magic
-                    ? orderId("cripple")
-                    : orderId("flamingarrowstarg"),
-                unit
+                      ? orderId("cripple")
+                      : orderId("flamingarrowstarg"),
+                unit,
             )
             if (slowPoisonMethod) {
                 for (const abilityId of EVASION_ABILITY_IDS) {
@@ -535,7 +538,7 @@ export abstract class Buff implements Destroyable {
             const handle = BlzGetUnitAbility(unitHandle, preset.buffId)
             if (!success || handle == undefined) {
                 throw new IllegalStateException(
-                    `Cannot apply ${this.constructor.name} buff status effect on ${unit}`
+                    `Cannot apply ${this.constructor.name} buff status effect on ${unit}`,
                 )
             }
             this.handle = handle
@@ -580,7 +583,7 @@ export abstract class Buff implements Destroyable {
     public static ifApplied<T extends Buff>(
         this: BuffClass<T>,
         unit: Unit,
-        action: (buff: T) => void
+        action: (buff: T) => void,
     ): void {
         const instance = buffs.get(unit).get(this)
         if (instance) {
@@ -592,7 +595,7 @@ export abstract class Buff implements Destroyable {
     public destroy(): void {
         if (this.destroyed) {
             throw new IllegalStateException(
-                `${this.constructor.name} buff on ${this.unit} is already destroyed`
+                `${this.constructor.name} buff on ${this.unit} is already destroyed`,
             )
         }
         if (this.timer) {
@@ -658,7 +661,7 @@ const selfDispelAbilityIds = compiletime(
         "AIxs",
         "Amdf",
         "AEtq",
-    ].map((id) => fourCC(id))
+    ].map((id) => fourCC(id)),
 )
 
 const targetDispelAbilityIds = compiletime(
@@ -680,13 +683,13 @@ const targetDispelAbilityIds = compiletime(
         "AIlp",
         "AIpg",
         "AIps",
-    ].map((id) => fourCC(id))
+    ].map((id) => fourCC(id)),
 )
 
 const pointDispelAbilityIds = compiletime(
     ["Adis", "Adcn", "Adch", "Advm", "Adtn", "ACde", "Adsm", "AIdi", "AIds", "APdi"].map((id) =>
-        fourCC(id)
-    )
+        fourCC(id),
+    ),
 )
 
 const checkBuffs = (unit: Unit, dispel?: boolean, dispelSource?: Unit): void => {
@@ -710,7 +713,7 @@ Unit.abilityChannelingStartEvent[fourCC("AOvd")].addListener((caster, ability) =
     const targets = Unit.getInCollisionRange(
         caster.x,
         caster.y,
-        ability.getField(ABILITY_RLF_AREA_OF_EFFECT)
+        ability.getField(ABILITY_RLF_AREA_OF_EFFECT),
     )
     Timer.run(() => {
         for (const target of targets) {
