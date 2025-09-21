@@ -119,7 +119,7 @@ export const apply: {
     <
         T,
         ConsumerParameters extends any[],
-        K extends KeysOfType<T, (...parameters: ConsumerParameters) => void>
+        K extends KeysOfType<T, (...parameters: ConsumerParameters) => void>,
     >(
         object: T,
         key: K,
@@ -139,3 +139,5 @@ export const apply: {
     }
     return object
 }
+
+export const identity = <T>(value: T): T => value

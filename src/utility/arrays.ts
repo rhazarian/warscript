@@ -1,5 +1,6 @@
 import { IllegalArgumentException } from "../exception"
 import { TupleOf } from "./types"
+import { identity } from "./functions"
 
 const mathMax = math.max
 const mathMin = math.min
@@ -159,6 +160,8 @@ export const mapToLuaSet: {
     }
     return result
 }
+
+export const flatten = <T>(array: readonly (readonly T[])[]) => flatMap(array, identity)
 
 export const flatMap: {
     <T, R>(array: readonly T[], transform: (value: T) => readonly R[]): R[]
