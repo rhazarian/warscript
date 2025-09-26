@@ -65,7 +65,6 @@ const getHandleId = GetHandleId
 const getUnitCurrentOrder = GetUnitCurrentOrder
 const createUnit = CreateUnit
 const killUnit = KillUnit
-const setUnitExploded = SetUnitExploded
 const removeUnit = RemoveUnit
 const getUnitTypeId = GetUnitTypeId
 const isHeroUnitId = IsHeroUnitId
@@ -81,8 +80,6 @@ const getSpellTargetItem = GetSpellTargetItem
 const getSpellTargetDestructable = GetSpellTargetDestructable
 const isUnitInRangeXY = IsUnitInRangeXY
 const isUnitInRange = IsUnitInRange
-const setResourceAmount = SetResourceAmount
-const getResourceAmount = GetResourceAmount
 const getUnitWeaponRealField = BlzGetUnitWeaponRealField
 const setUnitWeaponRealField = BlzSetUnitWeaponRealField
 const getUnitWeaponStringField = BlzGetUnitWeaponStringField
@@ -1325,11 +1322,11 @@ export class Unit extends Handle<junit> {
 
     /** The amount of gold left in the gold mine. */
     public get gold(): number {
-        return getResourceAmount(this.handle)
+        return GetResourceAmount(this.handle)
     }
 
     public set gold(gold: number) {
-        setResourceAmount(this.handle, gold)
+        SetResourceAmount(this.handle, gold)
     }
 
     public get isPaused(): boolean {
@@ -1426,7 +1423,7 @@ export class Unit extends Handle<junit> {
     }
 
     public explode(): void {
-        setUnitExploded(this.handle, true)
+        SetUnitExploded(this.handle, true)
         killUnit(this.handle)
     }
 
