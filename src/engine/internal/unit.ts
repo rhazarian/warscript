@@ -118,8 +118,6 @@ const isUnitType = IsUnitType
 const isUnitAlly = IsUnitAlly
 const isUnitEnemy = IsUnitEnemy
 const getOwningPlayer = GetOwningPlayer
-const setUnitColor = SetUnitColor
-const showUnitTeamGlow = BlzShowUnitTeamGlow
 
 export type UnitClassification = junittype
 export namespace UnitClassification {
@@ -1125,14 +1123,14 @@ export class Unit extends Handle<junit> {
     }
 
     public set isTeamGlowVisible(isTeamGlowVisible: boolean) {
-        showUnitTeamGlow(this.handle, isTeamGlowVisible)
+        BlzShowUnitTeamGlow(this.handle, isTeamGlowVisible)
         this[UnitPropertyKey.IS_TEAM_GLOW_HIDDEN] = !isTeamGlowVisible ? true : undefined
     }
 
     public set color(color: PlayerColor) {
-        setUnitColor(this.handle, color.handle)
+        SetUnitColor(this.handle, color.handle)
         if (this[UnitPropertyKey.IS_TEAM_GLOW_HIDDEN]) {
-            showUnitTeamGlow(this.handle, false)
+            BlzShowUnitTeamGlow(this.handle, false)
         }
     }
 
