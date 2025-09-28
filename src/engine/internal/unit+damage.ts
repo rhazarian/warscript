@@ -73,7 +73,21 @@ declare module "./unit" {
             attackType?: AttackType,
             damageType?: DamageType,
             weaponType?: WeaponType,
+            metadata?: unknown,
         ): boolean
+
+        /*damageArea(
+            x: number,
+            y: number,
+            allowedTargetCombatClassifications: CombatClassifications,
+            amount: number,
+            attack?: boolean,
+            ranged?: boolean,
+            attackType?: AttackType,
+            damageType?: DamageType,
+            weaponType?: WeaponType,
+            metadata?: unknown,
+        ): LuaMultiReturn<[boolean, Unit[]]>*/
     }
 }
 
@@ -84,6 +98,9 @@ for (const player of Player.all) {
     dummies.set(player, dummy)
 }
 
+/** @internal For use by internal systems only. */
+export const damageMetadataByTarget = setmetatable(new LuaTable<Unit, unknown>(), { __mode: "k" })
+
 Unit.prototype.damageTarget = function (
     target: Widget,
     amount: number,
@@ -92,6 +109,7 @@ Unit.prototype.damageTarget = function (
     attackType = AttackType.SPELL,
     damageType = DamageType.MAGIC,
     weaponType = WeaponType.UNKNOWN,
+    metadata?: unknown,
 ): boolean {
     let handle = this.handle
     const targetHandle = target.handle
@@ -99,6 +117,9 @@ Unit.prototype.damageTarget = function (
         handle = dummies.get(
             target instanceof Unit ? target.owner : (this["_owner"] ?? Player.neutralAggressive),
         )
+    }
+    if (target instanceof Unit) {
+        damageMetadataByTarget.set(target, metadata)
     }
     return unitDamageTarget(
         handle,

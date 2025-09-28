@@ -35,6 +35,7 @@ import {
     attackTypeToNative,
     nativeToAttackType,
 } from "../object-data/auxiliary/attack-type"
+import { damageMetadataByTarget } from "./unit+damage"
 
 const match = string.match
 const tostring = _G.tostring
@@ -383,8 +384,10 @@ export interface DamagingEvent {
     attackType: AttackType
     damageType: jdamagetype
     weaponType: jweapontype
+    metadata: unknown
     readonly isAttack: boolean
     readonly originalAmount: number
+    readonly originalMetadata: unknown
 }
 
 export type DamageEvent = DamagingEvent & {
@@ -738,9 +741,11 @@ const delayHealthChecksCallback = (unit: Unit): void => {
 
 let nextSyncId = 1
 
-const unitBySyncId = setmetatable(new LuaMap<number, Unit>(), { __mode: "k" })
+const unitBySyncId = setmetatable(new LuaMap<number, Unit>(), { __mode: "v" })
 
 export type UnitSyncId = number & { readonly __unitSyncId: unique symbol }
+
+const damagingEventByTarget = setmetatable(new LuaMap<Unit, DamagingEvent>(), { __mode: "k" })
 
 export class Unit extends Handle<junit> {
     public readonly syncId = nextSyncId++ as UnitSyncId
@@ -2252,13 +2257,18 @@ export class Unit extends Handle<junit> {
                     if (source && source.typeId == dummyUnitId) {
                         source = undefined
                     }
-                    const target = BlzGetEventDamageTarget()
+                    const target = Unit.of(BlzGetEventDamageTarget())
+                    const metadata = damageMetadataByTarget.get(target)
+                    damageMetadataByTarget.delete(target)
                     const data = {
                         amount: GetEventDamage(),
                         attackType: nativeToAttackType(BlzGetEventAttackType()),
                         damageType: BlzGetEventDamageType(),
                         weaponType: BlzGetEventWeaponType(),
+                        metadata: metadata,
                         isAttack: BlzGetEventIsAttack(),
+                        originalAmount: GetEventDamage(),
+                        originalMetadata: metadata,
                     } as DamagingEvent & {
                         weapon?: UnitWeapon
                     }
@@ -2291,18 +2301,22 @@ export class Unit extends Handle<junit> {
                         invoke(
                             event,
                             source,
-                            Unit.of(target),
+                            target,
                             setmetatable<{}, DamagingEvent>(
                                 {},
                                 {
                                     __index: data,
                                     __newindex(key: keyof typeof damageSetters, value: never) {
-                                        damageSetters[key](value)
+                                        const damageSetter = damageSetters[key]
+                                        if (damageSetter != undefined) {
+                                            damageSetter(value)
+                                        }
                                         data[key] = value
                                     },
                                 },
                             ),
                         )
+                        damagingEventByTarget.set(target, data)
                         return
                     }
                     BlzSetEventDamage(0)
@@ -2310,7 +2324,7 @@ export class Unit extends Handle<junit> {
                     BlzSetEventDamageType(DAMAGE_TYPE_UNKNOWN)
                     BlzSetEventWeaponType(WEAPON_TYPE_WHOKNOWS)
                     const sourceOwner = source.owner.handle
-                    const targetOwner = GetOwningPlayer(target)
+                    const targetOwner = target.owner.handle
                     if (!GetPlayerAlliance(sourceOwner, targetOwner, ALLIANCE_PASSIVE)) {
                         SetPlayerAlliance(sourceOwner, targetOwner, ALLIANCE_PASSIVE, true)
                         Timer.run(() => {
@@ -2324,16 +2338,16 @@ export class Unit extends Handle<junit> {
                         })
                     }
                     for (const [condition, action] of source._attackHandlers) {
-                        if (condition(source, Unit.of(target), data as AttackDamageEvent)) {
+                        if (condition(source, target, data as AttackDamageEvent)) {
                             action(
                                 source,
-                                Unit.of(target),
+                                target,
                                 setmetatable<{ fire(this: void): void }, AttackDamageEvent>(
                                     {
                                         fire() {
                                             UnitDamageTarget(
                                                 source!.handle,
-                                                target,
+                                                target.handle,
                                                 data.amount,
                                                 true,
                                                 true,
@@ -2373,13 +2387,18 @@ export class Unit extends Handle<junit> {
                         if (source && source.typeId == dummyUnitId) {
                             source = undefined
                         }
+                        const target = Unit.of(BlzGetEventDamageTarget())
+                        const damagingEvent = damagingEventByTarget.get(target)
+                        damagingEventByTarget.delete(target)
                         const data: InternalDamageEvent = {
                             amount: GetEventDamage(),
                             attackType: nativeToAttackType(BlzGetEventAttackType()),
                             damageType: BlzGetEventDamageType(),
                             weaponType: BlzGetEventWeaponType(),
+                            metadata: damagingEvent?.metadata,
                             isAttack: BlzGetEventIsAttack(),
-                            originalAmount: GetEventDamage(),
+                            originalAmount: damagingEvent?.originalAmount ?? GetEventDamage(),
+                            originalMetadata: damagingEvent?.originalMetadata,
 
                             preventDeath: damageEventPreventDeath,
                         }
@@ -2393,7 +2412,6 @@ export class Unit extends Handle<junit> {
                                 },
                             },
                         )
-                        const target = Unit.of(BlzGetEventDamageTarget())
                         invoke(event, source, target, evData)
                         if (
                             evData[DamageEventPropertyKey.PREVENT_DEATH_CALLBACK] != undefined &&
