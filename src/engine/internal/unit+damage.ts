@@ -3,6 +3,7 @@ import { Widget } from "../../core/types/widget"
 import { Player } from "../../core/types/player"
 import { dummyUnitId } from "../../objutil/dummy"
 import { AttackType, attackTypeToNative } from "../object-data/auxiliary/attack-type"
+import { damageMetadataByTarget } from "./misc/damage-metadata-by-target"
 
 const createUnit = CreateUnit
 const getOwningPlayer = GetOwningPlayer
@@ -97,9 +98,6 @@ for (const player of Player.all) {
     showUnit(dummy, false)
     dummies.set(player, dummy)
 }
-
-/** @internal For use by internal systems only. */
-export const damageMetadataByTarget = setmetatable(new LuaTable<Unit, unknown>(), { __mode: "k" })
 
 Unit.prototype.damageTarget = function (
     target: Widget,

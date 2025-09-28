@@ -35,7 +35,7 @@ import {
     attackTypeToNative,
     nativeToAttackType,
 } from "../object-data/auxiliary/attack-type"
-import { damageMetadataByTarget } from "./unit+damage"
+import { damageMetadataByTarget } from "./misc/damage-metadata-by-target"
 
 const match = string.match
 const tostring = _G.tostring
