@@ -15,9 +15,10 @@ export type DamageAbilityBehaviorParameters = {
     damagePerStrength?: AbilityDependentValue<number>
     damagePerAgility?: AbilityDependentValue<number>
     damagePerIntelligence?: AbilityDependentValue<number>
-    attackType?: AttackType
+    attackType?: AbilityDependentValue<AttackType>
     damageType?: DamageType
     weaponType?: WeaponType
+    metadata?: AbilityDependentValue<string | number | boolean>
 }
 
 export type DamageAreaAbilityBehaviorParameters = DamageAbilityBehaviorParameters & {
@@ -78,9 +79,10 @@ export class DamageSelfAbilityBehavior extends DamageAbilityBehavior {
             this.calculateDamage(caster),
             undefined,
             undefined,
-            parameters?.attackType,
+            this.resolveCurrentAbilityDependentValue(parameters?.attackType),
             parameters?.damageType,
             parameters?.weaponType,
+            this.resolveCurrentAbilityDependentValue(parameters?.metadata),
         )
     }
 }
@@ -101,9 +103,10 @@ export class DamageTargetAbilityBehavior extends DamageAbilityBehavior {
             this.calculateDamage(caster),
             undefined,
             undefined,
-            parameters?.attackType,
+            this.resolveCurrentAbilityDependentValue(parameters?.attackType),
             parameters?.damageType,
             parameters?.weaponType,
+            this.resolveCurrentAbilityDependentValue(parameters?.metadata),
         )
     }
 }
@@ -147,9 +150,10 @@ abstract class DamageAreaAbilityBehavior extends DamageAbilityBehavior<DamageAre
                 damage,
                 undefined,
                 undefined,
-                parameters?.attackType,
+                this.resolveCurrentAbilityDependentValue(parameters?.attackType),
                 parameters?.damageType,
                 parameters?.weaponType,
+                this.resolveCurrentAbilityDependentValue(parameters?.metadata),
             )
         }
     }
