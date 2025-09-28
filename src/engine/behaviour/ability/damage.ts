@@ -61,6 +61,20 @@ abstract class DamageAbilityBehavior<
         }
         return damage
     }
+
+    protected damageTarget(caster: Unit, target: Widget, damage?: number): void {
+        const parameters = this.parameters
+        caster.damageTarget(
+            target,
+            damage ?? this.calculateDamage(caster),
+            undefined,
+            undefined,
+            this.resolveCurrentAbilityDependentValue(parameters?.attackType),
+            parameters?.damageType,
+            parameters?.weaponType,
+            this.resolveCurrentAbilityDependentValue(parameters?.metadata),
+        )
+    }
 }
 
 export class DamageSelfAbilityBehavior extends DamageAbilityBehavior {
@@ -73,17 +87,7 @@ export class DamageSelfAbilityBehavior extends DamageAbilityBehavior {
     }
 
     public override onImpact(caster: Unit): void {
-        const parameters = this.parameters
-        caster.damageTarget(
-            caster,
-            this.calculateDamage(caster),
-            undefined,
-            undefined,
-            this.resolveCurrentAbilityDependentValue(parameters?.attackType),
-            parameters?.damageType,
-            parameters?.weaponType,
-            this.resolveCurrentAbilityDependentValue(parameters?.metadata),
-        )
+        this.damageTarget(caster, caster)
     }
 }
 
@@ -97,17 +101,7 @@ export class DamageTargetAbilityBehavior extends DamageAbilityBehavior {
     }
 
     public override onWidgetTargetImpact(caster: Unit, target: Widget): void {
-        const parameters = this.parameters
-        caster.damageTarget(
-            target,
-            this.calculateDamage(caster),
-            undefined,
-            undefined,
-            this.resolveCurrentAbilityDependentValue(parameters?.attackType),
-            parameters?.damageType,
-            parameters?.weaponType,
-            this.resolveCurrentAbilityDependentValue(parameters?.metadata),
-        )
+        this.damageTarget(caster, target)
     }
 }
 
@@ -145,16 +139,7 @@ abstract class DamageAreaAbilityBehavior extends DamageAbilityBehavior<DamageAre
         }
 
         for (const target of targets) {
-            caster.damageTarget(
-                target,
-                damage,
-                undefined,
-                undefined,
-                this.resolveCurrentAbilityDependentValue(parameters?.attackType),
-                parameters?.damageType,
-                parameters?.weaponType,
-                this.resolveCurrentAbilityDependentValue(parameters?.metadata),
-            )
+            this.damageTarget(caster, target, damage)
         }
     }
 }
