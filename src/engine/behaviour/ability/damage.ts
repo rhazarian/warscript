@@ -27,7 +27,7 @@ export type DamageAreaAbilityBehaviorParameters = DamageAbilityBehaviorParameter
     allowedTargetCombatClassifications?: AbilityDependentValue<CombatClassifications>
 }
 
-abstract class DamageAbilityBehavior<
+export abstract class DamageAbilityBehavior<
     T extends DamageAbilityBehaviorParameters = DamageAbilityBehaviorParameters,
 > extends AbilityBehavior {
     protected constructor(
