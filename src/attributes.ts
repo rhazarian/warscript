@@ -6,11 +6,28 @@ export type Attribute<T> = {
     readonly __marker: typeof marker
 } & symbol
 
+export const attribute = <T>(): Attribute<T> => {
+    return { __marker: marker } as Attribute<T>
+}
+
 export const isAttribute = (value: unknown): value is Attribute<unknown> => {
     return (
         type(value) == "table" && rawget(value as Record<keyof any, unknown>, "__marker") == marker
     )
 }
+
+export declare const getAttribute: (<T>(
+    object: AttributesHolder,
+    attribute: Attribute<T>,
+) => T | undefined) &
+    LuaExtension<"TableGet">
+
+export declare const setAttribute: (<T>(
+    object: AttributesHolder,
+    attribute: Attribute<T>,
+    value: T | undefined,
+) => void) &
+    LuaExtension<"TableSet">
 
 export namespace Attribute {
     export const create = <T>(): Attribute<T> => {
