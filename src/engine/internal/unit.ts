@@ -36,6 +36,7 @@ import {
     nativeToAttackType,
 } from "../object-data/auxiliary/attack-type"
 import { damageMetadataByTarget } from "./misc/damage-metadata-by-target"
+import { AttributesHolder, isAttribute } from "../../attributes"
 
 const match = string.match
 const tostring = _G.tostring
@@ -379,7 +380,7 @@ function dispatchAbility<T extends any[] = []>(
 
 type Collector<T extends any[]> = () => LuaMultiReturn<T>
 
-export interface DamagingEvent {
+export interface DamagingEvent extends AttributesHolder {
     amount: number
     attackType: AttackType
     damageType: jdamagetype
@@ -2390,7 +2391,7 @@ export class Unit extends Handle<junit> {
                         const target = Unit.of(BlzGetEventDamageTarget())
                         const damagingEvent = damagingEventByTarget.get(target)
                         damagingEventByTarget.delete(target)
-                        const data: InternalDamageEvent = {
+                        const data = {
                             amount: GetEventDamage(),
                             attackType: nativeToAttackType(BlzGetEventAttackType()),
                             damageType: BlzGetEventDamageType(),
@@ -2401,13 +2402,23 @@ export class Unit extends Handle<junit> {
                             originalMetadata: damagingEvent?.originalMetadata,
 
                             preventDeath: damageEventPreventDeath,
+                        } as InternalDamageEvent
+                        if (damagingEvent) {
+                            for (const [key, value] of pairs(damagingEvent)) {
+                                if (isAttribute(key)) {
+                                    data.set(key, value)
+                                }
+                            }
                         }
                         const evData = setmetatable(
                             {},
                             {
                                 __index: data,
                                 __newindex(key: keyof typeof damageSetters, value: never) {
-                                    damageSetters[key](value)
+                                    const damageSetter = damageSetters[key]
+                                    if (damageSetter != undefined) {
+                                        damageSetter(value)
+                                    }
                                     data[key] = value
                                 },
                             },
