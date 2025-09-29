@@ -43,8 +43,6 @@ const tostring = _G.tostring
 
 const setUnitAnimation = SetUnitAnimation
 const setUnitAnimationByIndex = SetUnitAnimationByIndex
-const resetUnitAnimation = ResetUnitAnimation
-const queueUnitAnimation = QueueUnitAnimation
 const getUnitIntegerField = BlzGetUnitIntegerField
 const getUnitRealField = BlzGetUnitRealField
 const getHeroStr = GetHeroStr
@@ -999,11 +997,11 @@ export class Unit extends Handle<junit> {
     }
 
     public resetAnimation(): void {
-        resetUnitAnimation(this.handle)
+        ResetUnitAnimation(this.handle)
     }
 
     public queueAnimation(animation: string): void {
-        queueUnitAnimation(this.handle, animation)
+        QueueUnitAnimation(this.handle, animation)
     }
 
     public get weapons(): [UnitWeapon, UnitWeapon] {

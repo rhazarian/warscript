@@ -16,19 +16,6 @@ export const isAttribute = (value: unknown): value is Attribute<unknown> => {
     )
 }
 
-export declare const getAttribute: (<T>(
-    object: AttributesHolder,
-    attribute: Attribute<T>,
-) => T | undefined) &
-    LuaExtension<"TableGet">
-
-export declare const setAttribute: (<T>(
-    object: AttributesHolder,
-    attribute: Attribute<T>,
-    value: T | undefined,
-) => void) &
-    LuaExtension<"TableSet">
-
 export namespace Attribute {
     export const create = <T>(): Attribute<T> => {
         return { __marker: marker } as Attribute<T>
