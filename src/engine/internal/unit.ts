@@ -42,7 +42,6 @@ const match = string.match
 const tostring = _G.tostring
 
 const setUnitAnimation = SetUnitAnimation
-const setUnitAnimationWithRarity = SetUnitAnimationWithRarity
 const setUnitAnimationByIndex = SetUnitAnimationByIndex
 const resetUnitAnimation = ResetUnitAnimation
 const queueUnitAnimation = QueueUnitAnimation
@@ -993,7 +992,7 @@ export class Unit extends Handle<junit> {
         if (typeof animation == "number") {
             setUnitAnimationByIndex(this.handle, animation)
         } else if (rarity) {
-            setUnitAnimationWithRarity(this.handle, animation, rarity)
+            SetUnitAnimationWithRarity(this.handle, animation, rarity)
         } else {
             setUnitAnimation(this.handle, animation)
         }
