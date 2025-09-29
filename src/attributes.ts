@@ -1,11 +1,20 @@
+const marker = {} as const
+
 export type Attribute<T> = {
     readonly __attribute: unique symbol
     readonly __type: T
+    readonly __marker: typeof marker
 } & symbol
+
+export const isAttribute = (value: unknown): value is Attribute<unknown> => {
+    return (
+        type(value) == "table" && rawget(value as Record<keyof any, unknown>, "__marker") == marker
+    )
+}
 
 export namespace Attribute {
     export const create = <T>(): Attribute<T> => {
-        return {} as Attribute<T>
+        return { __marker: marker } as Attribute<T>
     }
 }
 
