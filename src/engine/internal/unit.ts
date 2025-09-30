@@ -123,6 +123,7 @@ export namespace UnitClassification {
     export const GROUND = UNIT_TYPE_GROUND
     export const SUMMONED = UNIT_TYPE_SUMMONED
     export const MECHANICAL = UNIT_TYPE_MECHANICAL
+    export const WORKER = UNIT_TYPE_PEON
     export const ANCIENT = UNIT_TYPE_ANCIENT
     export const SUICIDAL = UNIT_TYPE_SAPPER
     export const TAUREN = UNIT_TYPE_TAUREN
