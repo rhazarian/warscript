@@ -1786,6 +1786,10 @@ export class Unit extends Handle<junit> {
         return eventByValueByOperator
     }
 
+    public get targetAcquiredEvent(): Event {
+        return this.getEvent(EVENT_UNIT_ACQUIRED_TARGET)
+    }
+
     public get onSelect(): Event {
         return this.getEvent(EVENT_UNIT_SELECTED)
     }
