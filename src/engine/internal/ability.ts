@@ -34,6 +34,7 @@ const getHandleId = GetHandleId
 const getItemBooleanField = BlzGetItemBooleanField
 const setItemBooleanField = BlzSetItemBooleanField
 const unitHideAbility = BlzUnitHideAbility
+const unitDisableAbility = BlzUnitDisableAbility
 const match = string.match
 const type = _G.type
 const tostring = _G.tostring
@@ -449,6 +450,14 @@ export class UnitAbility extends Ability {
 
     public decrementHideCounter(): void {
         unitHideAbility(this.u, this.typeId, false)
+    }
+
+    public incrementDisableCounter(): void {
+        unitDisableAbility(this.u, this.typeId, true, false)
+    }
+
+    public decrementDisableCounter(): void {
+        unitDisableAbility(this.u, this.typeId, false, false)
     }
 
     public override get level(): number {
