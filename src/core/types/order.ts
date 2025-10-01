@@ -1,10 +1,11 @@
 import { Unit } from "./unit"
 import { Item } from "./item"
 import { Destructable } from "./destructable"
+import { elapsedTime } from "../game"
 
 const getUnitCurrentOrder = GetUnitCurrentOrder
 
-export type Order = { id: number; startX: number; startY: number } & (
+export type Order = { id: number; startX: number; startY: number; issueTime: number } & (
     | {
           type: "immediate"
       }
@@ -26,6 +27,7 @@ Unit.onImmediateOrder.addListener((unit, orderId) => {
         id: orderId,
         startX: unit.x,
         startY: unit.y,
+        issueTime: elapsedTime(),
         type: "immediate",
     })
 })
@@ -35,6 +37,7 @@ Unit.onPointOrder.addListener((unit, orderId, x, y) => {
         id: orderId,
         startX: unit.x,
         startY: unit.y,
+        issueTime: elapsedTime(),
         type: "point",
         targetX: x,
         targetY: y,
@@ -46,6 +49,7 @@ Unit.onTargetOrder.addListener((unit, orderId, target) => {
         id: orderId,
         startX: unit.x,
         startY: unit.y,
+        issueTime: elapsedTime(),
         type: "target",
         target: target,
     })
