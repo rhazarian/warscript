@@ -387,9 +387,31 @@ export interface DamagingEvent extends AttributesHolder {
     readonly isAttack: boolean
     readonly originalAmount: number
     readonly originalMetadata: unknown
+
+    preventRetaliation(this: DamagingEvent): void
 }
 
-export type DamageEvent = DamagingEvent & {
+const enum DamagingEventPropertyKey {
+    SHOULD_PREVENT_RETALIATION,
+    RETALIATION_PREVENTION_SOURCE_OWNER,
+    RETALIATION_PREVENTION_TARGET_OWNER,
+    RETALIATION_PREVENTION_SOURCE_TO_TARGET,
+    RETALIATION_PREVENTION_TARGET_TO_SOURCE,
+}
+
+type InternalDamagingEvent = DamagingEvent & {
+    [DamagingEventPropertyKey.SHOULD_PREVENT_RETALIATION]?: true
+    [DamagingEventPropertyKey.RETALIATION_PREVENTION_SOURCE_OWNER]?: jplayer
+    [DamagingEventPropertyKey.RETALIATION_PREVENTION_TARGET_OWNER]?: jplayer
+    [DamagingEventPropertyKey.RETALIATION_PREVENTION_SOURCE_TO_TARGET]?: true
+    [DamagingEventPropertyKey.RETALIATION_PREVENTION_TARGET_TO_SOURCE]?: true
+}
+
+function damagingEventPreventRetaliation(this: InternalDamagingEvent): void {
+    rawset(this as InternalDamagingEvent, DamagingEventPropertyKey.SHOULD_PREVENT_RETALIATION, true)
+}
+
+export type DamageEvent = Omit<DamagingEvent, "preventRetaliation"> & {
     preventDeath<P extends any[]>(
         this: DamageEvent,
         callback: (this: void, ...parameters: P) => any,
@@ -744,7 +766,9 @@ const unitBySyncId = setmetatable(new LuaMap<number, Unit>(), { __mode: "v" })
 
 export type UnitSyncId = number & { readonly __unitSyncId: unique symbol }
 
-const damagingEventByTarget = setmetatable(new LuaMap<Unit, DamagingEvent>(), { __mode: "k" })
+const damagingEventByTarget = setmetatable(new LuaMap<Unit, InternalDamagingEvent>(), {
+    __mode: "k",
+})
 
 export class Unit extends Handle<junit> {
     public readonly syncId = nextSyncId++ as UnitSyncId
@@ -2272,7 +2296,9 @@ export class Unit extends Handle<junit> {
                         isAttack: BlzGetEventIsAttack(),
                         originalAmount: GetEventDamage(),
                         originalMetadata: metadata,
-                    } as DamagingEvent & {
+
+                        preventRetaliation: damagingEventPreventRetaliation,
+                    } as InternalDamagingEvent & {
                         weapon?: UnitWeapon
                     }
                     if (data.isAttack && source) {
@@ -2319,6 +2345,26 @@ export class Unit extends Handle<junit> {
                                 },
                             ),
                         )
+                        if (data[DamagingEventPropertyKey.SHOULD_PREVENT_RETALIATION] && source) {
+                            const sourceOwner = source.owner.handle
+                            data[DamagingEventPropertyKey.RETALIATION_PREVENTION_SOURCE_OWNER] =
+                                sourceOwner
+                            const targetOwner = target.owner.handle
+                            data[DamagingEventPropertyKey.RETALIATION_PREVENTION_TARGET_OWNER] =
+                                targetOwner
+                            if (!GetPlayerAlliance(sourceOwner, targetOwner, ALLIANCE_PASSIVE)) {
+                                SetPlayerAlliance(sourceOwner, targetOwner, ALLIANCE_PASSIVE, true)
+                                data[
+                                    DamagingEventPropertyKey.RETALIATION_PREVENTION_SOURCE_TO_TARGET
+                                ] = true
+                            }
+                            if (!GetPlayerAlliance(targetOwner, sourceOwner, ALLIANCE_PASSIVE)) {
+                                SetPlayerAlliance(targetOwner, sourceOwner, ALLIANCE_PASSIVE, true)
+                                data[
+                                    DamagingEventPropertyKey.RETALIATION_PREVENTION_TARGET_TO_SOURCE
+                                ] = true
+                            }
+                        }
                         damagingEventByTarget.set(target, data)
                         return
                     }
@@ -2409,6 +2455,42 @@ export class Unit extends Handle<junit> {
                             for (const [key, value] of pairs(damagingEvent)) {
                                 if (isAttribute(key)) {
                                     data.set(key, value)
+                                }
+                            }
+                            const sourceOwner =
+                                damagingEvent[
+                                    DamagingEventPropertyKey.RETALIATION_PREVENTION_SOURCE_OWNER
+                                ]
+                            if (sourceOwner) {
+                                const targetOwner =
+                                    damagingEvent[
+                                        DamagingEventPropertyKey.RETALIATION_PREVENTION_TARGET_OWNER
+                                    ]!
+                                if (
+                                    damagingEvent[
+                                        DamagingEventPropertyKey
+                                            .RETALIATION_PREVENTION_SOURCE_TO_TARGET
+                                    ]
+                                ) {
+                                    SetPlayerAlliance(
+                                        sourceOwner,
+                                        targetOwner,
+                                        ALLIANCE_PASSIVE,
+                                        false,
+                                    )
+                                }
+                                if (
+                                    damagingEvent[
+                                        DamagingEventPropertyKey
+                                            .RETALIATION_PREVENTION_TARGET_TO_SOURCE
+                                    ]
+                                ) {
+                                    SetPlayerAlliance(
+                                        targetOwner,
+                                        sourceOwner,
+                                        ALLIANCE_PASSIVE,
+                                        false,
+                                    )
                                 }
                             }
                         }
