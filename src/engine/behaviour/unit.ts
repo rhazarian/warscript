@@ -5,11 +5,22 @@ import "../internal/unit+ability"
 import "../internal/unit-missile-launch"
 import { Item } from "../internal/item"
 import type { AbilityBehavior } from "./ability"
+import { Event } from "../../event"
+import { LinkedSet } from "../../utility/linked-set"
+import { Destructor } from "../../destroyable"
+import { getOrPut, mutableLuaMap } from "../../utility/lua-maps"
+import { mutableLuaSet } from "../../utility/lua-sets"
 
 export type UnitBehaviorConstructor<Args extends any[]> = new (
     unit: Unit,
     ...args: Args
 ) => UnitBehavior
+
+const behaviorsByEvent = new LuaMap<Event, LinkedSet<UnitBehavior>>()
+const rangeByBehaviorByEvent = new LuaMap<Event, LuaMap<UnitBehavior, number>>()
+const listenerByBehaviorByEvent = new LuaMap<Event, LuaMap<UnitBehavior, string>>()
+
+const eventsByBehavior = new LuaMap<UnitBehavior, LuaSet<Event>>()
 
 export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[]> extends Behavior<
     Unit,
@@ -19,10 +30,62 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         super(unit)
     }
 
+    protected override onDestroy(): Destructor {
+        const events = eventsByBehavior.get(this)
+        if (events !== undefined) {
+            for (const event of events) {
+                behaviorsByEvent.get(event)?.remove(this)
+                rangeByBehaviorByEvent.get(event)?.delete(this)
+                listenerByBehaviorByEvent.get(event)?.delete(this)
+            }
+            eventsByBehavior.delete(this)
+        }
+        return super.onDestroy()
+    }
+
     public readonly sourceAbilityBehavior?: AbilityBehavior
 
     public get unit(): Unit {
         return this.object
+    }
+
+    public registerInRangeUnitEvent<T extends string, Args extends any[]>(
+        this: UnitBehavior<PeriodicActionParameters> &
+            Record<T, (this: this, unit: Unit, ...args: Args) => unknown>,
+        event: Event<[Unit, ...Args]>,
+        range: number,
+        listener: T,
+    ): void {
+        const rangeByBehavior = getOrPut(rangeByBehaviorByEvent, event, mutableLuaMap)
+        rangeByBehavior.set(this, range)
+        const listenerByBehavior = getOrPut(listenerByBehaviorByEvent, event, mutableLuaMap)
+        listenerByBehavior.set(this, listener)
+        getOrPut(eventsByBehavior, this, mutableLuaSet).add(event)
+        let behaviors = behaviorsByEvent.get(event)
+        if (behaviors == undefined) {
+            event.addListener((unit, ...args) => {
+                const behaviors = behaviorsByEvent.get(event)
+                if (behaviors !== undefined) {
+                    for (const behavior of behaviors) {
+                        const range = rangeByBehavior.get(behavior)
+                        if (
+                            range !== undefined &&
+                            unit.getCollisionDistanceTo(behavior.unit) <= range
+                        ) {
+                            ;(
+                                behavior as Record<
+                                    T,
+                                    (this: unknown, unit: Unit, ...args: Args) => unknown
+                                >
+                            )[listenerByBehavior.get(behavior)! as T](unit, ...args)
+                        }
+                    }
+                }
+            })
+            behaviors = new LinkedSet()
+            behaviorsByEvent.set(event, behaviors)
+        }
+        behaviors.add(this)
     }
 
     public onAutoAttackStart(target: Unit): void {
@@ -30,6 +93,14 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
     }
 
     public onAutoAttackFinish(target: Unit): void {
+        // no-op
+    }
+
+    public onTargetingAutoAttackStart(source: Unit): void {
+        // no-op
+    }
+
+    public onTargetingAutoAttackFinish(source: Unit): void {
         // no-op
     }
 
@@ -84,10 +155,12 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
     static {
         Unit.autoAttackStartEvent.addListener((source, target) => {
             UnitBehavior.forAll(source, "onAutoAttackStart", target)
+            UnitBehavior.forAll(target, "onTargetingAutoAttackStart", source)
         })
 
         Unit.autoAttackFinishEvent.addListener((source, target) => {
             UnitBehavior.forAll(source, "onAutoAttackFinish", target)
+            UnitBehavior.forAll(target, "onTargetingAutoAttackFinish", source)
         })
 
         Unit.onDamaging.addListener((source, target, event) => {
