@@ -408,7 +408,7 @@ type InternalDamagingEvent = DamagingEvent & {
 }
 
 function damagingEventPreventRetaliation(this: InternalDamagingEvent): void {
-    rawset(this as InternalDamagingEvent, DamagingEventPropertyKey.SHOULD_PREVENT_RETALIATION, true)
+    this[DamagingEventPropertyKey.SHOULD_PREVENT_RETALIATION] = true
 }
 
 export type DamageEvent = Omit<DamagingEvent, "preventRetaliation"> & {
@@ -2374,6 +2374,7 @@ export class Unit extends Handle<junit> {
                     BlzSetEventWeaponType(WEAPON_TYPE_WHOKNOWS)
                     const sourceOwner = source.owner.handle
                     const targetOwner = target.owner.handle
+                    // TODO: remove copypaste (look above)
                     if (!GetPlayerAlliance(sourceOwner, targetOwner, ALLIANCE_PASSIVE)) {
                         SetPlayerAlliance(sourceOwner, targetOwner, ALLIANCE_PASSIVE, true)
                         Timer.run(() => {
