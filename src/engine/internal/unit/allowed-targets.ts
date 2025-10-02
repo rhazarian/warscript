@@ -10,12 +10,20 @@ declare module "../unit" {
         isAllowedTarget(
             this: Unit,
             source: Unit,
-            allowedTargetCombatClassifications: CombatClassifications,
+            allowedTargetCombatClassifications?: CombatClassifications,
         ): boolean
     }
 }
 Unit.prototype.isAllowedTarget = function (source, allowedTargetCombatClassifications) {
-    initializeFilterTargetState(source, allowedTargetCombatClassifications)
+    if (allowedTargetCombatClassifications !== undefined) {
+        initializeFilterTargetState(source, allowedTargetCombatClassifications)
+        return filterTarget(this)
+    }
+    initializeFilterTargetState(source, source.firstWeapon.allowedTargetCombatClassifications)
+    if (filterTarget(this)) {
+        return true
+    }
+    initializeFilterTargetState(source, source.secondWeapon.allowedTargetCombatClassifications)
     return filterTarget(this)
 }
 
