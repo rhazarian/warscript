@@ -4,7 +4,7 @@ import { Event } from "../../event"
 import { ReadonlyRect, Rect } from "../../core/types/rect"
 import { ItemAbility } from "./ability"
 import { AbilityTypeId } from "../object-data/entry/ability-type"
-import { doAbilityAction } from "./item/ability"
+import { doAbilityAction, doAbilityActionForceDummy, itemAbilityDummy } from "./item/ability"
 import { DUMMY_ITEM_ID } from "./object-data/dummy-item"
 import { SLOT_FILLER_ITEM_TYPE_ID } from "./unit/add-item-to-slot"
 import { distance } from "../../math/vec2"
@@ -25,6 +25,8 @@ const getEnumItem = GetEnumItem
 const getItemTypeId = GetItemTypeId
 const getItemX = GetItemX
 const getItemY = GetItemY
+const getItemCharges = GetItemCharges
+const setItemCharges = SetItemCharges
 
 const getItemIntegerField = BlzGetItemIntegerField
 
@@ -205,7 +207,7 @@ export class Item extends Handle<jitem> {
     }
 
     public get perishable(): boolean {
-        return BlzGetItemBooleanField(this.handle, ITEM_BF_PERISHABLE)
+        return getItemBooleanField(this.handle, ITEM_BF_PERISHABLE)
     }
 
     public set powerup(v: boolean) {
@@ -354,11 +356,38 @@ export class Item extends Handle<jitem> {
     }
 
     public set charges(v: number) {
-        SetItemCharges(this.handle, v)
+        setItemCharges(this.handle, v)
     }
 
     public get charges(): number {
-        return GetItemCharges(this.handle)
+        return getItemCharges(this.handle)
+    }
+
+    public consumeCharge(): boolean {
+        const handle = this.handle
+        const charges = getItemCharges(handle)
+        if (charges >= 2) {
+            setItemCharges(handle, charges - 1)
+            return true
+        }
+        if (charges == 1) {
+            if (getItemBooleanField(handle, ITEM_BF_PERISHABLE)) {
+                this.destroy()
+                return true
+            }
+            doAbilityActionForceDummy(handle, this.owner?.handle, () => {
+                for (
+                    let i = 0, ability = getItemAbilityByIndex(handle, i);
+                    ability != undefined;
+                    i++, ability = getItemAbilityByIndex(handle, i)
+                ) {
+                    UnitRemoveAbility(itemAbilityDummy, getAbilityId(ability))
+                }
+                UnitUseItem(itemAbilityDummy, handle)
+            })
+            return true
+        }
+        return false
     }
 
     public addAbility(abilityTypeId: AbilityTypeId): ItemAbility | undefined {
