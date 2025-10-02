@@ -10,6 +10,7 @@ import { LinkedSet } from "../../utility/linked-set"
 import { Destructor } from "../../destroyable"
 import { getOrPut, mutableLuaMap } from "../../utility/lua-maps"
 import { mutableLuaSet } from "../../utility/lua-sets"
+import type { Widget } from "../../core/types/widget"
 
 export type UnitBehaviorConstructor<Args extends any[]> = new (
     unit: Unit,
@@ -88,6 +89,18 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         behaviors.add(this)
     }
 
+    public onImmediateOrder(orderId: number): void {
+        // no-op
+    }
+
+    public onTargetOrder(orderId: number, target: Widget): void {
+        // no-op
+    }
+
+    public onPointOrder(orderId: number, x: number, y: number): void {
+        // no-op
+    }
+
     public onAutoAttackStart(target: Unit): void {
         // no-op
     }
@@ -153,6 +166,16 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
     }
 
     static {
+        Unit.onImmediateOrder.addListener((source, orderId) => {
+            UnitBehavior.forAll(source, "onImmediateOrder", orderId)
+        })
+        Unit.onTargetOrder.addListener((source, orderId, target) => {
+            UnitBehavior.forAll(source, "onTargetOrder", orderId, target)
+        })
+        Unit.onPointOrder.addListener((source, orderId, x, y) => {
+            UnitBehavior.forAll(source, "onPointOrder", orderId, x, y)
+        })
+
         Unit.autoAttackStartEvent.addListener((source, target) => {
             UnitBehavior.forAll(source, "onAutoAttackStart", target)
             UnitBehavior.forAll(target, "onTargetingAutoAttackStart", source)
