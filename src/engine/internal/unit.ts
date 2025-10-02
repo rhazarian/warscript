@@ -2619,6 +2619,18 @@ export class Unit extends Handle<junit> {
         $multi(Unit.of(getTriggerUnit()!), Item.of(getManipulatedItem()!)),
     )
 
+    public static get itemChargesChangedEvent(): Event<[unit: Unit, item: Item]> {
+        const event = new Event<[Unit, Item]>()
+        Item.chargesChangedEvent.addListener((item) => {
+            const unit = item.owner
+            if (unit !== undefined) {
+                invoke(event, unit, item)
+            }
+        })
+        rawset(this, "itemChargesChangedEvent", event)
+        return event
+    }
+
     public static get itemUseOrderEvent(): Event<[unit: Unit, item: Item]> {
         const event = new Event<[Unit, Item]>()
         for (const order of $range(orderId("useslot0"), orderId("useslot5"))) {

@@ -157,6 +157,10 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         // no-op
     }
 
+    public onItemChargesChanged(item: Item): void {
+        // no-op
+    }
+
     public onKill(target: Unit): void {
         // no-op
     }
@@ -226,6 +230,9 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         })
         Unit.itemStackedEvent.addListener((unit, item) => {
             UnitBehavior.forAll(unit, "onItemStacked", item)
+        })
+        Unit.itemChargesChangedEvent.addListener((unit, item) => {
+            UnitBehavior.forAll(unit, "onItemChargesChanged", item)
         })
     }
 }

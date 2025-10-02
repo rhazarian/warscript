@@ -10,6 +10,8 @@ import { SLOT_FILLER_ITEM_TYPE_ID } from "./unit/add-item-to-slot"
 import { distance } from "../../math/vec2"
 import type { ItemTypeId } from "../object-data/entry/item-type"
 
+const itemChargesChangeEvent = new Event<[Item]>()
+
 const itemAddAbility = BlzItemAddAbility
 const itemRemoveAbility = BlzItemRemoveAbility
 const getItemAbility = BlzGetItemAbility
@@ -30,10 +32,17 @@ const setItemCharges = SetItemCharges
 const unitRemoveAbility = UnitRemoveAbility
 const unitUseItem = UnitUseItem
 
+_G.SetItemCharges = (whichItem, charges): void => {
+    setItemCharges(whichItem, charges)
+    invoke(itemChargesChangeEvent, Item.of(whichItem))
+}
+
 const getItemIntegerField = BlzGetItemIntegerField
 
 const setItemBooleanField = BlzSetItemBooleanField
 const getItemBooleanField = BlzGetItemBooleanField
+
+const invoke = Event.invoke
 
 const enumRect = Rect.create(0, 0, 0, 0).handle
 
@@ -382,6 +391,7 @@ export class Item extends Handle<jitem> {
         const charges = getItemCharges(handle)
         if (charges >= 2) {
             setItemCharges(handle, charges - 1)
+            invoke(itemChargesChangeEvent, this)
             return true
         }
         if (charges == 1) {
@@ -391,9 +401,11 @@ export class Item extends Handle<jitem> {
             }
             if (!getItemBooleanField(handle, ITEM_BF_ACTIVELY_USED)) {
                 setItemCharges(handle, 0)
+                invoke(itemChargesChangeEvent, this)
                 return true
             }
             doAbilityActionForceDummy(handle, this.owner?.handle, consumeCharge)
+            invoke(itemChargesChangeEvent, this)
             return true
         }
         return false
@@ -470,6 +482,8 @@ export class Item extends Handle<jitem> {
     public static override get destroyEvent(): Event<[Item]> {
         return this.onDestroyEvent
     }
+
+    public static readonly chargesChangedEvent = itemChargesChangeEvent
 }
 
 const getManipulatedItem = GetManipulatedItem
