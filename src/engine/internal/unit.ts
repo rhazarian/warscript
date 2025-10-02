@@ -560,6 +560,25 @@ export class UnitWeapon {
         this.damageDiceSideCount = maximumDamage - minimumDamage + 1
     }
 
+    public get allowedTargetCombatClassifications(): CombatClassifications {
+        return BlzGetUnitWeaponIntegerField(
+            this.unit.handle,
+            UNIT_WEAPON_IF_ATTACK_TARGETS_ALLOWED,
+            this.index,
+        ) as CombatClassifications
+    }
+
+    public set allowedTargetCombatClassifications(
+        allowedTargetCombatClassifications: CombatClassifications,
+    ) {
+        BlzSetUnitWeaponIntegerField(
+            this.unit.handle,
+            UNIT_WEAPON_IF_ATTACK_TARGETS_ALLOWED,
+            this.index,
+            allowedTargetCombatClassifications,
+        )
+    }
+
     public get damageBase(): number {
         return BlzGetUnitBaseDamage(this.unit.handle, this.index)
     }
@@ -1043,6 +1062,16 @@ export class Unit extends Handle<junit> {
         const weapon = new UnitWeapon(this, 1)
         rawset(this, "secondWeapon", weapon)
         return weapon
+    }
+
+    public chooseWeapon(target: Unit): UnitWeapon | undefined {
+        if (target.isAllowedTarget(this, this.firstWeapon.allowedTargetCombatClassifications)) {
+            return this.firstWeapon
+        }
+        if (target.isAllowedTarget(target, this.secondWeapon.allowedTargetCombatClassifications)) {
+            return this.secondWeapon
+        }
+        return undefined
     }
 
     public get level(): number {

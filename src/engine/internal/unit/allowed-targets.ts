@@ -10,7 +10,7 @@ declare module "../unit" {
         isAllowedTarget(
             this: Unit,
             source: Unit,
-            allowedTargetCombatClassifications: CombatClassifications
+            allowedTargetCombatClassifications: CombatClassifications,
         ): boolean
     }
 }
@@ -27,7 +27,7 @@ declare module "../unit" {
             allowedTargetCombatClassifications: CombatClassifications,
             x: number,
             y: number,
-            range: number
+            range: number,
         ): Unit[]
     }
 }
@@ -36,7 +36,7 @@ Unit.getAllowedTargetsInRange = (
     allowedTargetCombatClassifications: CombatClassifications,
     x,
     y,
-    range
+    range,
 ) => {
     initializeFilterTargetState(source, allowedTargetCombatClassifications)
     return Unit.getInRange(x, y, range, filterTarget)
@@ -50,7 +50,7 @@ declare module "../unit" {
             allowedTargetCombatClassifications: CombatClassifications,
             x: number,
             y: number,
-            range: number
+            range: number,
         ): Unit[]
     }
 }
@@ -59,7 +59,7 @@ Unit.getAllowedTargetsInCollisionRange = (
     allowedTargetCombatClassifications: CombatClassifications,
     x,
     y,
-    range
+    range,
 ) => {
     initializeFilterTargetState(source, allowedTargetCombatClassifications)
     return Unit.getInCollisionRange(x, y, range, filterTarget)
