@@ -380,6 +380,7 @@ export class Item extends Handle<jitem> {
 
     public set charges(v: number) {
         setItemCharges(this.handle, v)
+        invoke(itemChargesChangeEvent, this)
     }
 
     public get charges(): number {
