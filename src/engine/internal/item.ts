@@ -27,6 +27,8 @@ const getItemX = GetItemX
 const getItemY = GetItemY
 const getItemCharges = GetItemCharges
 const setItemCharges = SetItemCharges
+const unitRemoveAbility = UnitRemoveAbility
+const unitUseItem = UnitUseItem
 
 const getItemIntegerField = BlzGetItemIntegerField
 
@@ -37,6 +39,7 @@ const enumRect = Rect.create(0, 0, 0, 0).handle
 
 type DefenseType = 0 | 1 | 2 | 3 | 4 | 5
 
+/** @internal For use by internal systems only. */
 export const addAndGetAbility = (handle: jitem, abilityTypeId: AbilityTypeId): jability | null => {
     if (itemAddAbility(handle, abilityTypeId)) {
         return getItemAbility(handle, abilityTypeId)
@@ -54,6 +57,17 @@ const getItemAbilities = (handle: jitem, item: Item): ItemAbility[] => {
         abilities[i] = ItemAbility.of(ability, getAbilityId(ability), item)
     }
     return abilities
+}
+
+const consumeCharge = (handle: jitem): void => {
+    for (
+        let i = 0, ability = getItemAbilityByIndex(handle, i);
+        ability != undefined;
+        i++, ability = getItemAbilityByIndex(handle, i)
+    ) {
+        unitRemoveAbility(itemAbilityDummy, getAbilityId(ability))
+    }
+    unitUseItem(itemAbilityDummy, handle)
 }
 
 let targetCollection: Item[]
@@ -375,16 +389,11 @@ export class Item extends Handle<jitem> {
                 this.destroy()
                 return true
             }
-            doAbilityActionForceDummy(handle, this.owner?.handle, () => {
-                for (
-                    let i = 0, ability = getItemAbilityByIndex(handle, i);
-                    ability != undefined;
-                    i++, ability = getItemAbilityByIndex(handle, i)
-                ) {
-                    UnitRemoveAbility(itemAbilityDummy, getAbilityId(ability))
-                }
-                UnitUseItem(itemAbilityDummy, handle)
-            })
+            if (!getItemBooleanField(handle, ITEM_BF_ACTIVELY_USED)) {
+                setItemCharges(handle, 0)
+                return true
+            }
+            doAbilityActionForceDummy(handle, this.owner?.handle, consumeCharge)
             return true
         }
         return false
