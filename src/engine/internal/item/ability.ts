@@ -49,23 +49,26 @@ const COOLDOWN_STARTER_ITEM_TYPE_ID = compiletime(() => {
     return itemType.id
 })
 
-const dummy = assert(CreateUnit(Player.neutralVictim.handle, dummyUnitId, 0, 0, 270))
+/** @internal For use by internal systems only. */
+export const itemAbilityDummy = assert(
+    CreateUnit(Player.neutralVictim.handle, dummyUnitId, 0, 0, 270),
+)
 
-const cooldownStarterItem = UnitAddItemById(dummy, COOLDOWN_STARTER_ITEM_TYPE_ID)
+const cooldownStarterItem = UnitAddItemById(itemAbilityDummy, COOLDOWN_STARTER_ITEM_TYPE_ID)
 
 const cooldownStarterAbility = BlzGetItemAbility(
     cooldownStarterItem,
     COOLDOWN_STARTER_ABILITY_TYPE_ID,
 )!
 
-ShowUnit(dummy, false)
+ShowUnit(itemAbilityDummy, false)
 
 const startItemCooldownInternal = (handle: jitem, cooldown: number): void => {
     const cooldownGroup = getItemIntegerField(handle, ITEM_IF_COOLDOWN_GROUP)
     setItemIntegerField(handle, ITEM_IF_COOLDOWN_GROUP, COOLDOWN_STARTER_ABILITY_TYPE_ID)
     setAbilityRealLevelField(cooldownStarterAbility, ABILITY_RLF_COOLDOWN, 0, cooldown)
-    unitResetCooldown(dummy)
-    unitUseItem(dummy, cooldownStarterItem)
+    unitResetCooldown(itemAbilityDummy)
+    unitUseItem(itemAbilityDummy, cooldownStarterItem)
     Timer.run(restoreCooldownGroup, handle, cooldownGroup)
 }
 
@@ -85,7 +88,7 @@ export const startItemCooldown = (
 }
 
 /** @internal For use by internal systems only. */
-export const abilityActionDummy = dummy
+export const abilityActionDummy = itemAbilityDummy
 
 /** @internal For use by internal systems only. */
 export const doAbilityAction = <T, Args extends any[]>(
@@ -109,13 +112,13 @@ export const doAbilityAction = <T, Args extends any[]>(
         }
         x = getItemX(handle)
         y = getItemY(handle)
-        unitAddItem(dummy, handle)
+        unitAddItem(itemAbilityDummy, handle)
     }
 
     const result = action(handle, ...args)
 
     if (!isOwned) {
-        unitRemoveItem(dummy, handle)
+        unitRemoveItem(itemAbilityDummy, handle)
         setItemPosition(handle, x!, y!)
         if (isPowerup) {
             setItemBooleanField(handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
@@ -155,11 +158,11 @@ export const doAbilityActionForceDummy = <T, Args extends any[]>(
         isPowerup = true
     }
     unitRemoveItem(owner, handle)
-    unitAddItem(dummy, handle)
+    unitAddItem(itemAbilityDummy, handle)
 
     const result = action(handle, ...args)
 
-    unitRemoveItem(dummy, handle)
+    unitRemoveItem(itemAbilityDummy, handle)
     unitAddItemToSlot(owner, handle, slot)
     if (isPowerup) {
         setItemBooleanField(handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
