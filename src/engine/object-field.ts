@@ -87,7 +87,7 @@ abstract class ObjectFieldBase<
 
     public constructor(
         id: number,
-        readonly isGlobal: boolean = true,
+        readonly isGlobal: boolean = false,
     ) {
         if (objectFieldById.has(id)) {
             throw new IllegalArgumentException(`An object field with id ${id} already exists.`)
