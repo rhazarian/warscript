@@ -98,8 +98,9 @@ abstract class ObjectFieldBase<
     public static create<T extends ObjectFieldBase<any, any, any, any>>(
         this: ObjectFieldConstructor<T>,
         id?: number,
+        isGlobal?: boolean,
     ): T & symbol {
-        return new this(id ?? idGenerator.next()) as T & symbol
+        return new this(id ?? idGenerator.next(), isGlobal) as T & symbol
     }
 
     public static of<T extends ObjectFieldBase<any, any, any, any>>(
