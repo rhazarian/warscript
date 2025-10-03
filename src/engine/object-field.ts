@@ -314,7 +314,7 @@ export abstract class ObjectField<
             const defaultValue = defaultValueByObjectDataEntryId.get(
                 this.getObjectDataEntryId(instance),
             ) as ValueType | undefined
-            if (defaultValue != undefined) {
+            if (defaultValue != undefined || this.isGlobal) {
                 const previousValue =
                     this.valueByInstance.get(instance) ?? defaultValue ?? this.defaultValue
                 if (value != previousValue) {
