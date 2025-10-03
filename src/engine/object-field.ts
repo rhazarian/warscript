@@ -13,6 +13,7 @@ import {
 import { ObjectDataEntryIdGenerator } from "./object-data/utility/object-data-entry-id-generator"
 import { LinkedSet, mutableLinkedSet } from "../utility/linked-set"
 import { getOrPut, mutableWeakLuaMap } from "../utility/lua-maps"
+import { emptyArray } from "../utility/arrays"
 
 export type ObjectFieldId = number & { readonly __objectDataEntryFieldId: unique symbol }
 
@@ -669,14 +670,16 @@ export abstract class ObjectLevelField<
             const defaultValueByLevel = defaultValueByObjectDataEntryId.get(
                 this.getObjectDataEntryId(entry),
             ) as ValueType[] | undefined
-            if (defaultValueByLevel != undefined) {
+            if (defaultValueByLevel != undefined || this.isGlobal) {
                 let valueByLevel = this.valueByInstance.get(entry)
                 if (valueByLevel == undefined) {
                     valueByLevel = []
                     this.valueByInstance.set(entry, valueByLevel)
                 }
                 const previousValue =
-                    valueByLevel[level] ?? defaultValueByLevel[level] ?? this.defaultValue
+                    valueByLevel[level] ??
+                    (defaultValueByLevel ?? emptyArray())[level] ??
+                    this.defaultValue
                 if (value != previousValue) {
                     valueByLevel[level] = value
                     this.invokeValueChangeEvent(entry, this, level, previousValue, value)
