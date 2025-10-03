@@ -1614,6 +1614,12 @@ export class Unit extends Handle<junit> {
         BlzEndUnitAbilityCooldown(this.handle, abilityId)
     }
 
+    public interruptMovement(): void {
+        const handle = this.handle
+        unitDisableAbility(handle, fourCC("Amov"), true, false)
+        unitDisableAbility(handle, fourCC("Amov"), false, false)
+    }
+
     public interruptAttack(): void {
         unitInterruptAttack(this.handle)
     }
