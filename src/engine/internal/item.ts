@@ -394,14 +394,18 @@ export class Item extends Handle<jitem> {
     }
 
     public consumeCharge(): boolean {
+        return this.consumeCharges(1)
+    }
+
+    public consumeCharges(count: number): boolean {
         const handle = this.handle
         const charges = getItemCharges(handle)
-        if (charges >= 2) {
-            setItemCharges(handle, charges - 1)
+        if (charges > count) {
+            setItemCharges(handle, charges - count)
             invoke(itemChargesChangeEvent, this)
             return true
         }
-        if (charges == 1) {
+        if (charges == count) {
             if (getItemBooleanField(handle, ITEM_BF_PERISHABLE)) {
                 this.destroy()
                 return true
@@ -411,6 +415,7 @@ export class Item extends Handle<jitem> {
                 invoke(itemChargesChangeEvent, this)
                 return true
             }
+            setItemCharges(handle, 1)
             doAbilityActionForceDummy(handle, this.owner?.handle, consumeCharge)
             invoke(itemChargesChangeEvent, this)
             return true
