@@ -300,8 +300,8 @@ export abstract class ObjectField<
             const defaultValue = defaultValueByObjectDataEntryId.get(
                 this.getObjectDataEntryId(instance),
             ) as ValueType | undefined
-            if (defaultValue != undefined) {
-                return this.valueByInstance.get(instance) ?? defaultValue
+            if (defaultValue != undefined || this.isGlobal) {
+                return this.valueByInstance.get(instance) ?? defaultValue ?? this.defaultValue
             }
         }
         return this.getNativeFieldValue(instance) ?? this.defaultValue
@@ -592,10 +592,10 @@ export abstract class ObjectLevelField<
             const defaultValueByLevel = defaultValueByObjectDataEntryId.get(
                 this.getObjectDataEntryId(entry),
             ) as ValueType[] | undefined
-            if (defaultValueByLevel != undefined) {
+            if (defaultValueByLevel != undefined || this.isGlobal) {
                 return (
                     this.valueByInstance.get(entry)?.[level] ??
-                    defaultValueByLevel[level] ??
+                    (defaultValueByLevel ?? emptyArray())[level] ??
                     this.defaultValue
                 )
             }
