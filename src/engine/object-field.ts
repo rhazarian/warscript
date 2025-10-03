@@ -30,7 +30,7 @@ const objectFieldById = new LuaMap<number, ObjectFieldBase<any, any, any, any>>(
 export type ObjectFieldConstructor<T extends ObjectFieldBase<any, any, any, any>> = OmitConstructor<
     typeof ObjectFieldBase
 > &
-    (new (id: number) => T)
+    (new (id: number, isGlobal?: boolean) => T)
 
 export type ObjectFieldAbstractConstructor<T extends ObjectFieldBase<any, any, any, any>> =
     OmitConstructor<typeof ObjectFieldBase> & (abstract new (id: number) => T)
@@ -77,13 +77,17 @@ abstract class ObjectFieldBase<
             this.id,
         )
         return (
+            this.isGlobal ||
             (defaultValueByObjectDataEntryId != undefined &&
                 defaultValueByObjectDataEntryId.has(this.getObjectDataEntryId(instance))) ||
             this.hasNativeFieldValue(instance)
         )
     }
 
-    public constructor(id: number) {
+    public constructor(
+        id: number,
+        readonly isGlobal: boolean = true,
+    ) {
         if (objectFieldById.has(id)) {
             throw new IllegalArgumentException(`An object field with id ${id} already exists.`)
         }
