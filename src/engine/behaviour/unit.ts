@@ -145,6 +145,10 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         // no-op
     }
 
+    public onAbilityImpact(ability: Ability): void {
+        // no-op
+    }
+
     public onAbilityChannelingFinish(ability: Ability): void {
         // no-op
     }
@@ -226,6 +230,9 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
 
         Unit.abilityChannelingStartEvent.addListener((source, ability) => {
             UnitBehavior.forAll(source, "onAbilityChannelingStart", ability)
+        })
+        Unit.abilityImpactEvent.addListener((source, ability) => {
+            UnitBehavior.forAll(source, "onAbilityImpact", ability)
         })
         Unit.abilityChannelingFinishEvent.addListener((source, ability) => {
             UnitBehavior.forAll(source, "onAbilityChannelingFinish", ability)

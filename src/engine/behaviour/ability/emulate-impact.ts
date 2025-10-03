@@ -7,6 +7,7 @@ import {
 import { max, MINIMUM_POSITIVE_NORMALIZED_FLOAT } from "../../../math"
 import { Sound3D, SoundSettings } from "../../../core/types/sound"
 import { UnitAbility } from "../../internal/ability"
+import { Event } from "../../../event"
 
 export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
     protected emulateImpact(caster: Unit) {
@@ -35,6 +36,6 @@ export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
             Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, caster)
         }
 
-        AbilityBehavior.forAll(this.ability, "onImpact", caster)
+        Event.invoke(Unit.abilityImpactEvent, caster, this.ability)
     }
 }

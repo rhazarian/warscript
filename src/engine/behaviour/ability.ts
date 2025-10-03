@@ -459,7 +459,7 @@ export abstract class AbilityBehavior<
         Unit.abilityNoTargetChannelingStartEvent.addListener(
             createUnitEventListener("onNoTargetChannelingStart"),
         )
-        Unit.abilityChannelingStartEvent.addListener(createZeroTimerUnitEventListener("onImpact"))
+        Unit.abilityImpactEvent.addListener(createUnitEventListener("onImpact"))
         Unit.abilityWidgetTargetChannelingStartEvent.addListener(
             createZeroTimerUnitEventListener("onWidgetTargetImpact"),
         )

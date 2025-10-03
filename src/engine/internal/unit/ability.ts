@@ -14,6 +14,7 @@ import {
 } from "../../../event"
 import { checkNotNull } from "../../../utility/preconditions"
 import { lazyRecord } from "../../../utility/lazy"
+import { Timer } from "../../../core/types/timer"
 
 const eventInvoke = Event.invoke
 
@@ -535,6 +536,25 @@ rawset(
         createNoTargetEvent(internalAbilityChannelingStartEvent),
         extractAbilityTypeId,
     ),
+)
+
+// === IMPACT ===
+
+const internalAbilityImpactEvent = new Event<InternalUnitAbilityEventParameters>()
+
+internalAbilityChannelingStartEvent.addListener((...parameters) => {
+    Timer.run(eventInvoke, internalAbilityImpactEvent, ...parameters)
+})
+
+declare module "../unit" {
+    namespace Unit {
+        const abilityImpactEvent: DispatchingEvent<[Unit, Ability]>
+    }
+}
+rawset(
+    Unit,
+    "abilityImpactEvent",
+    createDispatchingEvent(createCommonEvent(internalAbilityImpactEvent), extractAbilityTypeId),
 )
 
 // === CHANNELING FINISH ===
