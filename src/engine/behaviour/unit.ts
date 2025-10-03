@@ -149,6 +149,10 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         // no-op
     }
 
+    public onAbilityStop(ability: Ability): void {
+        // no-op
+    }
+
     public onItemDropped(item: Item): void {
         // no-op
     }
@@ -225,6 +229,9 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         })
         Unit.abilityChannelingFinishEvent.addListener((source, ability) => {
             UnitBehavior.forAll(source, "onAbilityChannelingFinish", ability)
+        })
+        Unit.abilityStopEvent.addListener((source, ability) => {
+            UnitBehavior.forAll(source, "onAbilityStop", ability)
         })
 
         Unit.deathEvent.addListener((target, source) => {
