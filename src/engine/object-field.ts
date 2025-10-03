@@ -485,7 +485,7 @@ export abstract class ObjectArrayField<
     public getValue(
         entry: ObjectDataEntryType | InstanceType,
         index?: number,
-    ): ValueType[] | ValueType {
+    ): readonly ValueType[] | ValueType {
         if (entry instanceof ObjectDataEntry) {
             const defaultValueByObjectDataEntryId = (
                 warpack.compiletime
@@ -506,12 +506,12 @@ export abstract class ObjectArrayField<
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
-        if (defaultValueByObjectDataEntryId != undefined) {
-            const defaultValue = defaultValueByObjectDataEntryId.get(
+        if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
+            const defaultValue = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
                 this.getObjectDataEntryId(entry),
             ) as ValueType[] | undefined
-            if (defaultValue != undefined) {
-                const value = this.valueByInstance.get(entry) ?? defaultValue
+            if (defaultValue != undefined || this.isGlobal) {
+                const value = this.valueByInstance.get(entry) ?? defaultValue ?? emptyArray()
                 return index == undefined ? value : (value[index] ?? this.defaultValue)
             }
         }
