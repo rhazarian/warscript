@@ -31,6 +31,8 @@ const getItemCharges = GetItemCharges
 const setItemCharges = SetItemCharges
 const unitRemoveAbility = UnitRemoveAbility
 const unitUseItem = UnitUseItem
+const unitUseItemPoint = UnitUseItemPoint
+const unitUseItemTarget = UnitUseItemTarget
 
 _G.SetItemCharges = (whichItem, charges): void => {
     setItemCharges(whichItem, charges)
@@ -68,7 +70,7 @@ const getItemAbilities = (handle: jitem, item: Item): ItemAbility[] => {
     return abilities
 }
 
-const consumeCharge = (handle: jitem): void => {
+const consumeCharge = (handle: jitem): boolean => {
     for (
         let i = 0, ability = getItemAbilityByIndex(handle, i);
         ability != undefined;
@@ -76,7 +78,11 @@ const consumeCharge = (handle: jitem): void => {
     ) {
         unitRemoveAbility(itemAbilityDummy, getAbilityId(ability))
     }
-    unitUseItem(itemAbilityDummy, handle)
+    return (
+        unitUseItem(itemAbilityDummy, handle) ||
+        unitUseItemPoint(itemAbilityDummy, handle, 0, 0) ||
+        unitUseItemTarget(itemAbilityDummy, handle, itemAbilityDummy)
+    )
 }
 
 let targetCollection: Item[]
