@@ -6,6 +6,7 @@ import {
 } from "../../standard/fields/ability"
 import { max, MINIMUM_POSITIVE_NORMALIZED_FLOAT } from "../../../math"
 import { Sound3D, SoundSettings } from "../../../core/types/sound"
+import { UnitAbility } from "../../internal/ability"
 
 export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
     protected emulateImpact(caster: Unit) {
@@ -16,7 +17,11 @@ export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
             COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD,
         )
 
-        if (this.ability.cooldownRemaining != 0 || caster.mana < manaCost) {
+        if (
+            this.ability.cooldownRemaining != 0 ||
+            caster.mana < manaCost ||
+            (this.ability instanceof UnitAbility && this.ability.isDisabled)
+        ) {
             return
         }
 

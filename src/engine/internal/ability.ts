@@ -434,6 +434,7 @@ export class UnrecognizedAbility extends Ability {
 
 export class UnitAbility extends Ability {
     private readonly u: junit
+    private d?: number
 
     public constructor(
         handle: jability,
@@ -454,10 +455,16 @@ export class UnitAbility extends Ability {
 
     public incrementDisableCounter(): void {
         unitDisableAbility(this.u, this.typeId, true, false)
+        this.d = (this.d ?? 0) + 1
     }
 
     public decrementDisableCounter(): void {
         unitDisableAbility(this.u, this.typeId, false, false)
+        this.d = (this.d ?? 0) - 1
+    }
+
+    public get isDisabled(): boolean {
+        return this.d !== undefined && this.d > 0
     }
 
     public override get level(): number {
