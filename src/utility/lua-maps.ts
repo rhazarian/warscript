@@ -7,6 +7,12 @@ const weakKeysMetatable = {
     __mode: "k",
 } as const
 
+const EMPTY_LUA_MAP: ReadonlyLuaMap<any, any> = new LuaMap()
+
+export const emptyLuaMap = <K extends AnyNotNil, V>(): ReadonlyLuaMap<K, V> => {
+    return EMPTY_LUA_MAP
+}
+
 export const mutableLuaMap = <K extends AnyNotNil, V>(): LuaMap<K, V> => {
     return new LuaMap()
 }

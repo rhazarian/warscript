@@ -12,7 +12,7 @@ import {
 } from "./object-data/entry"
 import { ObjectDataEntryIdGenerator } from "./object-data/utility/object-data-entry-id-generator"
 import { LinkedSet, mutableLinkedSet } from "../utility/linked-set"
-import { getOrPut, mutableWeakLuaMap } from "../utility/lua-maps"
+import { emptyLuaMap, getOrPut, mutableWeakLuaMap } from "../utility/lua-maps"
 import { emptyArray } from "../utility/arrays"
 
 export type ObjectFieldId = number & { readonly __objectDataEntryFieldId: unique symbol }
@@ -147,6 +147,16 @@ type ObjectFieldModifier<
     InstanceType extends AnyNotNil,
     ValueType extends number | string | boolean,
 > = (instance: InstanceType, currentValue: ValueType, originalValue: ValueType) => ValueType
+
+type ObjectLevelFieldModifier<
+    InstanceType extends AnyNotNil,
+    ValueType extends number | string | boolean,
+> = (
+    instance: InstanceType,
+    level: number,
+    currentValue: ValueType,
+    originalValue: ValueType,
+) => ValueType
 
 export abstract class ObjectField<
     ObjectDataEntryType extends ObjectDataEntry = ObjectDataEntry,
@@ -296,8 +306,8 @@ export abstract class ObjectField<
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
-        if (defaultValueByObjectDataEntryId != undefined) {
-            const defaultValue = defaultValueByObjectDataEntryId.get(
+        if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
+            const defaultValue = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
                 this.getObjectDataEntryId(instance),
             ) as ValueType | undefined
             if (defaultValue != undefined || this.isGlobal) {
@@ -311,8 +321,8 @@ export abstract class ObjectField<
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
-        if (defaultValueByObjectDataEntryId != undefined) {
-            const defaultValue = defaultValueByObjectDataEntryId.get(
+        if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
+            const defaultValue = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
                 this.getObjectDataEntryId(instance),
             ) as ValueType | undefined
             if (defaultValue != undefined || this.isGlobal) {
@@ -538,6 +548,13 @@ export abstract class ObjectLevelField<
     InputValueType extends ValueType = never,
     NativeFieldType = unknown,
 > extends ObjectFieldBase<ObjectDataEntryType, InstanceType, ValueType[], NativeFieldType> {
+    private originalValueByLevelByInstance?: LuaMap<InstanceType, LuaMap<number, ValueType>>
+
+    private modifiersByInstance?: LuaMap<
+        InstanceType,
+        LinkedSet<ObjectLevelFieldModifier<InstanceType, ValueType>>
+    >
+
     protected abstract readonly defaultValue: ValueType
 
     protected abstract getNativeFieldValue(instance: InstanceType, level: number): ValueType
@@ -588,8 +605,8 @@ export abstract class ObjectLevelField<
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
-        if (defaultValueByObjectDataEntryId != undefined) {
-            const defaultValueByLevel = defaultValueByObjectDataEntryId.get(
+        if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
+            const defaultValueByLevel = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
                 this.getObjectDataEntryId(entry),
             ) as ValueType[] | undefined
             if (defaultValueByLevel != undefined || this.isGlobal) {
@@ -666,8 +683,8 @@ export abstract class ObjectLevelField<
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
-        if (defaultValueByObjectDataEntryId != undefined) {
-            const defaultValueByLevel = defaultValueByObjectDataEntryId.get(
+        if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
+            const defaultValueByLevel = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
                 this.getObjectDataEntryId(entry),
             ) as ValueType[] | undefined
             if (defaultValueByLevel != undefined || this.isGlobal) {
