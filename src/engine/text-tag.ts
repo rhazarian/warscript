@@ -1,4 +1,7 @@
 import { Color } from "../core/types/color"
+import { Unit } from "./internal/unit"
+import { Timer } from "../core/types/timer"
+import { AbstractDestroyable, Destructor } from "../destroyable"
 
 const createTextTag = CreateTextTag
 const destroyTextTag = DestroyTextTag
@@ -27,8 +30,36 @@ export type TextTagPreset = {
     color: Color
 }
 
-export class TextTag {
-    private constructor(private readonly handle: jtexttag) {}
+const applyConfiguration = (textTag: jtexttag, configuration: TextTagPreset): void => {
+    setTextTagFadepoint(textTag, configuration.fadepoint)
+    setTextTagLifespan(textTag, configuration.lifespan)
+    const color = configuration.color
+    setTextTagColor(textTag, color.r, color.g, color.b, color.a)
+    setTextTagVelocity(textTag, configuration.velocityX, configuration.velocityY)
+    setTextTagPermanent(textTag, false)
+    setTextTagVisibility(textTag, true)
+}
+
+const unitTextTags = setmetatable(new LuaSet<TextTag>(), { __mode: "k" })
+
+const enum TextTagPropertyKey {
+    UNIT = 100,
+    CONFIGURATION,
+}
+
+export class TextTag extends AbstractDestroyable {
+    private [TextTagPropertyKey.UNIT]?: junit
+    private [TextTagPropertyKey.CONFIGURATION]?: Readonly<TextTagPreset>
+
+    private constructor(private readonly handle: jtexttag) {
+        super()
+    }
+
+    protected override onDestroy(): Destructor {
+        destroyTextTag(this.handle)
+        unitTextTags.delete(this)
+        return super.onDestroy()
+    }
 
     public static BASE: Readonly<TextTagPreset> = {
         fadepoint: 2,
@@ -83,7 +114,7 @@ export class TextTag {
         text: string,
         x: number,
         y: number,
-        z?: number
+        z?: number,
     ): void {
         const textTag = createTextTag()
         setTextTagText(textTag, text, DEFAULT_FONT_SIZE)
@@ -91,14 +122,35 @@ export class TextTag {
             textTag,
             x + configuration.offsetX,
             y + configuration.offsetY,
-            (z ?? 0) + configuration.offsetZ
+            (z ?? 0) + configuration.offsetZ,
         )
-        setTextTagFadepoint(textTag, configuration.fadepoint)
-        setTextTagLifespan(textTag, configuration.lifespan)
-        const color = configuration.color
-        setTextTagColor(textTag, color.r, color.g, color.b, color.a)
-        setTextTagVelocity(textTag, configuration.velocityX, configuration.velocityY)
-        setTextTagPermanent(textTag, false)
-        setTextTagVisibility(textTag, true)
+        applyConfiguration(textTag, configuration)
+    }
+
+    public static create(
+        configuration: Readonly<TextTagPreset>,
+        text: string,
+        unit: Unit,
+    ): TextTag {
+        const handle = createTextTag()
+        setTextTagText(handle, text, DEFAULT_FONT_SIZE)
+        setTextTagPosUnit(handle, unit.handle, configuration.offsetZ)
+        applyConfiguration(handle, configuration)
+        setTextTagPermanent(handle, true)
+        const textTag = new TextTag(handle)
+        textTag[TextTagPropertyKey.UNIT] = unit.handle
+        textTag[TextTagPropertyKey.CONFIGURATION] = configuration
+        unitTextTags.add(textTag)
+        return textTag
     }
 }
+
+Timer.onPeriod[1 / 64].addListener(() => {
+    for (const textTag of unitTextTags) {
+        setTextTagPosUnit(
+            textTag["handle"],
+            textTag[TextTagPropertyKey.UNIT]!,
+            textTag[TextTagPropertyKey.CONFIGURATION]!.offsetZ,
+        )
+    }
+})
