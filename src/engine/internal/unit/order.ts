@@ -2,6 +2,7 @@ import { attribute } from "../../../attributes"
 import { Widget } from "../../../core/types/widget"
 import { Unit } from "../unit"
 import { elapsedTime } from "../../../core/game"
+import { EventListenerPriority } from "../../../event"
 
 const getUnitCurrentOrder = GetUnitCurrentOrder
 const issueImmediateOrderById = IssueImmediateOrderById
@@ -23,7 +24,7 @@ const unitLastOrderTargetXAttribute = attribute<number>()
 const unitLastOrderTargetYAttribute = attribute<number>()
 const unitLastOrderTargetAttribute = attribute<Widget>()
 
-Unit.onImmediateOrder.addListener((unit, orderId) => {
+Unit.onImmediateOrder.addListener(EventListenerPriority.HIGHEST, (unit, orderId) => {
     unit.set(unitLastOrderTypeAttribute, OrderType.IMMEDIATE)
     unit.set(unitLastOrderIdAttribute, orderId)
     unit.set(unitLastOrderStartTimeAttribute, elapsedTime())
@@ -34,7 +35,7 @@ Unit.onImmediateOrder.addListener((unit, orderId) => {
     unit.set(unitLastOrderTargetAttribute, undefined)
 })
 
-Unit.onPointOrder.addListener((unit, orderId, x, y) => {
+Unit.onPointOrder.addListener(EventListenerPriority.HIGHEST, (unit, orderId, x, y) => {
     unit.set(unitLastOrderTypeAttribute, OrderType.POINT)
     unit.set(unitLastOrderIdAttribute, orderId)
     unit.set(unitLastOrderStartTimeAttribute, elapsedTime())
@@ -45,7 +46,7 @@ Unit.onPointOrder.addListener((unit, orderId, x, y) => {
     unit.set(unitLastOrderTargetAttribute, undefined)
 })
 
-Unit.onTargetOrder.addListener((unit, orderId, target) => {
+Unit.onTargetOrder.addListener(EventListenerPriority.HIGHEST, (unit, orderId, target) => {
     unit.set(unitLastOrderTypeAttribute, OrderType.TARGET)
     unit.set(unitLastOrderIdAttribute, orderId)
     unit.set(unitLastOrderStartTimeAttribute, elapsedTime())
