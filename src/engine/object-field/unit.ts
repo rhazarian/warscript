@@ -16,6 +16,8 @@ const convertUnitStringField = ConvertUnitStringField
 const convertUnitWeaponIntegerField = ConvertUnitWeaponIntegerField
 const getUnitWeaponIntegerField = BlzGetUnitWeaponIntegerField
 const setUnitWeaponIntegerField = BlzSetUnitWeaponIntegerField
+const getUnitPropulsionWindow = GetUnitPropWindow
+const setUnitPropulsionWindow = SetUnitPropWindow
 
 export abstract class UnitField<
     ValueType extends number | string | boolean = number | string | boolean,
@@ -198,4 +200,15 @@ export class UnitAttackTypeWeaponField extends UnitEnumWeaponField<AttackType> {
         AttackType.MAGIC,
         AttackType.HERO,
     )
+}
+
+export class UnitPropulsionWindowField extends UnitFloatField {
+    protected override getNativeFieldValue(instance: Unit): number {
+        return getUnitPropulsionWindow(instance.handle)
+    }
+
+    protected override setNativeFieldValue(instance: Unit, value: number): boolean {
+        setUnitPropulsionWindow(instance.handle, value)
+        return true
+    }
 }
