@@ -557,6 +557,81 @@ rawset(
     createDispatchingEvent(createCommonEvent(internalAbilityImpactEvent), extractAbilityTypeId),
 )
 
+declare module "../unit" {
+    namespace Unit {
+        const abilityWidgetTargetImpactEvent: DispatchingEvent<[Unit, Ability, Widget]>
+    }
+}
+rawset(
+    Unit,
+    "abilityWidgetTargetImpactEvent",
+    createDispatchingEvent(
+        createWidgetTargetEvent(internalAbilityImpactEvent),
+        extractAbilityTypeId,
+    ),
+)
+
+declare module "../unit" {
+    namespace Unit {
+        const abilityUnitTargetImpactEvent: DispatchingEvent<[Unit, Ability, Unit]>
+    }
+}
+rawset(
+    Unit,
+    "abilityUnitTargetImpactEvent",
+    createDispatchingEvent(createUnitTargetEvent(internalAbilityImpactEvent), extractAbilityTypeId),
+)
+
+declare module "../unit" {
+    namespace Unit {
+        const abilityItemTargetImpactEvent: DispatchingEvent<[Unit, Ability, Item]>
+    }
+}
+rawset(
+    Unit,
+    "abilityItemTargetImpactEvent",
+    createDispatchingEvent(createItemTargetEvent(internalAbilityImpactEvent), extractAbilityTypeId),
+)
+
+declare module "../unit" {
+    namespace Unit {
+        const abilityDestructibleTargetImpactEvent: DispatchingEvent<[Unit, Ability, Destructable]>
+    }
+}
+rawset(
+    Unit,
+    "abilityDestructibleTargetImpactEvent",
+    createDispatchingEvent(
+        createDestructibleTargetEvent(internalAbilityImpactEvent),
+        extractAbilityTypeId,
+    ),
+)
+
+declare module "../unit" {
+    namespace Unit {
+        const abilityPointTargetImpactEvent: DispatchingEvent<[Unit, Ability, number, number]>
+    }
+}
+rawset(
+    Unit,
+    "abilityPointTargetImpactEvent",
+    createDispatchingEvent(
+        createPointTargetEvent(internalAbilityImpactEvent),
+        extractAbilityTypeId,
+    ),
+)
+
+declare module "../unit" {
+    namespace Unit {
+        const abilityNoTargetImpactEvent: DispatchingEvent<[Unit, Ability]>
+    }
+}
+rawset(
+    Unit,
+    "abilityNoTargetImpactEvent",
+    createDispatchingEvent(createNoTargetEvent(internalAbilityImpactEvent), extractAbilityTypeId),
+)
+
 // === CHANNELING FINISH ===
 
 declare module "../unit" {

@@ -11,6 +11,7 @@ import { Destructor } from "../../destroyable"
 import { getOrPut, mutableLuaMap } from "../../utility/lua-maps"
 import { mutableLuaSet } from "../../utility/lua-sets"
 import type { Widget } from "../../core/types/widget"
+import { Destructable } from "../../core/types/destructable"
 
 export type UnitBehaviorConstructor<Args extends any[]> = new (
     unit: Unit,
@@ -149,6 +150,30 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         // no-op
     }
 
+    public onAbilityWidgetTargetImpact(ability: Ability, target: Widget): void {
+        // no-op
+    }
+
+    public onAbilityUnitTargetImpact(ability: Ability, target: Unit): void {
+        // no-op
+    }
+
+    public onAbilityItemTargetImpact(ability: Ability, target: Item): void {
+        // no-op
+    }
+
+    public onAbilityDestructibleTargetImpact(ability: Ability, target: Destructable): void {
+        // no-op
+    }
+
+    public onAbilityPointTargetImpact(ability: Ability, x: number, y: number): void {
+        // no-op
+    }
+
+    public onAbilityNoTargetImpact(ability: Ability): void {
+        // no-op
+    }
+
     public onAbilityChannelingFinish(ability: Ability): void {
         // no-op
     }
@@ -233,6 +258,24 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         })
         Unit.abilityImpactEvent.addListener((source, ability) => {
             UnitBehavior.forAll(source, "onAbilityImpact", ability)
+        })
+        Unit.abilityWidgetTargetImpactEvent.addListener((source, ability, target) => {
+            UnitBehavior.forAll(source, "onAbilityWidgetTargetImpact", ability, target)
+        })
+        Unit.abilityUnitTargetImpactEvent.addListener((source, ability, target) => {
+            UnitBehavior.forAll(source, "onAbilityUnitTargetImpact", ability, target)
+        })
+        Unit.abilityItemTargetImpactEvent.addListener((source, ability, target) => {
+            UnitBehavior.forAll(source, "onAbilityItemTargetImpact", ability, target)
+        })
+        Unit.abilityDestructibleTargetImpactEvent.addListener((source, ability, target) => {
+            UnitBehavior.forAll(source, "onAbilityDestructibleTargetImpact", ability, target)
+        })
+        Unit.abilityPointTargetImpactEvent.addListener((source, ability, x, y) => {
+            UnitBehavior.forAll(source, "onAbilityPointTargetImpact", ability, x, y)
+        })
+        Unit.abilityNoTargetImpactEvent.addListener((source, ability) => {
+            UnitBehavior.forAll(source, "onAbilityNoTargetImpact", ability)
         })
         Unit.abilityChannelingFinishEvent.addListener((source, ability) => {
             UnitBehavior.forAll(source, "onAbilityChannelingFinish", ability)
