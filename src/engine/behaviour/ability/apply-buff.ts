@@ -226,7 +226,7 @@ export class ApplyBuffChannelingTargetAbilityBehavior<
     }
 }
 
-Buff.destroyEvent.addListener((buff) => {
+Buff.beingDestroyedEvent.addListener((buff) => {
     const behavior = behaviorByBuff.get(buff)
     if (behavior !== undefined) {
         behaviorByBuff.delete(buff)

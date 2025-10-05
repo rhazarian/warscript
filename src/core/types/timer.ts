@@ -1,6 +1,5 @@
 import { Event, InitializingEvent } from "../../event"
 import { ObjectPool } from "../../util/objectPool"
-import { IllegalStateException } from "../../exception"
 import { AbstractDestroyable, Destructor } from "../../destroyable"
 
 const createTimer = CreateTimer
@@ -43,7 +42,7 @@ const timerSafeCall = () => {
                     timer as any,
                     TimerPropertyKey.ARGS_LENGTH + 1,
                     TimerPropertyKey.ARGS_LENGTH + (timer[TimerPropertyKey.ARGS_LENGTH] ?? 0),
-                )
+                ),
             )
         }
     }
@@ -120,7 +119,10 @@ export class Timer extends AbstractDestroyable {
         return new Timer()
     }
 
-    public static run<Args extends any[]>(callback: (...args: Args) => void, ...args: Args): void {
+    public static run<Args extends any[]>(
+        callback: (this: void, ...args: Args) => void,
+        ...args: Args
+    ): void {
         Timer.simple(0, callback, ...args) // TODO: batch
     }
 

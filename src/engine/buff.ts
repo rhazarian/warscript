@@ -521,7 +521,8 @@ const buffHealingIntervalTimerCallback = (buff: Buff) => {
     }
 }
 
-const buffDestroyEvent = new Event<[Buff]>()
+const buffBeingCreatedEvent = new Event<[Buff]>()
+const buffBeingDestroyedEvent = new Event<[Buff]>()
 
 export class Buff<
     AdditionalParameters extends Prohibit<Record<string, any>, keyof BuffParameters> = object,
@@ -925,6 +926,8 @@ export class Buff<
         }
 
         this.onCreate()
+
+        Event.invoke(buffBeingCreatedEvent, this)
 
         this[BuffPropertyKey.STATE] = HandleState.CREATED
     }
@@ -1464,7 +1467,7 @@ export class Buff<
             }
         }
 
-        Event.invoke(buffDestroyEvent, this)
+        Event.invoke(buffBeingDestroyedEvent, this)
 
         this[BuffPropertyKey.STATE] = HandleState.DESTROYED
 
@@ -1588,7 +1591,8 @@ export class Buff<
         }
     }
 
-    public static readonly destroyEvent = buffDestroyEvent
+    public static readonly beingCreatedEvent = buffBeingCreatedEvent
+    public static readonly beingDestroyedEvent = buffBeingDestroyedEvent
 
     static {
         const destroyBuffIfNeeded = (buff: Buff) => {
