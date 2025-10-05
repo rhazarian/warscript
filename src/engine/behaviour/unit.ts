@@ -12,6 +12,7 @@ import { getOrPut, mutableLuaMap } from "../../utility/lua-maps"
 import { mutableLuaSet } from "../../utility/lua-sets"
 import type { Widget } from "../../core/types/widget"
 import { Destructable } from "../../core/types/destructable"
+import type { Buff } from "../buff"
 
 export type UnitBehaviorConstructor<Args extends any[]> = new (
     unit: Unit,
@@ -187,6 +188,10 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
     }
 
     public onTargetingAbilityImpact(ability: Ability, source: Unit): void {
+        // no-op
+    }
+
+    public onBuffGained(buff: Buff): void {
         // no-op
     }
 

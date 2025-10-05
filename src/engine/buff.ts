@@ -521,7 +521,7 @@ const buffHealingIntervalTimerCallback = (buff: Buff) => {
     }
 }
 
-const buffBeingCreatedEvent = new Event<[Buff]>()
+const buffCreatedEvent = new Event<[Buff]>()
 const buffBeingDestroyedEvent = new Event<[Buff]>()
 
 export class Buff<
@@ -927,9 +927,9 @@ export class Buff<
 
         this.onCreate()
 
-        Event.invoke(buffBeingCreatedEvent, this)
-
         this[BuffPropertyKey.STATE] = HandleState.CREATED
+
+        Event.invoke(buffCreatedEvent, this)
     }
 
     public get level(): number {
@@ -1591,7 +1591,7 @@ export class Buff<
         }
     }
 
-    public static readonly beingCreatedEvent = buffBeingCreatedEvent
+    public static readonly createdEvent = buffCreatedEvent
     public static readonly beingDestroyedEvent = buffBeingDestroyedEvent
 
     static {
@@ -1650,6 +1650,11 @@ export class Buff<
                 checkBuffs(source)
             }
             checkBuffs(target)
+        })
+
+        // It is here to avoid cyclic dependency between UnitBehavior and Buff.
+        buffCreatedEvent.addListener((buff) => {
+            UnitBehavior.forAll(buff.unit, "onBuffGained", buff)
         })
     }
 }
