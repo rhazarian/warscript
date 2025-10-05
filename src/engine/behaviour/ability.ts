@@ -28,7 +28,6 @@ import {
     resolveCurrentAbilityDependentValue,
     SubscribableAbilityDependentValue,
 } from "../object-field/ability"
-import { Timer } from "../../core/types/timer"
 import { Destructor } from "../../destroyable"
 
 const createBehaviorFunctionsByAbilityTypeId = new LuaMap<
@@ -62,15 +61,6 @@ const exclusiveOnImpactHandlerAbilityBehaviorByAbility = setmetatable(
 )
 
 type UnitEventHandlerParameters<T> = T extends (unit: Unit, ...args: infer P) => any ? P : never
-
-const createZeroTimerUnitEventListener: <K extends keyof AbilityBehavior>(
-    key: K,
-) => EventListener<[Unit, Ability, ...UnitEventHandlerParameters<AbilityBehavior[K]>]> = (key) => {
-    const unitEventListener = createUnitEventListener(key)
-    return (unit, ability, ...args) => {
-        Timer.run(unitEventListener, unit, ability, ...args)
-    }
-}
 
 const createUnitEventListener: <K extends keyof AbilityBehavior>(
     key: K,
@@ -460,24 +450,18 @@ export abstract class AbilityBehavior<
             createUnitEventListener("onNoTargetChannelingStart"),
         )
         Unit.abilityImpactEvent.addListener(createUnitEventListener("onImpact"))
-        Unit.abilityWidgetTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onWidgetTargetImpact"),
+        Unit.abilityWidgetTargetImpactEvent.addListener(
+            createUnitEventListener("onWidgetTargetImpact"),
         )
-        Unit.abilityUnitTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onUnitTargetImpact"),
+        Unit.abilityUnitTargetImpactEvent.addListener(createUnitEventListener("onUnitTargetImpact"))
+        Unit.abilityItemTargetImpactEvent.addListener(createUnitEventListener("onItemTargetImpact"))
+        Unit.abilityDestructibleTargetImpactEvent.addListener(
+            createUnitEventListener("onDestructibleTargetImpact"),
         )
-        Unit.abilityItemTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onItemTargetImpact"),
+        Unit.abilityPointTargetImpactEvent.addListener(
+            createUnitEventListener("onPointTargetImpact"),
         )
-        Unit.abilityDestructibleTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onDestructibleTargetImpact"),
-        )
-        Unit.abilityPointTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onPointTargetImpact"),
-        )
-        Unit.abilityNoTargetChannelingStartEvent.addListener(
-            createZeroTimerUnitEventListener("onNoTargetImpact"),
-        )
+        Unit.abilityNoTargetImpactEvent.addListener(createUnitEventListener("onNoTargetImpact"))
         Unit.abilityChannelingFinishEvent.addListener(createUnitEventListener("onChannelingFinish"))
         Unit.abilityStopEvent.addListener(createUnitEventListener("onStop"))
     }

@@ -182,6 +182,14 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         // no-op
     }
 
+    public onTargetingAbilityChannelingStart(ability: Ability, source: Unit): void {
+        // no-op
+    }
+
+    public onTargetingAbilityImpact(ability: Ability, source: Unit): void {
+        // no-op
+    }
+
     public onItemDropped(item: Item): void {
         // no-op
     }
@@ -256,6 +264,9 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         Unit.abilityChannelingStartEvent.addListener((source, ability) => {
             UnitBehavior.forAll(source, "onAbilityChannelingStart", ability)
         })
+        Unit.abilityUnitTargetChannelingStartEvent.addListener((source, ability, target) => {
+            UnitBehavior.forAll(target, "onTargetingAbilityChannelingStart", ability, source)
+        })
         Unit.abilityImpactEvent.addListener((source, ability) => {
             UnitBehavior.forAll(source, "onAbilityImpact", ability)
         })
@@ -264,6 +275,7 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         })
         Unit.abilityUnitTargetImpactEvent.addListener((source, ability, target) => {
             UnitBehavior.forAll(source, "onAbilityUnitTargetImpact", ability, target)
+            UnitBehavior.forAll(target, "onTargetingAbilityImpact", ability, source)
         })
         Unit.abilityItemTargetImpactEvent.addListener((source, ability, target) => {
             UnitBehavior.forAll(source, "onAbilityItemTargetImpact", ability, target)

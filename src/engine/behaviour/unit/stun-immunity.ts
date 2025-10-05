@@ -5,37 +5,57 @@ import { AbilityType } from "../../object-data/entry/ability-type"
 import { flatMapToLuaSet, map } from "../../../utility/arrays"
 import { TextTag, TextTagPreset } from "../../text-tag"
 import { Destructor } from "../../../destroyable"
+import { Timer } from "../../../core/types/timer"
 
 const DEFAULT_BUFF_TYPE_IDS = postcompile(() => {
     return flatMapToLuaSet(
         AbilityType.getAllByBaseIds(
             map(
                 [
-                    "Aslo",
-                    "AHtc",
-                    "Aens",
-                    "Aprg",
-                    "Apg2",
-                    "AOeq",
-                    "SNeq",
-                    "Aweb",
-                    "Afra",
-                    "Afrb",
-                    "Afrc",
-                    "Afr2",
-                    "Acri",
-                    "Scri",
-                    "AUfn",
-                    "Aspo",
-                    "AEer",
-                    "ACwb",
+                    "AHtb",
+                    "AHbh",
+                    "AOws",
+                    "AOw2",
+                    "AUim",
+                    "Acyc",
+                    "ANfb",
+                    "ANsb",
+                    "ANcs",
+                    "ANc1",
+                    "ANc2",
+                    "ANc3",
+                    "ACbh",
+                    "ANbh",
+                    "SCc1",
+                    "ACcy",
+                    "ANb2",
+                    "Awrs",
+                    "Awrh",
+                    "Awrg",
+                    "ACtb",
+                    "ACcb",
                 ],
-                fourCC
-            )
+                fourCC,
+            ),
         ),
-        (abilityType) => abilityType.buffTypeIds.flat()
+        (abilityType) => abilityType.buffTypeIds.flat(),
     )
 })
+
+const process = (behavior: StunImmunityUnitBehavior): void => {
+    let hasRemovedBuffs = false
+    for (const buffTypeId of behavior.parameters.buffTypeIds ?? DEFAULT_BUFF_TYPE_IDS) {
+        hasRemovedBuffs = hasRemovedBuffs || behavior.unit.removeBuff(buffTypeId)
+    }
+    if (hasRemovedBuffs && behavior.parameters.textTagText != undefined) {
+        TextTag.flash(
+            TextTag.MISS,
+            behavior.parameters.textTagText,
+            behavior.unit.x,
+            behavior.unit.y,
+        )
+    }
+}
 
 export type StunImmunityUnitBehaviourParameters = {
     buffTypeIds?: LuaSet<BuffTypeId>
@@ -52,11 +72,11 @@ export class StunImmunityUnitBehavior extends UnitBehavior {
 
     public constructor(
         unit: Unit,
-        private readonly parameters: StunImmunityUnitBehaviourParameters = StunImmunityUnitBehavior.defaultParameters
+        public readonly parameters: Readonly<StunImmunityUnitBehaviourParameters> = StunImmunityUnitBehavior.defaultParameters,
     ) {
         super(unit)
         unit.decrementStunCounter()
-        this.onBuffsCheck()
+        process(this)
     }
 
     protected override onDestroy(): Destructor {
@@ -64,13 +84,16 @@ export class StunImmunityUnitBehavior extends UnitBehavior {
         return super.onDestroy()
     }
 
-    private onBuffsCheck(): void {
-        let hasRemovedBuffs = false
-        for (const buffTypeId of this.parameters.buffTypeIds ?? DEFAULT_BUFF_TYPE_IDS) {
-            hasRemovedBuffs = hasRemovedBuffs || this.unit.removeBuff(buffTypeId)
-        }
-        if (hasRemovedBuffs && this.parameters.textTagText != undefined) {
-            TextTag.flash(TextTag.MISS, this.parameters.textTagText, this.unit.x, this.unit.y)
-        }
+    public override onDamageReceived(): void {
+        process(this)
+        Timer.run(process, this)
+    }
+
+    public override onTargetingAbilityChannelingStart(): void {
+        process(this)
+    }
+
+    public override onTargetingAbilityImpact(): void {
+        process(this)
     }
 }
