@@ -185,7 +185,7 @@ const itemBySlot = new LuaMap<number, jitem>()
 export const doUnitAbilityAction = <T, Args extends any[]>(
     unit: junit,
     abilityTypeId: AbilityTypeId,
-    action: (...args: Args) => T,
+    action: (unit: junit, ...args: Args) => T,
     ...args: Args
 ): T => {
     const offset = 6 * depth++
@@ -202,10 +202,12 @@ export const doUnitAbilityAction = <T, Args extends any[]>(
             if (!isAlreadyIgnoredInEvents) {
                 ignoreEventsItems.delete(item)
             }
+
+            itemBySlot.set(offset + slot, item)
         }
     }
 
-    const result = action(...args)
+    const result = action(unit, ...args)
 
     for (const slot of $range(0, unitInventorySize(unit) - 1)) {
         const item = itemBySlot.get(offset + slot)
