@@ -109,7 +109,6 @@ const getIssuedOrderId = GetIssuedOrderId
 
 const isUnitInvulnerable = BlzIsUnitInvulnerable
 const unitAlive = UnitAlive
-const isUnitType = IsUnitType
 const isUnitAlly = IsUnitAlly
 const isUnitEnemy = IsUnitEnemy
 const getOwningPlayer = GetOwningPlayer
@@ -1032,7 +1031,7 @@ export class Unit extends Handle<junit> {
     }
 
     public hasClassification(classification: UnitClassification): boolean {
-        return isUnitType(this.handle, classification)
+        return IsUnitType(this.handle, classification)
     }
 
     public isVisibleTo(player: Player): boolean {
