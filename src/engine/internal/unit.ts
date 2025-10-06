@@ -109,9 +109,6 @@ const getIssuedOrderId = GetIssuedOrderId
 
 const isUnitInvulnerable = BlzIsUnitInvulnerable
 const unitAlive = UnitAlive
-const unitAddType = UnitAddType
-const unitRemoveType = UnitRemoveType
-const isUnitIllusion = IsUnitIllusion
 const isUnitType = IsUnitType
 const isUnitAlly = IsUnitAlly
 const isUnitEnemy = IsUnitEnemy
@@ -1005,7 +1002,7 @@ export class Unit extends Handle<junit> {
     }
 
     public get isIllusion(): boolean {
-        return isUnitIllusion(this.handle)
+        return IsUnitIllusion(this.handle)
     }
 
     public get isStunned(): boolean {
@@ -1027,11 +1024,11 @@ export class Unit extends Handle<junit> {
     }
 
     public addClassification(classification: UnitClassification): boolean {
-        return unitAddType(this.handle, classification)
+        return UnitAddType(this.handle, classification)
     }
 
     public removeClassification(classification: UnitClassification): boolean {
-        return unitRemoveType(this.handle, classification)
+        return UnitRemoveType(this.handle, classification)
     }
 
     public hasClassification(classification: UnitClassification): boolean {
