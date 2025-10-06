@@ -11,6 +11,7 @@ import { unitAddItemToSlot } from "../unit/add-item-to-slot"
 
 const isItemOwned = IsItemOwned
 const isItemPowerup = IsItemPowerup
+const getItemAbility = BlzGetItemAbility
 const getItemX = GetItemX
 const getItemY = GetItemY
 const setAbilityRealLevelField = BlzSetAbilityRealLevelField
@@ -22,6 +23,8 @@ const unitAddItem = UnitAddItem
 const unitRemoveItem = UnitRemoveItem
 const unitUseItem = UnitUseItem
 const unitResetCooldown = UnitResetCooldown
+const unitInventorySize = UnitInventorySize
+const unitItemInSlot = UnitItemInSlot
 
 const COOLDOWN_STARTER_ABILITY_TYPE_ID = compiletime(() => {
     if (!currentMap) {
@@ -56,7 +59,7 @@ export const itemAbilityDummy = assert(
 
 const cooldownStarterItem = UnitAddItemById(itemAbilityDummy, COOLDOWN_STARTER_ITEM_TYPE_ID)
 
-const cooldownStarterAbility = BlzGetItemAbility(
+const cooldownStarterAbility = getItemAbility(
     cooldownStarterItem,
     COOLDOWN_STARTER_ABILITY_TYPE_ID,
 )!
@@ -171,6 +174,65 @@ export const doAbilityActionForceDummy = <T, Args extends any[]>(
     if (!isAlreadyIgnoredInEvents) {
         ignoreEventsItems.delete(handle)
     }
+
+    return result
+}
+
+let depth = 0
+const itemBySlot = new LuaMap<number, jitem>()
+
+/** @internal For use by internal systems only. */
+export const doUnitAbilityAction = <T, Args extends any[]>(
+    unit: junit,
+    abilityTypeId: AbilityTypeId,
+    action: (...args: Args) => T,
+    ...args: Args
+): T => {
+    const offset = 6 * depth++
+    for (const slot of $range(0, unitInventorySize(unit) - 1)) {
+        const item = unitItemInSlot(unit, slot)
+        if (getItemAbility(item, abilityTypeId) != undefined) {
+            const isAlreadyIgnoredInEvents = ignoreEventsItems.has(item)
+            if (!isAlreadyIgnoredInEvents) {
+                ignoreEventsItems.add(item)
+            }
+
+            unitRemoveItem(unit, item)
+
+            if (!isAlreadyIgnoredInEvents) {
+                ignoreEventsItems.delete(item)
+            }
+        }
+    }
+
+    const result = action(...args)
+
+    for (const slot of $range(0, unitInventorySize(unit) - 1)) {
+        const item = itemBySlot.get(offset + slot)
+        if (item !== undefined) {
+            const isAlreadyIgnoredInEvents = ignoreEventsItems.has(item)
+            if (!isAlreadyIgnoredInEvents) {
+                ignoreEventsItems.add(item)
+            }
+
+            const isPowerup = isItemPowerup(item)
+            if (isPowerup) {
+                setItemBooleanField(item, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, false)
+            }
+            unitAddItemToSlot(unit, item, slot)
+            if (isPowerup) {
+                setItemBooleanField(item, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
+            }
+
+            if (!isAlreadyIgnoredInEvents) {
+                ignoreEventsItems.delete(item)
+            }
+
+            itemBySlot.delete(offset + slot)
+        }
+    }
+
+    depth--
 
     return result
 }

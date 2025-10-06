@@ -37,6 +37,8 @@ import {
 } from "../object-data/auxiliary/attack-type"
 import { damageMetadataByTarget } from "./misc/damage-metadata-by-target"
 import { AttributesHolder, isAttribute } from "../../attributes"
+import { doUnitAbilityAction } from "./item/ability"
+import type { AbilityTypeId } from "../object-data/entry/ability-type"
 
 const match = string.match
 const tostring = _G.tostring
@@ -788,6 +790,40 @@ export type UnitSyncId = number & { readonly __unitSyncId: unique symbol }
 const damagingEventByTarget = setmetatable(new LuaMap<Unit, InternalDamagingEvent>(), {
     __mode: "k",
 })
+
+const addAbility = (unit: Unit, abilityTypeId: AbilityTypeId): UnitAbility | undefined => {
+    const handle = unit["handle"]
+    if (unitAddAbility(handle, abilityTypeId)) {
+        const ability = UnitAbility.of(
+            checkNotNull(getUnitAbility(handle, abilityTypeId)),
+            abilityTypeId,
+            unit,
+        )
+        const abilities = unit.abilities as UnitAbility[]
+        abilities[abilities.length] = ability
+        return ability
+    }
+    return undefined
+}
+
+const getAbility = (unit: Unit, abilityTypeId: AbilityTypeId): UnitAbility | undefined => {
+    return UnitAbility.of(getUnitAbility(unit["handle"], abilityTypeId), abilityTypeId, unit)
+}
+
+const removeAbility = (unit: Unit, abilityTypeId: AbilityTypeId): boolean => {
+    if (unitRemoveAbility(unit["handle"], abilityTypeId)) {
+        const abilities = unit.abilities as UnitAbility[]
+        for (const i of $range(1, abilities.length)) {
+            if (abilities[i - 1].typeId == abilityTypeId) {
+                abilities[i - 1].destroy()
+                tremove(abilities, i)
+                return true
+            }
+        }
+        return true
+    }
+    return false
+}
 
 export class Unit extends Handle<junit> {
     public readonly syncId = nextSyncId++ as UnitSyncId
@@ -1544,18 +1580,14 @@ export class Unit extends Handle<junit> {
         return Item.of(unitItemInSlot(this.handle, slot))
     }
 
-    public addAbility(abilityId: number): UnitAbility | null {
-        if (unitAddAbility(this.handle, abilityId)) {
-            const ability = UnitAbility.of(
-                checkNotNull(getUnitAbility(this.handle, abilityId)),
-                abilityId,
-                this,
-            )
-            const abilities = this.abilities as UnitAbility[]
-            abilities[abilities.length] = ability
-            return ability
-        }
-        return null
+    public addAbility(abilityId: number): UnitAbility | undefined {
+        return doUnitAbilityAction(
+            this.handle,
+            abilityId as AbilityTypeId,
+            addAbility,
+            this,
+            abilityId as AbilityTypeId,
+        )
     }
 
     public makeAbilityPermanent(abilityId: number, permanent: true): boolean {
@@ -1575,27 +1607,23 @@ export class Unit extends Handle<junit> {
     }
 
     public getAbilityById(abilityId: number): UnitAbility | undefined {
-        const handle = this.handle
-        if (unitAddAbility(handle, abilityId)) {
-            assert(unitRemoveAbility(handle, abilityId))
-            return undefined
-        }
-        return UnitAbility.of(getUnitAbility(this.handle, abilityId), abilityId, this)
+        return doUnitAbilityAction(
+            this.handle,
+            abilityId as AbilityTypeId,
+            getAbility,
+            this,
+            abilityId as AbilityTypeId,
+        )
     }
 
     public removeAbility(abilityId: number): boolean {
-        if (unitRemoveAbility(this.handle, abilityId)) {
-            const abilities = this.abilities as UnitAbility[]
-            for (const i of $range(1, abilities.length)) {
-                if (abilities[i - 1].typeId == abilityId) {
-                    abilities[i - 1].destroy()
-                    tremove(abilities, i)
-                    return true
-                }
-            }
-            return true
-        }
-        return false
+        return doUnitAbilityAction(
+            this.handle,
+            abilityId as AbilityTypeId,
+            removeAbility,
+            this,
+            abilityId as AbilityTypeId,
+        )
     }
 
     public hideAbility(abilityId: number, flag: boolean): void {

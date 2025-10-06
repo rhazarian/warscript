@@ -486,9 +486,7 @@ AbilityLevelField.valueChangeEvent.addListener((ability, field) => {
 })
 
 Ability.onCreate.addListener((ability) => {
-    const createBehaviorFunctions = createBehaviorFunctionsByAbilityTypeId.get(
-        ability.typeId as AbilityTypeId,
-    )
+    const createBehaviorFunctions = createBehaviorFunctionsByAbilityTypeId.get(ability.typeId)
     if (createBehaviorFunctions != undefined) {
         for (const createBehavior of createBehaviorFunctions) {
             createBehavior(ability)
