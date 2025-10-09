@@ -56,7 +56,7 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         this: UnitBehavior<PeriodicActionParameters> &
             Record<T, (this: this, ...args: Args) => unknown>,
         event: Event<[...Args]>,
-        extractUnit: (...args: Args) => Unit,
+        extractUnit: (...args: Args) => Unit | undefined,
         range: number,
         listener: T,
     ): void {
@@ -68,18 +68,20 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         let behaviors = behaviorsByEvent.get(event)
         if (behaviors == undefined) {
             event.addListener((...args) => {
-                const unit = extractUnit(...args)
                 const behaviors = behaviorsByEvent.get(event)
                 if (behaviors !== undefined) {
-                    for (const behavior of behaviors) {
-                        const range = rangeByBehavior.get(behavior)
-                        if (
-                            range !== undefined &&
-                            unit.getCollisionDistanceTo(behavior.unit) <= range
-                        ) {
-                            ;(behavior as Record<T, (this: unknown, ...args: Args) => unknown>)[
-                                listenerByBehavior.get(behavior)! as T
-                            ](...args)
+                    const unit = extractUnit(...args)
+                    if (unit !== undefined) {
+                        for (const behavior of behaviors) {
+                            const range = rangeByBehavior.get(behavior)
+                            if (
+                                range !== undefined &&
+                                unit.getCollisionDistanceTo(behavior.unit) <= range
+                            ) {
+                                ;(behavior as Record<T, (this: unknown, ...args: Args) => unknown>)[
+                                    listenerByBehavior.get(behavior)! as T
+                                ](...args)
+                            }
                         }
                     }
                 }
