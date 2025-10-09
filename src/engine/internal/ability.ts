@@ -454,12 +454,18 @@ export class UnitAbility extends Ability {
     }
 
     public incrementDisableCounter(): void {
-        unitDisableAbility(this.u, this.typeId, true, false)
+        const unit = this.u
+        const typeId = this.typeId
+        unitDisableAbility(unit, typeId, true, false)
+        unitHideAbility(unit, typeId, true)
         this.d = (this.d ?? 0) + 1
     }
 
     public decrementDisableCounter(): void {
-        unitDisableAbility(this.u, this.typeId, false, false)
+        const unit = this.u
+        const typeId = this.typeId
+        unitDisableAbility(unit, typeId, false, false)
+        unitHideAbility(unit, typeId, true)
         this.d = (this.d ?? 0) - 1
     }
 
