@@ -141,3 +141,9 @@ export const apply: {
 }
 
 export const identity = <T>(value: T): T => value
+
+export const firstArgument = identity
+
+export const secondArgument = <T>(_: unknown, value: T): T => value
+
+export const thirdArgument = <T>(_first: unknown, _second: unknown, value: T): T => value

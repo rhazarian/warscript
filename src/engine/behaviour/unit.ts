@@ -54,8 +54,9 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
 
     public registerInRangeUnitEvent<T extends string, Args extends any[]>(
         this: UnitBehavior<PeriodicActionParameters> &
-            Record<T, (this: this, unit: Unit, ...args: Args) => unknown>,
-        event: Event<[Unit, ...Args]>,
+            Record<T, (this: this, ...args: Args) => unknown>,
+        event: Event<[...Args]>,
+        extractUnit: (...args: Args) => Unit,
         range: number,
         listener: T,
     ): void {
@@ -66,7 +67,8 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         getOrPut(eventsByBehavior, this, mutableLuaSet).add(event)
         let behaviors = behaviorsByEvent.get(event)
         if (behaviors == undefined) {
-            event.addListener((unit, ...args) => {
+            event.addListener((...args) => {
+                const unit = extractUnit(...args)
                 const behaviors = behaviorsByEvent.get(event)
                 if (behaviors !== undefined) {
                     for (const behavior of behaviors) {
@@ -75,12 +77,9 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
                             range !== undefined &&
                             unit.getCollisionDistanceTo(behavior.unit) <= range
                         ) {
-                            ;(
-                                behavior as Record<
-                                    T,
-                                    (this: unknown, unit: Unit, ...args: Args) => unknown
-                                >
-                            )[listenerByBehavior.get(behavior)! as T](unit, ...args)
+                            ;(behavior as Record<T, (this: unknown, ...args: Args) => unknown>)[
+                                listenerByBehavior.get(behavior)! as T
+                            ](...args)
                         }
                     }
                 }
