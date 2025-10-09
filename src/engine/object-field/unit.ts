@@ -8,6 +8,7 @@ import {
 import { UnitType, UnitTypeId } from "../object-data/entry/unit-type"
 import { nonEmptyLinkedSetOf, ReadonlyNonEmptyLinkedSet } from "../../utility/linked-set"
 import { AttackType } from "../object-data/auxiliary/attack-type"
+import { UnitClassifications } from "../object-data/auxiliary/unit-classification"
 
 const convertUnitBooleanField = ConvertUnitBooleanField
 const convertUnitIntegerField = ConvertUnitIntegerField
@@ -200,6 +201,24 @@ export class UnitAttackTypeWeaponField extends UnitEnumWeaponField<AttackType> {
         AttackType.MAGIC,
         AttackType.HERO,
     )
+}
+
+export class UnitClassificationsField extends UnitField<UnitClassifications, junitintegerfield> {
+    protected override get defaultValue(): UnitClassifications {
+        return 0 as UnitClassifications
+    }
+
+    protected getNativeFieldById(id: number): junitintegerfield {
+        return convertUnitIntegerField(id)
+    }
+
+    protected getNativeFieldValue(instance: Unit): UnitClassifications {
+        return instance.getField(this.nativeField) as UnitClassifications
+    }
+
+    protected setNativeFieldValue(instance: Unit, value: UnitClassifications): boolean {
+        return instance.setField(this.nativeField, value)
+    }
 }
 
 export class UnitPropulsionWindowField extends UnitFloatField {
