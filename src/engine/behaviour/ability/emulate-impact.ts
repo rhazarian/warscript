@@ -10,7 +10,7 @@ import { UnitAbility } from "../../internal/ability"
 import { Event } from "../../../event"
 
 export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
-    protected emulateImpact(caster: Unit) {
+    protected emulateImpact(caster: Unit): boolean {
         const manaCost = this.resolveCurrentAbilityDependentValue(
             MANA_COST_ABILITY_INTEGER_LEVEL_FIELD,
         )
@@ -23,7 +23,7 @@ export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
             caster.mana < manaCost ||
             (this.ability instanceof UnitAbility && this.ability.isDisabled)
         ) {
-            return
+            return false
         }
 
         caster.mana -= manaCost
@@ -37,5 +37,7 @@ export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
         }
 
         Event.invoke(Unit.abilityImpactEvent, caster, this.ability)
+
+        return true
     }
 }

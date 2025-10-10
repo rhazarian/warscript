@@ -147,3 +147,7 @@ export const firstArgument = identity
 export const secondArgument = <T>(_: unknown, value: T): T => value
 
 export const thirdArgument = <T>(_first: unknown, _second: unknown, value: T): T => value
+
+export const increment = (value: number): number => value + 1
+
+export const or = (lhs: boolean, rhs: boolean): boolean => lhs || rhs

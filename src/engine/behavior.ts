@@ -1,5 +1,6 @@
 import { AbstractDestroyable, Destructor } from "../destroyable"
 import { Timer } from "../core/types/timer"
+import { increment } from "../utility/functions"
 
 const safeCall = warpack.safeCall
 
@@ -19,6 +20,57 @@ const enum BehaviorPropertyKey {
 
 const invokeBehaviorOnPeriod = (behavior: Behavior<any>, ...args: any[]): void => {
     behavior["onPeriod"](...args)
+}
+
+const reduceBehaviors = <
+    T extends Behavior<AnyNotNil>,
+    ConstructorParameters extends any[],
+    ConsumerParameters extends any[],
+    Accumulator,
+    R,
+>(
+    behaviorConstructor: BehaviorConstructor<T, ConstructorParameters>,
+    object: T extends Behavior<infer Object> ? Object : never,
+    operation: (accumulator: Accumulator, value: R) => Accumulator,
+    initial: Accumulator,
+    consumerOrKey:
+        | ((this: void, behavior: T, ...parameters: ConsumerParameters) => R)
+        | KeysOfType<T, (this: T, ...parameters: ConsumerParameters) => R>,
+    ...parameters: ConsumerParameters
+): Accumulator => {
+    let result = initial as Accumulator
+    let behavior = firstBehaviorByObject.get(object)
+    if (behavior != undefined) {
+        if (typeof consumerOrKey == "function") {
+            do {
+                if (behavior instanceof behaviorConstructor) {
+                    result = operation(
+                        result,
+                        safeCall(consumerOrKey, behavior as T, ...parameters),
+                    )
+                }
+                behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
+            } while (behavior != undefined)
+        } else {
+            do {
+                if (behavior instanceof behaviorConstructor) {
+                    result = operation(
+                        result,
+                        safeCall(
+                            (behavior as T)[consumerOrKey] as (
+                                this: T,
+                                ...parameters: ConsumerParameters
+                            ) => R,
+                            behavior as T,
+                            ...parameters,
+                        ),
+                    )
+                }
+                behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
+            } while (behavior != undefined)
+        }
+    }
+    return result
 }
 
 export abstract class Behavior<
@@ -282,41 +334,62 @@ export abstract class Behavior<
         ConstructorParameters extends any[],
         ConsumerParameters extends any[],
     >(
-        this: BehaviorConstructor<T, ConstructorParameters>,
+        this: typeof Behavior & BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
         consumerOrKey:
             | ((this: void, behavior: T, ...parameters: ConsumerParameters) => unknown)
             | KeysOfType<T, (this: T, ...parameters: ConsumerParameters) => unknown>,
         ...parameters: ConsumerParameters
     ): number {
-        let behaviorsCount = 0
-        let behavior = firstBehaviorByObject.get(object)
-        if (behavior != undefined) {
-            if (typeof consumerOrKey == "function") {
-                do {
-                    if (behavior instanceof this) {
-                        safeCall(consumerOrKey, behavior as T, ...parameters)
-                        ++behaviorsCount
-                    }
-                    behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
-                } while (behavior != undefined)
-            } else {
-                do {
-                    if (behavior instanceof this) {
-                        safeCall(
-                            (behavior as T)[consumerOrKey] as (
-                                this: T,
-                                ...parameters: ConsumerParameters
-                            ) => unknown,
-                            behavior as T,
-                            ...parameters,
-                        )
-                        ++behaviorsCount
-                    }
-                    behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
-                } while (behavior != undefined)
-            }
-        }
-        return behaviorsCount
+        return reduceBehaviors(this, object, increment, 0, consumerOrKey, ...parameters)
+    }
+
+    public static reduce<
+        T extends Behavior<AnyNotNil>,
+        ConstructorParameters extends any[],
+        ConsumerParameters extends any[],
+        Accumulator,
+        R,
+    >(
+        this: BehaviorConstructor<T, ConstructorParameters>,
+        object: T extends Behavior<infer Object> ? Object : never,
+        operation: (accumulator: Accumulator, value: R) => Accumulator,
+        initial: Accumulator,
+        consumer: (this: void, behavior: T, ...parameters: ConsumerParameters) => R,
+        ...parameters: ConsumerParameters
+    ): Accumulator
+
+    public static reduce<
+        T extends Behavior<AnyNotNil>,
+        ConstructorParameters extends any[],
+        Accumulator,
+        R,
+        K extends KeysOfType<T, (this: T, ...args: any) => R>,
+    >(
+        this: BehaviorConstructor<T, ConstructorParameters>,
+        object: T extends Behavior<infer Object> ? Object : never,
+        operation: (accumulator: Accumulator, value: R) => Accumulator,
+        initial: Accumulator,
+        key: K,
+        ...parameters: T[K] extends (this: T, ...args: any) => R ? Parameters<T[K]> : never
+    ): Accumulator
+
+    public static reduce<
+        T extends Behavior<AnyNotNil>,
+        ConstructorParameters extends any[],
+        ConsumerParameters extends any[],
+        Accumulator,
+        R,
+    >(
+        this: typeof Behavior & BehaviorConstructor<T, ConstructorParameters>,
+        object: T extends Behavior<infer Object> ? Object : never,
+        operation: (accumulator: Accumulator, value: R) => Accumulator,
+        initial: Accumulator,
+        consumerOrKey:
+            | ((this: void, behavior: T, ...parameters: ConsumerParameters) => R)
+            | KeysOfType<T, (this: T, ...parameters: ConsumerParameters) => R>,
+        ...parameters: ConsumerParameters
+    ): Accumulator {
+        return reduceBehaviors(this, object, operation, initial, consumerOrKey, ...parameters)
     }
 }
