@@ -38,39 +38,43 @@ const reduceBehaviors = <
         | KeysOfType<T, (this: T, ...parameters: ConsumerParameters) => R>,
     ...parameters: ConsumerParameters
 ): Accumulator => {
-    let result = initial as Accumulator
+    let accumulator = initial as Accumulator
     let behavior = firstBehaviorByObject.get(object)
     if (behavior != undefined) {
         if (typeof consumerOrKey == "function") {
             do {
                 if (behavior instanceof behaviorConstructor) {
-                    result = operation(
-                        result,
-                        safeCall(consumerOrKey, behavior as T, ...parameters),
+                    const [isSuccessful, result] = safeCall(
+                        consumerOrKey,
+                        behavior as T,
+                        ...parameters,
                     )
+                    if (isSuccessful) {
+                        accumulator = operation(accumulator, result)
+                    }
                 }
                 behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
             } while (behavior != undefined)
         } else {
             do {
                 if (behavior instanceof behaviorConstructor) {
-                    result = operation(
-                        result,
-                        safeCall(
-                            (behavior as T)[consumerOrKey] as (
-                                this: T,
-                                ...parameters: ConsumerParameters
-                            ) => R,
-                            behavior as T,
-                            ...parameters,
-                        ),
+                    const [isSuccessful, result] = safeCall(
+                        (behavior as T)[consumerOrKey] as (
+                            this: T,
+                            ...parameters: ConsumerParameters
+                        ) => R,
+                        behavior as T,
+                        ...parameters,
                     )
+                    if (isSuccessful) {
+                        accumulator = operation(accumulator, result)
+                    }
                 }
                 behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
             } while (behavior != undefined)
         }
     }
-    return result
+    return accumulator
 }
 
 export abstract class Behavior<
