@@ -1,6 +1,7 @@
 import { Event, InitializingEvent } from "../../event"
 import { ObjectPool } from "../../util/objectPool"
 import { AbstractDestroyable, Destructor } from "../../destroyable"
+import { BehaviorConstructor } from "../../engine/behavior"
 
 const createTimer = CreateTimer
 const timerStart = TimerStart
@@ -15,6 +16,7 @@ const getHandleId = GetHandleId
 const pcall = _G.pcall
 const print = _G.print
 const select = _G.select
+const type = _G.type
 
 const safeCall = warpack.safeCall
 
@@ -119,11 +121,24 @@ export class Timer extends AbstractDestroyable {
         return new Timer()
     }
 
+    public static run<T, K extends KeysOfType<T, (this: T, ...args: any) => any>>(
+        object: T,
+        key: K,
+        ...parameters: T[K] extends (this: T, ...args: any) => any ? Parameters<T[K]> : never
+    ): void
+
     public static run<Args extends any[]>(
         callback: (this: void, ...args: Args) => void,
         ...args: Args
-    ): void {
-        Timer.simple(0, callback, ...args) // TODO: batch
+    ): void
+
+    public static run(objectOrCallback: any, keyOrFirstArg: any, ...restArgs: any[]): void {
+        // TODO: batch
+        if (type(objectOrCallback) == "function") {
+            Timer.simple(0, objectOrCallback, keyOrFirstArg, ...restArgs)
+        } else {
+            Timer.simple(0, objectOrCallback[keyOrFirstArg], objectOrCallback, ...restArgs)
+        }
     }
 
     public static simple<Args extends any[]>(

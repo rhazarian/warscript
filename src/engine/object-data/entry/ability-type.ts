@@ -730,9 +730,7 @@ for (const [abilityTypeId, animationFQN] of postcompile(() => castAnimationFQNBy
         EventListenerPriority.HIGHEST,
         (caster, ability) => {
             if (ability.getField(ABILITY_RLF_CASTING_TIME) != 0) {
-                Timer.run(() => {
-                    caster.playAnimation(animationFQN)
-                })
+                Timer.run(caster, "playAnimation", animationFQN)
             }
         },
     )

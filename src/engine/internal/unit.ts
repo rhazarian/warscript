@@ -1029,8 +1029,9 @@ export class Unit extends Handle<junit> {
         return isUnitEnemy(this.handle, getOwningPlayer(unit.handle))
     }
 
-    public playAnimation(animation: string, rarity?: jraritycontrol): void
-    public playAnimation(animation: number): void
+    public playAnimation(
+        ...parameters: [animation: number] | [animation: string, rarity?: jraritycontrol]
+    ): void
 
     public playAnimation(animation: string | number, rarity?: jraritycontrol): void {
         if (typeof animation == "number") {
