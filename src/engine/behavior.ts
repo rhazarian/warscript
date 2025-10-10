@@ -31,7 +31,7 @@ const reduceBehaviors = <
 >(
     behaviorConstructor: BehaviorConstructor<T, ConstructorParameters>,
     object: T extends Behavior<infer Object> ? Object : never,
-    operation: (accumulator: Accumulator, value: R) => Accumulator,
+    operation: (this: void, accumulator: Accumulator, value: R) => Accumulator,
     initial: Accumulator,
     consumerOrKey:
         | ((this: void, behavior: T, ...parameters: ConsumerParameters) => R)
@@ -353,7 +353,7 @@ export abstract class Behavior<
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
-        operation: (accumulator: Accumulator, value: R) => Accumulator,
+        operation: (this: void, accumulator: Accumulator, value: R) => Accumulator,
         initial: Accumulator,
         consumer: (this: void, behavior: T, ...parameters: ConsumerParameters) => R,
         ...parameters: ConsumerParameters
@@ -368,7 +368,7 @@ export abstract class Behavior<
     >(
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
-        operation: (accumulator: Accumulator, value: R) => Accumulator,
+        operation: (this: void, accumulator: Accumulator, value: R) => Accumulator,
         initial: Accumulator,
         key: K,
         ...parameters: T[K] extends (this: T, ...args: any) => R ? Parameters<T[K]> : never
@@ -383,7 +383,7 @@ export abstract class Behavior<
     >(
         this: typeof Behavior & BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
-        operation: (accumulator: Accumulator, value: R) => Accumulator,
+        operation: (this: void, accumulator: Accumulator, value: R) => Accumulator,
         initial: Accumulator,
         consumerOrKey:
             | ((this: void, behavior: T, ...parameters: ConsumerParameters) => R)
