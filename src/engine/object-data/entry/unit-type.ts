@@ -29,6 +29,7 @@ import type { UpgradeId } from "./upgrade"
 import { AnimationQualifier } from "../auxiliary/animation-qualifier"
 import { AttackType, attackTypeToString, stringToAttackType } from "../auxiliary/attack-type"
 import { WarscriptConfig } from "../../../config"
+import { ArmorType, armorTypeToString, stringToArmorType } from "../auxiliary/armor-type"
 
 export type UnitTypeId = ObjectDataEntryId & number & { readonly __unitTypeId: unique symbol }
 
@@ -556,6 +557,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setNumberField("urun:hd", runSpeedHD)
     }
 
+    public get selectionCircleHeight(): number {
+        return this.getNumberField("uslz")
+    }
+
+    public set selectionCircleHeight(height: number) {
+        this.setNumberField("uslz", height)
+    }
+
     public get selectionCircleScale(): number {
         return this.getNumberField("ussc")
     }
@@ -710,6 +719,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     // Combat
 
+    public get armor(): number {
+        return this.getNumberField("udef")
+    }
+
+    public set armor(armor: number) {
+        this.setNumberField("udef", armor)
+    }
+
     public get armorSoundType(): ArmorSoundType {
         return this.getStringField("uarm") as ArmorSoundType
     }
@@ -734,6 +751,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setStringField("uarm:hd", armorSoundTypeHD)
     }
 
+    public get armorType(): ArmorType {
+        return stringToArmorType(this.getStringField("udty"))
+    }
+
+    public set armorType(armorType: ArmorType) {
+        this.setStringField("udty", armorTypeToString(armorType))
+    }
+
     public get combatClassifications(): CombatClassifications {
         return stringArrayToCombatClassifications(this.getStringsField("utar"))
     }
@@ -742,11 +767,11 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setStringsField("utar", combatClassificationsToStringArray(combatClassifications))
     }
 
-    public get unitClassifications(): UnitClassifications {
+    public get classifications(): UnitClassifications {
         return stringArrayToUnitClassifications(this.getStringsField("utyp"))
     }
 
-    public set unitClassifications(unitClassifications: UnitClassifications) {
+    public set classifications(unitClassifications: UnitClassifications) {
         this.setStringsField("utyp", unitClassificationsToStringArray(unitClassifications))
     }
 
@@ -888,6 +913,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set healthRegenerationRate(healthRegenerationRate: number) {
         this.setNumberField("uhpr", healthRegenerationRate)
+    }
+
+    public get level(): number {
+        return this.getNumberField("ulev")
+    }
+
+    public set level(level: number) {
+        this.setNumberField("ulev", level)
     }
 
     public get manaRegenerationRate(): number {

@@ -388,13 +388,15 @@ declare interface jmovetype extends jhandle {
 declare interface jtargetflag extends jhandle {
     __jtargetflag: never
 }
-declare interface jarmortype extends jhandle {
+declare type jarmortype = symbol &
+    jhandle & {
     __jarmortype: never
 }
 declare interface jheroattribute extends jhandle {
     __jheroattribute: never
 }
-declare interface jdefensetype extends jhandle {
+declare type jdefensetype = symbol &
+    jhandle & {
     __jdefensetype: never
 }
 declare interface jregentype extends jhandle {
