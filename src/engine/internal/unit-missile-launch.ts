@@ -3,6 +3,7 @@ import { Unit } from "./unit"
 import { Event } from "../../event"
 import { Timer } from "../../core/types/timer"
 import { luaSetOf } from "../../utility/lua-sets"
+import { min } from "../../math"
 
 declare module "./unit" {
     namespace Unit {
@@ -55,6 +56,11 @@ const timerCallback = (source: Unit, target: Unit): void => {
 
 Unit.autoAttackStartEvent.addListener((source, target) => {
     const attackPoint = (source.chooseWeapon(target) ?? source.firstWeapon).impactDelay
-    const timer = Timer.simple(attackPoint, timerCallback, source, target)
+    const timer = Timer.simple(
+        attackPoint + min(0.001, attackPoint / 2),
+        timerCallback,
+        source,
+        target,
+    )
     eventTimerByUnit.set(source, timer)
 })
