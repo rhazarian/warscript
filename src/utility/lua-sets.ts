@@ -1,5 +1,11 @@
 const select = _G.select
 
+const EMPTY_LUA_SET: ReadonlyLuaSet<any> = new LuaSet()
+
+export const emptyLuaSet = <T extends AnyNotNil>(): ReadonlyLuaSet<T> => {
+    return EMPTY_LUA_SET
+}
+
 export const mutableLuaSet = <T extends AnyNotNil>(): LuaSet<T> => {
     return new LuaSet()
 }
@@ -27,7 +33,7 @@ export const luaSetOfNotNull = <T extends AnyNotNil>(
 
 export const luaSetIntersection = <T extends AnyNotNil>(
     firstLuaSet: ReadonlyLuaSet<T>,
-    secondLuaSet: ReadonlyLuaSet<T>,
+    secondLuaSet: ReadonlyLuaSet<T>
 ): LuaSet<T> => {
     const luaSet = new LuaSet<T>()
     for (const element of firstLuaSet) {

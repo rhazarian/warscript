@@ -16,7 +16,7 @@ export class RestoreManaSelfAbilityBehavior extends AbilityBehavior {
     }
 }
 
-export class RestoreManaAbilityBehavior extends AbilityBehavior {
+export class RestoreManaTargetAbilityBehavior extends AbilityBehavior {
     public constructor(
         ability: Ability,
         private readonly mana: AbilityDependentValue<number>,

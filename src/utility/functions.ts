@@ -1,4 +1,5 @@
 import { TupleOf } from "./types"
+import { Unit } from "../engine/internal/unit"
 
 /** @internal An ugly function type for use by internal systems only. */
 export type Forward<N extends number> = <T, Args extends TupleOf<any, N>, R>(
@@ -151,3 +152,13 @@ export const thirdArgument = <T>(_first: unknown, _second: unknown, value: T): T
 export const increment = (value: number): number => value + 1
 
 export const or = (lhs: boolean, rhs: boolean): boolean => lhs || rhs
+
+export type Transform<T, R> = (<T, R>(value: T) => R) | KeysOfType<T, R>
+
+export const transform = <T, R>(object: T, transform: Transform<T, R>): R => {
+    if (typeof transform == "function") {
+        return transform(object)
+    } else {
+        return object[transform] as R
+    }
+}
