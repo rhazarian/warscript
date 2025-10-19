@@ -1,9 +1,9 @@
 import { Timer } from "./timer"
-import { FRAME_MAX_Y, FRAME_MIN_Y, getFrameMinXMaxX } from "./frame"
 import type { Unit } from "../../engine/internal/unit"
 import { EventListenerPriority } from "../../event"
 import { PLAYER_LOCAL_HANDLE } from "../../engine/internal/misc/player-local-handle"
 import { check } from "../../utility/preconditions"
+import { FRAME_MAX_Y, FRAME_MIN_Y, getFrameMinXMaxX } from "../../engine/internal/misc/frame-coordinates"
 
 const getHandleId = GetHandleId
 const setCameraField = SetCameraField

@@ -3,15 +3,13 @@ import { Player } from "./player"
 import { Event, TriggerEvent } from "../../event"
 import { Timer } from "./timer"
 import { Color } from "./color"
+import { getFrameMinXMaxX } from "../../engine/internal/misc/frame-coordinates"
 
 const frameClick = BlzFrameClick
 const frameGetEnable = BlzFrameGetEnable
 const frameIsVisible = BlzFrameIsVisible
 const frameSetEnable = BlzFrameSetEnable
 const frameSetScale = BlzFrameSetScale
-
-const getLocalClientWidth = BlzGetLocalClientWidth
-const getLocalClientHeight = BlzGetLocalClientHeight
 
 const getCameraTargetPositionX = GetCameraTargetPositionX
 const getCameraTargetPositionY = GetCameraTargetPositionY
@@ -89,22 +87,7 @@ export namespace FramePoint {
 
 const tooltipByFrame = setmetatable(new LuaMap<Frame, Frame>(), { __mode: "k" })
 
-/** @internal For use by internal systems only. */
-export const getFrameMinXMaxX = (): LuaMultiReturn<[number, number]> => {
-    const w = getLocalClientWidth()
-    const h = getLocalClientHeight()
-    const width4by3 = (w - (h / 600) * 800) / 2
-    const pxtodpi = 0.6 / h
-    const minX = -width4by3 * pxtodpi
-    const maxX = minX + w * pxtodpi
-    return $multi(minX, maxX)
-}
 
-/** @internal For use by internal systems only. */
-export const FRAME_MIN_Y = 0
-
-/** @internal For use by internal systems only. */
-export const FRAME_MAX_Y = 0.6
 
 export class Frame extends Handle<jframehandle> {
     public static readonly GAME_UI: Frame = Frame.byOrigin(ORIGIN_FRAME_GAME_UI)
