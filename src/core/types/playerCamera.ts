@@ -1,14 +1,23 @@
+import { PLAYER_LOCAL_HANDLE } from "./player"
+import { Timer } from "./timer"
+import { FRAME_MAX_Y, FRAME_MIN_Y, getFrameMinXMaxX } from "./frame"
+import type { Unit } from "../../engine/internal/unit"
+import { EventListenerPriority } from "../../event"
+
 const getHandleId = GetHandleId
 const setCameraField = SetCameraField
 const getCameraField = GetCameraField
 const setCameraPosition = SetCameraPosition
+const getCameraEyePositionX = GetCameraEyePositionX
+const getCameraEyePositionY = GetCameraEyePositionY
+const getCameraEyePositionZ = GetCameraEyePositionZ
 const getCameraTargetPositionX = GetCameraTargetPositionX
 const getCameraTargetPositionY = GetCameraTargetPositionY
 const resetToGameCamera = ResetToGameCamera
 
+const cos = math.cos
 const deg = math.deg
-
-const localPlayer = GetLocalPlayer()
+const sin = math.sin
 
 const memoized: Record<number, PlayerCamera | undefined> = {}
 
@@ -24,7 +33,7 @@ export class PlayerCamera {
         memoized[id] = this
 
         this.player = player
-        this.isLocal = player == localPlayer
+        this.isLocal = player == PLAYER_LOCAL_HANDLE
     }
 
     /** async */
@@ -121,7 +130,101 @@ export class PlayerCamera {
         }
     }
 
+    public static isUnitInView(unit: Unit): boolean {
+        const [, , isInView] = worldCoordinatesToFrame(unit.x, unit.y, unit.z)
+        return isInView
+    }
+
     public static of(player: jplayer): PlayerCamera {
         return memoized[getHandleId(player)] ?? new PlayerCamera(player)
     }
+}
+
+let cameraEyeX = 0
+let cameraEyeY = 0
+let cameraEyeZ = 0
+let cameraAngleOfAttack = 0
+let cameraAngleOfAttackCos = 0
+let cameraAngleOfAttackSin = 0
+let cameraRotation = 0
+let cameraRotationCos = 0
+let cameraRotationSin = 0
+let cameraAngleOfAttackCosRotationCos = 0
+let cameraAngleOfAttackCosRotationSin = 0
+let cameraAngleOfAttackSinRotationCos = 0
+let cameraAngleOfAttackSinRotationSin = 0
+
+let yCenterScreenShift = 0
+let scaleFactor = 0
+
+let frameMinX = 0
+let frameMaxX = 0
+
+let isCameraViewPrecalculated = false
+const precalculateCameraView = (): void => {
+    cameraEyeX = getCameraEyePositionX()
+    cameraEyeY = getCameraEyePositionY()
+    cameraEyeZ = getCameraEyePositionZ()
+    cameraAngleOfAttack = getCameraField(CAMERA_FIELD_ANGLE_OF_ATTACK)
+    cameraAngleOfAttackCos = cos(cameraAngleOfAttack)
+    cameraAngleOfAttackSin = sin(cameraAngleOfAttack)
+    cameraRotation = getCameraField(CAMERA_FIELD_ROTATION)
+    cameraRotationCos = cos(cameraRotation)
+    cameraRotationSin = sin(cameraRotation)
+    cameraAngleOfAttackCosRotationCos = cameraAngleOfAttackCos * cameraRotationCos
+    cameraAngleOfAttackCosRotationSin = cameraAngleOfAttackCos * cameraRotationSin
+    cameraAngleOfAttackSinRotationCos = cameraAngleOfAttackSin * cameraRotationCos
+    cameraAngleOfAttackSinRotationSin = cameraAngleOfAttackSin * cameraRotationSin
+
+    yCenterScreenShift = 0.1284 * cameraAngleOfAttackCos
+    const cameraFieldOfView = getCameraField(CAMERA_FIELD_FIELD_OF_VIEW)
+    scaleFactor =
+        0.0524 * cameraFieldOfView ** 3 -
+        0.0283 * cameraFieldOfView ** 2 +
+        1.061 * cameraFieldOfView
+    ;[frameMinX, frameMaxX] = getFrameMinXMaxX()
+
+    isCameraViewPrecalculated = true
+}
+Timer.onPeriod[1 / 64].addListener(EventListenerPriority.HIGHEST, () => {
+    isCameraViewPrecalculated = false
+})
+
+/** @internal For use by internal systems only. */
+export const worldCoordinatesToFrame = (
+    x: number,
+    y: number,
+    z: number,
+): LuaMultiReturn<[x: number, n: number, isInView: boolean]> => {
+    if (!isCameraViewPrecalculated) {
+        precalculateCameraView()
+    }
+    const dx = x - cameraEyeX
+    const dy = y - cameraEyeY
+    const dz = z - cameraEyeZ
+
+    const xPrime =
+        scaleFactor *
+        (-cameraAngleOfAttackCosRotationCos * dx -
+            cameraAngleOfAttackCosRotationSin * dy -
+            cameraAngleOfAttackSin * dz)
+
+    const frameX = 0.4 + (cameraRotationCos * dy - cameraRotationSin * dx) / xPrime
+    const frameY =
+        0.42625 -
+        yCenterScreenShift +
+        (cameraAngleOfAttackSinRotationCos * dx +
+            cameraAngleOfAttackSinRotationSin * dy -
+            cameraAngleOfAttackCos * dz) /
+            xPrime
+
+    return $multi(
+        frameX,
+        frameY,
+        xPrime < 0 &&
+            frameX >= frameMinX &&
+            frameX <= frameMaxX &&
+            frameY >= FRAME_MIN_Y &&
+            frameY <= FRAME_MAX_Y,
+    )
 }

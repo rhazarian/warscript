@@ -10,6 +10,9 @@ const frameIsVisible = BlzFrameIsVisible
 const frameSetEnable = BlzFrameSetEnable
 const frameSetScale = BlzFrameSetScale
 
+const getLocalClientWidth = BlzGetLocalClientWidth
+const getLocalClientHeight = BlzGetLocalClientHeight
+
 const getCameraTargetPositionX = GetCameraTargetPositionX
 const getCameraTargetPositionY = GetCameraTargetPositionY
 
@@ -86,6 +89,23 @@ export namespace FramePoint {
 
 const tooltipByFrame = setmetatable(new LuaMap<Frame, Frame>(), { __mode: "k" })
 
+/** @internal For use by internal systems only. */
+export const getFrameMinXMaxX = (): LuaMultiReturn<[number, number]> => {
+    const w = getLocalClientWidth()
+    const h = getLocalClientHeight()
+    const width4by3 = (w - (h / 600) * 800) / 2
+    const pxtodpi = 0.6 / h
+    const minX = -width4by3 * pxtodpi
+    const maxX = minX + w * pxtodpi
+    return $multi(minX, maxX)
+}
+
+/** @internal For use by internal systems only. */
+export const FRAME_MIN_Y = 0
+
+/** @internal For use by internal systems only. */
+export const FRAME_MAX_Y = 0.6
+
 export class Frame extends Handle<jframehandle> {
     public static readonly GAME_UI: Frame = Frame.byOrigin(ORIGIN_FRAME_GAME_UI)
     public static readonly CONSOLE_UI: Frame = Frame.byOrigin(ORIGIN_FRAME_SIMPLE_UI_PARENT)
@@ -125,26 +145,20 @@ export class Frame extends Handle<jframehandle> {
     }
 
     public static get minX(): number {
-        const w = BlzGetLocalClientWidth()
-        const h = BlzGetLocalClientHeight()
-        const width4by3 = (w - (h / 600) * 800) / 2
-        const pxtodpi = 0.6 / h
-        return -width4by3 * pxtodpi
+        const [minX] = getFrameMinXMaxX()
+        return minX
     }
 
     public static get maxX(): number {
-        const w = BlzGetLocalClientWidth()
-        const h = BlzGetLocalClientHeight()
-        const width4by3 = (w - (h / 600) * 800) / 2
-        const pxtodpi = 0.6 / h
-        return (-width4by3 + w) * pxtodpi
+        const [, maxX] = getFrameMinXMaxX()
+        return maxX
     }
 
     public static readonly centerX: number = 0.4
 
-    public static readonly minY: number = 0
+    public static readonly minY: number = FRAME_MIN_Y
 
-    public static readonly maxY: number = 0.6
+    public static readonly maxY: number = FRAME_MAX_Y
 
     public static readonly centerY: number = 0.3
 

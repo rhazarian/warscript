@@ -22,6 +22,10 @@ interface Unit {
     handle: junit
 }
 
+
+/** @internal For use by internal systems only. */
+export const PLAYER_LOCAL_HANDLE = GetLocalPlayer()
+
 export class Player extends Handle<jplayer> {
     public static readonly all: Player[] = (() => {
         const all: Player[] = []
@@ -31,7 +35,7 @@ export class Player extends Handle<jplayer> {
         return all
     })()
 
-    public static readonly local = Player.of(GetLocalPlayer())
+    public static readonly local = Player.of(PLAYER_LOCAL_HANDLE)
     public static readonly neutralPassive = Player.all[PLAYER_NEUTRAL_PASSIVE]
     public static readonly neutralAggressive = Player.all[PLAYER_NEUTRAL_AGGRESSIVE]
     public static readonly neutralVictim = Player.all[bj_PLAYER_NEUTRAL_VICTIM]

@@ -2,6 +2,9 @@ import { Color } from "../core/types/color"
 import { Unit } from "./internal/unit"
 import { Timer } from "../core/types/timer"
 import { AbstractDestroyable, Destructor } from "../destroyable"
+import { PLAYER_LOCAL_HANDLE } from "../core/types/player"
+import { worldCoordinatesToFrame } from "../core/types/playerCamera"
+import { getTerrainZ } from "./internal/misc/get-terrain-z"
 
 const createTextTag = CreateTextTag
 const destroyTextTag = DestroyTextTag
@@ -16,6 +19,12 @@ const setTextTagPermanent = SetTextTagPermanent
 const setTextTagAge = SetTextTagAge
 const setTextTagLifespan = SetTextTagLifespan
 const setTextTagFadepoint = SetTextTagFadepoint
+const isUnitHidden = IsUnitHidden
+const isUnitLoaded = IsUnitLoaded
+const isUnitVisible = IsUnitVisible
+const getUnitFlyHeight = GetUnitFlyHeight
+const getUnitX = GetUnitX
+const getUnitY = GetUnitY
 
 const DEFAULT_FONT_SIZE = 0.024
 
@@ -53,8 +62,43 @@ const enum TextTagPropertyKey {
     Y,
 }
 
+const ensureHandle = (textTag: TextTag): jtexttag => {
+    let handle = textTag[TextTagPropertyKey.HANDLE]
+    if (handle == undefined) {
+        handle = createTextTag()
+        applyConfiguration(handle, textTag[TextTagPropertyKey.CONFIGURATION]!)
+        setTextTagPermanent(handle, true)
+        setTextTagText(
+            handle,
+            textTag[TextTagPropertyKey.TEXT] ?? "",
+            textTag[TextTagPropertyKey.FONT_SIZE] ?? DEFAULT_FONT_SIZE,
+        )
+        const color = textTag[TextTagPropertyKey.COLOR]
+        if (color !== undefined) {
+            setTextTagColor(handle, color.r, color.g, color.b, color.a)
+        }
+        const unit = textTag[TextTagPropertyKey.UNIT]
+        if (unit !== undefined) {
+            setTextTagPosUnit(
+                handle,
+                unit.handle,
+                textTag[TextTagPropertyKey.CONFIGURATION]!.offsetZ,
+            )
+        } else {
+            setTextTagPos(
+                handle,
+                textTag[TextTagPropertyKey.X] ?? 0,
+                textTag[TextTagPropertyKey.Y] ?? 0,
+                0,
+            )
+        }
+        textTag[TextTagPropertyKey.HANDLE] = handle
+    }
+    return handle
+}
+
 export class TextTag extends AbstractDestroyable {
-    private readonly [TextTagPropertyKey.HANDLE]: jtexttag
+    private [TextTagPropertyKey.HANDLE]?: jtexttag
     private [TextTagPropertyKey.CONFIGURATION]?: Readonly<TextTagPreset>
     private [TextTagPropertyKey.TEXT]?: string
     private [TextTagPropertyKey.FONT_SIZE]?: number
@@ -63,13 +107,17 @@ export class TextTag extends AbstractDestroyable {
     private [TextTagPropertyKey.X]?: number
     private [TextTagPropertyKey.Y]?: number
 
-    private constructor(handle: jtexttag) {
+    private constructor(handle?: jtexttag) {
         super()
         this[TextTagPropertyKey.HANDLE] = handle
     }
 
     protected override onDestroy(): Destructor {
-        destroyTextTag(this[TextTagPropertyKey.HANDLE])
+        const handle = this[TextTagPropertyKey.HANDLE]
+        if (handle !== undefined) {
+            destroyTextTag(handle)
+            this[TextTagPropertyKey.HANDLE] = undefined
+        }
         unitTextTags.delete(this)
         return super.onDestroy()
     }
@@ -80,7 +128,7 @@ export class TextTag extends AbstractDestroyable {
 
     public set text(text: string) {
         setTextTagText(
-            this[TextTagPropertyKey.HANDLE],
+            ensureHandle(this),
             text,
             this[TextTagPropertyKey.FONT_SIZE] ?? DEFAULT_FONT_SIZE,
         )
@@ -92,11 +140,7 @@ export class TextTag extends AbstractDestroyable {
     }
 
     public set fontSize(fontSize: number) {
-        setTextTagText(
-            this[TextTagPropertyKey.HANDLE],
-            this[TextTagPropertyKey.TEXT] ?? "",
-            DEFAULT_FONT_SIZE,
-        )
+        setTextTagText(ensureHandle(this), this[TextTagPropertyKey.TEXT] ?? "", DEFAULT_FONT_SIZE)
         this[TextTagPropertyKey.FONT_SIZE] = fontSize
     }
 
@@ -105,7 +149,7 @@ export class TextTag extends AbstractDestroyable {
     }
 
     public set color(color: Color) {
-        setTextTagColor(this[TextTagPropertyKey.HANDLE], color.r, color.g, color.b, color.a)
+        setTextTagColor(ensureHandle(this), color.r, color.g, color.b, color.a)
         this[TextTagPropertyKey.COLOR] = color
     }
 
@@ -115,7 +159,7 @@ export class TextTag extends AbstractDestroyable {
 
     public set unit(unit: Unit | undefined) {
         if (unit !== undefined) {
-            setTextTagPosUnit(this[TextTagPropertyKey.HANDLE], unit.handle, 0)
+            setTextTagPosUnit(ensureHandle(this), unit.handle, 0)
             this[TextTagPropertyKey.X] = undefined
             this[TextTagPropertyKey.Y] = undefined
             unitTextTags.add(this)
@@ -123,7 +167,7 @@ export class TextTag extends AbstractDestroyable {
             const unit = this[TextTagPropertyKey.UNIT]
             const x = unit.x
             const y = unit.y
-            setTextTagPos(this[TextTagPropertyKey.HANDLE], x, y, 0)
+            setTextTagPos(ensureHandle(this), x, y, 0)
             this[TextTagPropertyKey.X] = x
             this[TextTagPropertyKey.Y] = y
             unitTextTags.delete(this)
@@ -137,7 +181,7 @@ export class TextTag extends AbstractDestroyable {
 
     public set x(x: number) {
         setTextTagPos(
-            this[TextTagPropertyKey.HANDLE],
+            ensureHandle(this),
             x,
             this[TextTagPropertyKey.Y] ?? this[TextTagPropertyKey.UNIT]?.y ?? 0,
             0,
@@ -153,7 +197,7 @@ export class TextTag extends AbstractDestroyable {
 
     public set y(y: number) {
         setTextTagPos(
-            this[TextTagPropertyKey.HANDLE],
+            ensureHandle(this),
             this[TextTagPropertyKey.X] ?? this[TextTagPropertyKey.UNIT]?.x ?? 0,
             y,
             0,
@@ -234,14 +278,10 @@ export class TextTag extends AbstractDestroyable {
         text: string,
         unit: Unit,
     ): TextTag {
-        const handle = createTextTag()
-        setTextTagText(handle, text, DEFAULT_FONT_SIZE)
-        setTextTagPosUnit(handle, unit.handle, configuration.offsetZ)
-        applyConfiguration(handle, configuration)
-        setTextTagPermanent(handle, true)
-        const textTag = new TextTag(handle)
+        const textTag = new TextTag()
         textTag[TextTagPropertyKey.UNIT] = unit
         textTag[TextTagPropertyKey.CONFIGURATION] = configuration
+        ensureHandle(textTag)
         unitTextTags.add(textTag)
         return textTag
     }
@@ -249,10 +289,28 @@ export class TextTag extends AbstractDestroyable {
 
 Timer.onPeriod[1 / 64].addListener(() => {
     for (const textTag of unitTextTags) {
-        setTextTagPosUnit(
-            textTag[TextTagPropertyKey.HANDLE],
-            textTag[TextTagPropertyKey.UNIT]!.handle,
-            textTag[TextTagPropertyKey.CONFIGURATION]!.offsetZ,
+        const unit = textTag[TextTagPropertyKey.UNIT]!.handle
+        const x = getUnitX(unit)
+        const y = getUnitY(unit)
+        const [, , isInView] = worldCoordinatesToFrame(
+            x,
+            y,
+            getUnitFlyHeight(unit) + getTerrainZ(x, y),
         )
+        if (
+            isInView &&
+            !isUnitHidden(unit) &&
+            !isUnitLoaded(unit) &&
+            isUnitVisible(unit, PLAYER_LOCAL_HANDLE)
+        ) {
+            setTextTagPosUnit(
+                ensureHandle(textTag),
+                unit,
+                textTag[TextTagPropertyKey.CONFIGURATION]!.offsetZ,
+            )
+        } else if (textTag[TextTagPropertyKey.HANDLE] !== undefined) {
+            destroyTextTag(textTag[TextTagPropertyKey.HANDLE])
+            textTag[TextTagPropertyKey.HANDLE] = undefined
+        }
     }
 })
