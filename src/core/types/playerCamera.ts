@@ -3,6 +3,7 @@ import { FRAME_MAX_Y, FRAME_MIN_Y, getFrameMinXMaxX } from "./frame"
 import type { Unit } from "../../engine/internal/unit"
 import { EventListenerPriority } from "../../event"
 import { PLAYER_LOCAL_HANDLE } from "../../engine/internal/misc/player-local-handle"
+import { check } from "../../utility/preconditions"
 
 const getHandleId = GetHandleId
 const setCameraField = SetCameraField
@@ -27,9 +28,7 @@ export class PlayerCamera {
 
     private constructor(player: jplayer) {
         const id = getHandleId(player)
-        if (memoized[id]) {
-            error("Double-constructor run player camera!")
-        }
+        check(memoized[id] === undefined)
         memoized[id] = this
 
         this.player = player
