@@ -3,7 +3,7 @@ import { Player } from "./player"
 import { Event, TriggerEvent } from "../../event"
 import { Timer } from "./timer"
 import { Color } from "./color"
-import { getFrameMinXMaxX } from "../../engine/internal/misc/frame-coordinates"
+import { FRAME_MAX_Y, FRAME_MIN_Y, getFrameMinXMaxX } from "../../engine/internal/misc/frame-coordinates"
 
 const frameClick = BlzFrameClick
 const frameGetEnable = BlzFrameGetEnable
