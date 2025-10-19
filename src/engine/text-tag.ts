@@ -279,6 +279,7 @@ export class TextTag extends AbstractDestroyable {
         unit: Unit,
     ): TextTag {
         const textTag = new TextTag()
+        textTag[TextTagPropertyKey.TEXT] = text
         textTag[TextTagPropertyKey.UNIT] = unit
         textTag[TextTagPropertyKey.CONFIGURATION] = configuration
         ensureHandle(textTag)
