@@ -1,7 +1,7 @@
 import { Ability, ItemAbility, UnitAbility } from "./ability"
 import { Unit } from "./unit"
 
-import { Event, EventListenerPriority, createDispatchingEvent, DispatchingEvent } from "../../event"
+import { createDispatchingEvent, DispatchingEvent, Event, EventListenerPriority } from "../../event"
 
 declare module "./unit" {
     namespace Unit {
@@ -11,12 +11,12 @@ declare module "./unit" {
 }
 const abilityGainedEvent = createDispatchingEvent(
     new Event<[Unit, Ability]>(),
-    (unit, ability) => ability.typeId
+    (unit, ability) => ability.typeId,
 )
 rawset(Unit, "abilityGainedEvent", abilityGainedEvent)
 const abilityLostEvent = createDispatchingEvent(
     new Event<[Unit, Ability]>(),
-    (unit, ability) => ability.typeId
+    (unit, ability) => ability.typeId,
 )
 rawset(Unit, "abilityLostEvent", abilityLostEvent)
 
@@ -38,6 +38,12 @@ ItemAbility.onCreate.addListener(EventListenerPriority.LOWEST, (ability) => {
 Unit.itemPickedUpEvent.addListener(EventListenerPriority.LOWEST, (unit, item) => {
     for (const ability of item.abilities) {
         Event.invoke(abilityGainedEvent, unit, ability)
+    }
+})
+
+Unit.itemStackedEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
+    for (const ability of item.abilities) {
+        Event.invoke(abilityLostEvent, unit, ability)
     }
 })
 
