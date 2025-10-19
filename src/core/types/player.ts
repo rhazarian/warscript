@@ -6,6 +6,7 @@ import { PlayerColor } from "./playerColor"
 import { IllegalStateException } from "../../exception"
 import { UpgradeId } from "../../engine/object-data/entry/upgrade"
 import { MAXIMUM_INTEGER } from "../../math"
+import { PLAYER_LOCAL_HANDLE } from "../../engine/internal/misc/player-local-handle"
 
 const getPlayerColor = GetPlayerColor
 const getPlayerName = GetPlayerName
@@ -21,10 +22,6 @@ type Collector<T extends any[]> = () => LuaMultiReturn<T>
 interface Unit {
     handle: junit
 }
-
-
-/** @internal For use by internal systems only. */
-export const PLAYER_LOCAL_HANDLE = GetLocalPlayer()
 
 export class Player extends Handle<jplayer> {
     public static readonly all: Player[] = (() => {
@@ -76,7 +73,7 @@ export class Player extends Handle<jplayer> {
 
     public get nameColored(): string {
         return `|c${PlayerColor.of(getPlayerColor(this.handle)).hexCode}${getPlayerName(
-            this.handle
+            this.handle,
         )}|r`
     }
 
@@ -195,7 +192,7 @@ export class Player extends Handle<jplayer> {
 
     private static getEvent<T extends any[]>(
         event: jplayerevent,
-        collector: Collector<T>
+        collector: Collector<T>,
     ): Event<T> {
         const eventId = GetHandleId(event)
         if (!this.events[eventId]) {
@@ -210,18 +207,21 @@ export class Player extends Handle<jplayer> {
 
     private static getMouseEvent<T extends any[]>(
         event: jplayerevent,
-        collector: Collector<T>
+        collector: Collector<T>,
     ): Event<T> {
         const eventId = GetHandleId(event)
         if (!this.events[eventId]) {
-            this.events[eventId] = new TriggerEvent<T>((trigger) => {
-                /** Mouse events may cause a crash when triggered from the loading screen. We initialize them after. */
-                Timer.simple(0, () => {
-                    for (const player of Player.all) {
-                        TriggerRegisterPlayerEvent(trigger, player.handle, event)
-                    }
-                })
-            }, collector || (() => []))
+            this.events[eventId] = new TriggerEvent<T>(
+                (trigger) => {
+                    /** Mouse events may cause a crash when triggered from the loading screen. We initialize them after. */
+                    Timer.simple(0, () => {
+                        for (const player of Player.all) {
+                            TriggerRegisterPlayerEvent(trigger, player.handle, event)
+                        }
+                    })
+                },
+                collector || (() => []),
+            )
         }
         return this.events[eventId]
     }
@@ -232,13 +232,13 @@ export class Player extends Handle<jplayer> {
 
     static get onMouseDown(): Event<[Player, jmousebuttontype]> {
         return Player.getMouseEvent(EVENT_PLAYER_MOUSE_DOWN, () =>
-            $multi(Player.of(GetTriggerPlayer()), BlzGetTriggerPlayerMouseButton())
+            $multi(Player.of(GetTriggerPlayer()), BlzGetTriggerPlayerMouseButton()),
         )
     }
 
     static get onMouseUp(): Event<[Player, jmousebuttontype]> {
         return Player.getMouseEvent(EVENT_PLAYER_MOUSE_UP, () =>
-            $multi(Player.of(GetTriggerPlayer()), BlzGetTriggerPlayerMouseButton())
+            $multi(Player.of(GetTriggerPlayer()), BlzGetTriggerPlayerMouseButton()),
         )
     }
 
@@ -246,8 +246,8 @@ export class Player extends Handle<jplayer> {
         return Player.getMouseEvent(EVENT_PLAYER_MOUSE_MOVE, () =>
             $multi(
                 Player.of(GetTriggerPlayer()),
-                vec2(BlzGetTriggerPlayerMouseX(), BlzGetTriggerPlayerMouseY())
-            )
+                vec2(BlzGetTriggerPlayerMouseX(), BlzGetTriggerPlayerMouseY()),
+            ),
         )
     }
 
@@ -300,7 +300,7 @@ export class Player extends Handle<jplayer> {
                         Event.invoke(metaKeyEvent, player)
                     }
                 }
-            })
+            }),
         )
 
         return setmetatable(
@@ -335,14 +335,14 @@ export class Player extends Handle<jplayer> {
                                 return metaKeyEvent
                             },
                             __newindex: keyEvent,
-                        }
+                        },
                     )
                     keyEvents[key] = mt as any
                     rawset(this, key, mt)
                     return mt
                 },
                 __newindex: event,
-            }
+            },
         ) as any
     }
 
@@ -373,7 +373,7 @@ export class Player extends Handle<jplayer> {
                     TriggerRegisterPlayerChatEvent(trigger, player.handle, "", false)
                 }
             },
-            () => $multi(Player.of(GetTriggerPlayer()), GetEventPlayerChatString())
+            () => $multi(Player.of(GetTriggerPlayer()), GetEventPlayerChatString()),
         )
         rawset(this, "onChat", event)
         return event

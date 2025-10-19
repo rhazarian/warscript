@@ -1,8 +1,8 @@
-import { PLAYER_LOCAL_HANDLE } from "./player"
 import { Timer } from "./timer"
 import { FRAME_MAX_Y, FRAME_MIN_Y, getFrameMinXMaxX } from "./frame"
 import type { Unit } from "../../engine/internal/unit"
 import { EventListenerPriority } from "../../event"
+import { PLAYER_LOCAL_HANDLE } from "../../engine/internal/misc/player-local-handle"
 
 const getHandleId = GetHandleId
 const setCameraField = SetCameraField
