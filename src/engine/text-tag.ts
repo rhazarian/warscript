@@ -2,9 +2,9 @@ import { Color } from "../core/types/color"
 import { Unit } from "./internal/unit"
 import { Timer } from "../core/types/timer"
 import { AbstractDestroyable, Destructor } from "../destroyable"
-import { PLAYER_LOCAL_HANDLE } from "../core/types/player"
 import { worldCoordinatesToFrame } from "../core/types/playerCamera"
 import { getTerrainZ } from "./internal/misc/get-terrain-z"
+import { PLAYER_LOCAL_HANDLE } from "./internal/misc/player-local-handle"
 
 const createTextTag = CreateTextTag
 const destroyTextTag = DestroyTextTag
