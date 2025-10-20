@@ -1,4 +1,4 @@
-import { Ability, jabilityfield } from "../internal/ability"
+import { Ability, abilityTypeHasField, jabilityfield } from "../internal/ability"
 import {
     ObjectArrayField,
     ObjectField,
@@ -38,8 +38,8 @@ export abstract class AbilityField<
         return instance.typeId
     }
 
-    protected override hasNativeFieldValue(instance: Ability): boolean {
-        return instance.hasField(this.nativeField)
+    protected override hasNativeFieldValue(abilityTypeId: AbilityTypeId): boolean {
+        return abilityTypeHasField(abilityTypeId, this.nativeField)
     }
 
     public static get valueChangeEvent(): ObjectFieldValueChangeEvent<
@@ -192,8 +192,8 @@ export abstract class AbilityArrayField<
         return instance.typeId
     }
 
-    protected override hasNativeFieldValue(instance: Ability): boolean {
-        return instance.hasField(this.nativeField)
+    protected override hasNativeFieldValue(abilityTypeId: AbilityTypeId): boolean {
+        return abilityTypeHasField(abilityTypeId, this.nativeField)
     }
 }
 
@@ -259,8 +259,8 @@ export abstract class AbilityLevelField<
         return instance.typeId
     }
 
-    protected override hasNativeFieldValue(instance: Ability): boolean {
-        return instance.hasField(this.nativeField)
+    protected override hasNativeFieldValue(abilityTypeId: AbilityTypeId): boolean {
+        return abilityTypeHasField(abilityTypeId, this.nativeField)
     }
 
     public static override get valueChangeEvent(): ObjectLevelFieldValueChangeEvent<

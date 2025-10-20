@@ -288,6 +288,22 @@ export const getOrderIdByAbilityTypeId = (abilityTypeId: AbilityTypeId): number 
     )
 }
 
+/** @internal For use by internal systems only. */
+export const abilityTypeHasField = (
+    abilityTypeId: AbilityTypeId,
+    field: jabilityfield | number,
+): boolean => {
+    field = type(field) == "number" ? (field as number) : getHandleId(field as jabilityfield)
+    if (commonFields[field]) {
+        return true
+    }
+    let id = availableFields[abilityTypeId]
+    if (type(id) == "number") {
+        id = availableFields[id as number]
+    }
+    return !!(id && (id as Record<number, true | undefined>)[field])
+}
+
 export abstract class Ability extends Handle<jability> {
     public readonly typeId: AbilityTypeId
 
@@ -325,15 +341,7 @@ export abstract class Ability extends Handle<jability> {
     }
 
     public hasField(field: jabilityfield | number): boolean {
-        field = type(field) == "number" ? (field as number) : getHandleId(field as jabilityfield)
-        if (commonFields[field]) {
-            return true
-        }
-        let id = availableFields[this.typeId]
-        if (type(id) == "number") {
-            id = availableFields[id as number]
-        }
-        return !!(id && (id as Record<number, true | undefined>)[field])
+        return abilityTypeHasField(this.typeId, field)
     }
 
     public getField(field: jabilityintegerfield | jabilityrealfield): number

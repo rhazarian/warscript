@@ -71,17 +71,25 @@ abstract class ObjectFieldBase<
         instance: InstanceType,
     ): ObjectDataEntryIdType<ObjectDataEntryType>
 
-    protected abstract hasNativeFieldValue(instance: InstanceType): boolean
+    protected abstract hasNativeFieldValue(
+        objectDataEntryId: ObjectDataEntryIdType<ObjectDataEntryType>,
+    ): boolean
 
-    public hasValue(instance: InstanceType): boolean {
+    public hasValue(
+        instanceOrObjectDataEntryId: InstanceType | ObjectDataEntryIdType<ObjectDataEntryType>,
+    ): boolean {
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
+        const objectDataEntryId =
+            instanceOrObjectDataEntryId instanceof this.instanceClass
+                ? this.getObjectDataEntryId(instanceOrObjectDataEntryId as InstanceType)
+                : (instanceOrObjectDataEntryId as ObjectDataEntryIdType<ObjectDataEntryType>)
         return (
             this.isGlobal ||
             (defaultValueByObjectDataEntryId != undefined &&
-                defaultValueByObjectDataEntryId.has(this.getObjectDataEntryId(instance))) ||
-            this.hasNativeFieldValue(instance)
+                defaultValueByObjectDataEntryId.has(objectDataEntryId)) ||
+            this.hasNativeFieldValue(objectDataEntryId)
         )
     }
 
@@ -321,9 +329,10 @@ export abstract class ObjectField<
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
+        const objectDataEntryId = this.getObjectDataEntryId(instance)
         if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
             const defaultValue = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
-                this.getObjectDataEntryId(instance),
+                objectDataEntryId,
             ) as ValueType | undefined
             if (defaultValue != undefined || this.isGlobal) {
                 const previousValue =
@@ -335,7 +344,7 @@ export abstract class ObjectField<
                 return true
             }
         }
-        if (!this.hasNativeFieldValue(instance)) {
+        if (!this.hasNativeFieldValue(objectDataEntryId)) {
             return false
         }
         const previousValue = this.getNativeFieldValue(instance)
@@ -683,9 +692,10 @@ export abstract class ObjectLevelField<
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
+        const objectDataEntryId = this.getObjectDataEntryId(entry)
         if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
             const defaultValueByLevel = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
-                this.getObjectDataEntryId(entry),
+                objectDataEntryId,
             ) as ValueType[] | undefined
             if (defaultValueByLevel != undefined || this.isGlobal) {
                 let valueByLevel = this.valueByInstance.get(entry)
@@ -704,7 +714,7 @@ export abstract class ObjectLevelField<
                 return true
             }
         }
-        if (!this.hasNativeFieldValue(entry)) {
+        if (!this.hasNativeFieldValue(objectDataEntryId)) {
             return false
         }
         const previousValue = this.getNativeFieldValue(entry, level)
