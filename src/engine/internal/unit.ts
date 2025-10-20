@@ -2614,10 +2614,15 @@ export class Unit extends Handle<junit> {
     })
 
     public static itemPickedUpEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_PICKUP_ITEM, () => {
-        const unit = getTriggerUnit()
-        const item = getManipulatedItem()
-        if (getUnitTypeId(unit!) != dummyUnitId && !ignoreEventsItems.has(item)) {
-            return $multi(Unit.of(unit!), Item.of(item!))
+        const unitHandle = getTriggerUnit()
+        const itemHandle = getManipulatedItem()
+        if (getUnitTypeId(unitHandle!) != dummyUnitId && !ignoreEventsItems.has(itemHandle)) {
+            // Stacking causes the engine to fire a PICKUP_ITEM event which doesn't make sense.
+            const unit = Unit.of(unitHandle)
+            const item = Item.of(itemHandle)
+            if (item.owner != unit) {
+                return $multi(unit, item)
+            }
         }
         return $multi(IgnoreEvent)
     })

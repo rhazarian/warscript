@@ -1,6 +1,7 @@
 import { Item } from "./item"
 
 import { Unit } from "./unit"
+import { EventListenerPriority } from "../../event"
 
 declare module "./item" {
     interface Item {
@@ -10,11 +11,11 @@ declare module "./item" {
 
 const ownerByItem = setmetatable(new LuaMap<Item, Unit>(), { __mode: "kv" })
 
-Unit.itemPickedUpEvent.addListener((unit, item) => {
+Unit.itemPickedUpEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
     ownerByItem.set(item, unit)
 })
 
-Unit.itemDroppedEvent.addListener((unit, item) => {
+Unit.itemDroppedEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
     ownerByItem.delete(item)
 })
 
