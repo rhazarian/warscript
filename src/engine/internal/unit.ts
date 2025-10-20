@@ -2636,13 +2636,13 @@ export class Unit extends Handle<junit> {
         return $multi(IgnoreEvent)
     })
 
-    public static itemStackedEvent = new UnitTriggerEvent<[source: Item, target: Item]>(
+    public static itemStackedEvent = new UnitTriggerEvent<[target: Item, source: Item]>(
         EVENT_PLAYER_UNIT_STACK_ITEM,
         () =>
             $multi(
                 Unit.of(getTriggerUnit()!),
-                Item.of(BlzGetStackingItemSource()!),
                 Item.of(BlzGetStackingItemTarget()!),
+                Item.of(BlzGetStackingItemSource()!),
             ),
     )
 
