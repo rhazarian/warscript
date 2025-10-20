@@ -75,16 +75,10 @@ abstract class ObjectFieldBase<
         objectDataEntryId: ObjectDataEntryIdType<ObjectDataEntryType>,
     ): boolean
 
-    public hasValue(
-        instanceOrObjectDataEntryId: InstanceType | ObjectDataEntryIdType<ObjectDataEntryType>,
-    ): boolean {
+    public hasValue(objectDataEntryId: ObjectDataEntryIdType<ObjectDataEntryType>): boolean {
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
-        const objectDataEntryId =
-            instanceOrObjectDataEntryId instanceof this.instanceClass
-                ? this.getObjectDataEntryId(instanceOrObjectDataEntryId as InstanceType)
-                : (instanceOrObjectDataEntryId as ObjectDataEntryIdType<ObjectDataEntryType>)
         return (
             this.isGlobal ||
             (defaultValueByObjectDataEntryId != undefined &&
