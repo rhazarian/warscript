@@ -30,6 +30,7 @@ const getItemY = GetItemY
 const getItemCharges = GetItemCharges
 const setItemCharges = SetItemCharges
 const unitRemoveAbility = UnitRemoveAbility
+const unitRemoveItem = UnitRemoveItem
 const unitUseItem = UnitUseItem
 const unitUseItemPoint = UnitUseItemPoint
 const unitUseItemTarget = UnitUseItemTarget
@@ -137,6 +138,10 @@ export class Item extends Handle<jitem> {
     }
 
     protected override onDestroy(): HandleDestructor {
+        const owner = this.owner
+        if (owner !== undefined) {
+            unitRemoveItem(owner.handle, this.handle)
+        }
         const abilities = this[ItemPropertyKey.ABILITIES]
         for (const i of $range(1, abilities.length)) {
             abilities[i - 1].destroy()

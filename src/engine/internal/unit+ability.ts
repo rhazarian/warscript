@@ -35,6 +35,13 @@ ItemAbility.onCreate.addListener(EventListenerPriority.LOWEST, (ability) => {
     }
 })
 
+ItemAbility.destroyEvent.addListener(EventListenerPriority.HIGHEST, (ability) => {
+    const unit = ability.owner.owner
+    if (unit != undefined) {
+        Event.invoke(abilityLostEvent, unit, ability)
+    }
+})
+
 Unit.itemPickedUpEvent.addListener(EventListenerPriority.LOWEST, (unit, item) => {
     for (const ability of item.abilities) {
         Event.invoke(abilityGainedEvent, unit, ability)
