@@ -2618,7 +2618,7 @@ export class Unit extends Handle<junit> {
         const itemHandle = getManipulatedItem()
         if (getUnitTypeId(unitHandle!) != dummyUnitId && !ignoreEventsItems.has(itemHandle)) {
             // Stacking causes the engine to fire a PICKUP_ITEM event which doesn't make sense.
-            const unit = Unit.of(unitHandle)
+            const unit = Unit.of(unitHandle!)
             const item = Item.of(itemHandle)
             if (item.owner != unit) {
                 return $multi(unit, item)
