@@ -13,7 +13,6 @@ import type { ItemTypeId } from "../object-data/entry/item-type"
 const itemChargesChangeEvent = new Event<[Item]>()
 
 const itemAddAbility = BlzItemAddAbility
-const itemRemoveAbility = BlzItemRemoveAbility
 const getItemAbility = BlzGetItemAbility
 const isItemPowerup = IsItemPowerup
 const getItemAbilityByIndex = BlzGetItemAbilityByIndex
@@ -34,6 +33,8 @@ const unitRemoveItem = UnitRemoveItem
 const unitUseItem = UnitUseItem
 const unitUseItemPoint = UnitUseItemPoint
 const unitUseItemTarget = UnitUseItemTarget
+
+const tableRemove = table.remove
 
 _G.SetItemCharges = (whichItem, charges): void => {
     setItemCharges(whichItem, charges)
@@ -444,17 +445,12 @@ export class Item extends Handle<jitem> {
     public removeAbility(abilityTypeId: AbilityTypeId): boolean {
         const luaIndexByAbilityTypeId = this[ItemPropertyKey.LUA_INDEX_BY_ABILITY_TYPE_ID]
         const luaIndex = luaIndexByAbilityTypeId[abilityTypeId]
-        if (
-            luaIndex != undefined &&
-            doAbilityAction(this.handle, itemRemoveAbility, abilityTypeId)
-        ) {
-            luaIndexByAbilityTypeId[abilityTypeId] = undefined
+        if (luaIndex != undefined) {
             const abilities = this[ItemPropertyKey.ABILITIES]
             abilities[luaIndex - 1].destroy()
-            const abilityTypeIdsLength = abilities.length
-            for (const j of $range(luaIndex, abilityTypeIdsLength)) {
-                abilities[j - 1] = abilities[j]
-            }
+            tableRemove(abilities, luaIndex)
+            luaIndexByAbilityTypeId[abilityTypeId] = undefined
+            return true
         }
         return false
     }

@@ -1,4 +1,4 @@
-import { Handle } from "../../core/types/handle"
+import { Handle, HandleDestructor } from "../../core/types/handle"
 import { Event } from "../../event"
 import type { Item } from "../../core/types/item"
 import type { Unit } from "./unit"
@@ -7,6 +7,7 @@ import {
     abilityActionDummy,
     doAbilityAction,
     doAbilityActionForceDummy,
+    doUnitAbilityAction,
     startItemCooldown,
 } from "./item/ability"
 
@@ -35,6 +36,8 @@ const getItemBooleanField = BlzGetItemBooleanField
 const setItemBooleanField = BlzSetItemBooleanField
 const unitHideAbility = BlzUnitHideAbility
 const unitDisableAbility = BlzUnitDisableAbility
+const unitRemoveAbility = UnitRemoveAbility
+const itemRemoveAbility = BlzItemRemoveAbility
 const match = string.match
 const type = _G.type
 const tostring = _G.tostring
@@ -493,6 +496,11 @@ export class UnitAbility extends Ability {
         this.owner.interruptCast(this.typeId)
     }
 
+    protected override onDestroy(): HandleDestructor {
+        doUnitAbilityAction(this.owner.handle, this.typeId, unitRemoveAbility, this.typeId)
+        return super.onDestroy()
+    }
+
     public static get onCreate(): Event<[UnitAbility]> {
         return this.onCreateEvent
     }
@@ -597,6 +605,11 @@ export class ItemAbility extends Ability {
             setItemBooleanField(handle, ITEM_BF_ACTIVELY_USED, false)
             setItemBooleanField(handle, ITEM_BF_ACTIVELY_USED, true)
         }
+    }
+
+    protected override onDestroy(): HandleDestructor {
+        doAbilityAction(this.owner.handle, itemRemoveAbility, this.typeId)
+        return super.onDestroy()
     }
 
     public static get onCreate(): Event<[ItemAbility]> {

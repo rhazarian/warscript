@@ -1587,23 +1587,13 @@ export class Unit extends Handle<junit> {
     }
 
     public removeAbility(abilityId: number): boolean {
-        if (
-            doUnitAbilityAction(
-                this.handle,
-                abilityId as AbilityTypeId,
-                unitRemoveAbility,
-                abilityId,
-            )
-        ) {
-            const abilities = this.abilities as UnitAbility[]
-            for (const i of $range(1, abilities.length)) {
-                if (abilities[i - 1].typeId == abilityId) {
-                    abilities[i - 1].destroy()
-                    tremove(abilities, i)
-                    return true
-                }
+        const abilities = this.abilities as UnitAbility[]
+        for (const i of $range(1, abilities.length)) {
+            if (abilities[i - 1].typeId == abilityId) {
+                abilities[i - 1].destroy()
+                tremove(abilities, i)
+                return true
             }
-            return true
         }
         return false
     }
