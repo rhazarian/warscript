@@ -13,6 +13,13 @@ import { mutableLuaSet } from "../../utility/lua-sets"
 import type { Widget } from "../../core/types/widget"
 import { Destructable } from "../../core/types/destructable"
 import type { Buff } from "../buff"
+import {
+    addOrUpdateOrRemoveUnitBonus,
+    getUnitBonus,
+    removeUnitBonus,
+    UnitBonusId,
+    UnitBonusType,
+} from "../internal/unit/bonus"
 
 export type UnitBehaviorConstructor<Args extends any[]> = new (
     unit: Unit,
@@ -29,6 +36,10 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
     Unit,
     PeriodicActionParameters
 > {
+    public readonly sourceAbilityBehavior?: AbilityBehavior
+
+    private _bonusIdByBonusType?: LuaMap<UnitBonusType, UnitBonusId | undefined>
+
     public constructor(unit: Unit) {
         super(unit)
     }
@@ -43,16 +54,42 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
             }
             eventsByBehavior.delete(this)
         }
+        if (this._bonusIdByBonusType != undefined) {
+            for (const [bonusType, bonusId] of this._bonusIdByBonusType) {
+                removeUnitBonus(this.object, bonusType, bonusId!)
+            }
+        }
         return super.onDestroy()
     }
-
-    public readonly sourceAbilityBehavior?: AbilityBehavior
 
     public get unit(): Unit {
         return this.object
     }
 
-    public registerInRangeUnitEvent<T extends string, Args extends any[]>(
+    protected getUnitBonus(bonusType: UnitBonusType): number {
+        const bonusId = this._bonusIdByBonusType?.get(bonusType)
+        return bonusId == undefined ? 0 : getUnitBonus(this.object, bonusType, bonusId)
+    }
+
+    protected addOrUpdateOrRemoveUnitBonus(bonusType: UnitBonusType, value: number): void {
+        let bonusIdByBonusType = this._bonusIdByBonusType
+        if (bonusIdByBonusType == undefined) {
+            bonusIdByBonusType = new LuaMap()
+            this._bonusIdByBonusType = bonusIdByBonusType
+        }
+
+        bonusIdByBonusType.set(
+            bonusType,
+            addOrUpdateOrRemoveUnitBonus(
+                this.object,
+                bonusType,
+                bonusIdByBonusType.get(bonusType),
+                value,
+            ),
+        )
+    }
+
+    protected registerInRangeUnitEvent<T extends string, Args extends any[]>(
         this: UnitBehavior<PeriodicActionParameters> &
             Record<T, (this: this, ...args: Args) => unknown>,
         event: Event<[...Args]>,

@@ -23,13 +23,7 @@ import {
 import { IllegalArgumentException } from "../exception"
 import { Timer } from "../core/types/timer"
 import { max, min } from "../math"
-import {
-    addOrUpdateOrRemoveUnitBonus,
-    getUnitBonus,
-    removeUnitBonus,
-    UnitBonusId,
-    UnitBonusType,
-} from "./internal/unit/bonus"
+import { UnitBonusType } from "./internal/unit/bonus"
 import { CombatClassifications } from "./object-data/auxiliary/combat-classification"
 import { damageArea } from "./internal/mechanics/area-damage"
 import { check, checkNotNull } from "../utility/preconditions"
@@ -615,32 +609,8 @@ export class Buff<
     private readonly _spellStealPriority?: number
     private readonly _learnLevelMinimum?: number
     private readonly [BuffPropertyKey.MISS_PROBABILITY]?: number
-    private _bonusIdByBonusType?: LuaMap<UnitBonusType, UnitBonusId | undefined>
     private readonly _abilityTypeIds?: LuaSet<AbilityTypeId>
     private _behaviors?: UnitBehavior[]
-
-    private getUnitBonus(bonusType: UnitBonusType): number {
-        const bonusId = this._bonusIdByBonusType?.get(bonusType)
-        return bonusId == undefined ? 0 : getUnitBonus(this._unit, bonusType, bonusId)
-    }
-
-    private addOrUpdateOrRemoveUnitBonus(bonusType: UnitBonusType, value: number): void {
-        let bonusIdByBonusType = this._bonusIdByBonusType
-        if (bonusIdByBonusType == undefined) {
-            bonusIdByBonusType = new LuaMap()
-            this._bonusIdByBonusType = bonusIdByBonusType
-        }
-
-        bonusIdByBonusType.set(
-            bonusType,
-            addOrUpdateOrRemoveUnitBonus(
-                this._unit,
-                bonusType,
-                bonusIdByBonusType.get(bonusType),
-                value,
-            ),
-        )
-    }
 
     public constructor(target: Unit, ...parameters: BuffConstructorParameters<AdditionalParameters>)
 
@@ -1459,11 +1429,6 @@ export class Buff<
         if (this._abilityTypeIds != undefined) {
             for (const abilityTypeId of this._abilityTypeIds) {
                 unit.removeAbility(abilityTypeId)
-            }
-        }
-        if (this._bonusIdByBonusType != undefined) {
-            for (const [bonusType, bonusId] of this._bonusIdByBonusType) {
-                removeUnitBonus(unit, bonusType, bonusId!)
             }
         }
 
