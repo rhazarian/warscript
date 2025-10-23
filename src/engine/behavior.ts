@@ -166,6 +166,16 @@ export abstract class Behavior<
         behaviors.add(this)
     }
 
+    protected deregisterEvent(event: Event<any>): boolean {
+        const behaviors = behaviorsByEvent.get(event)
+        if (behaviors !== undefined && behaviors.remove(this)) {
+            eventsByBehavior.get(this)!.delete(event)
+            listenerByBehaviorByEvent.get(event)!.delete(this)
+            return true
+        }
+        return false
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     protected onPeriod(...parameters: PeriodicActionParameters): void {
         // no-op
