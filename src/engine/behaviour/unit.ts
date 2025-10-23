@@ -21,6 +21,8 @@ import {
     UnitBonusType,
 } from "../internal/unit/bonus"
 
+const safeCall = warpack.safeCall
+
 export type UnitBehaviorConstructor<Args extends any[]> = new (
     unit: Unit,
     ...args: Args
@@ -115,9 +117,16 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
                                 range !== undefined &&
                                 unit.getCollisionDistanceTo(behavior.unit) <= range
                             ) {
-                                ;(behavior as Record<T, (this: unknown, ...args: Args) => unknown>)[
-                                    listenerByBehavior.get(behavior)! as T
-                                ](...args)
+                                safeCall(
+                                    (
+                                        behavior as Record<
+                                            T,
+                                            (this: unknown, ...args: Args) => unknown
+                                        >
+                                    )[listenerByBehavior.get(behavior)! as T],
+                                    behavior,
+                                    ...args,
+                                )
                             }
                         }
                     }

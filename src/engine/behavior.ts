@@ -150,9 +150,13 @@ export abstract class Behavior<
                 const behaviors = behaviorsByEvent.get(event)
                 if (behaviors !== undefined) {
                     for (const behavior of behaviors) {
-                        ;(behavior as Record<K, (this: unknown, ...args: Args) => unknown>)[
-                            listenerByBehavior.get(behavior)! as K
-                        ](...args)
+                        safeCall(
+                            (behavior as Record<K, (this: unknown, ...args: Args) => unknown>)[
+                                listenerByBehavior.get(behavior)! as K
+                            ],
+                            behavior,
+                            ...args,
+                        )
                     }
                 }
             })
