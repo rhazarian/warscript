@@ -110,6 +110,15 @@ export abstract class Behavior<
     protected onDestroy(): Destructor {
         this[BehaviorPropertyKey.TIMER]?.destroy()
 
+        const events = eventsByBehavior.get(this)
+        if (events !== undefined) {
+            for (const event of events) {
+                behaviorsByEvent.get(event)?.remove(this)
+                listenerByBehaviorByEvent.get(event)?.delete(this)
+            }
+            eventsByBehavior.delete(this)
+        }
+
         const previousBehavior = this[BehaviorPropertyKey.PREVIOUS_BEHAVIOR]
         const nextBehavior = this[BehaviorPropertyKey.NEXT_BEHAVIOR]
         if (previousBehavior != undefined) {
