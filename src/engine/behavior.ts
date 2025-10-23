@@ -1,6 +1,10 @@
 import { AbstractDestroyable, Destructor } from "../destroyable"
 import { Timer } from "../core/types/timer"
 import { increment } from "../utility/functions"
+import { LinkedSet } from "../utility/linked-set"
+import { Event } from "../event"
+import { getOrPut, mutableLuaMap } from "../utility/lua-maps"
+import { mutableLuaSet } from "../utility/lua-sets"
 
 const safeCall = warpack.safeCall
 
@@ -77,6 +81,11 @@ const reduceBehaviors = <
     return accumulator
 }
 
+const behaviorsByEvent = new LuaMap<Event, LinkedSet<Behavior<any>>>()
+const listenerByBehaviorByEvent = new LuaMap<Event, LuaMap<Behavior<any>, string>>()
+
+const eventsByBehavior = new LuaMap<Behavior<any>, LuaSet<Event>>()
+
 export abstract class Behavior<
     T extends AnyNotNil,
     PeriodicActionParameters extends any[] = any[],
@@ -115,6 +124,33 @@ export abstract class Behavior<
         }
 
         return super.onDestroy()
+    }
+
+    protected registerEvent<K extends string, Args extends any[]>(
+        this: Behavior<any, PeriodicActionParameters> &
+            Record<K, (this: this, ...args: Args) => unknown>,
+        event: Event<[...Args]>,
+        listener: K,
+    ): void {
+        const listenerByBehavior = getOrPut(listenerByBehaviorByEvent, event, mutableLuaMap)
+        listenerByBehavior.set(this, listener)
+        getOrPut(eventsByBehavior, this, mutableLuaSet).add(event)
+        let behaviors = behaviorsByEvent.get(event)
+        if (behaviors == undefined) {
+            event.addListener((...args) => {
+                const behaviors = behaviorsByEvent.get(event)
+                if (behaviors !== undefined) {
+                    for (const behavior of behaviors) {
+                        ;(behavior as Record<K, (this: unknown, ...args: Args) => unknown>)[
+                            listenerByBehavior.get(behavior)! as K
+                        ](...args)
+                    }
+                }
+            })
+            behaviors = new LinkedSet()
+            behaviorsByEvent.set(event, behaviors)
+        }
+        behaviors.add(this)
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
