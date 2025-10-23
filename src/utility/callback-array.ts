@@ -1,5 +1,3 @@
-import { max } from "../math"
-
 const safeCall = warpack.safeCall
 const select = _G.select
 const tableMove = table.move
