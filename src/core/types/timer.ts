@@ -1,7 +1,7 @@
 import { Event, InitializingEvent } from "../../event"
 import { ObjectPool } from "../../util/objectPool"
 import { AbstractDestroyable, Destructor } from "../../destroyable"
-import { BehaviorConstructor } from "../../engine/behavior"
+import { addCallback, callbackArray, consumeCallbacks } from "../../utility/callback-array"
 
 const createTimer = CreateTimer
 const timerStart = TimerStart
@@ -48,6 +48,14 @@ const timerSafeCall = () => {
             )
         }
     }
+}
+
+let zeroTimerScheduled = false
+const zeroTimerCallbacks = callbackArray()
+
+const invokeZeroTimerCallbacks = () => {
+    zeroTimerScheduled = false
+    consumeCallbacks(zeroTimerCallbacks)
 }
 
 const enum TimerPropertyKey {
@@ -133,11 +141,19 @@ export class Timer extends AbstractDestroyable {
     ): void
 
     public static run(objectOrCallback: any, keyOrFirstArg: any, ...restArgs: any[]): void {
-        // TODO: batch
+        if (!zeroTimerScheduled) {
+            zeroTimerScheduled = true
+            Timer.simple(0, invokeZeroTimerCallbacks)
+        }
         if (type(objectOrCallback) == "function") {
-            Timer.simple(0, objectOrCallback, keyOrFirstArg, ...restArgs)
+            addCallback(zeroTimerCallbacks, objectOrCallback, keyOrFirstArg, ...restArgs)
         } else {
-            Timer.simple(0, objectOrCallback[keyOrFirstArg], objectOrCallback, ...restArgs)
+            addCallback(
+                zeroTimerCallbacks,
+                objectOrCallback[keyOrFirstArg],
+                objectOrCallback,
+                ...restArgs,
+            )
         }
     }
 
