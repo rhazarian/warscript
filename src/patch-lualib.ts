@@ -6,7 +6,7 @@ const type = _G.type
 lualib.__TS__ArrayIsArray = function (this: void, value: any): boolean {
     return (
         type(value) == "table" &&
-        (value[1] != undefined || next(value) == undefined) &&
+        (value[1] != undefined || next(value)[0] == undefined) &&
         value.constructor == undefined
     )
 }
