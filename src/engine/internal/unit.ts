@@ -1596,7 +1596,12 @@ export class Unit extends Handle<junit> {
                 return true
             }
         }
-        return doUnitAbilityAction(this.handle, abilityTypeId, unitRemoveAbility, abilityTypeId)
+        return doUnitAbilityAction(
+            this.handle,
+            abilityTypeId as AbilityTypeId,
+            unitRemoveAbility,
+            abilityTypeId,
+        )
     }
 
     public hideAbility(abilityId: number, flag: boolean): void {
