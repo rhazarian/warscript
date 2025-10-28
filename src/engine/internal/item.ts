@@ -13,6 +13,7 @@ import type { ItemTypeId } from "../object-data/entry/item-type"
 const itemChargesChangeEvent = new Event<[Item]>()
 
 const itemAddAbility = BlzItemAddAbility
+const itemRemoveAbility = BlzItemRemoveAbility
 const getItemAbility = BlzGetItemAbility
 const isItemPowerup = IsItemPowerup
 const getItemAbilityByIndex = BlzGetItemAbilityByIndex
@@ -53,11 +54,14 @@ const enumRect = Rect.create(0, 0, 0, 0).handle
 type DefenseType = 0 | 1 | 2 | 3 | 4 | 5
 
 /** @internal For use by internal systems only. */
-export const addAndGetAbility = (handle: jitem, abilityTypeId: AbilityTypeId): jability | null => {
+export const addAndGetAbility = (
+    handle: jitem,
+    abilityTypeId: AbilityTypeId,
+): jability | undefined => {
     if (itemAddAbility(handle, abilityTypeId)) {
         return getItemAbility(handle, abilityTypeId)
     }
-    return null
+    return undefined
 }
 
 const getItemAbilities = (handle: jitem, item: Item): ItemAbility[] => {
@@ -115,27 +119,15 @@ const collectIntoTargetRange = () => {
 
 const enum ItemPropertyKey {
     ABILITIES = 100,
-    LUA_INDEX_BY_ABILITY_TYPE_ID = 101,
 }
 
 export class Item extends Handle<jitem> {
     private readonly [ItemPropertyKey.ABILITIES]: ItemAbility[]
-    private readonly [ItemPropertyKey.LUA_INDEX_BY_ABILITY_TYPE_ID]: Record<
-        AbilityTypeId,
-        number | undefined
-    >
 
     public constructor(handle: jitem) {
         super(handle)
 
-        const abilities = doAbilityAction(handle, getItemAbilities, this)
-        this[ItemPropertyKey.ABILITIES] = abilities
-
-        const luaIndexByAbilityTypeId = {} as Record<AbilityTypeId, number | undefined>
-        for (const i of $range(1, abilities.length)) {
-            luaIndexByAbilityTypeId[abilities[i - 1].typeId] = i
-        }
-        this[ItemPropertyKey.LUA_INDEX_BY_ABILITY_TYPE_ID] = luaIndexByAbilityTypeId
+        this[ItemPropertyKey.ABILITIES] = doAbilityAction(handle, getItemAbilities, this)
     }
 
     protected override onDestroy(): HandleDestructor {
@@ -434,36 +426,35 @@ export class Item extends Handle<jitem> {
         if (nativeAbility != null) {
             const ability = ItemAbility.of(nativeAbility, abilityTypeId, this)
             const abilities = this[ItemPropertyKey.ABILITIES]
-            const luaIndex = abilities.length + 1
-            abilities[luaIndex - 1] = ability
-            this[ItemPropertyKey.LUA_INDEX_BY_ABILITY_TYPE_ID][abilityTypeId] = luaIndex
+            abilities[abilities.length] = ability
             return ability
         }
         return undefined
     }
 
     public removeAbility(abilityTypeId: AbilityTypeId): boolean {
-        const luaIndexByAbilityTypeId = this[ItemPropertyKey.LUA_INDEX_BY_ABILITY_TYPE_ID]
-        const luaIndex = luaIndexByAbilityTypeId[abilityTypeId]
-        if (luaIndex != undefined) {
-            const abilities = this[ItemPropertyKey.ABILITIES]
-            abilities[luaIndex - 1].destroy()
-            tableRemove(abilities, luaIndex)
-            luaIndexByAbilityTypeId[abilityTypeId] = undefined
-            return true
+        const abilities = this[ItemPropertyKey.ABILITIES]
+        for (const i of $range(1, abilities.length)) {
+            if (abilities[i - 1].typeId == abilityTypeId) {
+                const ability = abilities[i - 1]
+                tableRemove(abilities, i)
+                ability.destroy()
+                return true
+            }
         }
-        return false
+        return doAbilityAction(this.handle, itemRemoveAbility, abilityTypeId)
     }
 
     public hasAbility(abilityTypeId: AbilityTypeId): boolean {
-        return this[ItemPropertyKey.LUA_INDEX_BY_ABILITY_TYPE_ID][abilityTypeId] != undefined
+        return doAbilityAction(this.handle, getItemAbility, abilityTypeId) != undefined
     }
 
     public getAbility(abilityTypeId: AbilityTypeId): ItemAbility | undefined {
-        const ability =
-            this[ItemPropertyKey.LUA_INDEX_BY_ABILITY_TYPE_ID][abilityTypeId] != undefined &&
-            doAbilityAction(this.handle, getItemAbility, abilityTypeId)
-        return ability ? ItemAbility.of(ability, abilityTypeId, this) : undefined
+        return ItemAbility.of(
+            doAbilityAction(this.handle, getItemAbility, abilityTypeId),
+            abilityTypeId,
+            this,
+        )
     }
 
     public get abilities(): readonly ItemAbility[] {

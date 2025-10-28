@@ -70,7 +70,7 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
     }
 
     /** @internal For use by internal systems only. */
-    protected get state(): HandleState {
+    public get state(): HandleState {
         return this[HandlePropertyKey.STATE] ?? HandleState.CREATED
     }
 

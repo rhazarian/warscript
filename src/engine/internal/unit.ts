@@ -1586,16 +1586,17 @@ export class Unit extends Handle<junit> {
         return UnitAbility.of(ability, abilityId, this)
     }
 
-    public removeAbility(abilityId: number): boolean {
+    public removeAbility(abilityTypeId: number): boolean {
         const abilities = this.abilities as UnitAbility[]
         for (const i of $range(1, abilities.length)) {
-            if (abilities[i - 1].typeId == abilityId) {
-                abilities[i - 1].destroy()
+            if (abilities[i - 1].typeId == abilityTypeId) {
+                const ability = abilities[i - 1]
                 tremove(abilities, i)
+                ability.destroy()
                 return true
             }
         }
-        return false
+        return doUnitAbilityAction(this.handle, abilityTypeId, unitRemoveAbility, abilityTypeId)
     }
 
     public hideAbility(abilityId: number, flag: boolean): void {

@@ -1,4 +1,4 @@
-import { Handle, HandleDestructor } from "../../core/types/handle"
+import { Handle, HandleDestructor, HandleState } from "../../core/types/handle"
 import { Event } from "../../event"
 import type { Item } from "../../core/types/item"
 import type { Unit } from "./unit"
@@ -7,7 +7,6 @@ import {
     abilityActionDummy,
     doAbilityAction,
     doAbilityActionForceDummy,
-    doUnitAbilityAction,
     startItemCooldown,
 } from "./item/ability"
 
@@ -36,8 +35,6 @@ const getItemBooleanField = BlzGetItemBooleanField
 const setItemBooleanField = BlzSetItemBooleanField
 const unitHideAbility = BlzUnitHideAbility
 const unitDisableAbility = BlzUnitDisableAbility
-const unitRemoveAbility = UnitRemoveAbility
-const itemRemoveAbility = BlzItemRemoveAbility
 const match = string.match
 const type = _G.type
 const tostring = _G.tostring
@@ -505,7 +502,9 @@ export class UnitAbility extends Ability {
     }
 
     protected override onDestroy(): HandleDestructor {
-        doUnitAbilityAction(this.owner.handle, this.typeId, unitRemoveAbility, this.typeId)
+        if (this.owner.state != HandleState.BEING_DESTROYED) {
+            this.owner.removeAbility(this.typeId)
+        }
         return super.onDestroy()
     }
 
@@ -616,7 +615,9 @@ export class ItemAbility extends Ability {
     }
 
     protected override onDestroy(): HandleDestructor {
-        doAbilityAction(this.owner.handle, itemRemoveAbility, this.typeId)
+        if (this.owner.state != HandleState.BEING_DESTROYED) {
+            this.owner.removeAbility(this.typeId)
+        }
         return super.onDestroy()
     }
 
