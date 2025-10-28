@@ -5259,8 +5259,8 @@ declare function BlzRemoveAbilityStringLevelArrayField(
     level: number,
     value: string,
 ): boolean
-declare function BlzGetItemAbilityByIndex(whichItem: jitem, index: number): jability | null
-declare function BlzGetItemAbility(whichItem: jitem, abilCode: number): jability | null
+declare function BlzGetItemAbilityByIndex(whichItem: jitem, index: number): jability | undefined
+declare function BlzGetItemAbility(whichItem: jitem, abilCode: number): jability | undefined
 declare function BlzItemAddAbility(whichItem: jitem, abilCode: number): boolean
 declare function BlzGetItemBooleanField(whichItem: jitem, whichField: jitembooleanfield): boolean
 declare function BlzGetItemIntegerField(whichItem: jitem, whichField: jitemintegerfield): number
