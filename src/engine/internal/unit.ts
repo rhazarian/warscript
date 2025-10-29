@@ -1576,7 +1576,7 @@ export class Unit extends Handle<junit> {
         return getUnitAbilityLevel(this.handle, abilityId) > 0
     }
 
-    public getAbilityById(abilityId: number): UnitAbility | undefined {
+    public getAbility(abilityId: number): UnitAbility | undefined {
         const ability = doUnitAbilityAction(
             this.handle,
             abilityId as AbilityTypeId,

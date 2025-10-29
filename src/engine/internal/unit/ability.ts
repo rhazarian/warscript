@@ -694,7 +694,7 @@ rawset(
                     condition(() => {
                         const unit = Unit.of(getTriggerUnit())
                         if (unit !== undefined) {
-                            const ability = unit.getAbilityById(abilityTypeId)
+                            const ability = unit.getAbility(abilityTypeId)
                             if (ability !== undefined) {
                                 eventInvoke(event, unit, ability, orderTypeStringId)
                             }
