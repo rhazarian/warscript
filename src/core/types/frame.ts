@@ -4,15 +4,14 @@ import { Event, TriggerEvent } from "../../event"
 import { Timer } from "./timer"
 import { Color } from "./color"
 import { FRAME_MAX_Y, FRAME_MIN_Y, getFrameMinXMaxX } from "../../engine/internal/misc/frame-coordinates"
+import { frameCoordinatesToWorld, worldCoordinatesToFrame } from "./playerCamera"
+import { getTerrainZ } from "../../engine/internal/misc/get-terrain-z"
 
 const frameClick = BlzFrameClick
 const frameGetEnable = BlzFrameGetEnable
 const frameIsVisible = BlzFrameIsVisible
 const frameSetEnable = BlzFrameSetEnable
 const frameSetScale = BlzFrameSetScale
-
-const getCameraTargetPositionX = GetCameraTargetPositionX
-const getCameraTargetPositionY = GetCameraTargetPositionY
 
 const rawget = _G.rawget
 const rawset = _G.rawset
@@ -744,16 +743,15 @@ export class Frame extends Handle<jframehandle> {
 
         let syncX = 0
         let syncY = 0
-        let syncCamX = getCameraTargetPositionX()
-        let syncCamY = getCameraTargetPositionY()
+        let syncFrameX = 0
+        let syncFrameY = 0
         let lastX = syncX
         let lastY = syncY
         this.onMouseMove.addListener((player, x, y) => {
             if (player.isLocal) {
                 syncX = x
                 syncY = y
-                syncCamX = getCameraTargetPositionX()
-                syncCamY = getCameraTargetPositionY()
+                ;[syncFrameX, syncFrameY] = worldCoordinatesToFrame(x, y, getTerrainZ(x, y))
                 lastX = x
                 lastY = y
                 invoke(event, x, y)
@@ -763,9 +761,8 @@ export class Frame extends Handle<jframehandle> {
             if (syncX == 0 && syncY == 0) {
                 return
             }
-            const x = syncX + (getCameraTargetPositionX() - syncCamX)
-            const y = syncY + (getCameraTargetPositionY() - syncCamY)
-            if (x != lastX || y != lastY) {
+            const [x, y, , isDefinite] = frameCoordinatesToWorld(syncFrameX, syncFrameY)
+            if (isDefinite && (x != lastX || y != lastY)) {
                 lastX = x
                 lastY = y
                 invoke(event, x, y)

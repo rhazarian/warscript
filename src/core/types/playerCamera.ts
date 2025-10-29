@@ -3,7 +3,12 @@ import type { Unit } from "../../engine/internal/unit"
 import { EventListenerPriority } from "../../event"
 import { PLAYER_LOCAL_HANDLE } from "../../engine/internal/misc/player-local-handle"
 import { check } from "../../utility/preconditions"
-import { FRAME_MAX_Y, FRAME_MIN_Y, getFrameMinXMaxX } from "../../engine/internal/misc/frame-coordinates"
+import {
+    FRAME_MAX_Y,
+    FRAME_MIN_Y,
+    getFrameMinXMaxX,
+} from "../../engine/internal/misc/frame-coordinates"
+import { getTerrainZ } from "../../engine/internal/misc/get-terrain-z"
 
 const getHandleId = GetHandleId
 const setCameraField = SetCameraField
@@ -19,6 +24,7 @@ const resetToGameCamera = ResetToGameCamera
 const cos = math.cos
 const deg = math.deg
 const sin = math.sin
+const sqrt = math.sqrt
 
 const memoized: Record<number, PlayerCamera | undefined> = {}
 
@@ -226,4 +232,64 @@ export const worldCoordinatesToFrame = (
             frameY >= FRAME_MIN_Y &&
             frameY <= FRAME_MAX_Y,
     )
+}
+
+/** @internal For use by internal systems only. */
+export const frameCoordinatesToWorld = (
+    x: number,
+    y: number,
+): LuaMultiReturn<[x: number, y: number, z: number, isDefinite: boolean]> => {
+    if (!isCameraViewPrecalculated) {
+        precalculateCameraView()
+    }
+
+    const a = (x - 0.4) * scaleFactor
+    const b = (0.42625 - yCenterScreenShift - y) * scaleFactor
+
+    // The vector pointing towards the mouse cursor in the camera's coordinate system.
+    const nx = 1 / sqrt(1 + a * a + b * b)
+    let ny = sqrt(1 - (1 + b * b) * nx * nx)
+    let nz = sqrt(1 - nx * nx - ny * ny)
+    if (a > 0) {
+        ny = -ny
+    }
+    if (b < 0) {
+        nz = -nz
+    }
+
+    //The vector pointing from the camera eye position to the mouse cursor.
+    const nxPrime =
+        cameraAngleOfAttackCosRotationCos * nx -
+        cameraRotationSin * ny +
+        cameraAngleOfAttackSinRotationCos * nz
+    const nyPrime =
+        cameraAngleOfAttackCosRotationSin * nx +
+        cameraRotationCos * ny +
+        cameraAngleOfAttackSinRotationSin * nz
+    const nzPrime = -cameraAngleOfAttackSin * nx + cameraAngleOfAttackCos * nz
+
+    let zGuess = getTerrainZ(cameraEyeX, cameraEyeY)
+    let xGuess = cameraEyeX + (nxPrime * (cameraEyeZ - zGuess)) / nzPrime
+    let yGuess = cameraEyeY + (nyPrime * (cameraEyeZ - zGuess)) / nzPrime
+    let zWorld = getTerrainZ(xGuess, yGuess)
+    let deltaZ = zWorld - zGuess
+    zGuess = zWorld
+
+    let zWorldOld = zWorld
+    let deltaZOld = deltaZ
+
+    let i = 0
+    while ((deltaZ > 1 || deltaZ < -1) && i < 50) {
+        xGuess = cameraEyeX + (nxPrime * (cameraEyeZ - zGuess)) / nzPrime
+        yGuess = cameraEyeY + (nyPrime * (cameraEyeZ - zGuess)) / nzPrime
+
+        zWorld = getTerrainZ(xGuess, yGuess)
+        deltaZ = zWorld - zGuess
+        zGuess = (deltaZOld * zWorld - deltaZ * zWorldOld) / (deltaZOld - deltaZ)
+        zWorldOld = zWorld
+        deltaZOld = deltaZ
+        i++
+    }
+
+    return $multi(xGuess, yGuess, zWorld, i < 50)
 }
