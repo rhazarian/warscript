@@ -1,3 +1,7 @@
+const getTerrainType = GetTerrainType
+const setTerrainType = SetTerrainType
+const getTerrainVariance = GetTerrainVariance
+
 const abs = math.abs
 const type = math.type
 const ult = math.ult
@@ -9,9 +13,43 @@ export class TileCell implements Readonly<Vec2> {
         private readonly id: number,
         public readonly x: number,
         public readonly y: number,
-        public readonly z: undefined
+        public readonly z: undefined,
     ) {
         tileCellById[id] = this
+    }
+
+    public get up(): TileCell {
+        return TileCell.of(this.x, this.y + 128)
+    }
+
+    public get down(): TileCell {
+        return TileCell.of(this.x, this.y - 128)
+    }
+
+    public get left(): TileCell {
+        return TileCell.of(this.x - 128, this.y)
+    }
+
+    public get right(): TileCell {
+        return TileCell.of(this.x + 128, this.y)
+    }
+
+    public get terrainTypeId(): number {
+        return getTerrainType(this.x, this.y)
+    }
+
+    public set terrainTypeId(terrainTypeId: number) {
+        setTerrainType(this.x, this.y, terrainTypeId, -1, 1, 1)
+    }
+
+    public get terrainVariance(): number {
+        return getTerrainVariance(this.x, this.y)
+    }
+
+    public set terrainVariance(terrainVariance: number) {
+        const x = this.x
+        const y = this.y
+        setTerrainType(x, y, getTerrainType(x, y), terrainVariance, 1, 1)
     }
 
     public isInRangeOf(x: number, y: number, range: number): boolean
