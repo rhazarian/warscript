@@ -24,7 +24,7 @@
         "@warscript/language-extensions": "^0.0.1",
         "@warscript/tstl-plugin": "^0.0.4",
         "lua-types": "^2.13.1",
-        "warpack": "0.0.1-dev.78d2c64"
+        "warpack": "0.0.1-dev.251db08"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^8.13.0",
