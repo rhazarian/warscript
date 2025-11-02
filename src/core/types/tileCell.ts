@@ -39,7 +39,9 @@ export class TileCell implements Readonly<Vec2> {
     }
 
     public set terrainTypeId(terrainTypeId: number) {
-        setTerrainType(this.x, this.y, terrainTypeId, -1, 1, 1)
+        const x = this.x
+        const y = this.y
+        setTerrainType(x, y, terrainTypeId, getTerrainVariance(x, y), 1, 1)
     }
 
     public get terrainVariance(): number {
@@ -50,6 +52,12 @@ export class TileCell implements Readonly<Vec2> {
         const x = this.x
         const y = this.y
         setTerrainType(x, y, getTerrainType(x, y), terrainVariance, 1, 1)
+    }
+
+    public randomizeTerrainVariance(): void {
+        const x = this.x
+        const y = this.y
+        setTerrainType(x, y, getTerrainType(x, y), -1, 1, 1)
     }
 
     public isInRangeOf(x: number, y: number, range: number): boolean
