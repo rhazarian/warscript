@@ -1,4 +1,5 @@
 import { MAXIMUM_INTEGER, PI } from "../math"
+import { ReadonlyNonEmptyArray } from "../utility/types"
 
 const getRandomInt = GetRandomInt
 const getRandomReal = GetRandomReal
@@ -24,9 +25,16 @@ export const randomFloat: {
 export const randomXY = (
     centerX: number,
     centerY: number,
-    range: number
+    range: number,
 ): LuaMultiReturn<[x: number, y: number]> => {
     const r = range * sqrt(getRandomReal(0, 1))
     const t = getRandomReal(0, 1) * 2 * PI
     return $multi(centerX + r * cos(t), centerY + r * sin(t))
+}
+
+export const randomElement: {
+    <T>(array: ReadonlyNonEmptyArray<T>): T
+    <T>(array: ReadonlyArray<T>): T | undefined
+} = <T>(array: ReadonlyArray<T>): T | undefined => {
+    return array[getRandomInt(1, array.length) - 1]
 }
