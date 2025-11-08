@@ -54,6 +54,15 @@ export const toLuaSet = <T extends AnyNotNil>(array: readonly T[]): LuaSet<T> =>
     return result
 }
 
+export const contains = <T>(array: readonly T[], element: T): boolean => {
+    for (const i of $range(1, array.length)) {
+        if (array[i - 1] == element) {
+            return true
+        }
+    }
+    return false
+}
+
 export const forEach = <T, Args extends any[]>(
     array: readonly T[],
     consumerOrKey:
