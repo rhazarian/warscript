@@ -78,11 +78,11 @@ export const luaMapOf = <K extends AnyNotNil, V>(
 }
 
 export const luaMapInvert = <K extends AnyNotNil, V extends AnyNotNil>(
-    luaMap: LuaMap<K, V>,
+    luaMap: LuaMap<K, V | undefined | null>,
 ): LuaMap<V, K> => {
     const invertLuaMap = new LuaMap<V, K>()
     for (const [key, value] of luaMap) {
-        invertLuaMap.set(value, key)
+        invertLuaMap.set(value!, key)
     }
     return invertLuaMap
 }
@@ -98,6 +98,32 @@ export const flattenKeys = <K extends AnyNotNil, V>(
     for (const [keys, value] of luaMap) {
         for (const key of keys) {
             result.set(key, value)
+        }
+    }
+    return result
+}
+
+export const mapKeys: {
+    <K1 extends AnyNotNil, K2 extends AnyNotNil, V>(
+        luaMap: ReadonlyLuaMap<K1, V>,
+        transform: (value: K1) => K2,
+    ): LuaMap<K2, V>
+    <K1 extends AnyNotNil, K2 extends keyof K1, V>(
+        luaMap: ReadonlyLuaMap<K1, V>,
+        key: K2,
+    ): K1[K2] extends AnyNotNil ? LuaMap<K1[K2], V> : never
+} = <K1 extends AnyNotNil, K2 extends AnyNotNil, V>(
+    luaMap: ReadonlyLuaMap<K1, V>,
+    transform: ((value: K1) => K2) | KeysOfType<K1, K2>,
+): LuaMap<K2, V> => {
+    const result = new LuaMap<K2, V>()
+    if (typeof transform == "function") {
+        for (const [key, value] of luaMap) {
+            result.set(transform(key), value)
+        }
+    } else {
+        for (const [key, value] of luaMap) {
+            result.set(key[transform] as K2, value)
         }
     }
     return result
