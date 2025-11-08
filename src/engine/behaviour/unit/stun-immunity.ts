@@ -47,13 +47,17 @@ const process = (behavior: StunImmunityUnitBehavior): void => {
     for (const buffTypeId of behavior.parameters.buffTypeIds ?? DEFAULT_BUFF_TYPE_IDS) {
         hasRemovedBuffs = hasRemovedBuffs || behavior.unit.removeBuff(buffTypeId)
     }
-    if (hasRemovedBuffs && behavior.parameters.textTagText != undefined) {
-        TextTag.flash(
-            TextTag.MISS,
-            behavior.parameters.textTagText,
-            behavior.unit.x,
-            behavior.unit.y,
-        )
+    if (hasRemovedBuffs) {
+        behavior["onEffect"]()
+        if (behavior.parameters.textTagText != undefined) {
+            TextTag.flash(
+                TextTag.MISS,
+                behavior.parameters.textTagText,
+                behavior.unit.x,
+                behavior.unit.y,
+            )
+        }
+        behavior.parameters.additionalAction?.(behavior.unit)
     }
 }
 
@@ -61,6 +65,7 @@ export type StunImmunityUnitBehaviourParameters = {
     buffTypeIds?: LuaSet<BuffTypeId>
     textTagPreset?: TextTagPreset
     textTagText?: string
+    additionalAction?: (this: void, unit: Unit) => void
 }
 
 export class StunImmunityUnitBehavior extends UnitBehavior {
@@ -95,5 +100,9 @@ export class StunImmunityUnitBehavior extends UnitBehavior {
 
     public override onTargetingAbilityImpact(): void {
         process(this)
+    }
+
+    protected onEffect(): void {
+        // no-op
     }
 }
