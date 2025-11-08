@@ -78,7 +78,7 @@ export const luaMapOf = <K extends AnyNotNil, V>(
 }
 
 export const luaMapInvert = <K extends AnyNotNil, V extends AnyNotNil>(
-    luaMap: LuaMap<K, V | undefined | null>,
+    luaMap: ReadonlyLuaMap<K, V | undefined | null>,
 ): LuaMap<V, K> => {
     const invertLuaMap = new LuaMap<V, K>()
     for (const [key, value] of luaMap) {
@@ -92,7 +92,7 @@ export const toLuaMap = <K extends PropertyKey, V>(record: Record<K, V>): LuaMap
 }
 
 export const flattenKeys = <K extends AnyNotNil, V>(
-    luaMap: LuaMap<readonly K[], V>,
+    luaMap: ReadonlyLuaMap<readonly K[], V>,
 ): LuaMap<K, V> => {
     const result = new LuaMap<K, V>()
     for (const [keys, value] of luaMap) {
