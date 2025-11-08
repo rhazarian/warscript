@@ -4,6 +4,8 @@ import { ReadonlyNonEmptyArray } from "../utility/types"
 const getRandomInt = GetRandomInt
 const getRandomReal = GetRandomReal
 
+const select = _G.select
+
 const cos = math.cos
 const sin = math.sin
 const sqrt = math.sqrt
@@ -37,4 +39,11 @@ export const randomElement: {
     <T>(array: ReadonlyArray<T>): T | undefined
 } = <T>(array: ReadonlyArray<T>): T | undefined => {
     return array[getRandomInt(1, array.length) - 1]
+}
+
+export const random: {
+    <T>(element: T, ...elements: T[]): T
+    <T>(...elements: T[]): T | undefined
+} = <T>(...elements: T[]): T | undefined => {
+    return select(getRandomInt(1, select("#", ...elements)), ...elements)[0]
 }
