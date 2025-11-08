@@ -92,7 +92,7 @@ export const toLuaMap = <K extends PropertyKey, V>(record: Record<K, V>): LuaMap
 }
 
 export const flattenKeys = <K extends AnyNotNil, V>(
-    luaMap: ReadonlyLuaMap<readonly K[], V>,
+    luaMap: ReadonlyLuaMap<readonly K[], V> | ReadonlyLuaMap<K[], V>,
 ): LuaMap<K, V> => {
     const result = new LuaMap<K, V>()
     for (const [keys, value] of luaMap) {
