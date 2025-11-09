@@ -1,6 +1,6 @@
 import { Unit } from "./unit"
 
-import { Event } from "../../event"
+import { Event, EventListenerPriority } from "../../event"
 import { Timer } from "../../core/types/timer"
 import { luaSetOf } from "../../utility/lua-sets"
 import { min } from "../../math"
@@ -54,10 +54,11 @@ const timerCallback = (source: Unit, target: Unit): void => {
     Event.invoke(autoAttackFinishEvent, source, target)
 }
 
-Unit.autoAttackStartEvent.addListener((source, target) => {
+Unit.autoAttackStartEvent.addListener(EventListenerPriority.HIGHEST, (source, target) => {
+    // TODO: if a timer already exists, we need to call it's callback NOW
     const attackPoint = (source.chooseWeapon(target) ?? source.firstWeapon).impactDelay
     const timer = Timer.simple(
-        attackPoint + min(0.001, attackPoint / 2),
+        attackPoint + min(compiletime(1 / 64), attackPoint / 2),
         timerCallback,
         source,
         target,
