@@ -44,6 +44,7 @@ import { UnitTypeId } from "./unit-type"
 import { Upgrade, UpgradeId } from "./upgrade"
 import { SoundPresetId } from "./sound-preset"
 import { isSoundLabelCustom, Sound3D, SoundSettings } from "../../../core/types/sound"
+import { luaSetOf } from "../../../utility/lua-sets"
 
 export type AbilityTypeId = ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol }
 
@@ -759,9 +760,14 @@ for (const [abilityTypeId, soundPresetId] of postcompile(
     }
 }
 
+const unsupportedEffectSoundAbilityTypeIds = luaSetOf(fourCC("AAns"))
+
 Unit.abilityChannelingStartEvent.addListener((caster, ability) => {
     const soundPresetId = ability.getField(ABILITY_SF_EFFECT_SOUND)
-    if (isSoundLabelCustom(soundPresetId)) {
+    if (
+        isSoundLabelCustom(soundPresetId) ||
+        (unsupportedEffectSoundAbilityTypeIds.has(ability.parentTypeId) && soundPresetId != "")
+    ) {
         Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, caster)
     }
 })
