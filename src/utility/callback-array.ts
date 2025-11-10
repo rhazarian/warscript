@@ -7,6 +7,10 @@ type Callback = {
     readonly __callback: unique symbol
 }
 
+export type CallbackId = number & {
+    readonly __callbackId: unique symbol
+}
+
 export type CallbackArray = {
     readonly __callbackArray: unique symbol
 } & Callback[]
@@ -15,20 +19,23 @@ export const callbackArray = () => [] as unknown as CallbackArray
 
 type CallbackArrayInternal = CallbackArray & any[]
 
+const doNothing = () => {}
+
 export function addCallback<Args extends any[]>(
     this: void,
     array: CallbackArray,
     callback: (...args: Args) => unknown,
     ...args: Args
-): void
+): CallbackId
 
 export function addCallback<Args extends any[]>(
     this: void,
     array: CallbackArrayInternal,
     callback: (...args: Args) => unknown,
     ...args: Args
-): void {
-    let i = array[0] || 2
+): CallbackId {
+    const id = array[0] || 2
+    let i = id
     array[i - 1] = callback
     const argsCount = select("#", ...args)
     ++i
@@ -38,6 +45,7 @@ export function addCallback<Args extends any[]>(
         array[i - 1] = select(j, ...args)[0]
     }
     array[0] = i + 1
+    return id
 }
 
 export function clearCallbacks(this: void, array: CallbackArray): void
@@ -45,6 +53,17 @@ export function clearCallbacks(this: void, array: CallbackArray): void
 export function clearCallbacks(this: void, array: CallbackArrayInternal): void {
     const length = array[0] || 2
     tableMove(array, length, length + length - 2, 1)
+}
+
+export function consumeCallback(this: void, array: CallbackArray, id: CallbackId): void
+
+export function consumeCallback(this: void, array: CallbackArrayInternal, id: CallbackId): void {
+    const callback = array[id - 1]
+    ++id
+    const argsCount = array[id - 1]
+    ++id
+    safeCall(callback, ...tableUnpack(array, id, id + argsCount - 1))
+    array[id - 1] = doNothing
 }
 
 export function consumeCallbacks(this: void, array: CallbackArray): void

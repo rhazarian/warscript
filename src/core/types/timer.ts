@@ -1,7 +1,13 @@
 import { Event, InitializingEvent } from "../../event"
 import { ObjectPool } from "../../util/objectPool"
 import { AbstractDestroyable, Destructor } from "../../destroyable"
-import { addCallback, callbackArray, consumeCallbacks } from "../../utility/callback-array"
+import {
+    addCallback,
+    callbackArray,
+    CallbackId,
+    consumeCallback,
+    consumeCallbacks,
+} from "../../utility/callback-array"
 
 const createTimer = CreateTimer
 const timerStart = TimerStart
@@ -52,6 +58,11 @@ const timerSafeCall = () => {
 
 let zeroTimerScheduled = false
 const zeroTimerCallbacks = callbackArray()
+
+/** @internal For use by internal systems only. */
+export const consumeZeroTimerCallback = (id: CallbackId) => {
+    consumeCallback(zeroTimerCallbacks, id)
+}
 
 const invokeZeroTimerCallbacks = () => {
     zeroTimerScheduled = false
@@ -133,22 +144,22 @@ export class Timer extends AbstractDestroyable {
         object: T,
         key: K,
         ...parameters: T[K] extends (this: T, ...args: any) => any ? Parameters<T[K]> : never
-    ): void
+    ): CallbackId
 
     public static run<Args extends any[]>(
         callback: (this: void, ...args: Args) => void,
         ...args: Args
-    ): void
+    ): CallbackId
 
-    public static run(objectOrCallback: any, keyOrFirstArg: any, ...restArgs: any[]): void {
+    public static run(objectOrCallback: any, keyOrFirstArg: any, ...restArgs: any[]): CallbackId {
         if (!zeroTimerScheduled) {
             zeroTimerScheduled = true
             Timer.simple(0, invokeZeroTimerCallbacks)
         }
         if (type(objectOrCallback) == "function") {
-            addCallback(zeroTimerCallbacks, objectOrCallback, keyOrFirstArg, ...restArgs)
+            return addCallback(zeroTimerCallbacks, objectOrCallback, keyOrFirstArg, ...restArgs)
         } else {
-            addCallback(
+            return addCallback(
                 zeroTimerCallbacks,
                 objectOrCallback[keyOrFirstArg],
                 objectOrCallback,

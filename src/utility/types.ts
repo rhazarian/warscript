@@ -30,11 +30,8 @@ export type ReadonlyKeys<T extends object> = keyof T &
         [P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, never, P>
     }[keyof T]
 
-type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y
-    ? 1
-    : 2
-    ? A
-    : B
+type IfEquals<X, Y, A = X, B = never> =
+    (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B
 
 type KeysOfType<T, V> = keyof { [P in keyof T as T[P] extends V ? P : never]: P }
 
@@ -50,7 +47,7 @@ type _TupleOf<T, N extends number, R extends unknown[]> = R["length"] extends N
 
 export type Flatten<T extends readonly any[], A extends readonly any[] = []> = T extends [
     infer F,
-    ...infer R
+    ...infer R,
 ]
     ? Flatten<R, F extends readonly any[] ? [...A, ...F] : [...A, F]>
     : A
@@ -58,3 +55,13 @@ export type Flatten<T extends readonly any[], A extends readonly any[] = []> = T
 export type Prohibit<T, K extends keyof any> = T & {
     [P in K]?: never
 }
+
+type TupleSplit<T, N extends number, O extends readonly any[] = readonly []> = O["length"] extends N
+    ? [O, T]
+    : T extends readonly [infer F, ...infer R]
+      ? TupleSplit<readonly [...R], N, readonly [...O, F]>
+      : [O, T]
+
+export type TakeFirst<T extends readonly any[], N extends number> = TupleSplit<T, N>[0]
+
+export type SkipFirst<T extends readonly any[], N extends number> = TupleSplit<T, N>[1]

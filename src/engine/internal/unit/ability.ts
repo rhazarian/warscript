@@ -14,8 +14,11 @@ import {
 } from "../../../event"
 import { checkNotNull } from "../../../utility/preconditions"
 import { lazyRecord } from "../../../utility/lazy"
-import { Timer } from "../../../core/types/timer"
+import { consumeZeroTimerCallback, Timer } from "../../../core/types/timer"
 import { luaSetOf } from "../../../utility/lua-sets"
+import { CallbackId } from "../../../utility/callback-array"
+import { attribute } from "../../../attributes"
+import { SkipFirst } from "../../../utility/types"
 
 const eventInvoke = Event.invoke
 
@@ -539,13 +542,116 @@ rawset(
     ),
 )
 
+// === CHANNELING FINISH ===
+
+const internalAbilityChannelingFinishEvent = new UnitTriggerEvent<[Ability]>(
+    EVENT_PLAYER_UNIT_SPELL_FINISH,
+    collectUnitAbilityEventParameters,
+)
+
+declare module "../unit" {
+    namespace Unit {
+        const abilityChannelingFinishEvent: DispatchingEvent<[Unit, Ability]>
+    }
+}
+rawset(
+    Unit,
+    "abilityChannelingFinishEvent",
+    createDispatchingEvent(internalAbilityChannelingFinishEvent, extractAbilityTypeId),
+)
+
+// === STOP ===
+
+const internalAbilityStopEvent = new UnitTriggerEvent<[Ability]>(
+    EVENT_PLAYER_UNIT_SPELL_ENDCAST,
+    collectUnitAbilityEventParameters,
+)
+
+declare module "../unit" {
+    namespace Unit {
+        const abilityStopEvent: DispatchingEvent<[Unit, Ability]>
+    }
+}
+rawset(
+    Unit,
+    "abilityStopEvent",
+    createDispatchingEvent(internalAbilityStopEvent, extractAbilityTypeId),
+)
+
+// === COMMAND ===
+
+declare module "../unit" {
+    namespace Unit {
+        const abilityCommandEvent: {
+            readonly [abilityTypeId: number]: {
+                readonly [orderTypeStringId: string]: Event<[Unit, Ability, string]>
+            }
+        }
+    }
+}
+rawset(
+    Unit,
+    "abilityCommandEvent",
+    lazyRecord((abilityTypeId: number) => {
+        return lazyRecord((orderTypeStringId: string) => {
+            return new InitializingEvent<[Unit, Ability, string]>((event) => {
+                const trigger = createTrigger()
+                triggerRegisterCommandEvent(trigger, abilityTypeId, orderTypeStringId)
+                triggerAddCondition(
+                    trigger,
+                    condition(() => {
+                        const unit = Unit.of(getTriggerUnit())
+                        if (unit !== undefined) {
+                            const ability = unit.getAbility(abilityTypeId)
+                            if (ability !== undefined) {
+                                eventInvoke(event, unit, ability, orderTypeStringId)
+                            }
+                        }
+                    }),
+                )
+            })
+        })
+    }),
+)
+
 // === IMPACT ===
 
 const internalAbilityImpactEvent = new Event<InternalUnitAbilityEventParameters>()
 
-internalAbilityChannelingStartEvent.addListener((...parameters) => {
-    Timer.run(eventInvoke, internalAbilityImpactEvent, ...parameters)
-})
+const impactCallbackIdAttribute = attribute<CallbackId>()
+
+const invokeImpactEvent = (
+    unit: Unit,
+    ability: Ability,
+    ...parameters: SkipFirst<InternalUnitAbilityEventParameters, 2>
+) => {
+    ability.set(impactCallbackIdAttribute, undefined)
+    eventInvoke(internalAbilityImpactEvent, unit, ability, ...parameters)
+}
+
+internalAbilityChannelingStartEvent.addListener(
+    EventListenerPriority.HIGHEST_INTERNAL,
+    (unit, ability, ...parameters) => {
+        ability.set(
+            impactCallbackIdAttribute,
+            Timer.run(invokeImpactEvent, unit, ability, ...parameters),
+        )
+    },
+)
+
+const consumeImpactCallback = (_: unknown, ability: Ability) => {
+    const impactCallbackId = ability.get(impactCallbackIdAttribute)
+    if (impactCallbackId !== undefined) {
+        consumeZeroTimerCallback(impactCallbackId)
+    }
+}
+
+internalAbilityChannelingFinishEvent.addListener(
+    EventListenerPriority.HIGHEST_INTERNAL,
+    consumeImpactCallback,
+)
+
+internalAbilityStopEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, consumeImpactCallback)
 
 declare module "../unit" {
     namespace Unit {
@@ -631,78 +737,6 @@ rawset(
     Unit,
     "abilityNoTargetImpactEvent",
     createDispatchingEvent(createNoTargetEvent(internalAbilityImpactEvent), extractAbilityTypeId),
-)
-
-// === CHANNELING FINISH ===
-
-const internalAbilityChannelingFinishEvent = new UnitTriggerEvent<[Ability]>(
-    EVENT_PLAYER_UNIT_SPELL_FINISH,
-    collectUnitAbilityEventParameters,
-)
-
-declare module "../unit" {
-    namespace Unit {
-        const abilityChannelingFinishEvent: DispatchingEvent<[Unit, Ability]>
-    }
-}
-rawset(
-    Unit,
-    "abilityChannelingFinishEvent",
-    createDispatchingEvent(internalAbilityChannelingFinishEvent, extractAbilityTypeId),
-)
-
-// === STOP ===
-
-const internalAbilityStopEvent = new UnitTriggerEvent<[Ability]>(
-    EVENT_PLAYER_UNIT_SPELL_ENDCAST,
-    collectUnitAbilityEventParameters,
-)
-
-declare module "../unit" {
-    namespace Unit {
-        const abilityStopEvent: DispatchingEvent<[Unit, Ability]>
-    }
-}
-rawset(
-    Unit,
-    "abilityStopEvent",
-    createDispatchingEvent(internalAbilityStopEvent, extractAbilityTypeId),
-)
-
-// === COMMAND ===
-
-declare module "../unit" {
-    namespace Unit {
-        const abilityCommandEvent: {
-            readonly [abilityTypeId: number]: {
-                readonly [orderTypeStringId: string]: Event<[Unit, Ability, string]>
-            }
-        }
-    }
-}
-rawset(
-    Unit,
-    "abilityCommandEvent",
-    lazyRecord((abilityTypeId: number) => {
-        return lazyRecord((orderTypeStringId: string) => {
-            return new InitializingEvent<[Unit, Ability, string]>((event) => {
-                const trigger = createTrigger()
-                triggerRegisterCommandEvent(trigger, abilityTypeId, orderTypeStringId)
-                triggerAddCondition(
-                    trigger,
-                    condition(() => {
-                        const unit = Unit.of(getTriggerUnit())
-                        if (unit !== undefined) {
-                            const ability = unit.getAbility(abilityTypeId)
-                            if (ability !== undefined) {
-                                eventInvoke(event, unit, ability, orderTypeStringId)
-                            }
-                        }
-                    }),
-                )
-            })
-        })
-    }),
 )
 
 // === band aids ===
