@@ -970,10 +970,6 @@ export class Unit extends Handle<junit> {
         return !unitAlive(this.handle)
     }
 
-    public get isRemoved(): boolean {
-        return getUnitAbilityLevel(this.handle, leaveDetectAbilityId) == 0
-    }
-
     public get isIllusion(): boolean {
         return IsUnitIllusion(this.handle)
     }
