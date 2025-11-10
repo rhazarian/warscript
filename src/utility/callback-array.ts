@@ -59,11 +59,11 @@ export function consumeCallback(this: void, array: CallbackArray, id: CallbackId
 
 export function consumeCallback(this: void, array: CallbackArrayInternal, id: CallbackId): void {
     const callback = array[id - 1]
+    array[id - 1] = doNothing
     ++id
     const argsCount = array[id - 1]
     ++id
     safeCall(callback, ...tableUnpack(array, id, id + argsCount - 1))
-    array[id - 1] = doNothing
 }
 
 export function consumeCallbacks(this: void, array: CallbackArray): void
