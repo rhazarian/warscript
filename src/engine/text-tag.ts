@@ -140,7 +140,7 @@ export class TextTag extends AbstractDestroyable {
     }
 
     public set fontSize(fontSize: number) {
-        setTextTagText(ensureHandle(this), this[TextTagPropertyKey.TEXT] ?? "", DEFAULT_FONT_SIZE)
+        setTextTagText(ensureHandle(this), this[TextTagPropertyKey.TEXT] ?? "", fontSize)
         this[TextTagPropertyKey.FONT_SIZE] = fontSize
     }
 

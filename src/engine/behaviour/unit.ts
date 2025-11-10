@@ -20,6 +20,7 @@ import {
     UnitBonusId,
     UnitBonusType,
 } from "../internal/unit/bonus"
+import { Player } from "../../core/types/player"
 
 const safeCall = warpack.safeCall
 
@@ -270,6 +271,10 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         // no-op
     }
 
+    public onOwnerChange(previousOwner: Player): void {
+        // no-op
+    }
+
     static {
         Unit.onImmediateOrder.addListener((source, orderId) => {
             UnitBehavior.forAll(source, "onImmediateOrder", orderId)
@@ -369,6 +374,10 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         })
         Unit.itemChargesChangedEvent.addListener((unit, item) => {
             UnitBehavior.forAll(unit, "onItemChargesChanged", item)
+        })
+
+        Unit.onOwnerChange.addListener((unit, previousOwner) => {
+            UnitBehavior.forAll(unit, "onOwnerChange", previousOwner)
         })
     }
 }
