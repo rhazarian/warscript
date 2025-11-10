@@ -764,7 +764,7 @@ Unit.onDamaging.addListener((source, target, event) => {
 })
 
 Unit.itemPickedUpEvent.addListener((unit, item) => {
-    if (item.powerup && item.hasAbility(fourCC("APdi") as AbilityTypeId)) {
+    if (item.isPowerUp && item.hasAbility(fourCC("APdi") as AbilityTypeId)) {
         // подумать
     }
 })

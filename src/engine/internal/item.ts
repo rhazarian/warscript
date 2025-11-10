@@ -34,6 +34,13 @@ const unitRemoveItem = UnitRemoveItem
 const unitUseItem = UnitUseItem
 const unitUseItemPoint = UnitUseItemPoint
 const unitUseItemTarget = UnitUseItemTarget
+const setItemDropOnDeath = SetItemDropOnDeath
+const setItemDroppable = SetItemDroppable
+const setItemPawnable = SetItemPawnable
+const isItemPawnable = IsItemPawnable
+const getItemIntegerField = BlzGetItemIntegerField
+const setItemBooleanField = BlzSetItemBooleanField
+const getItemBooleanField = BlzGetItemBooleanField
 
 const tableRemove = table.remove
 
@@ -41,11 +48,6 @@ _G.SetItemCharges = (whichItem, charges): void => {
     setItemCharges(whichItem, charges)
     invoke(itemChargesChangeEvent, Item.of(whichItem))
 }
-
-const getItemIntegerField = BlzGetItemIntegerField
-
-const setItemBooleanField = BlzSetItemBooleanField
-const getItemBooleanField = BlzGetItemBooleanField
 
 const invoke = Event.invoke
 
@@ -205,43 +207,46 @@ export class Item extends Handle<jitem> {
         return BlzGetItemIconPath(this.handle)
     }
 
-    public set dropOnDeath(v: boolean) {
-        SetItemDropOnDeath(this.handle, v)
+    public set dropsOnDeath(dropsOnDeath: boolean) {
+        setItemDropOnDeath(this.handle, dropsOnDeath)
     }
 
-    public get dropOnDeath(): boolean {
-        return BlzGetItemBooleanField(this.handle, ITEM_BF_DROPPED_WHEN_CARRIER_DIES)
+    public get dropsOnDeath(): boolean {
+        return getItemBooleanField(this.handle, ITEM_BF_DROPPED_WHEN_CARRIER_DIES)
     }
 
-    public set droppable(v: boolean) {
-        SetItemDroppable(this.handle, v)
+    public set canBeDropped(canBeDropped: boolean) {
+        setItemDroppable(this.handle, canBeDropped)
     }
 
-    public get droppable(): boolean {
-        return BlzGetItemBooleanField(this.handle, ITEM_BF_CAN_BE_DROPPED)
+    public get canBeDropped(): boolean {
+        return getItemBooleanField(this.handle, ITEM_BF_CAN_BE_DROPPED)
     }
 
-    public set pawnable(v: boolean) {
-        SetItemPawnable(this.handle, v)
+    public set canBeSold(canBeSold: boolean) {
+        setItemPawnable(this.handle, canBeSold)
     }
 
-    public get pawnable(): boolean {
-        return IsItemPawnable(this.handle)
+    public get canBeSold(): boolean {
+        return isItemPawnable(this.handle)
     }
 
-    public set perishable(v: boolean) {
-        BlzSetItemBooleanField(this.handle, ITEM_BF_PERISHABLE, v)
+    public set perishes(perishes: boolean) {
+        const handle = this.handle
+        const powerUp = isItemPowerup(handle)
+        setItemBooleanField(handle, ITEM_BF_PERISHABLE, perishes)
+        setItemBooleanField(handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, powerUp)
     }
 
-    public get perishable(): boolean {
+    public get perishes(): boolean {
         return getItemBooleanField(this.handle, ITEM_BF_PERISHABLE)
     }
 
-    public set powerup(v: boolean) {
-        setItemBooleanField(this.handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, v)
+    public set isPowerUp(isPowerUp: boolean) {
+        setItemBooleanField(this.handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, isPowerUp)
     }
 
-    public get powerup(): boolean {
+    public get isPowerUp(): boolean {
         return isItemPowerup(this.handle)
     }
 
@@ -261,14 +266,22 @@ export class Item extends Handle<jitem> {
         return IsItemInvulnerable(this.handle)
     }
 
-    public set usable(v: boolean) {
+    public set isActivelyUsed(isActivelyUsed: boolean) {
         const handle = this.handle
-        const powerup = isItemPowerup(handle)
-        setItemBooleanField(handle, ITEM_BF_ACTIVELY_USED, v)
-        setItemBooleanField(handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, powerup)
+        const powerUp = isItemPowerup(handle)
+        const perishes = getItemBooleanField(handle, ITEM_BF_PERISHABLE)
+        const dropsOnDeath = getItemBooleanField(handle, ITEM_BF_DROPPED_WHEN_CARRIER_DIES)
+        const canBeDropped = getItemBooleanField(handle, ITEM_BF_CAN_BE_DROPPED)
+        const canBeSold = isItemPawnable(handle)
+        setItemBooleanField(handle, ITEM_BF_ACTIVELY_USED, isActivelyUsed)
+        setItemPawnable(handle, canBeSold)
+        setItemDroppable(handle, canBeDropped)
+        setItemDropOnDeath(handle, dropsOnDeath)
+        setItemBooleanField(handle, ITEM_BF_PERISHABLE, perishes)
+        setItemBooleanField(handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, powerUp)
     }
 
-    public get usable(): boolean {
+    public get isActivelyUsed(): boolean {
         return getItemBooleanField(this.handle, ITEM_BF_ACTIVELY_USED)
     }
 
