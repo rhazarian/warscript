@@ -11,11 +11,15 @@ const next = _G.next
 export type EventListener<T extends any[]> = (this: void, ...args: T) => void
 
 export const enum EventListenerPriority {
+    /** @internal For use by internal systems only. */
+    LOWEST_INTERNAL = -999999,
     LOWEST = 0,
     LOW = 1,
     MEDIUM = 2,
     HIGH = 3,
     HIGHEST = 4,
+    /** @internal For use by internal systems only. */
+    HIGHEST_INTERNAL = -999999,
 }
 
 export class Event<T extends any[] = []> {

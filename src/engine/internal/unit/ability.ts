@@ -666,13 +666,7 @@ declare module "../unit" {
 rawset(
     Unit,
     "abilityStopEvent",
-    createDispatchingEvent(
-        new UnitTriggerEvent<[Ability]>(
-            EVENT_PLAYER_UNIT_SPELL_ENDCAST,
-            collectUnitAbilityEventParameters,
-        ),
-        extractAbilityTypeId,
-    ),
+    createDispatchingEvent(internalAbilityStopEvent, extractAbilityTypeId),
 )
 
 // === COMMAND ===
@@ -715,9 +709,12 @@ rawset(
 
 const spellEffectOnlyAbilityTypeIds = luaSetOf(fourCC("AAns"))
 
-internalAbilityChannelingStartEvent.addListener((unit, ability) => {
-    if (spellEffectOnlyAbilityTypeIds.has(ability.parentTypeId)) {
-        eventInvoke(internalAbilityChannelingFinishEvent, unit, ability)
-        eventInvoke(internalAbilityStopEvent, unit, ability)
-    }
-})
+internalAbilityChannelingStartEvent.addListener(
+    EventListenerPriority.LOWEST_INTERNAL,
+    (unit, ability) => {
+        if (spellEffectOnlyAbilityTypeIds.has(ability.parentTypeId)) {
+            eventInvoke(internalAbilityChannelingFinishEvent, unit, ability)
+            eventInvoke(internalAbilityStopEvent, unit, ability)
+        }
+    },
+)
