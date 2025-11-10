@@ -1,5 +1,3 @@
-import { requireNotNull } from "./utility/preconditions"
-
 const pack = string.pack
 const concat = table.concat
 const unpack = table.unpack
@@ -22,7 +20,6 @@ export class BinaryWriter {
     }
 
     public writeBytes(value: string): void {
-        requireNotNull(value)
         const i = this.i + 1
         this.f[i - 1] = `c${value.length}`
         this.v[i - 1] = value
@@ -30,7 +27,6 @@ export class BinaryWriter {
     }
 
     public writeDouble(value: number): void {
-        requireNotNull(value)
         const i = this.i + 1
         this.f[i - 1] = "d"
         this.v[i - 1] = value
@@ -38,7 +34,6 @@ export class BinaryWriter {
     }
 
     public writeFloat(value: number): void {
-        requireNotNull(value)
         const i = this.i + 1
         this.f[i - 1] = "f"
         this.v[i - 1] = value
@@ -46,7 +41,6 @@ export class BinaryWriter {
     }
 
     public writeInt16(value: number): void {
-        requireNotNull(value)
         const i = this.i + 1
         this.f[i - 1] = "h"
         this.v[i - 1] = value
@@ -54,7 +48,6 @@ export class BinaryWriter {
     }
 
     public writeInt32(value: number): void {
-        requireNotNull(value)
         const i = this.i + 1
         this.f[i - 1] = "i4"
         this.v[i - 1] = value
@@ -62,7 +55,6 @@ export class BinaryWriter {
     }
 
     public writeInt8(value: number): void {
-        requireNotNull(value)
         const i = this.i + 1
         this.f[i - 1] = "b"
         this.v[i - 1] = value
@@ -70,7 +62,6 @@ export class BinaryWriter {
     }
 
     public writeString(value: string): void {
-        requireNotNull(value)
         const i = this.i + 1
         this.f[i - 1] = "z"
         this.v[i - 1] = value
@@ -78,7 +69,6 @@ export class BinaryWriter {
     }
 
     public writeUInt16(value: number): void {
-        requireNotNull(value)
         const i = this.i + 1
         this.f[i - 1] = "H"
         this.v[i - 1] = value
@@ -86,7 +76,6 @@ export class BinaryWriter {
     }
 
     public writeUInt32(value: number): void {
-        requireNotNull(value)
         const i = this.i + 1
         this.f[i - 1] = "I4"
         this.v[i - 1] = value
@@ -94,7 +83,6 @@ export class BinaryWriter {
     }
 
     public writeUInt8(value: number): void {
-        requireNotNull(value)
         const i = this.i + 1
         this.f[i - 1] = "B"
         this.v[i - 1] = value

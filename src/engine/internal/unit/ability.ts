@@ -15,6 +15,7 @@ import {
 import { checkNotNull } from "../../../utility/preconditions"
 import { lazyRecord } from "../../../utility/lazy"
 import { Timer } from "../../../core/types/timer"
+import { luaSetOf } from "../../../utility/lua-sets"
 
 const eventInvoke = Event.invoke
 
@@ -634,6 +635,11 @@ rawset(
 
 // === CHANNELING FINISH ===
 
+const internalAbilityChannelingFinishEvent = new UnitTriggerEvent<[Ability]>(
+    EVENT_PLAYER_UNIT_SPELL_FINISH,
+    collectUnitAbilityEventParameters,
+)
+
 declare module "../unit" {
     namespace Unit {
         const abilityChannelingFinishEvent: DispatchingEvent<[Unit, Ability]>
@@ -642,16 +648,15 @@ declare module "../unit" {
 rawset(
     Unit,
     "abilityChannelingFinishEvent",
-    createDispatchingEvent(
-        new UnitTriggerEvent<[Ability]>(
-            EVENT_PLAYER_UNIT_SPELL_FINISH,
-            collectUnitAbilityEventParameters,
-        ),
-        extractAbilityTypeId,
-    ),
+    createDispatchingEvent(internalAbilityChannelingFinishEvent, extractAbilityTypeId),
 )
 
 // === STOP ===
+
+const internalAbilityStopEvent = new UnitTriggerEvent<[Ability]>(
+    EVENT_PLAYER_UNIT_SPELL_ENDCAST,
+    collectUnitAbilityEventParameters,
+)
 
 declare module "../unit" {
     namespace Unit {
@@ -705,3 +710,14 @@ rawset(
         })
     }),
 )
+
+// === band aids ===
+
+const spellEffectOnlyAbilityTypeIds = luaSetOf(fourCC("AAns"))
+
+internalAbilityChannelingStartEvent.addListener((unit, ability) => {
+    if (spellEffectOnlyAbilityTypeIds.has(ability.parentTypeId)) {
+        eventInvoke(internalAbilityChannelingFinishEvent, unit, ability)
+        eventInvoke(internalAbilityStopEvent, unit, ability)
+    }
+})

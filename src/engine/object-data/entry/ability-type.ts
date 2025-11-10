@@ -766,7 +766,7 @@ Unit.abilityChannelingStartEvent.addListener((caster, ability) => {
     const soundPresetId = ability.getField(ABILITY_SF_EFFECT_SOUND)
     if (
         isSoundLabelCustom(soundPresetId) ||
-        (unsupportedEffectSoundAbilityTypeIds.has(ability.parentTypeId) && soundPresetId != "")
+        (soundPresetId != "" && unsupportedEffectSoundAbilityTypeIds.has(ability.parentTypeId))
     ) {
         Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, caster)
     }
