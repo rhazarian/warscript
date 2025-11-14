@@ -149,8 +149,9 @@ export class LinkedSet<T extends AnyNotNil> implements ReadonlyLinkedSet<T> {
         const n = this.n
         let c = this.f
         while (c !== undefined) {
+            const next = n.get(c)
             action(c, ...args)
-            c = n.get(c)
+            c = next
         }
     }
 

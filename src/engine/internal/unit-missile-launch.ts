@@ -4,6 +4,7 @@ import { Event, EventListenerPriority } from "../../event"
 import { Timer } from "../../core/types/timer"
 import { luaSetOf } from "../../utility/lua-sets"
 import { attribute } from "../../attributes"
+import { LinkedSet } from "../../utility/linked-set"
 
 declare module "./unit" {
     namespace Unit {
@@ -13,7 +14,11 @@ declare module "./unit" {
 const autoAttackFinishEvent = new Event<[source: Unit, target: Unit]>()
 rawset(Unit, "autoAttackFinishEvent", autoAttackFinishEvent)
 
-const eventTimerByUnit = new LuaMap<Unit, Timer>()
+const units = new LinkedSet<Unit>()
+
+const targetAttribute = attribute<Unit>()
+const impactDelayAttribute = attribute<number>()
+const passedTimeAttribute = attribute<number>()
 
 const instantOrderIds = luaSetOf(
     orderId("avatar"),
@@ -32,12 +37,10 @@ const instantOrderIds = luaSetOf(
 )
 
 const reset = (source: Unit, orderId: number) => {
-    if (!instantOrderIds.has(orderId)) {
-        const eventTimer = eventTimerByUnit.get(source)
-        if (eventTimer) {
-            eventTimer.destroy()
-            eventTimerByUnit.delete(source)
-        }
+    if (!instantOrderIds.has(orderId) && units.remove(source)) {
+        source.set(targetAttribute, undefined)
+        source.set(impactDelayAttribute, undefined)
+        source.set(passedTimeAttribute, undefined)
     }
 }
 
@@ -49,43 +52,33 @@ Unit.onPointOrder.addListener(reset)
 
 Unit.onTargetOrder.addListener(reset)
 
-const targetAttribute = attribute<Unit>()
-const impactDelayAttribute = attribute<number>()
-const passedTimeAttribute = attribute<number>()
-
-let unitsSize = 0
-const units: Unit[] = []
-
 const timerPeriod = 1 / 64
 
-Timer.onPeriod[timerPeriod].addListener(() => {
-    for (let i = 1; i <= unitsSize; i++) {
-        const unit = units[i - 1]
-        const passedTime = unit.get(passedTimeAttribute)! + timerPeriod
-        if (passedTime >= unit.get(impactDelayAttribute)!) {
-            units[i - 1] = units[unitsSize]
-            units[unitsSize] = undefined!
-            unitsSize--
-            i--
-            const target = unit.get(targetAttribute)!
-            unit.set(targetAttribute, undefined)
-            unit.set(impactDelayAttribute, undefined)
-            unit.set(passedTimeAttribute, undefined)
-            Event.invoke(autoAttackFinishEvent, unit, target)
-        } else {
-            unit.set(passedTimeAttribute, passedTime)
-        }
+const invokeEvent = (unit: Unit) => {
+    units.remove(unit)
+    const target = unit.get(targetAttribute)!
+    unit.set(targetAttribute, undefined)
+    unit.set(impactDelayAttribute, undefined)
+    unit.set(passedTimeAttribute, undefined)
+    Event.invoke(autoAttackFinishEvent, unit, target)
+}
+
+const checkUnit = (unit: Unit) => {
+    const passedTime = unit.get(passedTimeAttribute)! + timerPeriod
+    if (passedTime >= unit.get(impactDelayAttribute)!) {
+        invokeEvent(unit)
+    } else {
+        unit.set(passedTimeAttribute, passedTime)
     }
+}
+
+Timer.onPeriod[timerPeriod].addListener(() => {
+    units.forEach(checkUnit)
 })
 
 Unit.autoAttackStartEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (source, target) => {
-    const previousTarget = source.get(targetAttribute)
-    if (previousTarget != undefined) {
-        source.set(targetAttribute, undefined)
-        Event.invoke(autoAttackFinishEvent, source, target)
-    } else {
-        unitsSize++
-        units[unitsSize - 1] = source
+    if (source.get(targetAttribute) != undefined) {
+        invokeEvent(source)
     }
     source.set(targetAttribute, target)
     source.set(
@@ -93,4 +86,5 @@ Unit.autoAttackStartEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (s
         (source.chooseWeapon(target) ?? source.firstWeapon).impactDelay,
     )
     source.set(passedTimeAttribute, -timerPeriod)
+    units.add(source)
 })
