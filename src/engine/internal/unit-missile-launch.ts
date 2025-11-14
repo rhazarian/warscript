@@ -81,6 +81,7 @@ Timer.onPeriod[timerPeriod].addListener(() => {
 Unit.autoAttackStartEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (source, target) => {
     const previousTarget = source.get(targetAttribute)
     if (previousTarget != undefined) {
+        source.set(targetAttribute, undefined)
         Event.invoke(autoAttackFinishEvent, source, target)
     } else {
         unitsSize++
