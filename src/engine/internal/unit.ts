@@ -529,6 +529,23 @@ export class UnitWeapon {
         public readonly index: 0 | 1,
     ) {}
 
+    public get isEnabled(): boolean {
+        return BlzGetUnitWeaponBooleanField(
+            this.unit.handle,
+            UNIT_WEAPON_BF_ATTACKS_ENABLED,
+            this.index,
+        )
+    }
+
+    public set isEnabled(isEnabled: boolean) {
+        BlzSetUnitWeaponBooleanField(
+            this.unit.handle,
+            UNIT_WEAPON_BF_ATTACKS_ENABLED,
+            this.index,
+            isEnabled,
+        )
+    }
+
     public get cooldown(): number {
         return getUnitWeaponRealField(
             this.unit.handle,
@@ -1068,11 +1085,19 @@ export class Unit extends Handle<junit> {
     }
 
     public chooseWeapon(target: Unit): UnitWeapon | undefined {
-        if (target.isAllowedTarget(this, this.firstWeapon.allowedTargetCombatClassifications)) {
-            return this.firstWeapon
+        const firstWeapon = this.firstWeapon
+        if (
+            firstWeapon.isEnabled &&
+            target.isAllowedTarget(this, firstWeapon.allowedTargetCombatClassifications)
+        ) {
+            return firstWeapon
         }
-        if (target.isAllowedTarget(target, this.secondWeapon.allowedTargetCombatClassifications)) {
-            return this.secondWeapon
+        const secondWeapon = this.secondWeapon
+        if (
+            secondWeapon.isEnabled &&
+            target.isAllowedTarget(target, secondWeapon.allowedTargetCombatClassifications)
+        ) {
+            return secondWeapon
         }
         return undefined
     }
@@ -2343,29 +2368,7 @@ export class Unit extends Handle<junit> {
                         weapon?: UnitWeapon
                     }
                     if (data.isAttack && source) {
-                        let weapon = BlzGetUnitWeaponBooleanField(
-                            source.handle,
-                            UNIT_WEAPON_BF_ATTACKS_ENABLED,
-                            1,
-                        )
-                            ? BlzGetUnitWeaponBooleanField(
-                                  source.handle,
-                                  UNIT_WEAPON_BF_ATTACKS_ENABLED,
-                                  0,
-                              )
-                                ? -1
-                                : 1
-                            : 0
-                        if (weapon == -1) {
-                            const targetsAllowed = BlzGetUnitWeaponIntegerField(
-                                source.handle,
-                                UNIT_WEAPON_IF_ATTACK_TARGETS_ALLOWED,
-                                0,
-                            )
-                            // TODO: deduce weapon based on targets allowed
-                            weapon = 0
-                        }
-                        data.weapon = assert(source.weapons[weapon])
+                        data.weapon = source.chooseWeapon(target)
                     }
                     if (!data.isAttack || !source || !source._attackHandlers) {
                         invoke(
