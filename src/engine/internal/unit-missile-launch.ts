@@ -3,7 +3,7 @@ import { Unit } from "./unit"
 import { Event, EventListenerPriority } from "../../event"
 import { Timer } from "../../core/types/timer"
 import { luaSetOf } from "../../utility/lua-sets"
-import { min } from "../../math"
+import { attribute } from "../../attributes"
 
 declare module "./unit" {
     namespace Unit {
@@ -49,19 +49,47 @@ Unit.onPointOrder.addListener(reset)
 
 Unit.onTargetOrder.addListener(reset)
 
-const timerCallback = (source: Unit, target: Unit): void => {
-    eventTimerByUnit.delete(source)
-    Event.invoke(autoAttackFinishEvent, source, target)
-}
+const targetAttribute = attribute<Unit>()
+const impactDelayAttribute = attribute<number>()
+const passedTimeAttribute = attribute<number>()
 
-Unit.autoAttackStartEvent.addListener(EventListenerPriority.HIGHEST, (source, target) => {
-    // TODO: if a timer already exists, we need to call it's callback NOW
-    const attackPoint = (source.chooseWeapon(target) ?? source.firstWeapon).impactDelay
-    const timer = Timer.simple(
-        attackPoint + min(compiletime(1 / 64), attackPoint / 2),
-        timerCallback,
-        source,
-        target,
+let unitsSize = 0
+const units: Unit[] = []
+
+const timerPeriod = 1 / 64
+
+Timer.onPeriod[timerPeriod].addListener(() => {
+    for (let i = 1; i <= unitsSize; i++) {
+        const unit = units[i - 1]
+        const passedTime = unit.get(passedTimeAttribute)! + timerPeriod
+        if (passedTime >= unit.get(impactDelayAttribute)!) {
+            units[i - 1] = units[unitsSize]
+            units[unitsSize] = undefined!
+            unitsSize--
+            i--
+            const target = unit.get(targetAttribute)!
+            unit.set(targetAttribute, undefined)
+            unit.set(impactDelayAttribute, undefined)
+            unit.set(passedTimeAttribute, undefined)
+            Event.invoke(autoAttackFinishEvent, unit, target)
+        } else {
+            unit.set(passedTimeAttribute, passedTime)
+        }
+    }
+})
+
+Unit.autoAttackStartEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (source, target) => {
+    const previousTarget = source.get(targetAttribute)
+    if (previousTarget != undefined) {
+        Event.invoke(autoAttackFinishEvent, source, target)
+    } else {
+        unitsSize++
+        units[unitsSize - 1] = source
+    }
+    source.set(targetAttribute, target)
+    source.set(
+        impactDelayAttribute,
+        (source.chooseWeapon(target) ?? source.firstWeapon).impactDelay,
     )
-    eventTimerByUnit.set(source, timer)
+    source.set(passedTimeAttribute, -timerPeriod)
 })
