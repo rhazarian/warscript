@@ -19,7 +19,7 @@ export const enum EventListenerPriority {
     HIGH = 3,
     HIGHEST = 4,
     /** @internal For use by internal systems only. */
-    HIGHEST_INTERNAL = -999999,
+    HIGHEST_INTERNAL = 999999,
 }
 
 export class Event<T extends any[] = []> {
