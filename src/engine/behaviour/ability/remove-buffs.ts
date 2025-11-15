@@ -27,3 +27,26 @@ export class RemoveBuffsSelfAbilityBehavior extends AbilityBehavior {
         )
     }
 }
+
+export class RemoveBuffsTargetAbilityBehavior extends AbilityBehavior {
+    public constructor(
+        ability: Ability,
+        private readonly polarity?: AbilityDependentValue<BuffPolarity>,
+        private readonly resistanceType?: AbilityDependentValue<BuffResistanceType>,
+        private readonly includeExpirationTimers?: AbilityDependentValue<boolean>,
+        private readonly includeAuras?: AbilityDependentValue<boolean>,
+        private readonly autoDispel?: AbilityDependentValue<boolean>,
+    ) {
+        super(ability)
+    }
+
+    public onUnitTargetImpact(_: Unit, target: Unit) {
+        target.removeBuffs(
+            this.resolveCurrentAbilityDependentValue(this.polarity),
+            this.resolveCurrentAbilityDependentValue(this.resistanceType),
+            this.resolveCurrentAbilityDependentValue(this.includeExpirationTimers),
+            this.resolveCurrentAbilityDependentValue(this.includeAuras),
+            this.resolveCurrentAbilityDependentValue(this.autoDispel),
+        )
+    }
+}
