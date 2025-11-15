@@ -24,9 +24,9 @@ export class Socket {
         onReceive[this[SocketPropertyKey.ID]].addListener((sender, data) => {
             const chunks = chunksByPlayer.get(sender)
             if (chunks !== undefined) {
+                chunksByPlayer.delete(sender)
                 chunks[chunks.length] = data
                 Event.invoke(this.onMessage, sender, tableConcat(chunks))
-                chunksByPlayer.delete(sender)
             } else {
                 Event.invoke(this.onMessage, sender, data)
             }

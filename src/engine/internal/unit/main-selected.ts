@@ -1,8 +1,8 @@
 import { Player } from "../../../core/types/player"
-import { MAXIMUM_INTEGER, MINIMUM_INTEGER } from "../../../math"
 import { LocalClient } from "../../local-client"
 import { Unit, UnitSyncId } from "../unit"
 import { Event } from "../../../event"
+import { ObjectBus } from "../../synchronization"
 
 declare module "../unit" {
     namespace Unit {
@@ -14,25 +14,16 @@ rawset(Unit, "mainSelectedUnitChangeEvent", mainSelectedUnitChangeEvent)
 
 const mainSelectedUnitByPlayer = new LuaMap<Player, Unit | undefined>()
 
-const syncSlider = BlzCreateFrameByType(
-    "SLIDER",
-    "UnitSyncId",
-    BlzGetOriginFrame(ORIGIN_FRAME_WORLD_FRAME, 0),
-    "",
-    0,
+const unitBus = new ObjectBus<Unit, UnitSyncId>(
+    (unit) => unit.syncId,
+    (syncId) => Unit.getBySyncId(syncId),
 )
-BlzFrameSetMinMaxValue(syncSlider, MINIMUM_INTEGER, MAXIMUM_INTEGER)
 LocalClient.mainSelectedUnitChangeEvent.addListener(() => {
-    const syncId = (LocalClient.mainSelectedUnit as Unit | undefined)?.syncId
-    BlzFrameSetValue(syncSlider, syncId ?? 0)
+    unitBus.send(LocalClient.mainSelectedUnit as Unit | undefined)
 })
-const trg = CreateTrigger()
-BlzTriggerRegisterFrameEvent(trg, syncSlider, FRAMEEVENT_SLIDER_VALUE_CHANGED)
-TriggerAddAction(trg, () => {
-    const player = Player.of(GetTriggerPlayer())
-    const mainSelectedUnit = Unit.getBySyncId(BlzGetTriggerFrameValue() as UnitSyncId)
-    if (mainSelectedUnit != mainSelectedUnitByPlayer.get(player)) {
-        mainSelectedUnitByPlayer.set(player, mainSelectedUnit)
+unitBus.event.addListener((player, unit) => {
+    if (unit != mainSelectedUnitByPlayer.get(player)) {
+        mainSelectedUnitByPlayer.set(player, unit)
         Event.invoke(mainSelectedUnitChangeEvent, player)
     }
 })
