@@ -27,4 +27,14 @@ export class AttributesHolder {
         LuaExtension<"TableGetMethod">
     declare readonly set: (<T>(attribute: Attribute<T>, value: T | undefined) => void) &
         LuaExtension<"TableSetMethod">
+
+    public getOrPut<T>(attribute: Attribute<T>, defaultValue: () => T): T {
+        let value = this.get(attribute)
+        if (value != undefined) {
+            return value
+        }
+        value = defaultValue()
+        this.set(attribute, value)
+        return value
+    }
 }
