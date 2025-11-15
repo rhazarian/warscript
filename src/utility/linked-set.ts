@@ -71,6 +71,24 @@ export class LinkedSet<T extends AnyNotNil> implements ReadonlyLinkedSet<T> {
         return this.l
     }
 
+    public pop(): T | undefined {
+        const f = this.f
+        if (f == undefined) {
+            return undefined
+        }
+        const n = this.n
+        const next = n.get(f)
+        n.delete(f)
+        this.f = next
+        if (next != undefined) {
+            this.p.delete(next)
+        } else {
+            this.l = undefined
+        }
+        this.s = this.s - 1
+        return f
+    }
+
     public next(key: T): T | undefined {
         return this.n.get(key)
     }
