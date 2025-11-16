@@ -13,6 +13,7 @@ const getPlayerColor = GetPlayerColor
 const getPlayerName = GetPlayerName
 const getPlayerTechCount = GetPlayerTechCount
 const getPlayerTechMaxAllowed = GetPlayerTechMaxAllowed
+const getTriggerPlayer = GetTriggerPlayer
 const setPlayerAlliance = SetPlayerAlliance
 const setPlayerTechMaxAllowed = SetPlayerTechMaxAllowed
 const setPlayerTechResearched = SetPlayerTechResearched
@@ -262,26 +263,32 @@ export class Player extends Handle<jplayer> {
         return this.events[eventId]
     }
 
+    public static get allianceChangedEvent(): Event<[Player]> {
+        return Player.getEvent(EVENT_PLAYER_ALLIANCE_CHANGED, () =>
+            $multi(Player.of(getTriggerPlayer())),
+        )
+    }
+
     static get onLeave(): Event<[Player]> {
-        return Player.getEvent(EVENT_PLAYER_LEAVE, () => $multi(Player.of(GetTriggerPlayer())))
+        return Player.getEvent(EVENT_PLAYER_LEAVE, () => $multi(Player.of(getTriggerPlayer())))
     }
 
     static get onMouseDown(): Event<[Player, jmousebuttontype]> {
         return Player.getMouseEvent(EVENT_PLAYER_MOUSE_DOWN, () =>
-            $multi(Player.of(GetTriggerPlayer()), BlzGetTriggerPlayerMouseButton()),
+            $multi(Player.of(getTriggerPlayer()), BlzGetTriggerPlayerMouseButton()),
         )
     }
 
     static get onMouseUp(): Event<[Player, jmousebuttontype]> {
         return Player.getMouseEvent(EVENT_PLAYER_MOUSE_UP, () =>
-            $multi(Player.of(GetTriggerPlayer()), BlzGetTriggerPlayerMouseButton()),
+            $multi(Player.of(getTriggerPlayer()), BlzGetTriggerPlayerMouseButton()),
         )
     }
 
     static get onMouseMove(): Event<[Player, Vec2]> {
         return Player.getMouseEvent(EVENT_PLAYER_MOUSE_MOVE, () =>
             $multi(
-                Player.of(GetTriggerPlayer()),
+                Player.of(getTriggerPlayer()),
                 vec2(BlzGetTriggerPlayerMouseX(), BlzGetTriggerPlayerMouseY()),
             ),
         )
@@ -324,7 +331,7 @@ export class Player extends Handle<jplayer> {
         TriggerAddCondition(
             trigger,
             Condition(() => {
-                const player = Player.of(GetTriggerPlayer())
+                const player = Player.of(getTriggerPlayer())
                 const key = BlzGetTriggerPlayerKey()
                 const metaKey = BlzGetTriggerPlayerMetaKey() as oskeymeta
                 Event.invoke(event, player, key, metaKey)
@@ -409,7 +416,7 @@ export class Player extends Handle<jplayer> {
                     TriggerRegisterPlayerChatEvent(trigger, player.handle, "", false)
                 }
             },
-            () => $multi(Player.of(GetTriggerPlayer()), GetEventPlayerChatString()),
+            () => $multi(Player.of(getTriggerPlayer()), GetEventPlayerChatString()),
         )
         rawset(this, "onChat", event)
         return event
