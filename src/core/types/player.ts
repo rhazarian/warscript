@@ -7,6 +7,7 @@ import { IllegalStateException } from "../../exception"
 import { UpgradeId } from "../../engine/object-data/entry/upgrade"
 import { MAXIMUM_INTEGER } from "../../math"
 import { PLAYER_LOCAL_HANDLE } from "../../engine/internal/misc/player-local-handle"
+import { lazyRecord } from "../../utility/lazy"
 
 const getPlayerAlliance = GetPlayerAlliance
 const getPlayerColor = GetPlayerColor
@@ -18,6 +19,7 @@ const setPlayerAlliance = SetPlayerAlliance
 const setPlayerTechMaxAllowed = SetPlayerTechMaxAllowed
 const setPlayerTechResearched = SetPlayerTechResearched
 const setPlayerAbilityAvailable = SetPlayerAbilityAvailable
+const triggerRegisterPlayerAllianceChange = TriggerRegisterPlayerAllianceChange
 const playerNative = _G.Player
 
 type Collector<T extends any[]> = () => LuaMultiReturn<T>
@@ -251,7 +253,7 @@ export class Player extends Handle<jplayer> {
             this.events[eventId] = new TriggerEvent<T>(
                 (trigger) => {
                     /** Mouse events may cause a crash when triggered from the loading screen. We initialize them after. */
-                    Timer.simple(0, () => {
+                    Timer.run(() => {
                         for (const player of Player.all) {
                             TriggerRegisterPlayerEvent(trigger, player.handle, event)
                         }
@@ -263,10 +265,25 @@ export class Player extends Handle<jplayer> {
         return this.events[eventId]
     }
 
-    public static get allianceChangedEvent(): Event<[Player]> {
-        return Player.getEvent(EVENT_PLAYER_ALLIANCE_CHANGED, () =>
-            $multi(Player.of(getTriggerPlayer())),
-        )
+    public static get allianceChangedEvent(): Readonly<
+        Record<PlayerAllianceType, Event<[Player]>>
+    > {
+        const event = lazyRecord((type: PlayerAllianceType) => {
+            return new TriggerEvent<[Player]>(
+                (trigger) => {
+                    for (const player of Player.all) {
+                        triggerRegisterPlayerAllianceChange(
+                            trigger,
+                            player.handle,
+                            nativeByPlayerAllianceType[type],
+                        )
+                    }
+                },
+                () => $multi(Player.of(getTriggerPlayer())),
+            )
+        })
+        rawset(this, "allianceChangedEvent", event)
+        return event
     }
 
     static get onLeave(): Event<[Player]> {
