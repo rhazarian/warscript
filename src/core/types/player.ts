@@ -8,10 +8,12 @@ import { UpgradeId } from "../../engine/object-data/entry/upgrade"
 import { MAXIMUM_INTEGER } from "../../math"
 import { PLAYER_LOCAL_HANDLE } from "../../engine/internal/misc/player-local-handle"
 
+const getPlayerAlliance = GetPlayerAlliance
 const getPlayerColor = GetPlayerColor
 const getPlayerName = GetPlayerName
 const getPlayerTechCount = GetPlayerTechCount
 const getPlayerTechMaxAllowed = GetPlayerTechMaxAllowed
+const setPlayerAlliance = SetPlayerAlliance
 const setPlayerTechMaxAllowed = SetPlayerTechMaxAllowed
 const setPlayerTechResearched = SetPlayerTechResearched
 const setPlayerAbilityAvailable = SetPlayerAbilityAvailable
@@ -22,6 +24,32 @@ type Collector<T extends any[]> = () => LuaMultiReturn<T>
 interface Unit {
     handle: junit
 }
+
+export const enum PlayerAllianceType {
+    PASSIVE,
+    RESCUABLE,
+    HELP_REQUEST,
+    HELP_RESPONSE,
+    SHARED_XP,
+    SHARED_SPELLS,
+    SHARED_VISION,
+    SHARED_VISION_FORCED,
+    SHARED_CONTROL,
+    SHARED_ADVANCED_CONTROL,
+}
+
+const nativeByPlayerAllianceType = {
+    [PlayerAllianceType.PASSIVE]: ALLIANCE_PASSIVE,
+    [PlayerAllianceType.RESCUABLE]: ALLIANCE_RESCUABLE,
+    [PlayerAllianceType.HELP_REQUEST]: ALLIANCE_HELP_REQUEST,
+    [PlayerAllianceType.HELP_RESPONSE]: ALLIANCE_HELP_RESPONSE,
+    [PlayerAllianceType.SHARED_XP]: ALLIANCE_SHARED_XP,
+    [PlayerAllianceType.SHARED_SPELLS]: ALLIANCE_SHARED_SPELLS,
+    [PlayerAllianceType.SHARED_VISION]: ALLIANCE_SHARED_VISION,
+    [PlayerAllianceType.SHARED_VISION_FORCED]: ALLIANCE_SHARED_VISION_FORCED,
+    [PlayerAllianceType.SHARED_CONTROL]: ALLIANCE_SHARED_CONTROL,
+    [PlayerAllianceType.SHARED_ADVANCED_CONTROL]: ALLIANCE_SHARED_ADVANCED_CONTROL,
+} as const
 
 export class Player extends Handle<jplayer> {
     public static readonly all: Player[] = (() => {
@@ -164,6 +192,14 @@ export class Player extends Handle<jplayer> {
 
     public isEnemyOf(other: Player): boolean {
         return IsPlayerEnemy(this.handle, other.handle)
+    }
+
+    public setAlliance(other: Player, type: PlayerAllianceType, value: boolean): void {
+        setPlayerAlliance(this.handle, other.handle, nativeByPlayerAllianceType[type], value)
+    }
+
+    public getAlliance(other: Player, type: PlayerAllianceType): boolean {
+        return getPlayerAlliance(this.handle, other.handle, nativeByPlayerAllianceType[type])
     }
 
     public setAbilityAvailable(abilityId: number, available: boolean): void {
