@@ -5,6 +5,7 @@ import { GraphicsMode } from "./index"
 import { Frame } from "../core/types/frame"
 import { Player } from "../core/types/player"
 import { Timer } from "../core/types/timer"
+import { Color } from "../core/types/color"
 
 const loadTOCFile = BlzLoadTOCFile
 const getLocalClientWidth = BlzGetLocalClientWidth
@@ -16,6 +17,8 @@ const getMouseFocusUnit = BlzGetMouseFocusUnit
 const getUnitRealField = BlzGetUnitRealField
 const getUnitTypeId = GetUnitTypeId
 const getLocale = BlzGetLocale
+const pingMinimap = PingMinimap
+const pingMinimapEx = PingMinimapEx
 
 const tableSort = table.sort
 
@@ -93,6 +96,50 @@ export class LocalClient {
 
     public static get isActive(): boolean {
         return isLocalClientActive()
+    }
+
+    public static pingMinimap(
+        x: number,
+        y: number,
+        duration: number,
+        ...parameters:
+            | []
+            | [red: number, green: number, blue: number, extraEffects?: boolean]
+            | [color: Color, extraEffects?: boolean]
+    ): void
+
+    public static pingMinimap(
+        x: number,
+        y: number,
+        duration: number,
+        redOrColor?: number | Color,
+        greenOrExtraEffects?: number | boolean,
+        blue?: number,
+        extraEffects?: boolean,
+    ): void {
+        if (redOrColor == undefined) {
+            pingMinimap(x, y, duration)
+        } else if (redOrColor instanceof Color) {
+            pingMinimapEx(
+                x,
+                y,
+                duration,
+                redOrColor.r,
+                redOrColor.g,
+                redOrColor.b,
+                (greenOrExtraEffects as boolean | undefined) || false,
+            )
+        } else {
+            pingMinimapEx(
+                x,
+                y,
+                duration,
+                redOrColor,
+                greenOrExtraEffects as number,
+                blue as number,
+                extraEffects || false,
+            )
+        }
     }
 
     public static get mouseFocusUnit(): Async<Unit> | undefined {
