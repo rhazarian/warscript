@@ -39,6 +39,7 @@ import { damageMetadataByTarget } from "./misc/damage-metadata-by-target"
 import { AttributesHolder, isAttribute } from "../../attributes"
 import { doUnitAbilityAction } from "./item/ability"
 import type { AbilityTypeId } from "../object-data/entry/ability-type"
+import { synchronizer } from "../synchronization"
 
 const match = string.match
 const tostring = _G.tostring
@@ -771,6 +772,7 @@ const enum UnitPropertyKey {
     SYNC_ID = 100,
     IS_PAUSED,
     STUN_COUNTER,
+    FORCE_STUN_COUNTER,
     DELAY_HEALTH_CHECKS_COUNTER,
     DELAY_HEALTH_CHECKS_HEALTH_BONUS,
     PREVENT_DEATH_HEALTH_BONUS,
@@ -812,6 +814,7 @@ export class Unit extends Handle<junit> {
     public readonly syncId = nextSyncId++ as UnitSyncId
     private [UnitPropertyKey.IS_PAUSED]?: true
     private [UnitPropertyKey.STUN_COUNTER]?: number
+    private [UnitPropertyKey.FORCE_STUN_COUNTER]?: number
     private [UnitPropertyKey.DELAY_HEALTH_CHECKS_COUNTER]?: number
     private [UnitPropertyKey.DELAY_HEALTH_CHECKS_HEALTH_BONUS]?: number
     private [UnitPropertyKey.PREVENT_DEATH_HEALTH_BONUS]?: number
@@ -1422,14 +1425,18 @@ export class Unit extends Handle<junit> {
         const handle = this.handle
         if (isPaused && !IsUnitPaused(handle)) {
             this[UnitPropertyKey.IS_PAUSED] = true
-            for (const _ of $range(this[UnitPropertyKey.STUN_COUNTER] ?? 0, -1)) {
-                BlzPauseUnitEx(handle, true)
+            if ((this[UnitPropertyKey.FORCE_STUN_COUNTER] ?? 0) <= 0) {
+                for (const _ of $range(this[UnitPropertyKey.STUN_COUNTER] ?? 0, -1)) {
+                    BlzPauseUnitEx(handle, true)
+                }
             }
             PauseUnit(handle, true)
         } else if (!isPaused && IsUnitPaused(handle)) {
             PauseUnit(handle, false)
-            for (const _ of $range(this[UnitPropertyKey.STUN_COUNTER] ?? 0, -1)) {
-                BlzPauseUnitEx(handle, false)
+            if ((this[UnitPropertyKey.FORCE_STUN_COUNTER] ?? 0) <= 0) {
+                for (const _ of $range(this[UnitPropertyKey.STUN_COUNTER] ?? 0, -1)) {
+                    BlzPauseUnitEx(handle, false)
+                }
             }
             this[UnitPropertyKey.IS_PAUSED] = undefined
         }
@@ -1738,7 +1745,11 @@ export class Unit extends Handle<junit> {
 
     public incrementStunCounter(): void {
         const stunCounter = this[UnitPropertyKey.STUN_COUNTER] ?? 0
-        if (!this[UnitPropertyKey.IS_PAUSED] || stunCounter >= 0) {
+        if (
+            (!this[UnitPropertyKey.IS_PAUSED] &&
+                (this[UnitPropertyKey.FORCE_STUN_COUNTER] ?? 0) <= 0) ||
+            stunCounter >= 0
+        ) {
             BlzPauseUnitEx(this.handle, true)
         }
         this[UnitPropertyKey.STUN_COUNTER] = stunCounter + 1
@@ -1746,10 +1757,42 @@ export class Unit extends Handle<junit> {
 
     public decrementStunCounter(): void {
         const stunCounter = this[UnitPropertyKey.STUN_COUNTER] ?? 0
-        if (!this[UnitPropertyKey.IS_PAUSED] || stunCounter >= 1) {
+        if (
+            (!this[UnitPropertyKey.IS_PAUSED] &&
+                (this[UnitPropertyKey.FORCE_STUN_COUNTER] ?? 0) <= 0) ||
+            stunCounter >= 1
+        ) {
             BlzPauseUnitEx(this.handle, false)
         }
         this[UnitPropertyKey.STUN_COUNTER] = stunCounter - 1
+    }
+
+    public incrementForceStunCounter(): void {
+        const forceStunCounter = this[UnitPropertyKey.FORCE_STUN_COUNTER] ?? 0
+        if (forceStunCounter == 0) {
+            const handle = this.handle
+            if (!this[UnitPropertyKey.IS_PAUSED]) {
+                for (const _ of $range(this[UnitPropertyKey.STUN_COUNTER] ?? 0, -1)) {
+                    BlzPauseUnitEx(handle, true)
+                }
+            }
+            BlzPauseUnitEx(handle, true)
+        }
+        this[UnitPropertyKey.FORCE_STUN_COUNTER] = forceStunCounter + 1
+    }
+
+    public decrementForceStunCounter(): void {
+        const forceStunCounter = this[UnitPropertyKey.FORCE_STUN_COUNTER] ?? 0
+        if (forceStunCounter == 1) {
+            const handle = this.handle
+            if (!this[UnitPropertyKey.IS_PAUSED]) {
+                for (const _ of $range(this[UnitPropertyKey.STUN_COUNTER] ?? 0, -1)) {
+                    BlzPauseUnitEx(handle, false)
+                }
+            }
+            BlzPauseUnitEx(handle, false)
+        }
+        this[UnitPropertyKey.FORCE_STUN_COUNTER] = forceStunCounter - 1
     }
 
     public set waygateActive(v: boolean) {
@@ -2738,6 +2781,11 @@ export class Unit extends Handle<junit> {
     public static getBySyncId(syncId: UnitSyncId): Unit | undefined {
         return unitBySyncId.get(syncId)
     }
+
+    public static synchronize = synchronizer<Unit, UnitSyncId>(
+        (unit) => unit.syncId,
+        (syncId) => unitBySyncId.get(syncId),
+    )
 
     static {
         const leaveAbilityIds = postcompile(() => {

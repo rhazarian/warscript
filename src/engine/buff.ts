@@ -1115,13 +1115,13 @@ export class Buff<
     public set stuns(stuns: boolean) {
         if (!stuns && this[BuffPropertyKey.STUNS]) {
             if (this[BuffPropertyKey.IGNORES_STUN_IMMUNITY]) {
-                this.object.decrementStunCounter()
+                this.object.decrementForceStunCounter()
             }
             this.object.decrementStunCounter()
             this[BuffPropertyKey.STUNS] = undefined
         } else if (stuns && !this[BuffPropertyKey.STUNS]) {
             if (this[BuffPropertyKey.IGNORES_STUN_IMMUNITY]) {
-                this.object.incrementStunCounter()
+                this.object.incrementForceStunCounter()
             }
             this.object.incrementStunCounter()
             this[BuffPropertyKey.STUNS] = true
@@ -1135,12 +1135,12 @@ export class Buff<
     public set ignoresStunImmunity(ignoresStunImmunity: boolean) {
         if (!ignoresStunImmunity && this[BuffPropertyKey.IGNORES_STUN_IMMUNITY]) {
             if (this[BuffPropertyKey.STUNS]) {
-                this.object.decrementStunCounter()
+                this.object.decrementForceStunCounter()
             }
             this[BuffPropertyKey.IGNORES_STUN_IMMUNITY] = undefined
         } else if (ignoresStunImmunity && !this[BuffPropertyKey.IGNORES_STUN_IMMUNITY]) {
             if (this[BuffPropertyKey.STUNS]) {
-                this.object.incrementStunCounter()
+                this.object.incrementForceStunCounter()
             }
             this[BuffPropertyKey.IGNORES_STUN_IMMUNITY] = true
         }
@@ -1417,7 +1417,7 @@ export class Buff<
 
         if (this[BuffPropertyKey.STUNS]) {
             if (this[BuffPropertyKey.IGNORES_STUN_IMMUNITY]) {
-                unit.decrementStunCounter()
+                unit.decrementForceStunCounter()
             }
             unit.decrementStunCounter()
         }
