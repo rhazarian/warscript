@@ -25,6 +25,7 @@ const isUnitVisible = IsUnitVisible
 const getUnitFlyHeight = GetUnitFlyHeight
 const getUnitX = GetUnitX
 const getUnitY = GetUnitY
+const unitAlive = UnitAlive
 
 const DEFAULT_FONT_SIZE = 0.024
 
@@ -302,7 +303,8 @@ Timer.onPeriod[1 / 64].addListener(() => {
             isInView &&
             !isUnitHidden(unit) &&
             !isUnitLoaded(unit) &&
-            isUnitVisible(unit, PLAYER_LOCAL_HANDLE)
+            isUnitVisible(unit, PLAYER_LOCAL_HANDLE) &&
+            unitAlive(unit)
         ) {
             setTextTagPosUnit(
                 ensureHandle(textTag),
