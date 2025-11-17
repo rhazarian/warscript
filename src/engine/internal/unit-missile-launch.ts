@@ -5,6 +5,7 @@ import { Timer } from "../../core/types/timer"
 import { luaSetOf } from "../../utility/lua-sets"
 import { attribute } from "../../attributes"
 import { LinkedSet } from "../../utility/linked-set"
+import { ceil } from "../../math"
 
 declare module "./unit" {
     namespace Unit {
@@ -65,7 +66,8 @@ const invokeEvent = (unit: Unit) => {
 
 const checkUnit = (unit: Unit) => {
     const passedTime = unit.get(passedTimeAttribute)! + timerPeriod
-    if (passedTime >= unit.get(impactDelayAttribute)!) {
+    const impactDelay = unit.get(impactDelayAttribute)!
+    if (passedTime >= impactDelay && ceil(passedTime / 0.02) >= ceil(impactDelay / 0.02)) {
         invokeEvent(unit)
     } else {
         unit.set(passedTimeAttribute, passedTime)
