@@ -157,6 +157,8 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           killsOnExpiration?: BooleanParameterValueType
           explodesOnExpiration?: BooleanParameterValueType
 
+          abilityCooldownFactor?: NumberParameterValueType
+
           uniqueGroup?: BuffUniqueGroup
       }
     : BuffParameters & (T extends Buff<infer AdditionalParameters> ? AdditionalParameters : object)
@@ -212,6 +214,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     healingOnExpiration: true,
     killsOnExpiration: true,
     explodesOnExpiration: true,
+    abilityCooldownFactor: true,
 }
 
 const resolveEnumValue = <T extends number>(
