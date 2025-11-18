@@ -1,3 +1,5 @@
+import { AttributesHolder } from "../../attributes"
+
 const getTerrainType = GetTerrainType
 const setTerrainType = SetTerrainType
 const getTerrainVariance = GetTerrainVariance
@@ -8,13 +10,14 @@ const ult = math.ult
 
 const tileCellById: Record<number, TileCell | undefined> = {}
 
-export class TileCell implements Readonly<Vec2> {
+export class TileCell extends AttributesHolder implements Readonly<Vec2> {
     protected constructor(
         private readonly id: number,
         public readonly x: number,
         public readonly y: number,
         public readonly z: undefined,
     ) {
+        super()
         tileCellById[id] = this
     }
 
