@@ -4,7 +4,7 @@ import {
     internalApplyBuff,
     removeBuff,
 } from "./object-data/entry/buff-type/applicable"
-import { Ability } from "./internal/ability"
+import { Ability, UnitAbility } from "./internal/ability"
 import { AbilityTypeId } from "./object-data/entry/ability-type"
 import { BuffPolarity } from "./object-data/auxiliary/buff-polarity"
 import { BuffResistanceType } from "./object-data/auxiliary/buff-resistance-type"
@@ -29,7 +29,7 @@ import { damageArea } from "./internal/mechanics/area-damage"
 import { check, checkNotNull } from "../utility/preconditions"
 import { IsExactlyAny, Prohibit, ReadonlyNonEmptyArray } from "../utility/types"
 import { Effect, EffectParameters } from "../core/types/effect"
-import { ObjectFieldId } from "./object-field"
+import { ObjectFieldId, ObjectLevelFieldModifier } from "./object-field"
 import { BuffType, BuffTypeId } from "./object-data/entry/buff-type"
 import { UnitBehavior } from "./behaviour/unit"
 import type { Widget } from "../core/types/widget"
@@ -40,6 +40,7 @@ import { getAbilityDuration } from "./internal/mechanics/ability-duration"
 import { Item } from "./internal/item"
 import { Destructable } from "../core/types/destructable"
 import { HandleState } from "../core/types/handle"
+import { COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD } from "./standard/fields/ability"
 
 const getUnitAbility = BlzGetUnitAbility
 
@@ -364,6 +365,9 @@ const enum BuffPropertyKey {
     EXPLODES_ON_EXPIRATION,
 
     MISS_PROBABILITY,
+
+    ABILITY_COOLDOWN_FACTOR,
+    ABILITY_COOLDOWN_MODIFIER,
 }
 
 export const enum BuffTypeIdSelectionPolicy {
@@ -578,6 +582,9 @@ export class Buff<
     private [BuffPropertyKey.PROVIDES_INVULNERABILITY]?: true
     private [BuffPropertyKey.KILLS_ON_EXPIRATION]?: true
     private [BuffPropertyKey.EXPLODES_ON_EXPIRATION]?: true
+
+    private [BuffPropertyKey.ABILITY_COOLDOWN_FACTOR]?: number
+    private [BuffPropertyKey.ABILITY_COOLDOWN_MODIFIER]?: ObjectLevelFieldModifier<Ability, number>
 
     protected static readonly defaultParameters: BuffParameters = {}
 
@@ -1312,6 +1319,47 @@ export class Buff<
         }
     }
 
+    public get abilityCooldownFactor(): number {
+        return this[BuffPropertyKey.ABILITY_COOLDOWN_FACTOR] ?? 1
+    }
+
+    public set abilityCooldownFactor(abilityCooldownFactor: number) {
+        const previousAbilityCooldownModifier = this[BuffPropertyKey.ABILITY_COOLDOWN_MODIFIER]
+        if (previousAbilityCooldownModifier) {
+            for (const ability of this._unit.abilities) {
+                COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD.removeModifier(
+                    ability,
+                    previousAbilityCooldownModifier,
+                )
+            }
+        }
+        const modifier: ObjectLevelFieldModifier<Ability, number> = (ability, level, cooldown) =>
+            cooldown * abilityCooldownFactor
+        for (const ability of this._unit.abilities) {
+            COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD.applyModifier(ability, modifier)
+        }
+        this[BuffPropertyKey.ABILITY_COOLDOWN_MODIFIER] = modifier
+        this[BuffPropertyKey.ABILITY_COOLDOWN_FACTOR] = abilityCooldownFactor
+    }
+
+    public override onAbilityGained(ability: Ability): void {
+        if (ability instanceof UnitAbility) {
+            const abilityCooldownModifier = this[BuffPropertyKey.ABILITY_COOLDOWN_MODIFIER]
+            if (abilityCooldownModifier) {
+                COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD.applyModifier(ability, abilityCooldownModifier)
+            }
+        }
+    }
+
+    public override onAbilityLost(ability: Ability): void {
+        if (ability instanceof UnitAbility) {
+            const abilityCooldownModifier = this[BuffPropertyKey.ABILITY_COOLDOWN_MODIFIER]
+            if (abilityCooldownModifier) {
+                COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD.removeModifier(ability, abilityCooldownModifier)
+            }
+        }
+    }
+
     public flashEffect(
         ...parameters: [
             ...widgetOrXY: [] | [Widget] | [x: number, x: number],
@@ -1404,6 +1452,16 @@ export class Buff<
         if (this._behaviors != undefined) {
             for (const behavior of this._behaviors) {
                 behavior.destroy()
+            }
+        }
+
+        const previousAbilityCooldownModifier = this[BuffPropertyKey.ABILITY_COOLDOWN_MODIFIER]
+        if (previousAbilityCooldownModifier) {
+            for (const ability of this._unit.abilities) {
+                COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD.removeModifier(
+                    ability,
+                    previousAbilityCooldownModifier,
+                )
             }
         }
 

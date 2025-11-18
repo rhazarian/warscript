@@ -145,12 +145,12 @@ const valueChangeEventByObjectFieldConstructor = new LuaMap<
     ObjectFieldValueChangeEvent<ReadonlyObjectFieldType<ObjectField>>
 >()
 
-type ObjectFieldModifier<
+export type ObjectFieldModifier<
     InstanceType extends AnyNotNil,
     ValueType extends number | string | boolean,
 > = (instance: InstanceType, currentValue: ValueType, originalValue: ValueType) => ValueType
 
-type ObjectLevelFieldModifier<
+export type ObjectLevelFieldModifier<
     InstanceType extends AnyNotNil,
     ValueType extends number | string | boolean,
 > = (
