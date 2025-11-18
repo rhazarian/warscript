@@ -12,7 +12,7 @@ import {
 } from "./object-data/entry"
 import { ObjectDataEntryIdGenerator } from "./object-data/utility/object-data-entry-id-generator"
 import { LinkedSet, mutableLinkedSet } from "../utility/linked-set"
-import { emptyLuaMap, getOrPut, mutableWeakLuaMap } from "../utility/lua-maps"
+import { emptyLuaMap, getOrPut, mutableLuaMap, mutableWeakLuaMap } from "../utility/lua-maps"
 import { emptyArray } from "../utility/arrays"
 
 export type ObjectFieldId = number & { readonly __objectDataEntryFieldId: unique symbol }
@@ -261,7 +261,10 @@ export abstract class ObjectField<
                 originalValueByInstance = mutableWeakLuaMap()
                 this.originalValueByInstance = originalValueByInstance
             }
-            originalValueByInstance.set(instance, this.getActualValue(instance))
+            originalValueByInstance.set(
+                instance,
+                originalValueByInstance.get(instance) ?? this.getActualValue(instance),
+            )
             this.setActualValue(instance, this.calculateActualValue(instance))
         }
     }
@@ -605,22 +608,7 @@ export abstract class ObjectLevelField<
             return this.defaultValue
         }
 
-        const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
-            this.id,
-        )
-        if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
-            const defaultValueByLevel = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
-                this.getObjectDataEntryId(entry),
-            ) as ValueType[] | undefined
-            if (defaultValueByLevel != undefined || this.isGlobal) {
-                return (
-                    this.valueByInstance.get(entry)?.[level] ??
-                    (defaultValueByLevel ?? emptyArray())[level] ??
-                    this.defaultValue
-                )
-            }
-        }
-        return this.getNativeFieldValue(entry, level) ?? this.defaultValue
+        return this.getActualValue(entry, level)
     }
 
     public setValue(
@@ -683,42 +671,71 @@ export abstract class ObjectLevelField<
             valueByLevel[level] = value
             return true
         }
-        const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
-            this.id,
-        )
-        const objectDataEntryId = this.getObjectDataEntryId(entry)
-        if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
-            const defaultValueByLevel = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
-                objectDataEntryId,
-            ) as ValueType[] | undefined
-            if (defaultValueByLevel != undefined || this.isGlobal) {
-                let valueByLevel = this.valueByInstance.get(entry)
-                if (valueByLevel == undefined) {
-                    valueByLevel = []
-                    this.valueByInstance.set(entry, valueByLevel)
+
+        const modifiersByInstance = this.modifiersByInstance
+        if (modifiersByInstance != undefined) {
+            const modifiers = modifiersByInstance.get(entry)
+            if (modifiers != undefined && modifiers.size != 0) {
+                let originalValueByLevelByInstance = this.originalValueByLevelByInstance
+                if (originalValueByLevelByInstance == undefined) {
+                    originalValueByLevelByInstance = mutableWeakLuaMap()
+                    this.originalValueByLevelByInstance = originalValueByLevelByInstance
                 }
-                const previousValue =
-                    valueByLevel[level] ??
-                    (defaultValueByLevel ?? emptyArray())[level] ??
-                    this.defaultValue
-                if (value != previousValue) {
-                    valueByLevel[level] = value
-                    this.invokeValueChangeEvent(entry, this, level, previousValue, value)
+                getOrPut(originalValueByLevelByInstance, entry, mutableLuaMap).set(level, value)
+                value = this.calculateActualValue(entry, level) as InputValueType
+            }
+        }
+
+        return this.setActualValue(entry, level, value as ValueType)
+    }
+
+    public applyModifier(
+        instance: InstanceType,
+        modifier: ObjectLevelFieldModifier<InstanceType, ValueType>,
+    ): void {
+        let modifiersByInstance = this.modifiersByInstance
+        if (modifiersByInstance == undefined) {
+            modifiersByInstance = mutableWeakLuaMap()
+            this.modifiersByInstance = modifiersByInstance
+        }
+        if (getOrPut(modifiersByInstance, instance, mutableLinkedSet).add(modifier)) {
+            let originalValueByLevelByInstance = this.originalValueByLevelByInstance
+            if (originalValueByLevelByInstance == undefined) {
+                originalValueByLevelByInstance = mutableWeakLuaMap()
+                this.originalValueByLevelByInstance = originalValueByLevelByInstance
+            }
+            const originalValueByLevel = getOrPut(
+                originalValueByLevelByInstance,
+                instance,
+                mutableLuaMap,
+            )
+            const levelCount = this.getLevelCount(instance)
+            for (const level of $range(0, levelCount - 1)) {
+                originalValueByLevel.set(
+                    level,
+                    originalValueByLevel.get(level) ?? this.getActualValue(instance, level),
+                )
+                this.setActualValue(instance, level, this.calculateActualValue(instance, level))
+            }
+        }
+    }
+
+    public removeModifier(
+        instance: InstanceType,
+        modifier: ObjectLevelFieldModifier<InstanceType, ValueType>,
+    ): boolean {
+        const modifiersByInstance = this.modifiersByInstance
+        if (modifiersByInstance != undefined) {
+            const modifiers = modifiersByInstance.get(instance)
+            if (modifiers != undefined && modifiers.remove(modifier)) {
+                const levelCount = this.getLevelCount(instance)
+                for (const level of $range(0, levelCount - 1)) {
+                    this.setActualValue(instance, level, this.calculateActualValue(instance, level))
                 }
                 return true
             }
         }
-        if (!this.hasNativeFieldValue(objectDataEntryId)) {
-            return false
-        }
-        const previousValue = this.getNativeFieldValue(entry, level)
-        if (value != previousValue) {
-            if (!this.setNativeFieldValue(entry, level, value)) {
-                return false
-            }
-            this.invokeValueChangeEvent(entry, this, level, previousValue, value)
-        }
-        return true
+        return false
     }
 
     public trySetValue(
@@ -740,6 +757,79 @@ export abstract class ObjectLevelField<
             return false
         }
         return this.setValue(entry, levelOrValue as InputValueType)
+    }
+
+    private getActualValue(instance: InstanceType, level: number): ValueType {
+        const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
+            this.id,
+        )
+        if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
+            const defaultValueByLevel = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
+                this.getObjectDataEntryId(instance),
+            ) as ValueType[] | undefined
+            if (defaultValueByLevel != undefined || this.isGlobal) {
+                return (
+                    this.valueByInstance.get(instance)?.[level] ??
+                    (defaultValueByLevel ?? emptyArray())[level] ??
+                    this.defaultValue
+                )
+            }
+        }
+        return this.getNativeFieldValue(instance, level) ?? this.defaultValue
+    }
+
+    private setActualValue(instance: InstanceType, level: number, value: ValueType): boolean {
+        const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
+            this.id,
+        )
+        const objectDataEntryId = this.getObjectDataEntryId(instance)
+        if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
+            const defaultValueByLevel = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
+                objectDataEntryId,
+            ) as ValueType[] | undefined
+            if (defaultValueByLevel != undefined || this.isGlobal) {
+                let valueByLevel = this.valueByInstance.get(instance)
+                if (valueByLevel == undefined) {
+                    valueByLevel = []
+                    this.valueByInstance.set(instance, valueByLevel)
+                }
+                const previousValue =
+                    valueByLevel[level] ??
+                    (defaultValueByLevel ?? emptyArray())[level] ??
+                    this.defaultValue
+                if (value != previousValue) {
+                    valueByLevel[level] = value
+                    this.invokeValueChangeEvent(instance, this, level, previousValue, value)
+                }
+                return true
+            }
+        }
+        if (!this.hasNativeFieldValue(objectDataEntryId)) {
+            return false
+        }
+        const previousValue = this.getNativeFieldValue(instance, level)
+        if (value != previousValue) {
+            if (!this.setNativeFieldValue(instance, level, value)) {
+                return false
+            }
+            this.invokeValueChangeEvent(instance, this, level, previousValue, value)
+        }
+        return true
+    }
+
+    private calculateActualValue(instance: InstanceType, level: number): ValueType {
+        const originalValue = this.originalValueByLevelByInstance?.get(instance)?.get(level)
+        const modifiers = this.modifiersByInstance?.get(instance)
+        if (originalValue !== undefined) {
+            let value = originalValue
+            if (modifiers !== undefined) {
+                for (const modifier of modifiers) {
+                    value = modifier(instance, level, value, originalValue)
+                }
+            }
+            return value
+        }
+        return this.defaultValue
     }
 
     private invokeValueChangeEvent(
