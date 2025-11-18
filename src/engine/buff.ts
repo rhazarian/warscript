@@ -306,6 +306,7 @@ const buffNumberParameters = [
     "healingOverDuration",
     "damageOnExpiration",
     "healingOnExpiration",
+    "abilityCooldownFactor",
 ] as const
 
 const unsuccessfulApplicationMarker = {}
