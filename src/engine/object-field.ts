@@ -334,10 +334,8 @@ export abstract class ObjectField<
             if (defaultValue != undefined || this.isGlobal) {
                 const previousValue =
                     this.valueByInstance.get(instance) ?? defaultValue ?? this.defaultValue
-                if (value != previousValue) {
-                    this.valueByInstance.set(instance, value)
-                    this.invokeValueChangeEvent(instance, this, previousValue, value)
-                }
+                this.valueByInstance.set(instance, value)
+                this.invokeValueChangeEvent(instance, this, previousValue, value)
                 return true
             }
         }
@@ -345,12 +343,10 @@ export abstract class ObjectField<
             return false
         }
         const previousValue = this.getNativeFieldValue(instance)
-        if (value != previousValue) {
-            if (!this.setNativeFieldValue(instance, value)) {
-                return false
-            }
-            this.invokeValueChangeEvent(instance, this, previousValue, value)
+        if (value != previousValue && !this.setNativeFieldValue(instance, value)) {
+            return false
         }
+        this.invokeValueChangeEvent(instance, this, previousValue, value)
         return true
     }
 
@@ -797,10 +793,8 @@ export abstract class ObjectLevelField<
                     valueByLevel[level] ??
                     (defaultValueByLevel ?? emptyArray())[level] ??
                     this.defaultValue
-                if (value != previousValue) {
-                    valueByLevel[level] = value
-                    this.invokeValueChangeEvent(instance, this, level, previousValue, value)
-                }
+                valueByLevel[level] = value
+                this.invokeValueChangeEvent(instance, this, level, previousValue, value)
                 return true
             }
         }
@@ -808,12 +802,10 @@ export abstract class ObjectLevelField<
             return false
         }
         const previousValue = this.getNativeFieldValue(instance, level)
-        if (value != previousValue) {
-            if (!this.setNativeFieldValue(instance, level, value)) {
-                return false
-            }
-            this.invokeValueChangeEvent(instance, this, level, previousValue, value)
+        if (value != previousValue && !this.setNativeFieldValue(instance, level, value)) {
+            return false
         }
+        this.invokeValueChangeEvent(instance, this, level, previousValue, value)
         return true
     }
 
