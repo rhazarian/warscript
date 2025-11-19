@@ -3,7 +3,7 @@ import { FLY_HEIGHT_UNIT_FLOAT_FIELD } from "../../standard/fields/unit"
 
 declare module "../unit" {
     interface Unit {
-        readonly flyHeight: number
+        flyHeight: number
     }
 }
 Object.defineProperty(Unit.prototype, "flyHeight", {

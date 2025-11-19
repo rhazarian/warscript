@@ -1340,14 +1340,6 @@ export class Unit extends Handle<junit> {
         SetUnitMoveSpeed(this.handle, v)
     }
 
-    get flyHeight(): number {
-        return getUnitFlyHeight(this.handle)
-    }
-
-    set flyHeight(v: number) {
-        SetUnitFlyHeight(this.handle, v, 100000)
-    }
-
     get x(): number {
         return this[UnitPropertyKey.LAST_X] ?? getUnitX(this.handle)
     }
