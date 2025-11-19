@@ -17,6 +17,8 @@ const convertUnitStringField = ConvertUnitStringField
 const convertUnitWeaponIntegerField = ConvertUnitWeaponIntegerField
 const getUnitWeaponIntegerField = BlzGetUnitWeaponIntegerField
 const setUnitWeaponIntegerField = BlzSetUnitWeaponIntegerField
+const getUnitFlyHeight = GetUnitFlyHeight
+const setUnitFlyHeight = SetUnitFlyHeight
 const getUnitPropulsionWindow = GetUnitPropWindow
 const setUnitPropulsionWindow = SetUnitPropWindow
 
@@ -218,6 +220,17 @@ export class UnitClassificationsField extends UnitField<UnitClassifications, jun
 
     protected setNativeFieldValue(instance: Unit, value: UnitClassifications): boolean {
         return instance.setField(this.nativeField, value)
+    }
+}
+
+export class UnitFlyHeightField extends UnitFloatField {
+    protected override getNativeFieldValue(instance: Unit): number {
+        return getUnitFlyHeight(instance.handle)
+    }
+
+    protected override setNativeFieldValue(instance: Unit, value: number): boolean {
+        setUnitFlyHeight(instance.handle, value, 100000)
+        return true
     }
 }
 

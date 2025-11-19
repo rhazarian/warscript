@@ -1,6 +1,6 @@
 import {
     UnitClassificationsField,
-    UnitFloatField,
+    UnitFlyHeightField,
     UnitPropulsionWindowField,
 } from "../../object-field/unit"
 
@@ -8,4 +8,4 @@ export const PROPULSION_WINDOW_UNIT_FLOAT_FIELD = UnitPropulsionWindowField.crea
 
 export const UNIT_CLASSIFICATIONS_FIELD = UnitClassificationsField.create(fourCC("utyp"))
 
-export const FLY_HEIGHT_UNIT_FLOAT_FIELD = UnitFloatField.create(fourCC("ufyh"))
+export const FLY_HEIGHT_UNIT_FLOAT_FIELD = UnitFlyHeightField.create(fourCC("ufyh"))
