@@ -8,8 +8,23 @@ import { mutableLuaSet } from "../utility/lua-sets"
 
 const safeCall = warpack.safeCall
 
-const firstBehaviorByObject = new LuaMap<AnyNotNil, Behavior<AnyNotNil> | undefined>()
-const lastBehaviorByObject = new LuaMap<AnyNotNil, Behavior<AnyNotNil> | undefined>()
+export const enum BehaviorPriority {
+    HIGH,
+    MEDIUM,
+    LOW,
+}
+
+const firstBehaviorByObjectByPriority = {
+    [BehaviorPriority.HIGH]: new LuaMap<AnyNotNil, Behavior<AnyNotNil> | undefined>(),
+    [BehaviorPriority.LOW]: new LuaMap<AnyNotNil, Behavior<AnyNotNil> | undefined>(),
+    [BehaviorPriority.MEDIUM]: new LuaMap<AnyNotNil, Behavior<AnyNotNil> | undefined>(),
+}
+
+const lastBehaviorByObjectByPriority = {
+    [BehaviorPriority.HIGH]: new LuaMap<AnyNotNil, Behavior<AnyNotNil> | undefined>(),
+    [BehaviorPriority.LOW]: new LuaMap<AnyNotNil, Behavior<AnyNotNil> | undefined>(),
+    [BehaviorPriority.MEDIUM]: new LuaMap<AnyNotNil, Behavior<AnyNotNil> | undefined>(),
+}
 
 export type BehaviorConstructor<
     T extends Behavior<AnyNotNil>,
@@ -43,39 +58,41 @@ const reduceBehaviors = <
     ...parameters: ConsumerParameters
 ): Accumulator => {
     let accumulator = initial as Accumulator
-    let behavior = firstBehaviorByObject.get(object)
-    if (behavior != undefined) {
-        if (typeof consumerOrKey == "function") {
-            do {
-                if (behavior instanceof behaviorConstructor) {
-                    const [isSuccessful, result] = safeCall(
-                        consumerOrKey,
-                        behavior as T,
-                        ...parameters,
-                    )
-                    if (isSuccessful) {
-                        accumulator = operation(accumulator, result)
+    for (const priority of $range(BehaviorPriority.HIGH, BehaviorPriority.LOW)) {
+        let behavior = firstBehaviorByObjectByPriority[priority as BehaviorPriority].get(object)
+        if (behavior != undefined) {
+            if (typeof consumerOrKey == "function") {
+                do {
+                    if (behavior instanceof behaviorConstructor) {
+                        const [isSuccessful, result] = safeCall(
+                            consumerOrKey,
+                            behavior as T,
+                            ...parameters,
+                        )
+                        if (isSuccessful) {
+                            accumulator = operation(accumulator, result)
+                        }
                     }
-                }
-                behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
-            } while (behavior != undefined)
-        } else {
-            do {
-                if (behavior instanceof behaviorConstructor) {
-                    const [isSuccessful, result] = safeCall(
-                        (behavior as T)[consumerOrKey] as (
-                            this: T,
-                            ...parameters: ConsumerParameters
-                        ) => R,
-                        behavior as T,
-                        ...parameters,
-                    )
-                    if (isSuccessful) {
-                        accumulator = operation(accumulator, result)
+                    behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
+                } while (behavior != undefined)
+            } else {
+                do {
+                    if (behavior instanceof behaviorConstructor) {
+                        const [isSuccessful, result] = safeCall(
+                            (behavior as T)[consumerOrKey] as (
+                                this: T,
+                                ...parameters: ConsumerParameters
+                            ) => R,
+                            behavior as T,
+                            ...parameters,
+                        )
+                        if (isSuccessful) {
+                            accumulator = operation(accumulator, result)
+                        }
                     }
-                }
-                behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
-            } while (behavior != undefined)
+                    behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
+                } while (behavior != undefined)
+            }
         }
     }
     return accumulator
@@ -94,11 +111,15 @@ export abstract class Behavior<
     private [BehaviorPropertyKey.NEXT_BEHAVIOR]?: Behavior<T>
     private [BehaviorPropertyKey.TIMER]?: Timer
 
-    protected constructor(protected readonly object: T) {
+    protected constructor(
+        protected readonly object: T,
+        public readonly priority: BehaviorPriority = BehaviorPriority.MEDIUM,
+    ) {
         super()
+        const lastBehaviorByObject = lastBehaviorByObjectByPriority[priority]
         const lastBehavior = lastBehaviorByObject.get(object) as Behavior<T>
         if (lastBehavior == undefined) {
-            firstBehaviorByObject.set(object, this)
+            firstBehaviorByObjectByPriority[priority].set(object, this)
             lastBehaviorByObject.set(object, this)
         } else {
             this[BehaviorPropertyKey.PREVIOUS_BEHAVIOR] = lastBehavior
@@ -124,12 +145,12 @@ export abstract class Behavior<
         if (previousBehavior != undefined) {
             previousBehavior[BehaviorPropertyKey.NEXT_BEHAVIOR] = nextBehavior
         } else {
-            firstBehaviorByObject.set(this.object, nextBehavior)
+            firstBehaviorByObjectByPriority[this.priority].set(this.object, nextBehavior)
         }
         if (nextBehavior != undefined) {
             nextBehavior[BehaviorPropertyKey.PREVIOUS_BEHAVIOR] = previousBehavior
         } else {
-            lastBehaviorByObject.set(this.object, previousBehavior)
+            lastBehaviorByObjectByPriority[this.priority].set(this.object, previousBehavior)
         }
 
         return super.onDestroy()
@@ -204,12 +225,14 @@ export abstract class Behavior<
         limit?: number,
     ): number {
         let behaviorsCount = 0
-        let behavior = firstBehaviorByObject.get(object)
-        while (behavior != undefined && (limit == undefined || behaviorsCount < limit)) {
-            if (behavior instanceof this) {
-                ++behaviorsCount
+        for (const priority of $range(BehaviorPriority.HIGH, BehaviorPriority.LOW)) {
+            let behavior = firstBehaviorByObjectByPriority[priority as BehaviorPriority].get(object)
+            while (behavior != undefined && (limit == undefined || behaviorsCount < limit)) {
+                if (behavior instanceof this) {
+                    ++behaviorsCount
+                }
+                behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
             }
-            behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
         }
         return behaviorsCount
     }
@@ -238,28 +261,34 @@ export abstract class Behavior<
         countOrPredicate?: number | ((behavior: T, ...args: PredicateArgs) => boolean),
         ...predicateArgs: PredicateArgs
     ): T[] | T | undefined {
-        let behavior = firstBehaviorByObject.get(object)
         if (typeof countOrPredicate != "number") {
-            while (behavior != undefined) {
-                if (
-                    behavior instanceof this &&
-                    (countOrPredicate == undefined ||
-                        countOrPredicate(behavior as T, ...predicateArgs))
-                ) {
-                    return behavior as T
+            for (const priority of $range(BehaviorPriority.HIGH, BehaviorPriority.LOW)) {
+                let behavior =
+                    firstBehaviorByObjectByPriority[priority as BehaviorPriority].get(object)
+                while (behavior != undefined) {
+                    if (
+                        behavior instanceof this &&
+                        (countOrPredicate == undefined ||
+                            countOrPredicate(behavior as T, ...predicateArgs))
+                    ) {
+                        return behavior as T
+                    }
+                    behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
                 }
-                behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
             }
             return undefined
         }
         const behaviors: T[] = []
         let behaviorsCount = 0
-        while (behavior != undefined && behaviorsCount < countOrPredicate) {
-            if (behavior instanceof this) {
-                ++behaviorsCount
-                behaviors[behaviorsCount - 1] = behavior as T
+        for (const priority of $range(BehaviorPriority.HIGH, BehaviorPriority.LOW)) {
+            let behavior = firstBehaviorByObjectByPriority[priority as BehaviorPriority].get(object)
+            while (behavior != undefined && behaviorsCount < countOrPredicate) {
+                if (behavior instanceof this) {
+                    ++behaviorsCount
+                    behaviors[behaviorsCount - 1] = behavior as T
+                }
+                behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
             }
-            behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
         }
         return behaviors
     }
@@ -268,12 +297,14 @@ export abstract class Behavior<
         this: BehaviorConstructor<T, ConstructorParameters>,
         object: T extends Behavior<infer Object> ? Object : never,
     ): T | undefined {
-        let behavior = lastBehaviorByObject.get(object)
-        while (behavior != undefined) {
-            if (behavior instanceof this) {
-                return behavior as T
+        for (const priority of $range(BehaviorPriority.LOW, BehaviorPriority.HIGH, -1)) {
+            let behavior = lastBehaviorByObjectByPriority[priority as BehaviorPriority].get(object)
+            while (behavior != undefined) {
+                if (behavior instanceof this) {
+                    return behavior as T
+                }
+                behavior = behavior[BehaviorPropertyKey.PREVIOUS_BEHAVIOR]
             }
-            behavior = behavior[BehaviorPropertyKey.PREVIOUS_BEHAVIOR]
         }
         return undefined
     }
@@ -290,16 +321,18 @@ export abstract class Behavior<
     ): T[] {
         const behaviors: T[] = []
         let behaviorsCount = 0
-        let behavior = firstBehaviorByObject.get(object)
-        while (behavior != undefined) {
-            if (
-                behavior instanceof this &&
-                (predicate == undefined || predicate(behavior as T, ...predicateArgs))
-            ) {
-                ++behaviorsCount
-                behaviors[behaviorsCount - 1] = behavior as T
+        for (const priority of $range(BehaviorPriority.HIGH, BehaviorPriority.LOW)) {
+            let behavior = firstBehaviorByObjectByPriority[priority as BehaviorPriority].get(object)
+            while (behavior != undefined) {
+                if (
+                    behavior instanceof this &&
+                    (predicate == undefined || predicate(behavior as T, ...predicateArgs))
+                ) {
+                    ++behaviorsCount
+                    behaviors[behaviorsCount - 1] = behavior as T
+                }
+                behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
             }
-            behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
         }
         return behaviors
     }
@@ -342,29 +375,36 @@ export abstract class Behavior<
         ...parameters: ConsumerParameters
     ): number {
         let behaviorsCount = 0
-        let behavior = firstBehaviorByObject.get(object)
         if (typeof consumerOrKey == "function") {
-            while (behavior != undefined && behaviorsCount < count) {
-                if (behavior instanceof this) {
-                    safeCall(consumerOrKey, behavior as T, ...parameters)
-                    ++behaviorsCount
+            for (const priority of $range(BehaviorPriority.HIGH, BehaviorPriority.LOW)) {
+                let behavior =
+                    firstBehaviorByObjectByPriority[priority as BehaviorPriority].get(object)
+                while (behavior != undefined && behaviorsCount < count) {
+                    if (behavior instanceof this) {
+                        safeCall(consumerOrKey, behavior as T, ...parameters)
+                        ++behaviorsCount
+                    }
+                    behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
                 }
-                behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
             }
         } else {
-            while (behavior != undefined && behaviorsCount < count) {
-                if (behavior instanceof this) {
-                    safeCall(
-                        (behavior as T)[consumerOrKey] as (
-                            this: T,
-                            ...parameters: ConsumerParameters
-                        ) => unknown,
-                        behavior as T,
-                        ...parameters,
-                    )
-                    ++behaviorsCount
+            for (const priority of $range(BehaviorPriority.HIGH, BehaviorPriority.LOW)) {
+                let behavior =
+                    firstBehaviorByObjectByPriority[priority as BehaviorPriority].get(object)
+                while (behavior != undefined && behaviorsCount < count) {
+                    if (behavior instanceof this) {
+                        safeCall(
+                            (behavior as T)[consumerOrKey] as (
+                                this: T,
+                                ...parameters: ConsumerParameters
+                            ) => unknown,
+                            behavior as T,
+                            ...parameters,
+                        )
+                        ++behaviorsCount
+                    }
+                    behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
                 }
-                behavior = behavior[BehaviorPropertyKey.NEXT_BEHAVIOR]
             }
         }
         return behaviorsCount
