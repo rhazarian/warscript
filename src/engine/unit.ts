@@ -19,6 +19,7 @@ import "./internal/unit/detach-missiles"
 import "./internal/unit/main-selected"
 import "./internal/unit/add-item-to-slot-init"
 import "./internal/unit/fly-height"
+import "./internal/unit/scale"
 
 import "./internal/unit/band-aids/ancestral-spirit-cannibalize"
 

@@ -1464,15 +1464,6 @@ export class Unit extends Handle<junit> {
         SetUnitVertexColor(this.handle, v.r, v.g, v.b, v.a)
     }
 
-    public get scale(): number {
-        return getUnitRealField(this.handle, UNIT_RF_SCALING_VALUE)
-    }
-
-    public set scale(v: number) {
-        setUnitScale(this.handle, v, v, v)
-        setUnitRealField(this.handle, UNIT_RF_SCALING_VALUE, v)
-    }
-
     public get timeScale(): number {
         return this._timeScale ?? 1
     }
