@@ -1,8 +1,10 @@
 import { Unit } from "../internal/unit"
 import {
     ObjectField,
+    ObjectFieldValueChangeEvent,
     ObjectLevelField,
     ObjectLevelFieldValueChangeEvent,
+    ReadonlyObjectFieldType,
     ReadonlyObjectLevelFieldType,
 } from "../object-field"
 import { UnitType, UnitTypeId } from "../object-data/entry/unit-type"
@@ -21,6 +23,7 @@ const getUnitFlyHeight = GetUnitFlyHeight
 const setUnitFlyHeight = SetUnitFlyHeight
 const getUnitPropulsionWindow = GetUnitPropWindow
 const setUnitPropulsionWindow = SetUnitPropWindow
+const setUnitScale = SetUnitScale
 
 export abstract class UnitField<
     ValueType extends number | string | boolean = number | string | boolean,
@@ -36,6 +39,12 @@ export abstract class UnitField<
 
     protected override hasNativeFieldValue(): boolean {
         return true
+    }
+
+    public static get valueChangeEvent(): ObjectFieldValueChangeEvent<
+        ReadonlyObjectFieldType<UnitField>
+    > {
+        return this.getOrCreateValueChangeEvent()
     }
 }
 
@@ -55,6 +64,12 @@ export class UnitBooleanField extends UnitField<boolean, junitbooleanfield> {
     protected override setNativeFieldValue(instance: Unit, value: boolean): boolean {
         return instance.setField(this.nativeField, value)
     }
+
+    public static get valueChangeEvent(): ObjectFieldValueChangeEvent<
+        ReadonlyObjectFieldType<UnitBooleanField>
+    > {
+        return this.getOrCreateValueChangeEvent()
+    }
 }
 
 export class UnitFloatField extends UnitField<number, junitrealfield> {
@@ -72,6 +87,12 @@ export class UnitFloatField extends UnitField<number, junitrealfield> {
 
     protected override setNativeFieldValue(instance: Unit, value: number): boolean {
         return instance.setField(this.nativeField, value)
+    }
+
+    public static get valueChangeEvent(): ObjectFieldValueChangeEvent<
+        ReadonlyObjectFieldType<UnitFloatField>
+    > {
+        return this.getOrCreateValueChangeEvent()
     }
 }
 
@@ -91,6 +112,12 @@ export class UnitIntegerField extends UnitField<number, junitintegerfield> {
     protected override setNativeFieldValue(instance: Unit, value: number): boolean {
         return instance.setField(this.nativeField, value)
     }
+
+    public static get valueChangeEvent(): ObjectFieldValueChangeEvent<
+        ReadonlyObjectFieldType<UnitIntegerField>
+    > {
+        return this.getOrCreateValueChangeEvent()
+    }
 }
 
 export class UnitStringField extends UnitField<string, junitstringfield> {
@@ -108,6 +135,12 @@ export class UnitStringField extends UnitField<string, junitstringfield> {
 
     protected override setNativeFieldValue(instance: Unit, value: string): boolean {
         return instance.setField(this.nativeField, value)
+    }
+
+    public static get valueChangeEvent(): ObjectFieldValueChangeEvent<
+        ReadonlyObjectFieldType<UnitStringField>
+    > {
+        return this.getOrCreateValueChangeEvent()
     }
 }
 
@@ -242,5 +275,12 @@ export class UnitPropulsionWindowField extends UnitFloatField {
     protected override setNativeFieldValue(instance: Unit, value: number): boolean {
         setUnitPropulsionWindow(instance.handle, value)
         return true
+    }
+}
+
+export class UnitScalingValueField extends UnitFloatField {
+    protected override setNativeFieldValue(instance: Unit, value: number): boolean {
+        setUnitScale(instance.handle, value, value, value)
+        return super.setNativeFieldValue(instance, value)
     }
 }
