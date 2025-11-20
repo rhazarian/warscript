@@ -62,7 +62,7 @@ const process = (behavior: StunImmunityUnitBehavior): void => {
     }
 }
 
-export type StunImmunityUnitBehaviourParameters = {
+export type StunImmunityUnitBehaviorParameters = {
     readonly priority?: BehaviorPriority
     buffTypeIds?: LuaSet<BuffTypeId>
     textTagPreset?: TextTagPreset
@@ -71,7 +71,7 @@ export type StunImmunityUnitBehaviourParameters = {
 }
 
 export class StunImmunityUnitBehavior extends UnitBehavior {
-    public static defaultParameters: StunImmunityUnitBehaviourParameters = {
+    public static defaultParameters: StunImmunityUnitBehaviorParameters = {
         buffTypeIds: DEFAULT_BUFF_TYPE_IDS,
         textTagPreset: TextTag.MISS,
         textTagText: undefined,
@@ -79,7 +79,7 @@ export class StunImmunityUnitBehavior extends UnitBehavior {
 
     public constructor(
         unit: Unit,
-        public readonly parameters: Readonly<StunImmunityUnitBehaviourParameters> = StunImmunityUnitBehavior.defaultParameters,
+        public readonly parameters: Readonly<StunImmunityUnitBehaviorParameters> = StunImmunityUnitBehavior.defaultParameters,
     ) {
         super(unit, parameters.priority)
         unit.decrementStunCounter()
