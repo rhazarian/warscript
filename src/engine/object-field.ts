@@ -198,7 +198,7 @@ export abstract class ObjectField<
             return this.defaultValue
         }
 
-        if (includeModifiers === false) {
+        if (!includeModifiers) {
             const originalValueByInstance = this.originalValueByInstance
             if (originalValueByInstance !== undefined) {
                 const originalValue = originalValueByInstance.get(entry)
@@ -602,6 +602,11 @@ export abstract class ObjectLevelField<
                 }
             }
             return this.defaultValue
+        }
+
+        const originalValue = this.originalValueByLevelByInstance?.get(entry)?.get(level)
+        if (originalValue !== undefined) {
+            return originalValue
         }
 
         return this.getActualValue(entry, level)
