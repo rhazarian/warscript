@@ -6,6 +6,7 @@ import { flatMapToLuaSet, map } from "../../../utility/arrays"
 import { TextTag, TextTagPreset } from "../../text-tag"
 import { Destructor } from "../../../destroyable"
 import { Timer } from "../../../core/types/timer"
+import { BehaviorPriority } from "../../behavior"
 
 const DEFAULT_BUFF_TYPE_IDS = postcompile(() => {
     return flatMapToLuaSet(
@@ -62,6 +63,7 @@ const process = (behavior: StunImmunityUnitBehavior): void => {
 }
 
 export type StunImmunityUnitBehaviourParameters = {
+    readonly priority?: BehaviorPriority
     buffTypeIds?: LuaSet<BuffTypeId>
     textTagPreset?: TextTagPreset
     textTagText?: string
@@ -79,7 +81,7 @@ export class StunImmunityUnitBehavior extends UnitBehavior {
         unit: Unit,
         public readonly parameters: Readonly<StunImmunityUnitBehaviourParameters> = StunImmunityUnitBehavior.defaultParameters,
     ) {
-        super(unit)
+        super(unit, parameters.priority)
         unit.decrementStunCounter()
         process(this)
     }

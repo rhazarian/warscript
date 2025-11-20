@@ -1,4 +1,4 @@
-import { Behavior } from "../behavior"
+import { Behavior, BehaviorPriority } from "../behavior"
 import { Ability } from "../internal/ability"
 import { DamageEvent, DamagingEvent, Unit } from "../internal/unit"
 import "../internal/unit+ability"
@@ -43,8 +43,8 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
 
     private _bonusIdByBonusType?: LuaMap<UnitBonusType, UnitBonusId | undefined>
 
-    public constructor(unit: Unit) {
-        super(unit)
+    public constructor(unit: Unit, priority?: BehaviorPriority) {
+        super(unit, priority)
     }
 
     protected override onDestroy(): Destructor {
