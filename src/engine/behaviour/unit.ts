@@ -4,7 +4,7 @@ import { DamageEvent, DamagingEvent, Unit } from "../internal/unit"
 import "../internal/unit+ability"
 import "../internal/unit-missile-launch"
 import { Item } from "../internal/item"
-import type { AbilityBehavior } from "./ability"
+import { AbilityBehavior } from "./ability"
 import { Event } from "../../event"
 import { LinkedSet } from "../../utility/linked-set"
 import { Destructor } from "../../destroyable"
@@ -21,8 +21,14 @@ import {
     UnitBonusType,
 } from "../internal/unit/bonus"
 import { Player } from "../../core/types/player"
+import { UnitTypeId } from "../object-data/entry/unit-type"
 
 const safeCall = warpack.safeCall
+
+const createBehaviorFunctionsByUnitTypeId = new LuaMap<
+    UnitTypeId,
+    ((unit: Unit) => UnitBehavior)[]
+>()
 
 export type UnitBehaviorConstructor<Args extends any[]> = new (
     unit: Unit,
@@ -275,6 +281,21 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         // no-op
     }
 
+    public static bindUnitType<Args extends any[]>(
+        this: UnitBehaviorConstructor<Args>,
+        unitTypeId: UnitTypeId,
+        ...args: Args
+    ): void {
+        let createBehaviorFunctions = createBehaviorFunctionsByUnitTypeId.get(unitTypeId)
+        if (createBehaviorFunctions == undefined) {
+            createBehaviorFunctions = []
+            createBehaviorFunctionsByUnitTypeId.set(unitTypeId, createBehaviorFunctions)
+        }
+        createBehaviorFunctions[createBehaviorFunctions.length] = (unit) => {
+            return new this(unit, ...args)
+        }
+    }
+
     static {
         Unit.onImmediateOrder.addListener((source, orderId) => {
             UnitBehavior.forAll(source, "onImmediateOrder", orderId)
@@ -381,6 +402,15 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         })
     }
 }
+
+Unit.onCreate.addListener((unit) => {
+    const createBehaviorFunctions = createBehaviorFunctionsByUnitTypeId.get(unit.typeId)
+    if (createBehaviorFunctions != undefined) {
+        for (const createBehavior of createBehaviorFunctions) {
+            createBehavior(unit)
+        }
+    }
+})
 
 Unit.destroyEvent.addListener((unit) => {
     UnitBehavior.forAll(unit, "destroy")
