@@ -54,6 +54,8 @@ const nativeByPlayerAllianceType = {
     [PlayerAllianceType.SHARED_ADVANCED_CONTROL]: ALLIANCE_SHARED_ADVANCED_CONTROL,
 } as const
 
+const playerColorChangedEvent = new Event<[Player]>()
+
 export class Player extends Handle<jplayer> {
     public static readonly all: Player[] = (() => {
         const all: Player[] = []
@@ -100,6 +102,7 @@ export class Player extends Handle<jplayer> {
 
     public set color(color: PlayerColor) {
         SetPlayerColor(this.handle, color.handle)
+        Event.invoke(playerColorChangedEvent, this)
     }
 
     public get nameColored(): string {
@@ -438,6 +441,8 @@ export class Player extends Handle<jplayer> {
         rawset(this, "onChat", event)
         return event
     }
+
+    public static readonly colorChangedEvent = playerColorChangedEvent
 
     public static byId(id: number): Player | undefined {
         return Player.all[id]
