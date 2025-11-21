@@ -35,11 +35,16 @@ export type UnitBehaviorConstructor<Args extends any[]> = new (
     ...args: Args
 ) => UnitBehavior
 
-const behaviorsByEvent = new LuaMap<Event, LinkedSet<UnitBehavior>>()
-const rangeByBehaviorByEvent = new LuaMap<Event, LuaMap<UnitBehavior, number>>()
-const listenerByBehaviorByEvent = new LuaMap<Event, LuaMap<UnitBehavior, string>>()
+const behaviorsByOwningPlayerEvent = new LuaMap<Event, LinkedSet<UnitBehavior>>()
+const listenerByBehaviorByOwningPlayerEvent = new LuaMap<Event, LuaMap<UnitBehavior, string>>()
 
-const eventsByBehavior = new LuaMap<UnitBehavior, LuaSet<Event>>()
+const owningPlayerEventsByBehavior = new LuaMap<UnitBehavior, LuaSet<Event>>()
+
+const behaviorsByInRangeUnitEvent = new LuaMap<Event, LinkedSet<UnitBehavior>>()
+const rangeByBehaviorByInRangeUnitEvent = new LuaMap<Event, LuaMap<UnitBehavior, number>>()
+const listenerByBehaviorByInRangeUnitEvent = new LuaMap<Event, LuaMap<UnitBehavior, string>>()
+
+const inRangeUnitEventsByBehavior = new LuaMap<UnitBehavior, LuaSet<Event>>()
 
 export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[]> extends Behavior<
     Unit,
@@ -54,14 +59,22 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
     }
 
     protected override onDestroy(): Destructor {
-        const events = eventsByBehavior.get(this)
-        if (events !== undefined) {
-            for (const event of events) {
-                behaviorsByEvent.get(event)?.remove(this)
-                rangeByBehaviorByEvent.get(event)?.delete(this)
-                listenerByBehaviorByEvent.get(event)?.delete(this)
+        const owningPlayerEvents = owningPlayerEventsByBehavior.get(this)
+        if (owningPlayerEvents !== undefined) {
+            for (const event of owningPlayerEvents) {
+                behaviorsByOwningPlayerEvent.get(event)?.remove(this)
+                listenerByBehaviorByOwningPlayerEvent.get(event)?.delete(this)
             }
-            eventsByBehavior.delete(this)
+            owningPlayerEventsByBehavior.delete(this)
+        }
+        const inRangeUnitEvents = inRangeUnitEventsByBehavior.get(this)
+        if (inRangeUnitEvents !== undefined) {
+            for (const event of inRangeUnitEvents) {
+                behaviorsByInRangeUnitEvent.get(event)?.remove(this)
+                rangeByBehaviorByInRangeUnitEvent.get(event)?.delete(this)
+                listenerByBehaviorByInRangeUnitEvent.get(event)?.delete(this)
+            }
+            inRangeUnitEventsByBehavior.delete(this)
         }
         if (this._bonusIdByBonusType != undefined) {
             for (const [bonusType, bonusId] of this._bonusIdByBonusType) {
@@ -98,6 +111,50 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         )
     }
 
+    protected registerOwningPlayerEvent<T extends string, Args extends any[]>(
+        this: UnitBehavior<PeriodicActionParameters> &
+            Record<T, (this: this, ...args: Args) => unknown>,
+        event: Event<[...Args]>,
+        extractPlayer: (...args: Args) => Player | undefined,
+        listener: T,
+    ): void {
+        const listenerByBehavior = getOrPut(
+            listenerByBehaviorByOwningPlayerEvent,
+            event,
+            mutableLuaMap,
+        )
+        listenerByBehavior.set(this, listener)
+        getOrPut(inRangeUnitEventsByBehavior, this, mutableLuaSet).add(event)
+        let behaviors = behaviorsByOwningPlayerEvent.get(event)
+        if (behaviors == undefined) {
+            event.addListener((...args) => {
+                const behaviors = behaviorsByOwningPlayerEvent.get(event)
+                if (behaviors !== undefined) {
+                    const player = extractPlayer(...args)
+                    if (player !== undefined) {
+                        for (const behavior of behaviors) {
+                            if (behavior.unit.owner == player) {
+                                safeCall(
+                                    (
+                                        behavior as Record<
+                                            T,
+                                            (this: unknown, ...args: Args) => unknown
+                                        >
+                                    )[listenerByBehavior.get(behavior)! as T],
+                                    behavior,
+                                    ...args,
+                                )
+                            }
+                        }
+                    }
+                }
+            })
+            behaviors = new LinkedSet()
+            behaviorsByOwningPlayerEvent.set(event, behaviors)
+        }
+        behaviors.add(this)
+    }
+
     protected registerInRangeUnitEvent<T extends string, Args extends any[]>(
         this: UnitBehavior<PeriodicActionParameters> &
             Record<T, (this: this, ...args: Args) => unknown>,
@@ -106,15 +163,19 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         range: number,
         listener: T,
     ): void {
-        const rangeByBehavior = getOrPut(rangeByBehaviorByEvent, event, mutableLuaMap)
+        const rangeByBehavior = getOrPut(rangeByBehaviorByInRangeUnitEvent, event, mutableLuaMap)
         rangeByBehavior.set(this, range)
-        const listenerByBehavior = getOrPut(listenerByBehaviorByEvent, event, mutableLuaMap)
+        const listenerByBehavior = getOrPut(
+            listenerByBehaviorByInRangeUnitEvent,
+            event,
+            mutableLuaMap,
+        )
         listenerByBehavior.set(this, listener)
-        getOrPut(eventsByBehavior, this, mutableLuaSet).add(event)
-        let behaviors = behaviorsByEvent.get(event)
+        getOrPut(inRangeUnitEventsByBehavior, this, mutableLuaSet).add(event)
+        let behaviors = behaviorsByInRangeUnitEvent.get(event)
         if (behaviors == undefined) {
             event.addListener((...args) => {
-                const behaviors = behaviorsByEvent.get(event)
+                const behaviors = behaviorsByInRangeUnitEvent.get(event)
                 if (behaviors !== undefined) {
                     const unit = extractUnit(...args)
                     if (unit !== undefined) {
@@ -140,7 +201,7 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
                 }
             })
             behaviors = new LinkedSet()
-            behaviorsByEvent.set(event, behaviors)
+            behaviorsByInRangeUnitEvent.set(event, behaviors)
         }
         behaviors.add(this)
     }
