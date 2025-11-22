@@ -1683,5 +1683,8 @@ export class Buff<
         buffCreatedEvent.addListener((buff) => {
             UnitBehavior.forAll(buff.unit, "onBuffGained", buff)
         })
+        buffBeingDestroyedEvent.addListener((buff) => {
+            UnitBehavior.forAll(buff.unit, "onBuffLost", buff)
+        })
     }
 }

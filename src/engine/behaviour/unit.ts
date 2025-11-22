@@ -310,6 +310,10 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
         // no-op
     }
 
+    public onBuffLost(buff: Buff): void {
+        // no-op
+    }
+
     public onItemDropped(item: Item): void {
         // no-op
     }
