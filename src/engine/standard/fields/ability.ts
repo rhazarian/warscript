@@ -1377,11 +1377,11 @@ export const DAMAGE_PER_SECOND_POI1_ABILITY_FLOAT_LEVEL_FIELD = AbilityFloatLeve
     fourCC("Poi1"),
 )
 
-export const ATTACK_SPEED_FACTOR_POI2_ABILITY_FLOAT_LEVEL_FIELD = AbilityFloatLevelField.create(
+export const MOVEMENT_SPEED_FACTOR_POI2_ABILITY_FLOAT_LEVEL_FIELD = AbilityFloatLevelField.create(
     fourCC("Poi2"),
 )
 
-export const MOVEMENT_SPEED_FACTOR_POI3_ABILITY_FLOAT_LEVEL_FIELD = AbilityFloatLevelField.create(
+export const ATTACK_SPEED_FACTOR_POI3_ABILITY_FLOAT_LEVEL_FIELD = AbilityFloatLevelField.create(
     fourCC("Poi3"),
 )
 
