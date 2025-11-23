@@ -119,6 +119,22 @@ export class UnitTypeWeapon {
         this.unitType["setStringField"](`ua${this.index}m`, missileModelPath)
     }
 
+    public get missileModelPathSD(): string {
+        return this.unitType["getStringField"](`ua${this.index}m:sd`)
+    }
+
+    public set missileModelPathSD(missileModelPathSD: string) {
+        this.unitType["setStringField"](`ua${this.index}m:sd`, missileModelPathSD)
+    }
+
+    public get missileModelPathHD(): string {
+        return this.unitType["getStringField"](`ua${this.index}m:hd`)
+    }
+
+    public set missileModelPathHD(missileModelPathHD: string) {
+        this.unitType["setStringField"](`ua${this.index}m:hd`, missileModelPathHD)
+    }
+
     public get range(): number {
         return this.unitType["getNumberField"](`ua${this.index}r`)
     }
