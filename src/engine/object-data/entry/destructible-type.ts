@@ -7,8 +7,6 @@ import {
 import { ObjectDataEntry, ObjectDataEntryConstructor, ObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 import { implementReadonlyNumberIndexSupplier } from "../../../utility/reflection"
-import { WarscriptConfig } from "../../../config"
-import { Destructable } from "../../../core/types/destructable"
 
 export type DestructibleTypeId = ObjectDataEntryId &
     number & {
