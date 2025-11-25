@@ -98,10 +98,32 @@ const reduceBehaviors = <
     return accumulator
 }
 
-const behaviorsByEvent = new LuaMap<Event, LinkedSet<Behavior<any>>>()
+const behaviorsByGlobalEvent = new LuaMap<Event, LinkedSet<Behavior<any>>>()
+const listenerByBehaviorByGlobalEvent = new LuaMap<Event, LuaMap<Behavior<any>, string>>()
+
+const globalEventsByBehavior = new LuaMap<Behavior<any>, LuaSet<Event>>()
+
+const behaviorsByEvent = new LuaMap<Event, LuaSet<Behavior<any>>>()
 const listenerByBehaviorByEvent = new LuaMap<Event, LuaMap<Behavior<any>, string>>()
 
 const eventsByBehavior = new LuaMap<Behavior<any>, LuaSet<Event>>()
+
+const safeCallBehaviorListener = <K extends string, Args extends any[]>(
+    behavior: Behavior<any>,
+    behaviors: LuaSet<Behavior<any>>,
+    listenerByBehavior: LuaMap<Behavior<any>, string>,
+    ...args: Args
+) => {
+    if (behaviors.has(behavior)) {
+        safeCall(
+            (behavior as Record<K, (this: unknown, ...args: Args) => unknown>)[
+                listenerByBehavior.get(behavior)! as K
+            ],
+            behavior,
+            ...args,
+        )
+    }
+}
 
 export abstract class Behavior<
     T extends AnyNotNil,
@@ -111,7 +133,7 @@ export abstract class Behavior<
     private [BehaviorPropertyKey.NEXT_BEHAVIOR]?: Behavior<T>
     private [BehaviorPropertyKey.TIMER]?: Timer
 
-    protected constructor(
+    public constructor(
         protected readonly object: T,
         public readonly priority: BehaviorPriority = BehaviorPriority.MEDIUM,
     ) {
@@ -131,10 +153,19 @@ export abstract class Behavior<
     protected onDestroy(): Destructor {
         this[BehaviorPropertyKey.TIMER]?.destroy()
 
+        const globalEvents = globalEventsByBehavior.get(this)
+        if (globalEvents !== undefined) {
+            for (const event of globalEvents) {
+                behaviorsByGlobalEvent.get(event)?.remove(this)
+                listenerByBehaviorByGlobalEvent.get(event)?.delete(this)
+            }
+            globalEventsByBehavior.delete(this)
+        }
+
         const events = eventsByBehavior.get(this)
         if (events !== undefined) {
             for (const event of events) {
-                behaviorsByEvent.get(event)?.remove(this)
+                behaviorsByEvent.get(event)?.delete(this)
                 listenerByBehaviorByEvent.get(event)?.delete(this)
             }
             eventsByBehavior.delete(this)
@@ -156,19 +187,19 @@ export abstract class Behavior<
         return super.onDestroy()
     }
 
-    protected registerEvent<K extends string, Args extends any[]>(
+    protected registerGlobalEvent<K extends string, Args extends any[]>(
         this: Behavior<any, PeriodicActionParameters> &
             Record<K, (this: this, ...args: Args) => unknown>,
         event: Event<[...Args]>,
         listener: K,
     ): void {
-        const listenerByBehavior = getOrPut(listenerByBehaviorByEvent, event, mutableLuaMap)
+        const listenerByBehavior = getOrPut(listenerByBehaviorByGlobalEvent, event, mutableLuaMap)
         listenerByBehavior.set(this, listener)
-        getOrPut(eventsByBehavior, this, mutableLuaSet).add(event)
-        let behaviors = behaviorsByEvent.get(event)
+        getOrPut(globalEventsByBehavior, this, mutableLuaSet).add(event)
+        let behaviors = behaviorsByGlobalEvent.get(event)
         if (behaviors == undefined) {
             event.addListener((...args) => {
-                const behaviors = behaviorsByEvent.get(event)
+                const behaviors = behaviorsByGlobalEvent.get(event)
                 if (behaviors !== undefined) {
                     for (const behavior of behaviors) {
                         safeCall(
@@ -182,6 +213,49 @@ export abstract class Behavior<
                 }
             })
             behaviors = new LinkedSet()
+            behaviorsByGlobalEvent.set(event, behaviors)
+        }
+        behaviors.add(this)
+    }
+
+    protected deregisterGlobalEvent(event: Event<any>): boolean {
+        const behaviors = behaviorsByGlobalEvent.get(event)
+        if (behaviors !== undefined && behaviors.remove(this)) {
+            globalEventsByBehavior.get(this)!.delete(event)
+            listenerByBehaviorByGlobalEvent.get(event)!.delete(this)
+            return true
+        }
+        return false
+    }
+
+    protected registerEvent<K extends string, Args extends any[]>(
+        this: Behavior<any, PeriodicActionParameters> &
+            Record<K, (this: this, ...args: Args) => unknown>,
+        event: Event<[...Args]>,
+        extractObject: (...args: Args) => T | undefined,
+        listener: K,
+    ): void {
+        const listenerByBehavior = getOrPut(listenerByBehaviorByEvent, event, mutableLuaMap)
+        listenerByBehavior.set(this, listener)
+        getOrPut(eventsByBehavior, this, mutableLuaSet).add(event)
+        let behaviors = behaviorsByEvent.get(event)
+        if (behaviors == undefined) {
+            event.addListener((...args) => {
+                const behaviors = behaviorsByEvent.get(event)
+                if (behaviors !== undefined) {
+                    const object = extractObject(...args)
+                    if (object !== undefined) {
+                        Behavior.forAll(
+                            object,
+                            safeCallBehaviorListener,
+                            behaviors,
+                            listenerByBehavior,
+                            ...args,
+                        )
+                    }
+                }
+            })
+            behaviors = new LuaSet()
             behaviorsByEvent.set(event, behaviors)
         }
         behaviors.add(this)
@@ -189,7 +263,8 @@ export abstract class Behavior<
 
     protected deregisterEvent(event: Event<any>): boolean {
         const behaviors = behaviorsByEvent.get(event)
-        if (behaviors !== undefined && behaviors.remove(this)) {
+        if (behaviors !== undefined && behaviors.has(this)) {
+            behaviors.delete(this)
             eventsByBehavior.get(this)!.delete(event)
             listenerByBehaviorByEvent.get(event)!.delete(this)
             return true
