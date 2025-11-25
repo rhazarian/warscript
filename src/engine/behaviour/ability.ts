@@ -1,5 +1,6 @@
 import { Behavior } from "../behavior"
-import { Unit } from "../unit"
+import { Unit } from "../internal/unit"
+import "../internal/unit/ability"
 import { Ability } from "../internal/ability"
 import { AbilityTypeId } from "../object-data/entry/ability-type"
 import { EventListener } from "../../event"
