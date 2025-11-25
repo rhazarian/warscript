@@ -229,6 +229,7 @@ export abstract class ObjectField<
             return true
         }
 
+        let previousOriginalValue: ValueType | undefined
         const modifiersByInstance = this.modifiersByInstance
         if (modifiersByInstance != undefined) {
             const modifiers = modifiersByInstance.get(entry)
@@ -238,12 +239,23 @@ export abstract class ObjectField<
                     originalValueByInstance = mutableWeakLuaMap()
                     this.originalValueByInstance = originalValueByInstance
                 }
+                previousOriginalValue = originalValueByInstance.get(entry)
+                if (value == previousOriginalValue) {
+                    return true
+                }
                 originalValueByInstance.set(entry, value)
                 value = this.calculateActualValue(entry)
             }
         }
 
-        return this.setActualValue(entry, value)
+        const previousValue = this.setActualValue(entry, value)
+        if (previousValue == undefined) {
+            return false
+        }
+        if (previousOriginalValue != undefined || value != previousValue) {
+            this.invokeValueChangeEvent(entry, this, previousOriginalValue ?? previousValue, value)
+        }
+        return true
     }
 
     public applyModifier(
@@ -322,7 +334,7 @@ export abstract class ObjectField<
         return this.getNativeFieldValue(instance) ?? this.defaultValue
     }
 
-    private setActualValue(instance: InstanceType, value: ValueType): boolean {
+    private setActualValue(instance: InstanceType, value: ValueType): ValueType | undefined {
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
@@ -335,19 +347,17 @@ export abstract class ObjectField<
                 const previousValue =
                     this.valueByInstance.get(instance) ?? defaultValue ?? this.defaultValue
                 this.valueByInstance.set(instance, value)
-                this.invokeValueChangeEvent(instance, this, previousValue, value)
-                return true
+                return previousValue
             }
         }
         if (!this.hasNativeFieldValue(objectDataEntryId)) {
-            return false
+            return undefined
         }
         const previousValue = this.getNativeFieldValue(instance)
         if (value != previousValue && !this.setNativeFieldValue(instance, value)) {
-            return false
+            return undefined
         }
-        this.invokeValueChangeEvent(instance, this, previousValue, value)
-        return true
+        return previousValue
     }
 
     private calculateActualValue(instance: InstanceType): ValueType {
@@ -673,6 +683,7 @@ export abstract class ObjectLevelField<
             return true
         }
 
+        let previousOriginalValue: ValueType | undefined
         const modifiersByInstance = this.modifiersByInstance
         if (modifiersByInstance != undefined) {
             const modifiers = modifiersByInstance.get(entry)
@@ -682,12 +693,34 @@ export abstract class ObjectLevelField<
                     originalValueByLevelByInstance = mutableWeakLuaMap()
                     this.originalValueByLevelByInstance = originalValueByLevelByInstance
                 }
-                getOrPut(originalValueByLevelByInstance, entry, mutableLuaMap).set(level, value)
+                const originalValueByLevel = getOrPut(
+                    originalValueByLevelByInstance,
+                    entry,
+                    mutableLuaMap,
+                )
+                previousOriginalValue = originalValueByLevel.get(level)
+                if (value == previousOriginalValue) {
+                    return true
+                }
+                originalValueByLevel.set(level, value)
                 value = this.calculateActualValue(entry, level) as InputValueType
             }
         }
 
-        return this.setActualValue(entry, level, value as ValueType)
+        const previousValue = this.setActualValue(entry, level, value as ValueType)
+        if (previousValue == undefined) {
+            return false
+        }
+        if (previousOriginalValue != undefined || value != previousValue) {
+            this.invokeValueChangeEvent(
+                entry,
+                this,
+                level,
+                previousOriginalValue ?? previousValue,
+                value,
+            )
+        }
+        return true
     }
 
     public applyModifier(
@@ -779,7 +812,11 @@ export abstract class ObjectLevelField<
         return this.getNativeFieldValue(instance, level) ?? this.defaultValue
     }
 
-    private setActualValue(instance: InstanceType, level: number, value: ValueType): boolean {
+    private setActualValue(
+        instance: InstanceType,
+        level: number,
+        value: ValueType,
+    ): ValueType | undefined {
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
@@ -799,19 +836,17 @@ export abstract class ObjectLevelField<
                     (defaultValueByLevel ?? emptyArray())[level] ??
                     this.defaultValue
                 valueByLevel[level] = value
-                this.invokeValueChangeEvent(instance, this, level, previousValue, value)
-                return true
+                return previousValue
             }
         }
         if (!this.hasNativeFieldValue(objectDataEntryId)) {
-            return false
+            return undefined
         }
         const previousValue = this.getNativeFieldValue(instance, level)
         if (value != previousValue && !this.setNativeFieldValue(instance, level, value)) {
-            return false
+            return undefined
         }
-        this.invokeValueChangeEvent(instance, this, level, previousValue, value)
-        return true
+        return previousValue
     }
 
     private calculateActualValue(instance: InstanceType, level: number): ValueType {
