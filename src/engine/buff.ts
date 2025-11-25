@@ -41,6 +41,7 @@ import { Item } from "./internal/item"
 import { Destructable } from "../core/types/destructable"
 import { HandleState } from "../core/types/handle"
 import { COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD } from "./standard/fields/ability"
+import { AbilityBehavior } from "./behaviour/ability"
 
 const getUnitAbility = BlzGetUnitAbility
 
@@ -457,7 +458,7 @@ export type BuffConstructorParameters<AdditionalParameters extends BuffAdditiona
     resistanceType: BuffResistanceTypeParameterType,
     ...abilityOrParameters:
         | [
-              ability?: Ability,
+              ability?: Ability | AbilityBehavior,
               parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>,
           ]
         | [parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>],
@@ -632,11 +633,13 @@ export class Buff<
         resistanceTypeOrPolarity: BuffResistanceTypeParameterType | BuffPolarityParameterType,
         abilityOrParametersOrResistanceType?:
             | Ability
+            | AbilityBehavior
             | (BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>)
             | BuffResistanceTypeParameterType,
         parametersOrAbility?:
             | (BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>)
-            | Ability,
+            | Ability
+            | AbilityBehavior,
         parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>,
     ) {
         super(_unit)
@@ -647,40 +650,44 @@ export class Buff<
         let polarity: BuffPolarityParameterType
         let resistanceType: BuffResistanceTypeParameterType
         let ability: Ability | undefined
+        let abilityBehavior: AbilityBehavior | undefined
         if (typeof typeIdOrTypeIds != "number") {
             typeId = selectBuffTypeIdWithLeastDuration(typeIdOrTypeIds, _unit)
 
             polarity = resistanceTypeOrPolarity as BuffPolarityParameterType
             resistanceType = abilityOrParametersOrResistanceType as BuffResistanceTypeParameterType
-            if (parametersOrAbility instanceof Ability || parametersOrAbility == undefined) {
+            if (parametersOrAbility instanceof AbilityBehavior) {
+                abilityBehavior = parametersOrAbility
+                ability = abilityBehavior.ability
+            } else if (parametersOrAbility instanceof Ability) {
                 ability = parametersOrAbility
-            } else {
-                ability = undefined
+            } else if (parametersOrAbility != undefined) {
                 parameters = parametersOrAbility
             }
         } else {
             typeId = typeIdOrTypeIds
             polarity = polarityOrTypeIdSelectionPolicy as BuffPolarityParameterType
             resistanceType = resistanceTypeOrPolarity as BuffResistanceTypeParameterType
-            if (
-                abilityOrParametersOrResistanceType instanceof Ability ||
-                abilityOrParametersOrResistanceType == undefined
-            ) {
+            if (abilityOrParametersOrResistanceType instanceof AbilityBehavior) {
+                abilityBehavior = abilityOrParametersOrResistanceType
+                ability = abilityBehavior.ability
+                parameters = parametersOrAbility as BuffParameters &
+                    Omit<AdditionalParameters, keyof BuffParameters>
+            } else if (abilityOrParametersOrResistanceType instanceof Ability) {
                 ability = abilityOrParametersOrResistanceType
                 parameters = parametersOrAbility as BuffParameters &
                     Omit<AdditionalParameters, keyof BuffParameters>
-            } else {
-                ability = undefined
+            } else if (abilityOrParametersOrResistanceType != undefined) {
                 parameters = abilityOrParametersOrResistanceType as BuffParameters &
+                    Omit<AdditionalParameters, keyof BuffParameters>
+            } else {
+                parameters = parametersOrAbility as BuffParameters &
                     Omit<AdditionalParameters, keyof BuffParameters>
             }
         }
+        ;(this as { sourceAbilityBehavior: Buff["sourceAbilityBehavior"] }).sourceAbilityBehavior =
+            abilityBehavior
         this.typeId = typeId
-
-        if (!(ability instanceof Ability || ability == undefined)) {
-            parameters = ability
-            ability = undefined
-        }
 
         const defaultParameters = (this.constructor as typeof Buff).defaultParameters
 

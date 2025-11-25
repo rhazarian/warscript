@@ -71,7 +71,7 @@ export abstract class ApplyBuffAbilityBehavior<
         super(ability)
         if (typeof constructorOrTypeIdOrTypeIds == "number") {
             this.applyBuff = ((unit: Unit) => {
-                const buff = Buff.apply(
+                return Buff.apply(
                     unit,
                     constructorOrTypeIdOrTypeIds,
                     typeIdOrTypeIdsOrPolarityOrTypeIdSelectionPolicy as BuffPolarityParameterType,
@@ -79,14 +79,10 @@ export abstract class ApplyBuffAbilityBehavior<
                     ability,
                     resistanceTypeOrPolarityOrParameters as BuffParametersType<T> | undefined,
                 )
-                ;(
-                    buff as { sourceAbilityBehavior: Buff["sourceAbilityBehavior"] }
-                ).sourceAbilityBehavior = this
-                return buff
             }) as (unit: Unit) => InstanceType<T>
         } else if (Array.isArray(constructorOrTypeIdOrTypeIds)) {
             this.applyBuff = ((unit: Unit) => {
-                const buff = Buff.apply(
+                return Buff.apply(
                     unit,
                     constructorOrTypeIdOrTypeIds as ReadonlyNonEmptyArray<ApplicableBuffTypeId>,
                     typeIdOrTypeIdsOrPolarityOrTypeIdSelectionPolicy as BuffTypeIdSelectionPolicy,
@@ -95,14 +91,10 @@ export abstract class ApplyBuffAbilityBehavior<
                     ability,
                     parametersOrResistanceType as BuffParametersType<T> | undefined,
                 )
-                ;(
-                    buff as { sourceAbilityBehavior: Buff["sourceAbilityBehavior"] }
-                ).sourceAbilityBehavior = this
-                return buff
             }) as (unit: Unit) => InstanceType<T>
         } else if (typeof typeIdOrTypeIdsOrPolarityOrTypeIdSelectionPolicy == "number") {
             this.applyBuff = ((unit: Unit) => {
-                const buff = (constructorOrTypeIdOrTypeIds as BuffConstructor as typeof Buff).apply(
+                return (constructorOrTypeIdOrTypeIds as BuffConstructor as typeof Buff).apply(
                     unit,
                     typeIdOrTypeIdsOrPolarityOrTypeIdSelectionPolicy as ApplicableBuffTypeId,
                     polarityOrTypeIdSelectionPolicyOrResistanceType as BuffPolarityParameterType,
@@ -110,14 +102,10 @@ export abstract class ApplyBuffAbilityBehavior<
                     ability,
                     parametersOrResistanceType as BuffParametersType<T> | undefined,
                 )
-                ;(
-                    buff as { sourceAbilityBehavior: Buff["sourceAbilityBehavior"] }
-                ).sourceAbilityBehavior = this
-                return buff
             }) as (unit: Unit) => InstanceType<T>
         } else {
             this.applyBuff = ((unit: Unit) => {
-                const buff = (constructorOrTypeIdOrTypeIds as BuffConstructor as typeof Buff).apply(
+                return (constructorOrTypeIdOrTypeIds as BuffConstructor as typeof Buff).apply(
                     unit,
                     typeIdOrTypeIdsOrPolarityOrTypeIdSelectionPolicy as ReadonlyNonEmptyArray<ApplicableBuffTypeId>,
                     polarityOrTypeIdSelectionPolicyOrResistanceType as BuffTypeIdSelectionPolicy,
@@ -126,10 +114,6 @@ export abstract class ApplyBuffAbilityBehavior<
                     ability,
                     parameters,
                 )
-                ;(
-                    buff as { sourceAbilityBehavior: Buff["sourceAbilityBehavior"] }
-                ).sourceAbilityBehavior = this
-                return buff
             }) as (unit: Unit) => InstanceType<T>
         }
     }
