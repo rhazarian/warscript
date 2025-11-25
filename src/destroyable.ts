@@ -19,6 +19,10 @@ const enum State {
 const stateByDestroyable = setmetatable(new LuaMap<AbstractDestroyable, State>(), { __mode: "k" })
 
 export abstract class AbstractDestroyable implements Destroyable {
+    public get isDestroyed(): boolean {
+        return stateByDestroyable.has(this)
+    }
+
     /**
      * An overriding function should always call the super one at the end of it,
      * in the following manner: `return super.onDestroy()`.
@@ -39,7 +43,7 @@ export abstract class AbstractDestroyable implements Destroyable {
 
         if (stateByDestroyable.get(this) != State.DESTROYED) {
             throw new IllegalStateException(
-                `'onDestroy' is incorrectly overridden (class '${this.constructor.name}').`
+                `'onDestroy' is incorrectly overridden (class '${this.constructor.name}').`,
             )
         }
 
