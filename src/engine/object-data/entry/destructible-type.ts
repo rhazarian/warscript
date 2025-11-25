@@ -32,6 +32,14 @@ export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeI
 
     // Art
 
+    public get fixedFacing(): number {
+        return this.getNumberField("bfxr")
+    }
+
+    public set fixedFacing(fixedFacing: number) {
+        this.setNumberField("bfxr", fixedFacing)
+    }
+
     public get modelPath(): string {
         return this.getStringField("bfil")
     }
