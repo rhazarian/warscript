@@ -17,7 +17,6 @@ import {
     AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD,
 } from "../../standard/fields/ability"
 import { ReadonlyNonEmptyArray } from "../../../utility/types"
-import { UnitBehavior } from "../unit"
 
 type BuffParametersType<T extends BuffConstructor> = BuffParameters &
     Omit<BuffAdditionalParametersType<T>, keyof BuffParameters>
@@ -76,7 +75,7 @@ export abstract class ApplyBuffAbilityBehavior<
                     constructorOrTypeIdOrTypeIds,
                     typeIdOrTypeIdsOrPolarityOrTypeIdSelectionPolicy as BuffPolarityParameterType,
                     polarityOrTypeIdSelectionPolicyOrResistanceType as BuffResistanceTypeParameterType,
-                    ability,
+                    this,
                     resistanceTypeOrPolarityOrParameters as BuffParametersType<T> | undefined,
                 )
             }) as (unit: Unit) => InstanceType<T>
@@ -88,7 +87,7 @@ export abstract class ApplyBuffAbilityBehavior<
                     typeIdOrTypeIdsOrPolarityOrTypeIdSelectionPolicy as BuffTypeIdSelectionPolicy,
                     polarityOrTypeIdSelectionPolicyOrResistanceType as BuffPolarityParameterType,
                     resistanceTypeOrPolarityOrParameters as BuffResistanceTypeParameterType,
-                    ability,
+                    this,
                     parametersOrResistanceType as BuffParametersType<T> | undefined,
                 )
             }) as (unit: Unit) => InstanceType<T>
@@ -99,7 +98,7 @@ export abstract class ApplyBuffAbilityBehavior<
                     typeIdOrTypeIdsOrPolarityOrTypeIdSelectionPolicy as ApplicableBuffTypeId,
                     polarityOrTypeIdSelectionPolicyOrResistanceType as BuffPolarityParameterType,
                     resistanceTypeOrPolarityOrParameters as BuffResistanceTypeParameterType,
-                    ability,
+                    this,
                     parametersOrResistanceType as BuffParametersType<T> | undefined,
                 )
             }) as (unit: Unit) => InstanceType<T>
@@ -111,7 +110,7 @@ export abstract class ApplyBuffAbilityBehavior<
                     polarityOrTypeIdSelectionPolicyOrResistanceType as BuffTypeIdSelectionPolicy,
                     resistanceTypeOrPolarityOrParameters as BuffPolarityParameterType,
                     parametersOrResistanceType as BuffResistanceTypeParameterType,
-                    ability,
+                    this,
                     parameters,
                 )
             }) as (unit: Unit) => InstanceType<T>
