@@ -4,15 +4,22 @@ import {
     combatClassificationsToStringArray,
     stringArrayToCombatClassifications,
 } from "../auxiliary/combat-classification"
-import { ObjectDataEntry, ObjectDataEntryId } from "../entry"
+import { ObjectDataEntry, ObjectDataEntryConstructor, ObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
+import { implementReadonlyNumberIndexSupplier } from "../../../utility/reflection"
 
 export type DestructibleTypeId = ObjectDataEntryId &
     number & {
         readonly __destructibleTypeId: unique symbol
     }
 
+export type StandardDestructibleTypeId = DestructibleTypeId & {
+    readonly __standardDestructibleTypeId: unique symbol
+}
+
 export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeId> {
+    static readonly [id: StandardDestructibleTypeId]: ObjectDataEntryConstructor<DestructibleType>
+
     private static readonly idGenerator = new ObjectDataEntryIdGenerator(fourCC("D000"))
 
     protected static override generateId(): number {
@@ -57,3 +64,8 @@ export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeI
         this.setStringsField("btar", combatClassificationsToStringArray(combatClassifications))
     }
 }
+implementReadonlyNumberIndexSupplier(DestructibleType, (id) => {
+    return class extends DestructibleType {
+        public static override readonly BASE_ID = id
+    }
+})
