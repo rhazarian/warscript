@@ -7,6 +7,8 @@ import {
 import { ObjectDataEntry, ObjectDataEntryConstructor, ObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 import { implementReadonlyNumberIndexSupplier } from "../../../utility/reflection"
+import { WarscriptConfig } from "../../../config"
+import { Destructable } from "../../../core/types/destructable"
 
 export type DestructibleTypeId = ObjectDataEntryId &
     number & {
@@ -28,6 +30,32 @@ export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeI
 
     protected static override getObjectData(map: WarMap): WarObjects {
         return map.objects.destructable
+    }
+
+    // Art
+
+    public get modelPath(): string {
+        return this.getStringField("bfil")
+    }
+
+    public set modelPath(modelPath: string) {
+        this.setStringField("bfil", modelPath)
+    }
+
+    public get modelPathSD(): string {
+        return this.getStringField("bfil:sd")
+    }
+
+    public set modelPathSD(modelPathSD: string) {
+        this.setStringField("bfil:sd", modelPathSD)
+    }
+
+    public get modelPathHD(): string {
+        return this.getStringField("bfil:hd")
+    }
+
+    public set modelPathHD(modelPathHD: string) {
+        this.setStringField("bfil:hd", modelPathHD)
     }
 
     // Combat
@@ -62,6 +90,24 @@ export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeI
 
     public set combatClassifications(combatClassifications: CombatClassifications) {
         this.setStringsField("btar", combatClassificationsToStringArray(combatClassifications))
+    }
+
+    // Pathing
+
+    public get pathingTexturePath(): string {
+        return this.getStringField("bptx")
+    }
+
+    public set pathingTexturePath(pathingTexturePath: string) {
+        this.setStringField("bptx", pathingTexturePath)
+    }
+
+    public get deadPathingTexturePath(): string {
+        return this.getStringField("bptd")
+    }
+
+    public set deadPathingTexturePath(deadPathingTexturePath: string) {
+        this.setStringField("bptd", deadPathingTexturePath)
     }
 }
 implementReadonlyNumberIndexSupplier(DestructibleType, (id) => {
