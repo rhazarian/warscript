@@ -40,6 +40,14 @@ export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeI
         this.setNumberField("bfxr", fixedFacing)
     }
 
+    public get flyOverHeight(): number {
+        return this.getNumberField("bflh")
+    }
+
+    public set flyOverHeight(flyOverHeight: number) {
+        this.setNumberField("bflh", flyOverHeight)
+    }
+
     public get modelPath(): string {
         return this.getStringField("bfil")
     }
@@ -62,6 +70,14 @@ export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeI
 
     public set modelPathHD(modelPathHD: string) {
         this.setStringField("bfil:hd", modelPathHD)
+    }
+
+    public get occlusionHeight(): number {
+        return this.getNumberField("boch")
+    }
+
+    public set occlusionHeight(occlusionHeight: number) {
+        this.setNumberField("boch", occlusionHeight)
     }
 
     // Combat
@@ -100,6 +116,22 @@ export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeI
 
     // Pathing
 
+    public get cliffHeight(): number {
+        return this.getNumberField("bclh")
+    }
+
+    public set cliffHeight(cliffHeight: number) {
+        this.setNumberField("bclh", cliffHeight)
+    }
+
+    public get isWalkable(): boolean {
+        return this.getBooleanField("bwal")
+    }
+
+    public set isWalkable(isWalkable: boolean) {
+        this.setBooleanField("bwal", isWalkable)
+    }
+
     public get pathingTexturePath(): string {
         return this.getStringField("bptx")
     }
@@ -114,6 +146,16 @@ export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeI
 
     public set deadPathingTexturePath(deadPathingTexturePath: string) {
         this.setStringField("bptd", deadPathingTexturePath)
+    }
+
+    // Text
+
+    public get name(): string {
+        return this.getStringField("bnam")
+    }
+
+    public set name(name: string) {
+        this.setStringField("bnam", name)
     }
 }
 implementReadonlyNumberIndexSupplier(DestructibleType, (id) => {
