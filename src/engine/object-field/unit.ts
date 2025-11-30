@@ -11,6 +11,7 @@ import { UnitType, UnitTypeId } from "../object-data/entry/unit-type"
 import { nonEmptyLinkedSetOf, ReadonlyNonEmptyLinkedSet } from "../../utility/linked-set"
 import { AttackType } from "../object-data/auxiliary/attack-type"
 import { UnitClassifications } from "../object-data/auxiliary/unit-classification"
+import { HealthRegenerationType } from "../object-data/auxiliary/health-regeneration-type"
 
 const convertUnitBooleanField = ConvertUnitBooleanField
 const convertUnitIntegerField = ConvertUnitIntegerField
@@ -96,20 +97,20 @@ export class UnitFloatField extends UnitField<number, junitrealfield> {
     }
 }
 
-export class UnitIntegerField extends UnitField<number, junitintegerfield> {
-    protected override get defaultValue(): number {
-        return 0
+export class UnitIntegerField<T extends number = number> extends UnitField<T, junitintegerfield> {
+    protected override get defaultValue(): T {
+        return 0 as T
     }
 
     protected getNativeFieldById(id: number): junitintegerfield {
         return convertUnitIntegerField(id)
     }
 
-    protected override getNativeFieldValue(instance: Unit): number {
-        return instance.getField(this.nativeField)
+    protected override getNativeFieldValue(instance: Unit): T {
+        return instance.getField(this.nativeField) as T
     }
 
-    protected override setNativeFieldValue(instance: Unit, value: number): boolean {
+    protected override setNativeFieldValue(instance: Unit, value: T): boolean {
         return instance.setField(this.nativeField, value)
     }
 
@@ -277,6 +278,8 @@ export class UnitPropulsionWindowField extends UnitFloatField {
         return true
     }
 }
+
+export class UnitHealthRegenerationTypeField extends UnitIntegerField<HealthRegenerationType> {}
 
 export class UnitScalingValueField extends UnitFloatField {
     protected override setNativeFieldValue(instance: Unit, value: number): boolean {
