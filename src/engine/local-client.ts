@@ -104,8 +104,8 @@ export class LocalClient {
         duration: number,
         ...parameters:
             | []
-            | [red: number, green: number, blue: number, extraEffects?: boolean]
-            | [color: Color, extraEffects?: boolean]
+            | [red: number, green: number, blue: number, flashy?: boolean]
+            | [color: Color, flashy?: boolean]
     ): void
 
     public static pingMinimap(
@@ -113,9 +113,9 @@ export class LocalClient {
         y: number,
         duration: number,
         redOrColor?: number | Color,
-        greenOrExtraEffects?: number | boolean,
+        greenOrFlashy?: number | boolean,
         blue?: number,
-        extraEffects?: boolean,
+        flashy?: boolean,
     ): void {
         if (redOrColor == undefined) {
             pingMinimap(x, y, duration)
@@ -127,7 +127,7 @@ export class LocalClient {
                 redOrColor.r,
                 redOrColor.g,
                 redOrColor.b,
-                (greenOrExtraEffects as boolean | undefined) || false,
+                (greenOrFlashy as boolean | undefined) || false,
             )
         } else {
             pingMinimapEx(
@@ -135,9 +135,9 @@ export class LocalClient {
                 y,
                 duration,
                 redOrColor,
-                greenOrExtraEffects as number,
+                greenOrFlashy as number,
                 blue as number,
-                extraEffects || false,
+                flashy || false,
             )
         }
     }

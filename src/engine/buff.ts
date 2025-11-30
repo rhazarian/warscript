@@ -133,6 +133,7 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           armorIncreaseFactor?: NumberParameterValueType
           attackSpeedIncreaseFactor?: NumberParameterValueType
           movementSpeedIncreaseFactor?: NumberParameterValueType
+          manaRegenerationRateIncreaseFactor?: NumberParameterValueType
           evasionProbability?: NumberParameterValueType
           missProbability?: NumberParameterValueType
           damageFactor?: NumberParameterValueType
@@ -191,6 +192,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     armorIncreaseFactor: true,
     attackSpeedIncreaseFactor: true,
     movementSpeedIncreaseFactor: true,
+    manaRegenerationRateIncreaseFactor: true,
     evasionProbability: true,
     missProbability: true,
     damageFactor: true,
@@ -292,6 +294,7 @@ const buffNumberParameters = [
     "durationIncreaseOnAutoAttack",
     "attackSpeedIncreaseFactor",
     "movementSpeedIncreaseFactor",
+    "manaRegenerationRateIncreaseFactor",
     "evasionProbability",
     "armorIncrease",
     "damageFactor",
@@ -1289,6 +1292,17 @@ export class Buff<
 
     public set evasionProbability(evasionProbability: number) {
         this.addOrUpdateOrRemoveUnitBonus(UnitBonusType.EVASION_PROBABILITY, evasionProbability)
+    }
+
+    public get manaRegenerationRateIncreaseFactor(): number {
+        return this.getUnitBonus(UnitBonusType.MANA_REGENERATION_RATE_FACTOR)
+    }
+
+    public set manaRegenerationRateIncreaseFactor(manaRegenerationRateIncreaseFactor: number) {
+        this.addOrUpdateOrRemoveUnitBonus(
+            UnitBonusType.MANA_REGENERATION_RATE_FACTOR,
+            manaRegenerationRateIncreaseFactor,
+        )
     }
 
     public get duration(): number {
