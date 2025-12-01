@@ -5,7 +5,7 @@ export const MANA_REGENERATION_RATE_INCREASE_FACTOR_DUMMY_ABILITY_TYPE_ID = comp
     const abilityType = ManaRegenerationAbilityType.create()
     abilityType.isInternal = true
     abilityType.isButtonVisible = false
-    abilityType.manaRegenerationRateIncreaseFactor = 100
+    abilityType.manaRegenerationRateIncreaseFactor = 0
     return abilityType.id
 })
 
