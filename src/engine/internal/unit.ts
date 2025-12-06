@@ -2076,6 +2076,10 @@ export class Unit extends Handle<junit> {
         }
     }*/
 
+    public static readonly levelChangedEvent = new UnitTriggerEvent(EVENT_PLAYER_HERO_LEVEL, () =>
+        $multi(Unit.of(getTriggerUnit()!)),
+    )
+
     public static readonly deathEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_DEATH, () =>
         $multi(Unit.of(GetDyingUnit()), Unit.of(GetKillingUnit())),
     )
