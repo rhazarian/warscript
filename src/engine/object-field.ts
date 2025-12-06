@@ -244,7 +244,7 @@ export abstract class ObjectField<
                     return true
                 }
                 originalValueByInstance.set(entry, value)
-                value = this.calculateActualValue(entry)
+                value = this.calculateActualValue(entry)[0]
             }
         }
 
@@ -256,6 +256,13 @@ export abstract class ObjectField<
             this.invokeValueChangeEvent(entry, this, previousOriginalValue ?? previousValue, value)
         }
         return true
+    }
+
+    public updateActualValue(instance: InstanceType): void {
+        const [actualValue, hasModifiers] = this.calculateActualValue(instance)
+        if (hasModifiers) {
+            this.setActualValue(instance, actualValue)
+        }
     }
 
     public applyModifier(
@@ -277,7 +284,7 @@ export abstract class ObjectField<
                 instance,
                 originalValueByInstance.get(instance) ?? this.getActualValue(instance),
             )
-            this.setActualValue(instance, this.calculateActualValue(instance))
+            this.setActualValue(instance, this.calculateActualValue(instance)[0])
         }
     }
 
@@ -289,7 +296,7 @@ export abstract class ObjectField<
         if (modifiersByInstance != undefined) {
             const modifiers = modifiersByInstance.get(instance)
             if (modifiers != undefined && modifiers.remove(modifier)) {
-                this.setActualValue(instance, this.calculateActualValue(instance))
+                this.setActualValue(instance, this.calculateActualValue(instance)[0])
                 return true
             }
         }
@@ -360,7 +367,7 @@ export abstract class ObjectField<
         return previousValue
     }
 
-    private calculateActualValue(instance: InstanceType): ValueType {
+    private calculateActualValue(instance: InstanceType): LuaMultiReturn<[ValueType, boolean]> {
         const originalValue = this.originalValueByInstance?.get(instance)
         const modifiers = this.modifiersByInstance?.get(instance)
         if (originalValue !== undefined) {
@@ -369,10 +376,11 @@ export abstract class ObjectField<
                 for (const modifier of modifiers) {
                     value = modifier(instance, value, originalValue)
                 }
+                return $multi(value, true)
             }
-            return value
+            return $multi(value, false)
         }
-        return this.defaultValue
+        return $multi(this.defaultValue, false)
     }
 
     private invokeValueChangeEvent(
@@ -721,6 +729,24 @@ export abstract class ObjectLevelField<
             )
         }
         return true
+    }
+
+    public updateActualValue(instance: InstanceType, level?: number): void {
+        const modifiersByInstance = this.modifiersByInstance
+        if (modifiersByInstance == undefined) {
+            return
+        }
+        const modifiers = modifiersByInstance.get(instance)
+        if (modifiers == undefined || modifiers.size == 0) {
+            return
+        }
+        if (level == undefined) {
+            for (const i of $range(0, this.getLevelCount(instance) - 1)) {
+                this.updateActualValue(instance, i)
+            }
+            return
+        }
+        this.setActualValue(instance, level, this.calculateActualValue(instance, level))
     }
 
     public applyModifier(
