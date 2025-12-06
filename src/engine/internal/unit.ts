@@ -40,11 +40,6 @@ import { AttributesHolder, isAttribute } from "../../attributes"
 import { doUnitAbilityAction } from "./item/ability"
 import type { AbilityTypeId } from "../object-data/entry/ability-type"
 import { synchronizer } from "../synchronization"
-import {
-    AGILITY_UNIT_FIELD,
-    INTELLIGENCE_UNIT_FIELD,
-    STRENGTH_UNIT_FIELD,
-} from "../standard/fields/unit"
 
 const match = string.match
 const tostring = _G.tostring
@@ -1137,14 +1132,6 @@ export class Unit extends Handle<junit> {
         setUnitIntegerField(this.handle, UNIT_IF_PRIMARY_ATTRIBUTE, primaryAttribute)
     }
 
-    public get strengthBase(): number {
-        return getHeroStr(this.handle, false)
-    }
-
-    public set strengthBase(strengthBase: number) {
-        STRENGTH_UNIT_FIELD.setValue(this, strengthBase)
-    }
-
     public get strengthBonus(): number {
         const handle = this.handle
         return getHeroStr(handle, true) - getHeroStr(handle, false)
@@ -1154,14 +1141,6 @@ export class Unit extends Handle<junit> {
         return getHeroStr(this.handle, true)
     }
 
-    public get agilityBase(): number {
-        return getHeroAgi(this.handle, false)
-    }
-
-    public set agilityBase(agilityBase: number) {
-        AGILITY_UNIT_FIELD.setValue(this, agilityBase)
-    }
-
     public get agilityBonus(): number {
         const handle = this.handle
         return getHeroAgi(handle, true) - getHeroAgi(handle, false)
@@ -1169,14 +1148,6 @@ export class Unit extends Handle<junit> {
 
     public get agility(): number {
         return getHeroAgi(this.handle, true)
-    }
-
-    public get intelligenceBase(): number {
-        return getHeroInt(this.handle, false)
-    }
-
-    public set intelligenceBase(intelligenceBase: number) {
-        INTELLIGENCE_UNIT_FIELD.setValue(this, intelligenceBase)
     }
 
     public get intelligenceBonus(): number {
