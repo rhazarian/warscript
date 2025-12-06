@@ -40,6 +40,11 @@ import { AttributesHolder, isAttribute } from "../../attributes"
 import { doUnitAbilityAction } from "./item/ability"
 import type { AbilityTypeId } from "../object-data/entry/ability-type"
 import { synchronizer } from "../synchronization"
+import {
+    AGILITY_UNIT_FIELD,
+    INTELLIGENCE_UNIT_FIELD,
+    STRENGTH_UNIT_FIELD,
+} from "../standard/fields/unit"
 
 const match = string.match
 const tostring = _G.tostring
@@ -51,16 +56,12 @@ const getUnitRealField = BlzGetUnitRealField
 const getHeroStr = GetHeroStr
 const getHeroAgi = GetHeroAgi
 const getHeroInt = GetHeroInt
-const setHeroStr = SetHeroStr
-const setHeroAgi = SetHeroAgi
-const setHeroInt = SetHeroInt
 const getUnitBooleanField = BlzGetUnitBooleanField
 const getUnitStringField = BlzGetUnitStringField
 const setUnitIntegerField = BlzSetUnitIntegerField
 const setUnitRealField = BlzSetUnitRealField
 const setUnitBooleanField = BlzSetUnitBooleanField
 const setUnitStringField = BlzSetUnitStringField
-const setUnitScale = SetUnitScale
 const setUnitPosition = SetUnitPosition
 const setUnitTimeScale = SetUnitTimeScale
 const getHandleId = GetHandleId
@@ -1141,7 +1142,7 @@ export class Unit extends Handle<junit> {
     }
 
     public set strengthBase(strengthBase: number) {
-        setHeroStr(this.handle, strengthBase, true)
+        STRENGTH_UNIT_FIELD.setValue(this, strengthBase)
     }
 
     public get strengthBonus(): number {
@@ -1158,7 +1159,7 @@ export class Unit extends Handle<junit> {
     }
 
     public set agilityBase(agilityBase: number) {
-        setHeroAgi(this.handle, agilityBase, true)
+        AGILITY_UNIT_FIELD.setValue(this, agilityBase)
     }
 
     public get agilityBonus(): number {
@@ -1175,7 +1176,7 @@ export class Unit extends Handle<junit> {
     }
 
     public set intelligenceBase(intelligenceBase: number) {
-        setHeroInt(this.handle, intelligenceBase, true)
+        INTELLIGENCE_UNIT_FIELD.setValue(this, intelligenceBase)
     }
 
     public get intelligenceBonus(): number {

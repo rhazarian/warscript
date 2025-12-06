@@ -1,5 +1,5 @@
 import { Unit } from "../unit"
-import { SCALING_VALUE_UNIT_FLOAT_FIELD } from "../../standard/fields/unit"
+import { SCALING_VALUE_UNIT_FIELD } from "../../standard/fields/unit"
 
 declare module "../unit" {
     interface Unit {
@@ -8,9 +8,9 @@ declare module "../unit" {
 }
 Object.defineProperty(Unit.prototype, "scale", {
     get(this: Unit): number {
-        return SCALING_VALUE_UNIT_FLOAT_FIELD.getValue(this)
+        return SCALING_VALUE_UNIT_FIELD.getValue(this)
     },
     set(this: Unit, value: number) {
-        SCALING_VALUE_UNIT_FLOAT_FIELD.setValue(this, value)
+        SCALING_VALUE_UNIT_FIELD.setValue(this, value)
     },
 })
