@@ -86,7 +86,6 @@ const setUnitWeaponStringField = BlzSetUnitWeaponStringField
 const getUnitAbilityLevel = GetUnitAbilityLevel
 
 const unitDisableAbility = BlzUnitDisableAbility
-const unitInterruptAttack = BlzUnitInterruptAttack
 const isUnitInvisible = IsUnitInvisible
 const isUnitVisible = IsUnitVisible
 const getUnitX = GetUnitX
@@ -1605,16 +1604,6 @@ export class Unit extends Handle<junit> {
 
     public endAbilityCooldown(abilityId: number): void {
         BlzEndUnitAbilityCooldown(this.handle, abilityId)
-    }
-
-    public interruptMovement(): void {
-        const handle = this.handle
-        unitDisableAbility(handle, fourCC("Amov"), true, false)
-        unitDisableAbility(handle, fourCC("Amov"), false, false)
-    }
-
-    public interruptAttack(): void {
-        unitInterruptAttack(this.handle)
     }
 
     public interruptCast(abilityId: number): void {

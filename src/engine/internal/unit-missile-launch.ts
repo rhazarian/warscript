@@ -37,11 +37,18 @@ const instantOrderIds = luaSetOf(
     orderId("unimmolation"),
 )
 
-const reset = (source: Unit, orderId: number) => {
-    if (!instantOrderIds.has(orderId) && units.remove(source)) {
-        source.set(targetAttribute, undefined)
-        source.set(impactDelayAttribute, undefined)
-        source.set(passedTimeAttribute, undefined)
+/** @internal For use by internal systems only. */
+export const resetAutoAttackTimer = (unit: Unit) => {
+    if (units.remove(unit)) {
+        unit.set(targetAttribute, undefined)
+        unit.set(impactDelayAttribute, undefined)
+        unit.set(passedTimeAttribute, undefined)
+    }
+}
+
+const reset = (unit: Unit, orderId: number) => {
+    if (!instantOrderIds.has(orderId)) {
+        resetAutoAttackTimer(unit)
     }
 }
 
