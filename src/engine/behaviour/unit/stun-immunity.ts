@@ -2,44 +2,46 @@ import { UnitBehavior } from "../unit"
 import { Unit } from "../../unit"
 import { BuffTypeId } from "../../object-data/entry/buff-type"
 import { AbilityType } from "../../object-data/entry/ability-type"
-import { flatMapToLuaSet, map } from "../../../utility/arrays"
+import { distinct, flatMap, map } from "../../../utility/arrays"
 import { TextTag, TextTagPreset } from "../../text-tag"
 import { Destructor } from "../../../destroyable"
 import { Timer } from "../../../core/types/timer"
 import { BehaviorPriority } from "../../behavior"
 
 const DEFAULT_BUFF_TYPE_IDS = postcompile(() => {
-    return flatMapToLuaSet(
-        AbilityType.getAllByBaseIds(
-            map(
-                [
-                    "AHtb",
-                    "AHbh",
-                    "AOws",
-                    "AOw2",
-                    "AUim",
-                    "Acyc",
-                    "ANfb",
-                    "ANsb",
-                    "ANcs",
-                    "ANc1",
-                    "ANc2",
-                    "ANc3",
-                    "ACbh",
-                    "ANbh",
-                    "SCc1",
-                    "ACcy",
-                    "ANb2",
-                    "Awrs",
-                    "Awrh",
-                    "Awrg",
-                    "ACtb",
-                    "ACcb",
-                ],
-                fourCC,
+    return distinct(
+        flatMap(
+            AbilityType.getAllByBaseIds(
+                map(
+                    [
+                        "AHtb",
+                        "AHbh",
+                        "AOws",
+                        "AOw2",
+                        "AUim",
+                        "Acyc",
+                        "ANfb",
+                        "ANsb",
+                        "ANcs",
+                        "ANc1",
+                        "ANc2",
+                        "ANc3",
+                        "ACbh",
+                        "ANbh",
+                        "SCc1",
+                        "ACcy",
+                        "ANb2",
+                        "Awrs",
+                        "Awrh",
+                        "Awrg",
+                        "ACtb",
+                        "ACcb",
+                    ],
+                    fourCC,
+                ),
             ),
+            (abilityType) => abilityType.buffTypeIds.flat(),
         ),
-        (abilityType) => abilityType.buffTypeIds.flat(),
     )
 })
 
@@ -64,7 +66,7 @@ const process = (behavior: StunImmunityUnitBehavior): void => {
 
 export type StunImmunityUnitBehaviorParameters = {
     readonly priority?: BehaviorPriority
-    buffTypeIds?: LuaSet<BuffTypeId>
+    buffTypeIds?: readonly BuffTypeId[]
     textTagPreset?: TextTagPreset
     textTagText?: string
     additionalAction?: (this: void, unit: Unit) => void

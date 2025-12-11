@@ -69,9 +69,12 @@ export const castAbility = <Args extends any[]>(
         unitRemoveAbility(nativeUnit, INVENTORY_ABILITY_TYPE_ID)
         if (latestInventoryAbilityTypeId != 0) {
             unitAddAbility(nativeUnit, latestInventoryAbilityTypeId)
-            for (const [slot, nativeItem] of nativeItemBySlot) {
-                unitAddItem(nativeUnit, nativeItem)
-                unitDropItemSlot(nativeUnit, nativeItem, slot)
+            for (const slot of $range(0, inventorySize - 1)) {
+                const nativeItem = nativeItemBySlot.get(slot)
+                if (nativeItem !== undefined) {
+                    unitAddItem(nativeUnit, nativeItem)
+                    unitDropItemSlot(nativeUnit, nativeItem, slot)
+                }
             }
         }
     }

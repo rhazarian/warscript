@@ -22,6 +22,7 @@ import {
 } from "../internal/unit/bonus"
 import { Player } from "../../core/types/player"
 import { UnitTypeId } from "../object-data/entry/unit-type"
+import { LinkedMap } from "../../utility/linked-map"
 
 const safeCall = warpack.safeCall
 
@@ -52,7 +53,7 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
 > {
     public readonly sourceAbilityBehavior?: AbilityBehavior
 
-    private _bonusIdByBonusType?: LuaMap<UnitBonusType, UnitBonusId | undefined>
+    private _bonusIdByBonusType?: LinkedMap<UnitBonusType, UnitBonusId | undefined>
 
     public constructor(unit: Unit, priority?: BehaviorPriority) {
         super(unit, priority)
@@ -96,11 +97,11 @@ export abstract class UnitBehavior<PeriodicActionParameters extends any[] = any[
     protected addOrUpdateOrRemoveUnitBonus(bonusType: UnitBonusType, value: number): void {
         let bonusIdByBonusType = this._bonusIdByBonusType
         if (bonusIdByBonusType == undefined) {
-            bonusIdByBonusType = new LuaMap()
+            bonusIdByBonusType = new LinkedMap()
             this._bonusIdByBonusType = bonusIdByBonusType
         }
 
-        bonusIdByBonusType.set(
+        bonusIdByBonusType.put(
             bonusType,
             addOrUpdateOrRemoveUnitBonus(
                 this.object,

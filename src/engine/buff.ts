@@ -33,7 +33,7 @@ import { ObjectFieldId, ObjectLevelFieldModifier } from "./object-field"
 import { BuffType, BuffTypeId } from "./object-data/entry/buff-type"
 import { UnitBehavior } from "./behaviour/unit"
 import type { Widget } from "../core/types/widget"
-import { forEach } from "../utility/arrays"
+import { emptyArray, forEach } from "../utility/arrays"
 import { Destructor } from "../destroyable"
 import { Event, EventListenerPriority } from "../event"
 import { getAbilityDuration } from "./internal/mechanics/ability-duration"
@@ -42,6 +42,7 @@ import { Destructable } from "../core/types/destructable"
 import { HandleState } from "../core/types/handle"
 import { COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD } from "./standard/fields/ability"
 import { AbilityBehavior } from "./behaviour/ability"
+import { sortedKeysUnnested } from "../utility/records"
 
 const getUnitAbility = BlzGetUnitAbility
 
@@ -100,10 +101,10 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           abilityTypeIds?: Record<
               AbilityTypeId,
               {
-                  [
-                      numberField: (AbilityNumberField | AbilityNumberLevelField) & symbol
-                  ]: NumberParameterValueType
-              } & {
+                  readonly fields?: [
+                      AbilityNumberField | AbilityNumberLevelField,
+                      NumberParameterValueType,
+                  ][]
                   /** Default `true`. */
                   readonly isButtonVisible?: boolean
                   /** Default is the level of the source ability or 0 if it is absent. */
@@ -624,7 +625,7 @@ export class Buff<
     private readonly _spellStealPriority?: number
     private readonly _learnLevelMinimum?: number
     private readonly [BuffPropertyKey.MISS_PROBABILITY]?: number
-    private readonly _abilityTypeIds?: LuaSet<AbilityTypeId>
+    private readonly _abilityTypeIds?: AbilityTypeId[]
     private _behaviors?: UnitBehavior[]
 
     public constructor(target: Unit, ...parameters: BuffConstructorParameters<AdditionalParameters>)
@@ -835,10 +836,11 @@ export class Buff<
             if (parametersAbilityTypeIds != undefined) {
                 let abilityTypeIds = this._abilityTypeIds
                 if (abilityTypeIds == undefined) {
-                    abilityTypeIds = new LuaSet()
+                    abilityTypeIds = []
                     this._abilityTypeIds = abilityTypeIds
                 }
-                for (const [abilityTypeId, abilityParameters] of pairs(parametersAbilityTypeIds)) {
+                for (const abilityTypeId of sortedKeysUnnested(parametersAbilityTypeIds)) {
+                    const abilityParameters = parametersAbilityTypeIds[abilityTypeId]
                     const addedAbility = _unit.addAbility(abilityTypeId)
                     if (addedAbility != undefined) {
                         _unit.makeAbilityPermanent(abilityTypeId, true)
@@ -846,37 +848,16 @@ export class Buff<
                             abilityTypeId,
                             1 + (abilityParameters.level ?? ability?.level ?? 0),
                         )
-                        for (const [abilityParameterKey, abilityParameterValue] of pairs(
-                            abilityParameters,
-                        )) {
-                            if (abilityParameterKey == "isButtonVisible") {
-                                if (
-                                    !resolveBooleanValue(
-                                        ability,
-                                        level,
-                                        abilityParameterValue as
-                                            | boolean
-                                            | AbilityBooleanField
-                                            | AbilityBooleanLevelField,
-                                    )
-                                ) {
-                                    _unit.hideAbility(abilityTypeId, true)
-                                }
-                            } else if (abilityParameterKey != "level") {
-                                abilityParameterKey.setValue(
-                                    addedAbility,
-                                    resolveNumberValue<number>(
-                                        ability,
-                                        level,
-                                        abilityParameterValue as
-                                            | number
-                                            | AbilityNumberField
-                                            | AbilityNumberLevelField,
-                                    ),
-                                )
-                            }
+                        if (abilityParameters.isButtonVisible === false) {
+                            _unit.hideAbility(abilityTypeId, true)
                         }
-                        abilityTypeIds.add(abilityTypeId)
+                        for (const field of abilityParameters.fields ?? emptyArray()) {
+                            field[0].setValue(
+                                addedAbility,
+                                resolveNumberValue<number>(ability, level, field[1]),
+                            )
+                        }
+                        abilityTypeIds[abilityTypeIds.length] = abilityTypeId
                     }
                 }
 
@@ -891,22 +872,23 @@ export class Buff<
                 }
             }
 
-            // TODO: properly.
-            const additionalParameters = {} as any
-            for (const [key, value] of pairs(parameters)) {
-                if (!buffParametersKeys[key as keyof BuffParameters]) {
-                    if (ability) {
-                        additionalParameters[key] = resolveCurrentAbilityDependentValue(
-                            ability,
-                            value as any,
-                        )
-                    } else {
-                        additionalParameters[key] = value
+            if (parameters !== undefined) {
+                const additionalParameters = {} as any
+                for (const key of sortedKeysUnnested(parameters)) {
+                    if (!buffParametersKeys[key as keyof BuffParameters]) {
+                        if (ability) {
+                            additionalParameters[key] = resolveCurrentAbilityDependentValue(
+                                ability,
+                                parameters[key],
+                            )
+                        } else {
+                            additionalParameters[key] = parameters[key]
+                        }
                     }
                 }
-            }
-            if (next(additionalParameters)[0] != undefined) {
-                this.parameters = additionalParameters
+                if (next(additionalParameters)[0] != undefined) {
+                    this.parameters = additionalParameters
+                }
             }
         }
 

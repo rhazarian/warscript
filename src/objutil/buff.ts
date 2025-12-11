@@ -15,6 +15,7 @@ import { Timer } from "../core/types/timer"
 import { IllegalStateException } from "../exception"
 import { AbilityTypeId } from "../engine/object-data/entry/ability-type"
 import { AttackType } from "../engine/object-data/auxiliary/attack-type"
+import { LinkedMap } from "../utility/linked-map"
 
 const assert = _G.assert
 const pairs = _G.pairs
@@ -462,10 +463,10 @@ type OmitConstructor<T> = Pick<T, NonConstructorKeys<T>>
 type BuffClass<T extends Buff, Args extends any[] = any[]> = OmitConstructor<typeof Buff> &
     (new (...args: Args) => T)
 
-const buffs = setmetatable(new LuaTable<Unit, LuaMap<typeof Buff, Buff>>(), {
+const buffs = setmetatable(new LuaTable<Unit, LinkedMap<typeof Buff, Buff>>(), {
     __mode: "k",
     __index(unit: Unit) {
-        const table = new LuaMap<typeof Buff, Buff>()
+        const table = new LinkedMap<typeof Buff, Buff>()
         this.set(unit, table)
         return table
     },
@@ -503,7 +504,7 @@ export abstract class Buff implements Destroyable {
                 )
             }
         }
-        instances.set(constructor, this)
+        instances.put(constructor, this)
         if (preset) {
             const unitHandle = unit.handle
             const slowPoisonMethod = !preset.positive && !preset.magic
@@ -605,7 +606,7 @@ export abstract class Buff implements Destroyable {
         if (this.preset) {
             this.unit.removeAbility(this.preset.buffId)
         }
-        buffs.get(this.unit).delete(this.constructor as typeof Buff)
+        buffs.get(this.unit).remove(this.constructor as typeof Buff)
         this.destroyed = true
     }
 

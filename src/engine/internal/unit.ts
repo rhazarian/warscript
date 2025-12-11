@@ -40,6 +40,7 @@ import { AttributesHolder, isAttribute } from "../../attributes"
 import { doUnitAbilityAction } from "./item/ability"
 import type { AbilityTypeId } from "../object-data/entry/ability-type"
 import { synchronizer } from "../synchronization"
+import { LinkedMap } from "../../utility/linked-map"
 
 const match = string.match
 const tostring = _G.tostring
@@ -821,7 +822,7 @@ export class Unit extends Handle<junit> {
 
     private _timeScale?: number
 
-    private events?: { [eventId: number]: TriggerEvent<any> } // TODO: should be a LinkedMap to destroy in order
+    private events?: LinkedMap<number, TriggerEvent<any>>
     private _attackHandlers?: [AttackHandlerCondition, AttackHandlerAction][]
 
     private _eventsToDestroy?: TriggerEvent<any>[]
@@ -831,18 +832,20 @@ export class Unit extends Handle<junit> {
     private getEvent(event: junitevent, c: void): Event
     private getEvent<T extends any[]>(event: junitevent, collector: Collector<T>): Event<T>
 
-    private getEvent<T extends any[] | []>(event: junitevent, collector: any): Event<T> {
-        this.events = this.events || {}
-        const eventId = GetHandleId(event)
-        if (!this.events[eventId]) {
-            this.events[eventId] = new TriggerEvent<T>(
+    private getEvent<T extends any[] | []>(jevent: junitevent, collector: any): Event<T> {
+        this.events = this.events ?? new LinkedMap()
+        const eventId = GetHandleId(jevent)
+        let event = this.events.get(eventId)
+        if (event == undefined) {
+            event = new TriggerEvent<T>(
                 (trigger) => {
-                    TriggerRegisterUnitEvent(trigger, this.handle, event)
+                    TriggerRegisterUnitEvent(trigger, this.handle, jevent)
                 },
                 collector || (() => []),
             )
+            this.events.put(eventId, event)
         }
-        return this.events[eventId]
+        return event
     }
 
     public constructor(handle: junit) {
@@ -883,7 +886,7 @@ export class Unit extends Handle<junit> {
         }
 
         if (this.events) {
-            for (const [, event] of pairs(this.events)) {
+            for (const [, event] of this.events) {
                 event.destroy()
             }
         }
