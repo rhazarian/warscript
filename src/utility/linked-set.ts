@@ -232,9 +232,17 @@ export class LinkedSet<T extends AnyNotNil> implements ReadonlyLinkedSet<T> {
     }
 }
 
+const emptyIteratorState: IteratorState<never> = {
+    t: new LuaMap(),
+}
+
 class EmptyLinkedSet extends LinkedSet<never> {
     override add(): boolean {
         throw new UnsupportedOperationException()
+    }
+
+    protected __pairs(this: LinkedSet<never>): LuaIterator<undefined, IteratorState<never>> {
+        return $multi(linkedSetNext, emptyIteratorState, undefined)
     }
 }
 
