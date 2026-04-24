@@ -12,7 +12,7 @@ _G.ipairs = function(t)
 end
 
 _G.assert = function(v, ...)
-    if ~v then
+    if not v then
        error(tableconcat({ ... }, " "))
     end
     return v, ...
