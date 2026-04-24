@@ -497,9 +497,15 @@ const modifiers = {
     },
     armor: (unit: junit, value: number): void => {
         if (UnitAddAbility(unit, armorBonusAbilityId)) {
-            assert(UnitMakeAbilityPermanent(unit, true, armorBonusAbilityId))
+            assert(
+                UnitMakeAbilityPermanent(unit, true, armorBonusAbilityId),
+                "armor bonus ability must be made permanent",
+            )
         }
-        const ability = assert(BlzGetUnitAbility(unit, armorBonusAbilityId))
+        const [ability] = assert(
+            BlzGetUnitAbility(unit, armorBonusAbilityId),
+            "armor bonus ability must be existing",
+        )
         assert(
             BlzSetAbilityRealLevelField(
                 ability,
@@ -507,6 +513,7 @@ const modifiers = {
                 0,
                 BlzGetAbilityRealLevelField(ability, armorBonusField, 0) + value,
             ),
+            "armor bonus ability field must be set",
         )
     },
 }
@@ -759,7 +766,10 @@ const fieldSetters: Record<string, (unit: Unit, field: any, value: any) => boole
 
 const dummies = new LuaTable<Player, junit>()
 for (const player of Player.all) {
-    const dummy = assert(createUnit(player.handle, dummyUnitId, 0, 0, 270))
+    const [dummy] = assert(
+        createUnit(player.handle, dummyUnitId, 0, 0, 270),
+        "dummy must be created",
+    )
     ShowUnit(dummy, false)
     dummies.set(player, dummy)
 }
@@ -854,10 +864,17 @@ export class Unit extends Handle<junit> {
         assert(
             unitAddAbility(handle, leaveDetectAbilityId) &&
                 UnitMakeAbilityPermanent(handle, true, leaveDetectAbilityId),
+            "leave detection ability must be added",
         )
-        assert(unitAddAbility(handle, morphDetectAbilityId))
+        assert(
+            unitAddAbility(handle, morphDetectAbilityId),
+            "morph detection ability must be added",
+        )
         if (unitAddAbility(handle, fourCC("Amrf"))) {
-            assert(unitRemoveAbility(handle, fourCC("Amrf")))
+            assert(
+                unitRemoveAbility(handle, fourCC("Amrf")),
+                "fly ability must be removed after addition",
+            )
         }
         unitBySyncId.set(this.syncId, this)
         this.abilities
@@ -918,6 +935,7 @@ export class Unit extends Handle<junit> {
             assert(
                 unitAddAbility(handle, attackHandlerAbilityId) &&
                     UnitMakeAbilityPermanent(handle, true, attackHandlerAbilityId),
+                "attack handler ability must be added",
             )
         }
 
