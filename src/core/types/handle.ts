@@ -135,6 +135,7 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
     ): T | null | undefined {
         return (
             handle &&
+            (getHandleId(handle) != 0 || undefined) &&
             ((
                 this as unknown as {
                     memoized: { [id: number]: T }
@@ -157,7 +158,7 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
 
     private static invokeOnCreateEvent(
         clazz: AbstractConstructor<Handle<any>> | undefined,
-        handle: Handle<any>
+        handle: Handle<any>,
     ): void {
         if (clazz == undefined) {
             return
@@ -219,7 +220,7 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
         this.onDestroy(...parameters)
         if ((this[HandlePropertyKey.STATE] as HandleState) != HandleState.DESTROYED) {
             throw new IllegalStateException(
-                `'onDestroy' is incorrectly overridden (class '${clazz.name}').`
+                `'onDestroy' is incorrectly overridden (class '${clazz.name}').`,
             )
         }
 
@@ -230,7 +231,7 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
 
     private static invokeOnDestroyEvent(
         clazz: AbstractConstructor<Handle<any>> | undefined,
-        handle: Handle<any>
+        handle: Handle<any>,
     ): void {
         if (clazz == undefined) {
             return
