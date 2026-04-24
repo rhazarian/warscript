@@ -13,7 +13,7 @@ end
 
 _G.assert = function(v, ...)
     if ~v then
-       error(tableconcat({ ... }))
+       error(tableconcat({ ... }, " "))
     end
     return v, ...
 end
