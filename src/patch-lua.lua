@@ -1,6 +1,8 @@
 local error = _G.error
 local getmetatable = _G.getmetatable
 local ipairs = _G.ipairs
+local select = _G.select
+local tostring = _G.tostring
 local tableconcat = table.concat
 
 _G.ipairs = function(t)
@@ -13,7 +15,11 @@ end
 
 _G.assert = function(v, ...)
     if not v then
-       error(tableconcat({ ... }, " "))
+        local args = {}
+        for i = 1, select("#", ...) do
+            args[i] = tostring(select(i, ...))
+        end
+        error(tableconcat(args, " "))
     end
     return v, ...
 end
