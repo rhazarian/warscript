@@ -500,11 +500,13 @@ const modifiers = {
             assert(
                 UnitMakeAbilityPermanent(unit, true, armorBonusAbilityId),
                 "armor bonus ability must be made permanent",
+                unit,
             )
         }
         const [ability] = assert(
             BlzGetUnitAbility(unit, armorBonusAbilityId),
             "armor bonus ability must be existing",
+            unit,
         )
         assert(
             BlzSetAbilityRealLevelField(
@@ -514,6 +516,7 @@ const modifiers = {
                 BlzGetAbilityRealLevelField(ability, armorBonusField, 0) + value,
             ),
             "armor bonus ability field must be set",
+            unit,
         )
     },
 }
@@ -769,6 +772,7 @@ for (const player of Player.all) {
     const [dummy] = assert(
         createUnit(player.handle, dummyUnitId, 0, 0, 270),
         "dummy must be created",
+        player,
     )
     ShowUnit(dummy, false)
     dummies.set(player, dummy)
@@ -865,15 +869,18 @@ export class Unit extends Handle<junit> {
             unitAddAbility(handle, leaveDetectAbilityId) &&
                 UnitMakeAbilityPermanent(handle, true, leaveDetectAbilityId),
             "leave detection ability must be added",
+            this,
         )
         assert(
             unitAddAbility(handle, morphDetectAbilityId),
             "morph detection ability must be added",
+            this,
         )
         if (unitAddAbility(handle, fourCC("Amrf"))) {
             assert(
                 unitRemoveAbility(handle, fourCC("Amrf")),
                 "fly ability must be removed after addition",
+                this,
             )
         }
         unitBySyncId.set(this.syncId, this)
@@ -936,6 +943,7 @@ export class Unit extends Handle<junit> {
                 unitAddAbility(handle, attackHandlerAbilityId) &&
                     UnitMakeAbilityPermanent(handle, true, attackHandlerAbilityId),
                 "attack handler ability must be added",
+                this,
             )
         }
 
