@@ -135,7 +135,7 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
     ): T | null | undefined {
         return (
             handle &&
-            (getHandleId(handle) != 0 || undefined) &&
+            (this.isHandleValid(handle) || undefined) &&
             ((
                 this as unknown as {
                     memoized: { [id: number]: T }
@@ -143,6 +143,14 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
             ).memoized[getHandleId(handle)] ??
                 this.createInternal<H, T, Args>(handle, ...args))
         )
+    }
+
+    protected static isHandleValid<H extends jhandle, T extends Handle<H>, Args extends any[]>(
+        this: HandleConstructor<H, T, Args> & typeof Handle,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        handle: H,
+    ): boolean {
+        return true
     }
 
     private static createInternal<H extends jhandle, T extends Handle<H>, Args extends any[]>(

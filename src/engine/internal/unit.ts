@@ -1,4 +1,4 @@
-import { Handle, HandleDestructor, HandleState } from "../../core/types/handle"
+import { HandleDestructor, HandleState } from "../../core/types/handle"
 import { Player } from "../../core/types/player"
 import { ReadonlyRect } from "../../core/types/rect"
 import { Event, EventListener, IgnoreEvent, InitializingEvent, TriggerEvent } from "../../event"
@@ -41,6 +41,7 @@ import { doUnitAbilityAction } from "./item/ability"
 import type { AbilityTypeId } from "../object-data/entry/ability-type"
 import { synchronizer } from "../synchronization"
 import { LinkedMap } from "../../utility/linked-map"
+import { Agent } from "../../core/types/agent"
 
 const match = string.match
 const tostring = _G.tostring
@@ -820,7 +821,7 @@ const addAbility = (unit: junit, abilityTypeId: number): jability | undefined =>
     return unitAddAbility(unit, abilityTypeId) ? getUnitAbility(unit, abilityTypeId) : undefined
 }
 
-export class Unit extends Handle<junit> {
+export class Unit extends Agent<junit> {
     public readonly syncId = nextSyncId++ as UnitSyncId
     private [UnitPropertyKey.IS_PAUSED]?: true
     private [UnitPropertyKey.STUN_COUNTER]?: number
