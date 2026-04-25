@@ -887,15 +887,17 @@ export class Unit extends Handle<junit> {
         this.abilities
     }
 
+    private saveData() {
+        const handle = this.handle
+        this[UnitPropertyKey.LAST_X] = this[UnitPropertyKey.LAST_X] ?? getUnitX(handle)
+        this[UnitPropertyKey.LAST_Y] = this[UnitPropertyKey.LAST_Y] ?? getUnitY(handle)
+        this._owner = this._owner ?? Player.of(getOwningPlayer(handle))
+    }
+
     protected override onDestroy(): HandleDestructor {
         const handle = this.handle
 
-        this[UnitPropertyKey.LAST_X] = getUnitX(handle)
-        this[UnitPropertyKey.LAST_Y] = getUnitY(handle)
-
-        if (!this._owner) {
-            this._owner = Player.of(getOwningPlayer(handle))
-        }
+        this.saveData()
 
         const abilities = this.abilities as UnitAbility[]
         for (const ability of abilities) {
@@ -2791,6 +2793,7 @@ export class Unit extends Handle<junit> {
                         return
                     }
                 }
+                unit.saveData()
                 Timer.run(unit, "destroy")
             })
         }
