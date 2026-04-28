@@ -30,6 +30,7 @@ import {
     SubscribableAbilityDependentValue,
 } from "../object-field/ability"
 import { Destructor } from "../../destroyable"
+import { Missile } from "../../core/types/missile"
 
 const createBehaviorFunctionsByAbilityTypeId = new LuaMap<
     AbilityTypeId,
@@ -41,7 +42,7 @@ export type AbilityBehaviorConstructor<Args extends any[]> = new (
     ...args: Args
 ) => AbilityBehavior
 
-/*const invokeOnMissileArrival = <T extends any[]>(
+const invokeOnMissileArrival = <T extends any[]>(
     _missile: Missile,
     success: boolean,
     abilityBehavior: AbilityBehavior<{ periodicActionParameters: T }>,
@@ -50,7 +51,7 @@ export type AbilityBehaviorConstructor<Args extends any[]> = new (
     if (success) {
         abilityBehavior.onMissileArrival(...parameters)
     }
-}*/
+}
 
 export type AbilityBehaviorParameters = {
     isExclusiveOnImpactHandler?: boolean
@@ -273,22 +274,41 @@ export abstract class AbilityBehavior<
         return missileLaunchConfig
     }
 
-    /*protected launchMissile(
+    protected launchMissile(
         source: Unit,
         ...args: [
-            ...pointOrWidget: [x: number, y: number] | [widget: Widget],
-            ...parameters: NonNullable<Parameters["missileParameters"]>
+            ...pointOrWidget: [x: number, y: number] | [widget: Unit /** TODO: support Widget */],
+            ...parameters: NonNullable<Parameters["missileParameters"]>,
         ]
+    ): void
+
+    protected launchMissile(
+        source: Unit,
+        xOrWidget: any,
+        yOrParameter: any,
+        ...parameters: any[]
     ): void {
-        Missile.launch(
-            this.missileLaunchConfig,
-            source,
-            target,
-            invokeOnMissileArrival,
-            this,
-            ...parameters
-        )
-    }*/
+        if (typeof xOrWidget != "number") {
+            Missile.launch(
+                this.missileLaunchConfig,
+                source,
+                xOrWidget,
+                invokeOnMissileArrival,
+                this,
+                yOrParameter,
+                ...parameters,
+            )
+        } else {
+            Missile.launch(
+                this.missileLaunchConfig,
+                source,
+                vec2(xOrWidget, yOrParameter),
+                invokeOnMissileArrival,
+                this,
+                ...parameters,
+            )
+        }
+    }
 
     protected onCreate(): void {
         // no-op
