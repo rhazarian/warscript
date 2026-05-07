@@ -22,6 +22,7 @@ import "./internal/unit/attributes"
 import "./internal/unit/fly-height"
 import "./internal/unit/scale"
 import "./internal/unit/interrupts"
+import "./internal/unit/range-event"
 
 import "./internal/unit/band-aids/ancestral-spirit-cannibalize"
 

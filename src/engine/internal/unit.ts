@@ -1805,24 +1805,6 @@ export class Unit extends Handle<junit> {
         return abilities
     }
 
-    public get onUnitInRange(): Record<number, Event<[Unit]>> {
-        const handle = this.handle
-        const onUnitInRange = setmetatable(new LuaTable<number, Event<[Unit]>>(), {
-            __index(value: number): Event<[Unit]> {
-                const event = new TriggerEvent(
-                    (trigger) => {
-                        TriggerRegisterUnitInRangeSimple(trigger, value, handle)
-                    },
-                    () => $multi(Unit.of(handle)),
-                )
-                rawset(this, value, event)
-                return event
-            },
-        })
-        rawset(this, "onUnitInRange", onUnitInRange)
-        return onUnitInRange
-    }
-
     public get onManaEqual(): Record<number, Event<[Unit, number]>> {
         const handle = this.handle
         const onManaEqual = setmetatable(new LuaTable<number, Event<[Unit, number]>>(), {
