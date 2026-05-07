@@ -24,7 +24,7 @@ export interface ReadonlyLinkedSet<T extends AnyNotNil> extends LuaPairsKeyItera
     next(key: T): T | undefined
     previous(key: T): T | undefined
     contains(key: AnyNotNil): key is T & OneSidedTypeGuard
-    size: number
+    readonly size: number
     forEach<Args extends any[]>(action: (value: T, ...args: Args) => void, ...args: Args): void
     toArray(): T[]
     sumOf(selector: ((value: T) => number) | KeysOfType<T, number>): number
@@ -115,6 +115,24 @@ export class LinkedSet<T extends AnyNotNil> implements ReadonlyLinkedSet<T> {
         } else {
             return false
         }
+        return true
+    }
+
+    protected addBefore(value: T, key: T): boolean {
+        const n = this.n
+        const p = this.p
+        const previous = p.get(value)
+        if (previous !== undefined) {
+            n.set(previous, key)
+            p.set(key, previous)
+        } else if (value == this.f) {
+            this.f = key
+        } else {
+            return false
+        }
+        n.set(key, value)
+        p.set(value, key)
+        this.s = this.s + 1
         return true
     }
 

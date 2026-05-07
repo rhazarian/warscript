@@ -1,4 +1,5 @@
 import { LinkedSet, ReadonlyLinkedSet } from "./linked-set"
+import { UnsupportedOperationException } from "../exception"
 
 type IteratorState<K extends AnyNotNil, V> = {
     n?: K
@@ -18,11 +19,18 @@ type OneSidedTypeGuard = {
     readonly __oneSidedTypeGuard: unique symbol
 }
 
+export interface ReadonlyLinkedMap<K extends AnyNotNil, V> extends LuaPairsIterable<K, V> {
+    readonly keys: ReadonlyLinkedSet<K>
+    get(key: K): V | undefined
+    contains(key: AnyNotNil): key is K & OneSidedTypeGuard
+    readonly size: number
+}
+
 export interface LinkedMap<K extends AnyNotNil, V> extends LuaPairsIterable<K, V> {
     readonly __linkedSet: unique symbol
 }
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
-export class LinkedMap<K extends AnyNotNil, V> {
+export class LinkedMap<K extends AnyNotNil, V> implements ReadonlyLinkedMap<K, V> {
     private k = new LinkedSet<K>()
     private v = new LuaMap<K, V>()
 
@@ -79,4 +87,39 @@ export class LinkedMap<K extends AnyNotNil, V> {
             undefined,
         )
     }
+}
+
+const emptyIteratorState: IteratorState<never, never> = {
+    t: new LuaMap(),
+    v: new LuaMap(),
+}
+
+class EmptyLinkedMap extends LinkedMap<never, never> {
+    public override getOrPut(): never {
+        throw new UnsupportedOperationException()
+    }
+
+    public override put(): never {
+        throw new UnsupportedOperationException()
+    }
+
+    public override remove(): never {
+        throw new UnsupportedOperationException()
+    }
+
+    protected __pairs(
+        this: LinkedMap<never, never>,
+    ): LuaIterator<LuaMultiReturn<[undefined, undefined]>, IteratorState<never, never>> {
+        return $multi(linkedMapNext, emptyIteratorState, undefined)
+    }
+}
+
+const EMPTY_LINKED_MAP = new EmptyLinkedMap()
+
+export const emptyLinkedMap = <K extends AnyNotNil, V>(): ReadonlyLinkedMap<K, V> => {
+    return EMPTY_LINKED_MAP as any
+}
+
+export const mutableLinkedMap = <K extends AnyNotNil, V>(): LinkedMap<K, V> => {
+    return new LinkedMap()
 }
