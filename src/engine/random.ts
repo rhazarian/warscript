@@ -47,3 +47,12 @@ export const random: {
 } = <T>(...elements: T[]): T | undefined => {
     return select(getRandomInt(1, select("#", ...elements)), ...elements)[0]
 }
+
+export const shuffle = (array: unknown[]): void => {
+    for (const i of $range(array.length - 1, 1)) {
+        const j = getRandomInt(0, i)
+        const value = array[i]
+        array[i] = array[j]
+        array[j] = value
+    }
+}
