@@ -451,22 +451,29 @@ const expireBuff = (buff: Buff) => {
 
 export type BuffAdditionalParameters = Prohibit<Record<string, any>, keyof BuffParameters>
 
-export type BuffConstructorParameters<AdditionalParameters extends BuffAdditionalParameters> = [
-    ...typeId:
-        | [ApplicableBuffTypeId]
-        | [
-              typeIds: ReadonlyNonEmptyArray<ApplicableBuffTypeId>,
-              typeIdSelectionPolicy: BuffTypeIdSelectionPolicy,
-          ],
-    polarity: BuffPolarityParameterType,
-    resistanceType: BuffResistanceTypeParameterType,
-    ...abilityOrParameters:
-        | [
-              ability?: Ability | AbilityBehavior,
-              parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>,
+export type BuffConstructorParameters<T extends Buff<BuffAdditionalParameters>> =
+    T extends Buff<infer AdditionalParameters>
+        ? [
+              ...typeId:
+                  | [ApplicableBuffTypeId]
+                  | [
+                        typeIds: ReadonlyNonEmptyArray<ApplicableBuffTypeId>,
+                        typeIdSelectionPolicy: BuffTypeIdSelectionPolicy,
+                    ],
+              polarity: BuffPolarityParameterType,
+              resistanceType: BuffResistanceTypeParameterType,
+              ...abilityOrParameters:
+                  | [
+                        ability?: Ability | AbilityBehavior,
+                        parameters?: BuffParameters &
+                            Omit<AdditionalParameters, keyof BuffParameters>,
+                    ]
+                  | [
+                        parameters?: BuffParameters &
+                            Omit<AdditionalParameters, keyof BuffParameters>,
+                    ],
           ]
-        | [parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>],
-]
+        : never
 
 const buffDamageIntervalInitialTimerCallback = (buff: Buff) => {
     buffDamageIntervalTimerCallback(buff)
@@ -628,7 +635,10 @@ export class Buff<
     private readonly _abilityTypeIds?: AbilityTypeId[]
     private _behaviors?: UnitBehavior[]
 
-    public constructor(target: Unit, ...parameters: BuffConstructorParameters<AdditionalParameters>)
+    public constructor(
+        target: Unit,
+        ...parameters: BuffConstructorParameters<Buff<AdditionalParameters>>
+    )
 
     public constructor(
         private _unit: Unit,
