@@ -1291,6 +1291,19 @@ export class Buff<
         return this[BuffPropertyKey.DURATION]
     }
 
+    public set duration(duration: number) {
+        if (duration <= 0) {
+            const timer = this._timer
+            if (timer !== undefined) {
+                timer.destroy()
+                this._timer = undefined
+            }
+            this[BuffPropertyKey.DURATION] = 0
+        } else {
+            this.remainingDuration += duration - this[BuffPropertyKey.DURATION]
+        }
+    }
+
     public get remainingDuration(): number {
         return this._timer?.remaining ?? 0
     }
@@ -1419,6 +1432,10 @@ export class Buff<
                 .get(this.typeId) ?? "origin",
             isWidgetProvided ? duration : widgetOrDuration,
         )
+    }
+
+    public expire(): void {
+        expireBuff(this)
     }
 
     protected onCreate(): void {
