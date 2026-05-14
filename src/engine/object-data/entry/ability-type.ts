@@ -1010,6 +1010,17 @@ for (const [abilityTypeId] of casterChannelingEffectModelPathsByAbilityTypeId) {
         EventListenerPriority.HIGHEST,
         handleAbilityChannelingStartEvent,
     )
+    Unit.abilityChannelingFinishEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        handleAbilityStopChannelingEvent,
+    )
+    Unit.abilityStopEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        handleAbilityStopChannelingEvent,
+    )
+}
+
+for (const [abilityTypeId] of targetChannelingEffectModelPathsByAbilityTypeId) {
     Unit.abilityWidgetTargetChannelingStartEvent[abilityTypeId].addListener(
         EventListenerPriority.HIGHEST,
         handleAbilityWidgetTargetChannelingStartEvent,
