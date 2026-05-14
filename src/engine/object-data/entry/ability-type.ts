@@ -45,6 +45,7 @@ import { Upgrade, UpgradeId } from "./upgrade"
 import { SoundPresetId } from "./sound-preset"
 import { isSoundLabelCustom, Sound3D, SoundSettings } from "../../../core/types/sound"
 import { luaSetOf } from "../../../utility/lua-sets"
+import { Widget } from "../../../core/types/widget"
 
 export type AbilityTypeId = ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol }
 
@@ -63,6 +64,11 @@ const casterChannelingEffectPresetsByAbilityTypeId = new LuaMap<
 >()
 
 const targetCastingEffectPresetsByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    EffectPresetWithParameters[]
+>()
+
+const targetChannelingEffectPresetsByAbilityTypeId = new LuaMap<
     AbilityTypeId,
     EffectPresetWithParameters[]
 >()
@@ -301,6 +307,19 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         targetCastingEffectPresetsByAbilityTypeId.set(
             this.id,
             map(targetCastingEffectPresets, toEffectPreset),
+        )
+    }
+
+    public get targetChannelingEffectPresets(): EffectPresetWithParameters[] {
+        return targetChannelingEffectPresetsByAbilityTypeId.get(this.id) ?? []
+    }
+
+    public set targetChannelingEffectPresets(
+        targetChannelingEffectPresets: EffectPresetWithParametersInput[],
+    ) {
+        targetChannelingEffectPresetsByAbilityTypeId.set(
+            this.id,
+            map(targetChannelingEffectPresets, toEffectPreset),
         )
     }
 
@@ -890,13 +909,99 @@ const handleAbilityChannelingStartEvent = (caster: Unit, ability: Ability): void
     casterChannelingEffectsByCaster.set(caster, effects)
 }
 
+const targetChannelingEffectModelPathsByAbilityTypeId = postcompile(() => {
+    return mapValues(
+        targetChannelingEffectPresetsByAbilityTypeId,
+        (targetChannelingEffectPresets) =>
+            map(targetChannelingEffectPresets, extractAttachmentPresetInputModelPath),
+    )
+})
+
+const targetChannelingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
+    return mapValues(
+        targetChannelingEffectPresetsByAbilityTypeId,
+        (targetChannelingEffectPresets) =>
+            map(targetChannelingEffectPresets, extractAttachmentPresetInputNodeFQN),
+    )
+})
+
+const targetChannelingEffectParametersByAbilityTypeId = postcompile(() => {
+    return mapValues(
+        targetChannelingEffectPresetsByAbilityTypeId,
+        (targetChannelingEffectPresets) => map(targetChannelingEffectPresets, "parameters"),
+    )
+})
+
+const targetChannelingEffectsByCaster = new LuaMap<Unit, Effect[]>()
+
+const handleAbilityWidgetTargetChannelingStartEvent = (
+    caster: Unit,
+    ability: Ability,
+    target: Widget,
+): void => {
+    const effectModelPaths = targetChannelingEffectModelPathsByAbilityTypeId.get(ability.typeId)
+    const attachmentPoints = targetChannelingEffectAttachmentPointsByAbilityTypeId.get(
+        ability.typeId,
+    )
+    const parameters = targetChannelingEffectParametersByAbilityTypeId.get(ability.typeId)
+    const effects: Effect[] = []
+    if (effectModelPaths != undefined) {
+        for (const i of $range(1, effectModelPaths.length)) {
+            const effectModelPath = effectModelPaths[i - 1]
+            let attachmentPoint = attachmentPoints && attachmentPoints[i - 1]
+            if (attachmentPoint == undefined || attachmentPoint == "") {
+                attachmentPoint = "origin"
+            }
+            effects[i - 1] = Effect.create(
+                effectModelPath,
+                target,
+                attachmentPoint,
+                parameters && parameters[i - 1],
+            )
+        }
+    }
+    targetChannelingEffectsByCaster.set(caster, effects)
+}
+
+const handleAbilityPointTargetChannelingStartEvent = (
+    caster: Unit,
+    ability: Ability,
+    x: number,
+    y: number,
+): void => {
+    const effectModelPaths = targetChannelingEffectModelPathsByAbilityTypeId.get(ability.typeId)
+    const attachmentPoints = targetChannelingEffectAttachmentPointsByAbilityTypeId.get(
+        ability.typeId,
+    )
+    const parameters = targetChannelingEffectParametersByAbilityTypeId.get(ability.typeId)
+    const effects: Effect[] = []
+    if (effectModelPaths != undefined) {
+        for (const i of $range(1, effectModelPaths.length)) {
+            const effectModelPath = effectModelPaths[i - 1]
+            let attachmentPoint = attachmentPoints && attachmentPoints[i - 1]
+            if (attachmentPoint == undefined || attachmentPoint == "") {
+                attachmentPoint = "origin"
+            }
+            effects[i - 1] = Effect.create(effectModelPath, x, y, parameters && parameters[i - 1])
+        }
+    }
+    targetChannelingEffectsByCaster.set(caster, effects)
+}
+
 const handleAbilityStopChannelingEvent = (caster: Unit): void => {
-    const effects = casterChannelingEffectsByCaster.get(caster)
-    if (effects != undefined) {
-        for (const i of $range(1, effects.length)) {
-            effects[i - 1].destroy()
+    const casterEffects = casterChannelingEffectsByCaster.get(caster)
+    if (casterEffects != undefined) {
+        for (const i of $range(1, casterEffects.length)) {
+            casterEffects[i - 1].destroy()
         }
         casterChannelingEffectsByCaster.delete(caster)
+    }
+    const targetEffects = targetChannelingEffectsByCaster.get(caster)
+    if (targetEffects != undefined) {
+        for (const i of $range(1, targetEffects.length)) {
+            targetEffects[i - 1].destroy()
+        }
+        targetChannelingEffectsByCaster.delete(caster)
     }
 }
 
@@ -904,6 +1009,14 @@ for (const [abilityTypeId] of casterChannelingEffectModelPathsByAbilityTypeId) {
     Unit.abilityChannelingStartEvent[abilityTypeId].addListener(
         EventListenerPriority.HIGHEST,
         handleAbilityChannelingStartEvent,
+    )
+    Unit.abilityWidgetTargetChannelingStartEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        handleAbilityWidgetTargetChannelingStartEvent,
+    )
+    Unit.abilityPointTargetChannelingStartEvent[abilityTypeId].addListener(
+        EventListenerPriority.HIGHEST,
+        handleAbilityPointTargetChannelingStartEvent,
     )
     Unit.abilityChannelingFinishEvent[abilityTypeId].addListener(
         EventListenerPriority.HIGHEST,
