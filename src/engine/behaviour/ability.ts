@@ -148,7 +148,7 @@ export abstract class AbilityBehavior<
         return resolveCurrentAbilityDependentValue(this.ability, value)
     }
 
-    protected flashCasterEffect(
+    public flashCasterEffect(
         widget: Widget,
         ...parametersOrDuration:
             | [parameters?: EffectParameters]
@@ -165,7 +165,7 @@ export abstract class AbilityBehavior<
         )
     }
 
-    protected flashTargetEffect(
+    public flashTargetEffect(
         widget: Widget,
         ...parametersOrDuration:
             | [parameters?: EffectParameters]
@@ -182,7 +182,7 @@ export abstract class AbilityBehavior<
         )
     }
 
-    protected flashAreaEffect(
+    public flashAreaEffect(
         x: number,
         y: number,
         ...parametersOrDuration:
@@ -197,7 +197,7 @@ export abstract class AbilityBehavior<
         )
     }
 
-    protected flashEffect(
+    public flashEffect(
         x: number,
         y: number,
         ...parametersOrDuration:
@@ -212,7 +212,7 @@ export abstract class AbilityBehavior<
         )
     }
 
-    protected flashSpecialEffect(
+    public flashSpecialEffect(
         ...args: [
             ...pointOrWidget: [x: number, y: number] | [widget: Widget],
             ...parametersOrDuration:
@@ -221,7 +221,7 @@ export abstract class AbilityBehavior<
         ]
     ): void
 
-    protected flashSpecialEffect(
+    public flashSpecialEffect(
         xOrWidget: number | Widget,
         yOrParametersOrDuration?: EffectParameters | number,
         durationOrParameters?: number | EffectParameters,
