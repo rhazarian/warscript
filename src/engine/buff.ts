@@ -154,6 +154,9 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           maximumAutoAttackCount?: IntegerParameterValueType
           maximumDamageDealtEventCount?: IntegerParameterValueType
           maximumDamageReceivedEventCount?: IntegerParameterValueType
+          absorbedDamageFactor?: NumberParameterValueType
+          maximumDamageAbsorbed?: NumberParameterValueType
+          destroysOnMaximumDamageAbsorbed?: BooleanParameterValueType
 
           damageOnExpiration?: NumberParameterValueType
           healingOnExpiration?: NumberParameterValueType
@@ -213,6 +216,9 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     maximumAutoAttackCount: true,
     maximumDamageDealtEventCount: true,
     maximumDamageReceivedEventCount: true,
+    absorbedDamageFactor: true,
+    maximumDamageAbsorbed: true,
+    destroysOnMaximumDamageAbsorbed: true,
     uniqueGroup: true,
     damageOnExpiration: true,
     healingOnExpiration: true,
@@ -282,6 +288,7 @@ const resolveAndSetNumberValue = <T extends string>(
 }
 
 const buffBooleanParameters = [
+    "destroysOnMaximumDamageAbsorbed",
     "turnsIntoGhost",
     "stuns",
     "ignoresStunImmunity",
@@ -311,6 +318,8 @@ const buffNumberParameters = [
     "healingOverDuration",
     "damageOnExpiration",
     "healingOnExpiration",
+    "absorbedDamageFactor",
+    "maximumDamageAbsorbed",
     "abilityCooldownFactor",
 ] as const
 
@@ -364,6 +373,11 @@ const enum BuffPropertyKey {
     MAXIMUM_DAMAGE_DEALT_EVENT_COUNT,
     DAMAGE_RECEIVED_EVENT_COUNT,
     MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT,
+
+    ABSORBED_DAMAGE_FACTOR,
+    MAXIMUM_DAMAGE_ABSORBED,
+    DAMAGE_ABSORBED,
+    DESTROYS_ON_MAXIMUM_DAMAGE_ABSORBED,
 
     TURNS_INTO_GHOST,
     STUNS,
@@ -590,6 +604,11 @@ export class Buff<
     private [BuffPropertyKey.DAMAGE_DEALT_EVENT_COUNT]?: number
     private [BuffPropertyKey.MAXIMUM_DAMAGE_RECEIVED_EVENT_COUNT]?: number
     private [BuffPropertyKey.DAMAGE_RECEIVED_EVENT_COUNT]?: number
+
+    private [BuffPropertyKey.ABSORBED_DAMAGE_FACTOR]?: number
+    private [BuffPropertyKey.MAXIMUM_DAMAGE_ABSORBED]?: number
+    private [BuffPropertyKey.DAMAGE_ABSORBED]?: number
+    private [BuffPropertyKey.DESTROYS_ON_MAXIMUM_DAMAGE_ABSORBED]?: false
 
     private [BuffPropertyKey.TURNS_INTO_GHOST]?: true
     private [BuffPropertyKey.STUNS]?: true
@@ -1349,6 +1368,44 @@ export class Buff<
         }
     }
 
+    public get absorbedDamageFactor(): number {
+        return this[BuffPropertyKey.ABSORBED_DAMAGE_FACTOR] ?? 1
+    }
+
+    public set absorbedDamageFactor(absorbedDamageFactor: number) {
+        if (absorbedDamageFactor == 1) {
+            this[BuffPropertyKey.ABSORBED_DAMAGE_FACTOR] = undefined
+        } else {
+            this[BuffPropertyKey.ABSORBED_DAMAGE_FACTOR] = absorbedDamageFactor
+        }
+    }
+
+    public get maximumDamageAbsorbed(): number {
+        return this[BuffPropertyKey.MAXIMUM_DAMAGE_ABSORBED] ?? 0
+    }
+
+    public set maximumDamageAbsorbed(maximumDamageAbsorbed: number) {
+        if (maximumDamageAbsorbed == 0) {
+            this[BuffPropertyKey.MAXIMUM_DAMAGE_ABSORBED] = undefined
+        } else {
+            this[BuffPropertyKey.MAXIMUM_DAMAGE_ABSORBED] = maximumDamageAbsorbed
+        }
+    }
+
+    public get damageAbsorbed(): number {
+        return this[BuffPropertyKey.DAMAGE_ABSORBED] ?? 0
+    }
+
+    public get destroysOnMaximumDamageAbsorbed(): boolean {
+        return this[BuffPropertyKey.DESTROYS_ON_MAXIMUM_DAMAGE_ABSORBED] ?? true
+    }
+
+    public set destroysOnMaximumDamageAbsorbed(destroysOnMaximumDamageAbsorbed: boolean) {
+        this[BuffPropertyKey.DESTROYS_ON_MAXIMUM_DAMAGE_ABSORBED] = destroysOnMaximumDamageAbsorbed
+            ? undefined
+            : false
+    }
+
     public get abilityCooldownFactor(): number {
         return this[BuffPropertyKey.ABILITY_COOLDOWN_FACTOR] ?? 1
     }
@@ -1636,6 +1693,24 @@ export class Buff<
 
     public override onDamageReceived(source: Unit | undefined, event: DamageEvent) {
         if (event.originalAmount != 0) {
+            const absorbedDamage = min(
+                event.amount * (this[BuffPropertyKey.ABSORBED_DAMAGE_FACTOR] ?? 1),
+                (this[BuffPropertyKey.MAXIMUM_DAMAGE_ABSORBED] ?? 0) -
+                    (this[BuffPropertyKey.DAMAGE_ABSORBED] ?? 0),
+            )
+            if (absorbedDamage > 0) {
+                event.amount -= absorbedDamage
+                this[BuffPropertyKey.DAMAGE_ABSORBED] =
+                    (this[BuffPropertyKey.DAMAGE_ABSORBED] ?? 0) + absorbedDamage
+                if (
+                    (this[BuffPropertyKey.DESTROYS_ON_MAXIMUM_DAMAGE_ABSORBED] ?? true) &&
+                    this[BuffPropertyKey.DAMAGE_ABSORBED] >=
+                        (this[BuffPropertyKey.MAXIMUM_DAMAGE_ABSORBED] ?? 0)
+                ) {
+                    this.destroy()
+                }
+            }
+
             const damageReceivedEventCount =
                 (this[BuffPropertyKey.DAMAGE_RECEIVED_EVENT_COUNT] ?? 0) + 1
             this[BuffPropertyKey.DAMAGE_RECEIVED_EVENT_COUNT] = damageReceivedEventCount
