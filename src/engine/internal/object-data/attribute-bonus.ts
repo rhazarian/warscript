@@ -1,4 +1,4 @@
-import { AttributeBonusAbilityType } from "../../object-data/entry/ability-type/attribute-increase"
+import { AttributeBonusAbilityType } from "../../object-data/entry/ability-type/attribute-bonus"
 
 /** @internal For use by internal systems. */
 export const ATTRIBUTE_BONUS_DUMMY_ABILITY_TYPE_ID = compiletime(() => {

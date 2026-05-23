@@ -3,7 +3,7 @@ import { Unit } from "./unit"
 import {
     ARMOR_BONUS_DUMMY_ABILITY_FIELD,
     ARMOR_BONUS_DUMMY_ABILITY_TYPE_ID,
-} from "./object-data/armor-increase"
+} from "./object-data/armor-bonus"
 
 const getUnitAbility = BlzGetUnitAbility
 const setAbilityRealLevelField = BlzSetAbilityRealLevelField

@@ -3,7 +3,7 @@ import { AbilityTypeId } from "../../object-data/entry/ability-type"
 import {
     ARMOR_BONUS_DUMMY_ABILITY_FIELD,
     ARMOR_BONUS_DUMMY_ABILITY_TYPE_ID,
-} from "../object-data/armor-increase"
+} from "../object-data/armor-bonus"
 import { addInternalAbility } from "../utility"
 
 import { product, sum } from "../../../utility/arrays"
@@ -26,6 +26,14 @@ import {
     EVASION_PROBABILITY_DUMMY_ABILITY_TYPE_ID,
 } from "../object-data/evasion-probability"
 import {
+    HEALTH_BONUS_DUMMY_ABILITY_FIELD,
+    HEALTH_BONUS_DUMMY_ABILITY_TYPE_ID,
+} from "../object-data/health-bonus"
+import {
+    MANA_BONUS_DUMMY_ABILITY_FIELD,
+    MANA_BONUS_DUMMY_ABILITY_TYPE_ID,
+} from "../object-data/mana-bonus"
+import {
     MANA_REGENERATION_RATE_INCREASE_FACTOR_ABILITY_FIELD,
     MANA_REGENERATION_RATE_INCREASE_FACTOR_DUMMY_ABILITY_TYPE_ID,
 } from "../object-data/mana-regeneration-rate-increase-factor"
@@ -35,6 +43,8 @@ export type UnitBonusId<Brand extends string = any> = number & {
     readonly __unitBonusIdBrand: Brand
 }
 
+export type UnitMaxHealthBonusId = UnitBonusId<"maxHealth">
+export type UnitMaxManaBonusId = UnitBonusId<"maxMana">
 export type UnitArmorBonusId = UnitBonusId<"armor">
 export type UnitAttackSpeedFactorBonusId = UnitBonusId<"attackSpeedFactor">
 export type UnitMovementSpeedFactorBonusId = UnitBonusId<"movementSpeedFactor">
@@ -77,6 +87,20 @@ const atLeastOnceProbability = (array: readonly number[]): number => {
 }
 
 export namespace UnitBonusType {
+    export const HEALTH: UnitBonusType<UnitMaxHealthBonusId> = {
+        abilityTypeId: HEALTH_BONUS_DUMMY_ABILITY_TYPE_ID,
+        field: HEALTH_BONUS_DUMMY_ABILITY_FIELD,
+        integer: true,
+        reduce: sum,
+        initialValue: 0,
+    }
+    export const MANA: UnitBonusType<UnitMaxManaBonusId> = {
+        abilityTypeId: MANA_BONUS_DUMMY_ABILITY_TYPE_ID,
+        field: MANA_BONUS_DUMMY_ABILITY_FIELD,
+        integer: true,
+        reduce: sum,
+        initialValue: 0,
+    }
     export const ARMOR: UnitBonusType<UnitArmorBonusId> = {
         abilityTypeId: ARMOR_BONUS_DUMMY_ABILITY_TYPE_ID,
         field: ARMOR_BONUS_DUMMY_ABILITY_FIELD,

@@ -131,7 +131,8 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           damageIncrease?: NumberParameterValueType
           damageIncreaseFactor?: NumberParameterValueType
           armorIncrease?: NumberParameterValueType
-          armorIncreaseFactor?: NumberParameterValueType
+          maxHealthIncrease?: NumberParameterValueType
+          maxManaIncrease?: NumberParameterValueType
           attackSpeedIncreaseFactor?: NumberParameterValueType
           movementSpeedIncreaseFactor?: NumberParameterValueType
           manaRegenerationRateIncreaseFactor?: NumberParameterValueType
@@ -193,7 +194,8 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     damageIncrease: true,
     damageIncreaseFactor: true,
     armorIncrease: true,
-    armorIncreaseFactor: true,
+    maxHealthIncrease: true,
+    maxManaIncrease: true,
     attackSpeedIncreaseFactor: true,
     movementSpeedIncreaseFactor: true,
     manaRegenerationRateIncreaseFactor: true,
@@ -305,6 +307,8 @@ const buffNumberParameters = [
     "manaRegenerationRateIncreaseFactor",
     "evasionProbability",
     "armorIncrease",
+    "maxHealthIncrease",
+    "maxManaIncrease",
     "damageFactor",
     "receivedDamageFactor",
     "maximumAutoAttackCount",
@@ -1124,6 +1128,22 @@ export class Buff<
 
     public set armorIncrease(armorIncrease: number) {
         this.addOrUpdateOrRemoveUnitBonus(UnitBonusType.ARMOR, armorIncrease)
+    }
+
+    public get maxHealthIncrease(): number {
+        return this.getUnitBonus(UnitBonusType.HEALTH)
+    }
+
+    public set maxHealthIncrease(maxHealthIncrease: number) {
+        this.addOrUpdateOrRemoveUnitBonus(UnitBonusType.HEALTH, maxHealthIncrease)
+    }
+
+    public get maxManaIncrease(): number {
+        return this.getUnitBonus(UnitBonusType.MANA)
+    }
+
+    public set maxManaIncrease(maxManaIncrease: number) {
+        this.addOrUpdateOrRemoveUnitBonus(UnitBonusType.MANA, maxManaIncrease)
     }
 
     public get turnsIntoGhost(): boolean {
