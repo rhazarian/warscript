@@ -637,7 +637,7 @@ export class Buff<
 
     public readonly parameters: IsExactlyAny<AdditionalParameters> extends true
         ? any
-        : keyof AdditionalParameters extends never
+        : AdditionalParameters extends Record<PropertyKey, never>
           ? undefined
           : {
                 [K in keyof Omit<
