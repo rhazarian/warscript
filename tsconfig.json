@@ -11,7 +11,7 @@
         "alwaysStrict": true,
         "strictNullChecks": true,
         "stripInternal": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "rootDir": "src",
         "outDir": "dist",
         "declaration": true,

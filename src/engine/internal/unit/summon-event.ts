@@ -21,12 +21,12 @@ rawset(
         EventListenerPriority.HIGHEST,
         (summonedUnit, summoningUnit) => {
             if (summonedUnit != undefined && summoningUnit != undefined) {
-                return $multi(true, summoningUnit, summonedUnit)
+                return $multi(true as const, summoningUnit, summonedUnit)
             } else {
-                return $multi(false)
+                return $multi(false as const)
             }
-        }
-    )
+        },
+    ),
 )
 
 declare module "../unit" {
@@ -42,10 +42,10 @@ rawset(
         EventListenerPriority.HIGH,
         (summonedUnit, summoningUnit) => {
             if (summonedUnit != undefined) {
-                return $multi(true, summonedUnit, summoningUnit)
+                return $multi(true as const, summonedUnit, summoningUnit)
             } else {
-                return $multi(false)
+                return $multi(false as const)
             }
-        }
-    )
+        },
+    ),
 )
