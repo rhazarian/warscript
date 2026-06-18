@@ -1479,12 +1479,53 @@ export class Buff<
         yOrParametersOrDuration?: EffectParameters | number,
         parametersOrDuration?: EffectParameters | number,
     ): void {
+        this.flash(
+            this[BuffPropertyKey.EFFECT_MODEL_PATH],
+            stringValueByBuffTypeIdByFieldId
+                .get(fourCC("feft") as ObjectFieldId)!
+                .get(this.typeId) ?? "origin",
+            widgetOrXOrParametersOrDuration,
+            yOrParametersOrDuration,
+            parametersOrDuration,
+        )
+    }
+
+    public flashSpecialEffect(
+        ...parameters: [
+            ...widgetOrXY: [] | [Widget] | [x: number, x: number],
+            ...parametersOrDuration: [] | [EffectParameters] | [number],
+        ]
+    ): void
+
+    public flashSpecialEffect(
+        widgetOrXOrParametersOrDuration?: Widget | EffectParameters | number,
+        yOrParametersOrDuration?: EffectParameters | number,
+        parametersOrDuration?: EffectParameters | number,
+    ): void {
+        this.flash(
+            this[BuffPropertyKey.SPECIAL_EFFECT_MODEL_PATH],
+            stringValueByBuffTypeIdByFieldId
+                .get(fourCC("fspt") as ObjectFieldId)!
+                .get(this.typeId) ?? "origin",
+            widgetOrXOrParametersOrDuration,
+            yOrParametersOrDuration,
+            parametersOrDuration,
+        )
+    }
+
+    private flash(
+        modelPath: string,
+        attachmentPoint: string,
+        widgetOrXOrParametersOrDuration?: Widget | EffectParameters | number,
+        yOrParametersOrDuration?: EffectParameters | number,
+        parametersOrDuration?: EffectParameters | number,
+    ) {
         if (
             typeof widgetOrXOrParametersOrDuration == "number" &&
             typeof yOrParametersOrDuration == "number"
         ) {
             Effect.flash(
-                this[BuffPropertyKey.EFFECT_MODEL_PATH],
+                modelPath,
                 widgetOrXOrParametersOrDuration, // x
                 yOrParametersOrDuration, // y
                 parametersOrDuration,
@@ -1495,30 +1536,12 @@ export class Buff<
                 widgetOrXOrParametersOrDuration instanceof Item ||
                 widgetOrXOrParametersOrDuration instanceof Destructable
             Effect.flash(
-                this[BuffPropertyKey.EFFECT_MODEL_PATH],
+                modelPath,
                 isWidgetProvided ? widgetOrXOrParametersOrDuration : this._unit,
-                stringValueByBuffTypeIdByFieldId
-                    .get(fourCC("feft") as ObjectFieldId)!
-                    .get(this.typeId) ?? "origin",
+                attachmentPoint,
                 isWidgetProvided ? yOrParametersOrDuration : widgetOrXOrParametersOrDuration,
             )
         }
-    }
-
-    public flashSpecialEffect(
-        ...parameters: [...widget: [] | [Widget], ...duration: [] | [number]]
-    ): void
-
-    public flashSpecialEffect(widgetOrDuration?: Widget | number, duration?: number): void {
-        const isWidgetProvided = typeof widgetOrDuration == "object"
-        Effect.flash(
-            this[BuffPropertyKey.SPECIAL_EFFECT_MODEL_PATH],
-            isWidgetProvided ? widgetOrDuration : this._unit,
-            stringValueByBuffTypeIdByFieldId
-                .get(fourCC("fspt") as ObjectFieldId)!
-                .get(this.typeId) ?? "origin",
-            isWidgetProvided ? duration : widgetOrDuration,
-        )
     }
 
     public expire(): void {
