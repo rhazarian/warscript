@@ -650,6 +650,8 @@ export class Buff<
 
     private readonly handle: jability
 
+    public readonly previousBuff?: Buff
+
     private _timer?: Timer
     private readonly _level?: number
     private readonly _spellStealPriority?: number
@@ -767,7 +769,8 @@ export class Buff<
             buffByTypeIdByUnit.set(_unit, buffByTypeId)
         }
 
-        buffByTypeId.get(typeId)?.destroy()
+        this.previousBuff = buffByTypeId.get(typeId)
+        this.previousBuff?.destroy()
 
         const uniqueGroup = parameters?.uniqueGroup ?? defaultParameters?.uniqueGroup
         if (uniqueGroup != undefined) {
