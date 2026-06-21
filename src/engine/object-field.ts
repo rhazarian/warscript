@@ -587,20 +587,21 @@ export abstract class ObjectLevelField<
 
     protected abstract getLevelCount(entry: ObjectDataEntryType | InstanceType): number
 
-    public getValue<LevelType extends [number] | []>(
+    public getValue<LevelType extends [number, boolean?] | [boolean?]>(
         entry: ObjectDataEntryType | InstanceType,
-        ...[level]: LevelType
-    ): LevelType extends [number] ? ValueType : ValueType[]
+        ...[level, includeModifiers]: LevelType
+    ): LevelType extends [number, boolean?] ? ValueType : ValueType[]
 
     public getValue(
         entry: ObjectDataEntryType | InstanceType,
         level?: number,
+        includeModifiers?: boolean,
     ): ValueType[] | ValueType {
         if (level == undefined) {
             const result: ValueType[] = []
             const levelCount = this.getLevelCount(entry)
             for (const i of $range(0, levelCount - 1)) {
-                result[i] = this.getValue(entry, i)
+                result[i] = this.getValue(entry, i, includeModifiers)
             }
             return result
         }
@@ -622,9 +623,11 @@ export abstract class ObjectLevelField<
             return this.defaultValue
         }
 
-        const originalValue = this.originalValueByLevelByInstance?.get(entry)?.get(level)
-        if (originalValue !== undefined) {
-            return originalValue
+        if (!includeModifiers) {
+            const originalValue = this.originalValueByLevelByInstance?.get(entry)?.get(level)
+            if (originalValue !== undefined) {
+                return originalValue
+            }
         }
 
         return this.getActualValue(entry, level)

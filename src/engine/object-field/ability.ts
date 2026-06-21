@@ -537,9 +537,9 @@ export const resolveCurrentAbilityDependentValue: {
     value?: AbilityDependentValue<ValueType>,
 ): ValueType | undefined => {
     if (value instanceof AbilityField) {
-        return value.getValue(ability)
+        return value.getValue(ability, true)
     } else if (value instanceof AbilityLevelField) {
-        return value.getValue(ability, ability.level)
+        return value.getValue(ability, ability.level, true)
     } else if (typeof value == "function") {
         return value(ability)
     } else {
