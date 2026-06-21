@@ -38,6 +38,8 @@ export abstract class DamageAbilityBehavior<
         super(ability)
     }
 
+    protected precalculatedDamage?: number
+
     protected calculateDamage(caster: Unit): number {
         const parameters = this.parameters
         let damage = this.resolveCurrentAbilityDependentValue(this.damage)
@@ -66,7 +68,7 @@ export abstract class DamageAbilityBehavior<
         const parameters = this.parameters
         caster.damageTarget(
             target,
-            damage ?? this.calculateDamage(caster),
+            damage ?? this.precalculatedDamage ?? this.calculateDamage(caster),
             undefined,
             undefined,
             this.resolveCurrentAbilityDependentValue(parameters?.attackType),
@@ -74,6 +76,14 @@ export abstract class DamageAbilityBehavior<
             parameters?.weaponType,
             this.resolveCurrentAbilityDependentValue(parameters?.metadata),
         )
+    }
+
+    public override onChannelingStart(caster: Unit): void {
+        this.precalculatedDamage = this.calculateDamage(caster)
+    }
+
+    public override onStop(): void {
+        this.precalculatedDamage = undefined
     }
 }
 
@@ -130,7 +140,7 @@ abstract class DamageAreaAbilityBehavior extends DamageAbilityBehavior<DamageAre
             ),
         )
 
-        let damage = this.calculateDamage(caster)
+        let damage = this.precalculatedDamage ?? this.calculateDamage(caster)
         const maximumDamage = this.resolveCurrentAbilityDependentValue(
             parameters?.maximumDamage ?? 0,
         )
