@@ -54,6 +54,22 @@ export const max = math.max
 
 export const min = math.min
 
+export const sum = (x: number, ...numbers: number[]): number => {
+    for (const i of $range(1, select("#", ...numbers))) {
+        const [number] = select(i, ...numbers)
+        x += number
+    }
+    return x
+}
+
+export const product = (x: number, ...numbers: number[]): number => {
+    for (const i of $range(1, select("#", ...numbers))) {
+        const [number] = select(i, ...numbers)
+        x *= number
+    }
+    return x
+}
+
 /** Returns the signum function of the argument;
  * zero if the argument is zero,
  * 1.0 if the argument is greater than zero,
