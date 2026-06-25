@@ -3,15 +3,25 @@ import { Player } from "./player"
 import { Event, TriggerEvent } from "../../event"
 import { Timer } from "./timer"
 import { Color } from "./color"
-import { FRAME_MAX_Y, FRAME_MIN_Y, getFrameMinXMaxX } from "../../engine/internal/misc/frame-coordinates"
+import {
+    FRAME_MAX_Y,
+    FRAME_MIN_Y,
+    getFrameMinXMaxX,
+} from "../../engine/internal/misc/frame-coordinates"
 import { frameCoordinatesToWorld, worldCoordinatesToFrame } from "./playerCamera"
 import { getTerrainZ } from "../../engine/internal/misc/get-terrain-z"
+import { mutableLuaSet } from "../../utility/lua-sets"
+import { Socket } from "../../net/socket"
+import { getOrPut, luaMapInvert, luaMapOf, mutableLuaMap } from "../../utility/lua-maps"
 
 const frameClick = BlzFrameClick
 const frameGetEnable = BlzFrameGetEnable
 const frameIsVisible = BlzFrameIsVisible
 const frameSetEnable = BlzFrameSetEnable
 const frameSetScale = BlzFrameSetScale
+const getHandleId = GetHandleId
+const getOriginFrame = BlzGetOriginFrame
+const location = Location
 
 const rawget = _G.rawget
 const rawset = _G.rawset
@@ -86,7 +96,45 @@ export namespace FramePoint {
 
 const tooltipByFrame = setmetatable(new LuaMap<Frame, Frame>(), { __mode: "k" })
 
+const keyByAsyncInitOriginFrameType = luaMapOf(
+    ORIGIN_FRAME_PORTRAIT_HP_TEXT,
+    "hp",
+    ORIGIN_FRAME_PORTRAIT_MANA_TEXT,
+    "mana",
+)
 
+const asyncInitOriginFrameTypeByKey = luaMapInvert(keyByAsyncInitOriginFrameType)
+
+const seenAsyncInitOriginFrameTypes = mutableLuaSet<joriginframetype>()
+
+const seenAsyncInitOriginFrameTypesSocket = new Socket()
+
+const seenPlayersByAsyncInitOriginFrameType = mutableLuaMap<joriginframetype, LuaSet<Player>>()
+
+seenAsyncInitOriginFrameTypesSocket.onMessage.addListener((player, key) => {
+    const asyncInitOriginFrameType = asyncInitOriginFrameTypeByKey.get(key)
+    if (asyncInitOriginFrameType != undefined) {
+        getOrPut(
+            seenPlayersByAsyncInitOriginFrameType,
+            asyncInitOriginFrameType,
+            mutableLuaSet,
+        ).add(player)
+    }
+})
+
+const haveAllPlayersSeenAsyncInitOriginFrameType = (frame: joriginframetype): boolean => {
+    const players = seenPlayersByAsyncInitOriginFrameType.get(frame)
+    if (players == undefined) {
+        return false
+    }
+    for (const player of Player.all) {
+        if (player.isUser && player.isPlaying && !players.has(player)) {
+            return false
+        }
+    }
+    keyByAsyncInitOriginFrameType.delete(frame)
+    return true
+}
 
 export class Frame extends Handle<jframehandle> {
     public static readonly GAME_UI: Frame = Frame.byOrigin(ORIGIN_FRAME_GAME_UI)
@@ -851,7 +899,21 @@ export class Frame extends Handle<jframehandle> {
         frameType: joriginframetype,
         index = 0,
     ): T {
-        return this.of<jframehandle, T>(BlzGetOriginFrame(frameType, index))
+        const frame = getOriginFrame(frameType, index)
+        const asyncInitOriginFrameTypeKey = keyByAsyncInitOriginFrameType.get(frameType)
+        if (
+            index == 0 &&
+            asyncInitOriginFrameTypeKey != undefined &&
+            !haveAllPlayersSeenAsyncInitOriginFrameType(frameType)
+        ) {
+            if (getHandleId(frame) == 0 || seenAsyncInitOriginFrameTypes.has(frameType)) {
+                location(0, 0)
+            } else {
+                seenAsyncInitOriginFrameTypes.add(frameType)
+                seenAsyncInitOriginFrameTypesSocket.send(asyncInitOriginFrameTypeKey)
+            }
+        }
+        return this.of<jframehandle, T>(frame)
     }
 }
 
