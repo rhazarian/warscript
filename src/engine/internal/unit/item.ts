@@ -16,7 +16,7 @@ const handleByUnitItems = setmetatable(new LuaMap<UnitItems, junit>(), { __mode:
 
 const unitItemsNext = (handle: junit, index: number) => {
     const slot = index & 0b111
-    if (index >> 3 == slot) {
+    if (index >>> 3 == slot) {
         return $multi(undefined as unknown as number, undefined)
     }
     return $multi(index + 1, Item.of(unitItemInSlot(handle, slot)))
