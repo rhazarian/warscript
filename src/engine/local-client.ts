@@ -75,6 +75,7 @@ let previousMainSelectedUnit: Unit | undefined
 let isInTargetingMode = false
 const targetingModeEnterEvent = new Event()
 const targetingModeLeaveEvent = new Event()
+const targetingModeStateChangeEvent = new Event()
 
 export class LocalClient {
     private constructor() {
@@ -220,6 +221,8 @@ export class LocalClient {
 
     public static readonly targetingModeLeaveEvent = targetingModeLeaveEvent
 
+    public static readonly targetingModeStateChangeEvent = targetingModeStateChangeEvent
+
     public static readonly onDisconnect = new TriggerEvent(
         (trigger) => {
             TriggerRegisterGameStateEvent(trigger, GAME_STATE_DISCONNECTED, NOT_EQUAL, 0)
@@ -244,10 +247,12 @@ Timer.onPeriod[1 / 64].addListener(() => {
         if (!isInTargetingMode) {
             isInTargetingMode = true
             Event.invoke(targetingModeEnterEvent)
+            Event.invoke(targetingModeStateChangeEvent)
         }
     } else if (isInTargetingMode) {
         isInTargetingMode = false
         Event.invoke(targetingModeLeaveEvent)
+        Event.invoke(targetingModeStateChangeEvent)
     }
 })
 
