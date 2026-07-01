@@ -29,6 +29,7 @@ export abstract class ItemField<
 }
 
 const nativeItemBooleanFieldIds = luaSetOf(
+    fourCC("ipaw"),
     fourCC("iusa"),
     // TODO
 )
