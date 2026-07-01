@@ -72,7 +72,7 @@ const compareUnitsSelectionPriority = (a: Unit, b: Unit): boolean => {
 let mainSelectedUnitChangeEvent: Event<[Unit | undefined, Unit | undefined]>
 let previousMainSelectedUnit: Unit | undefined
 
-let isInTargetingMode = false
+let lastTargetingModeState = false
 const targetingModeEnterEvent = new Event()
 const targetingModeLeaveEvent = new Event()
 const targetingModeStateChangeEvent = new Event()
@@ -214,7 +214,7 @@ export class LocalClient {
     }
 
     public static get isInTargetingMode(): boolean {
-        return isInTargetingMode
+        return actualizeTargetingModeState()
     }
 
     public static readonly targetingModeEnterEvent = targetingModeEnterEvent
@@ -233,7 +233,7 @@ export class LocalClient {
 
 const commandButtons = array(12, (i) => Frame.byOrigin(ORIGIN_FRAME_COMMAND_BUTTON, i))
 
-const isTargetingModeActive = (): boolean => {
+const getTargetingModeState = (): boolean => {
     for (const i of $range(0, 10)) {
         if (commandButtons[i].visible) {
             return false
@@ -242,18 +242,25 @@ const isTargetingModeActive = (): boolean => {
     return commandButtons[11].visible
 }
 
-Timer.onPeriod[1 / 64].addListener(() => {
-    if (isTargetingModeActive()) {
-        if (!isInTargetingMode) {
-            isInTargetingMode = true
+const actualizeTargetingModeState = (): boolean => {
+    if (getTargetingModeState()) {
+        if (!lastTargetingModeState) {
+            lastTargetingModeState = true
             Event.invoke(targetingModeEnterEvent)
             Event.invoke(targetingModeStateChangeEvent)
         }
-    } else if (isInTargetingMode) {
-        isInTargetingMode = false
+        return true
+    }
+    if (lastTargetingModeState) {
+        lastTargetingModeState = false
         Event.invoke(targetingModeLeaveEvent)
         Event.invoke(targetingModeStateChangeEvent)
     }
+    return false
+}
+
+Timer.onPeriod[1 / 64].addListener(() => {
+    actualizeTargetingModeState()
 })
 
 warpack.afterMapInit(() => {
