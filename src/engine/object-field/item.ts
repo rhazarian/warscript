@@ -7,7 +7,12 @@ const convertItemBooleanField = ConvertItemBooleanField
 const convertItemIntegerField = ConvertItemIntegerField
 const getItemBooleanField = BlzGetItemBooleanField
 const getItemIntegerField = BlzGetItemIntegerField
+const isItemPawnable = IsItemPawnable
+const isItemPowerup = IsItemPowerup
 const setItemBooleanField = BlzSetItemBooleanField
+const setItemDropOnDeath = SetItemDropOnDeath
+const setItemDroppable = SetItemDroppable
+const setItemPawnable = SetItemPawnable
 const setItemIntegerField = BlzSetItemIntegerField
 
 export abstract class ItemField<
@@ -46,6 +51,21 @@ export class ItemBooleanField extends ItemField<boolean, jitembooleanfield> {
     }
 
     protected override setNativeFieldValue(instance: Item, value: boolean): boolean {
+        if (this.id == fourCC("iusa")) {
+            const handle = instance.handle
+            const powerUp = isItemPowerup(handle)
+            const perishes = getItemBooleanField(handle, ITEM_BF_PERISHABLE)
+            const dropsOnDeath = getItemBooleanField(handle, ITEM_BF_DROPPED_WHEN_CARRIER_DIES)
+            const canBeDropped = getItemBooleanField(handle, ITEM_BF_CAN_BE_DROPPED)
+            const canBeSold = isItemPawnable(handle)
+            const result = setItemBooleanField(handle, ITEM_BF_ACTIVELY_USED, value)
+            setItemPawnable(handle, canBeSold)
+            setItemDroppable(handle, canBeDropped)
+            setItemDropOnDeath(handle, dropsOnDeath)
+            setItemBooleanField(handle, ITEM_BF_PERISHABLE, perishes)
+            setItemBooleanField(handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, powerUp)
+            return result
+        }
         return setItemBooleanField(instance.handle, this.nativeField, value)
     }
 }

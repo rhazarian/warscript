@@ -266,25 +266,6 @@ export class Item extends Handle<jitem> {
         return IsItemInvulnerable(this.handle)
     }
 
-    public set isActivelyUsed(isActivelyUsed: boolean) {
-        const handle = this.handle
-        const powerUp = isItemPowerup(handle)
-        const perishes = getItemBooleanField(handle, ITEM_BF_PERISHABLE)
-        const dropsOnDeath = getItemBooleanField(handle, ITEM_BF_DROPPED_WHEN_CARRIER_DIES)
-        const canBeDropped = getItemBooleanField(handle, ITEM_BF_CAN_BE_DROPPED)
-        const canBeSold = isItemPawnable(handle)
-        setItemBooleanField(handle, ITEM_BF_ACTIVELY_USED, isActivelyUsed)
-        setItemPawnable(handle, canBeSold)
-        setItemDroppable(handle, canBeDropped)
-        setItemDropOnDeath(handle, dropsOnDeath)
-        setItemBooleanField(handle, ITEM_BF_PERISHABLE, perishes)
-        setItemBooleanField(handle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, powerUp)
-    }
-
-    public get isActivelyUsed(): boolean {
-        return getItemBooleanField(this.handle, ITEM_BF_ACTIVELY_USED)
-    }
-
     public set visible(v: boolean) {
         SetItemVisible(this.handle, v)
     }
