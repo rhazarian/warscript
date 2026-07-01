@@ -223,14 +223,6 @@ export class Item extends Handle<jitem> {
         return getItemBooleanField(this.handle, ITEM_BF_CAN_BE_DROPPED)
     }
 
-    public set canBeSold(canBeSold: boolean) {
-        setItemPawnable(this.handle, canBeSold)
-    }
-
-    public get canBeSold(): boolean {
-        return isItemPawnable(this.handle)
-    }
-
     public set perishes(perishes: boolean) {
         const handle = this.handle
         const powerUp = isItemPowerup(handle)

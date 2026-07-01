@@ -1,5 +1,5 @@
 import { Item } from "../../engine/internal/item"
 import "../../engine/internal/item+owner"
-import "../../engine/internal/item/is-actively-used"
+import "../../engine/internal/item/fields"
 
 export { Item }
