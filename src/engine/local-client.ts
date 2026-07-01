@@ -6,6 +6,7 @@ import { Frame } from "../core/types/frame"
 import { Player } from "../core/types/player"
 import { Timer } from "../core/types/timer"
 import { Color } from "../core/types/color"
+import { array } from "../utility/arrays"
 
 const loadTOCFile = BlzLoadTOCFile
 const getLocalClientWidth = BlzGetLocalClientWidth
@@ -71,6 +72,10 @@ const compareUnitsSelectionPriority = (a: Unit, b: Unit): boolean => {
 let mainSelectedUnitChangeEvent: Event<[Unit | undefined, Unit | undefined]>
 let previousMainSelectedUnit: Unit | undefined
 
+let isInTargetingMode = false
+const targetingModeEnterEvent = new Event()
+const targetingModeLeaveEvent = new Event()
+
 export class LocalClient {
     private constructor() {
         // should not be instantiated
@@ -96,6 +101,10 @@ export class LocalClient {
 
     public static get isActive(): boolean {
         return isLocalClientActive()
+    }
+
+    public static get isMinimized(): boolean {
+        return getLocalClientHeight() == 0
     }
 
     public static pingMinimap(
@@ -203,6 +212,14 @@ export class LocalClient {
         return mainSelectedUnitChangeEvent
     }
 
+    public static get isInTargetingMode(): boolean {
+        return isInTargetingMode
+    }
+
+    public static readonly targetingModeEnterEvent = targetingModeEnterEvent
+
+    public static readonly targetingModeLeaveEvent = targetingModeLeaveEvent
+
     public static readonly onDisconnect = new TriggerEvent(
         (trigger) => {
             TriggerRegisterGameStateEvent(trigger, GAME_STATE_DISCONNECTED, NOT_EQUAL, 0)
@@ -210,6 +227,29 @@ export class LocalClient {
         () => $multi(),
     )
 }
+
+const commandButtons = array(12, (i) => Frame.byOrigin(ORIGIN_FRAME_COMMAND_BUTTON, i))
+
+const isTargetingModeActive = (): boolean => {
+    for (const i of $range(0, 10)) {
+        if (commandButtons[i].visible) {
+            return false
+        }
+    }
+    return commandButtons[11].visible
+}
+
+Timer.onPeriod[1 / 64].addListener(() => {
+    if (isTargetingModeActive()) {
+        if (!isInTargetingMode) {
+            isInTargetingMode = true
+            Event.invoke(targetingModeEnterEvent)
+        }
+    } else if (isInTargetingMode) {
+        isInTargetingMode = false
+        Event.invoke(targetingModeLeaveEvent)
+    }
+})
 
 warpack.afterMapInit(() => {
     rawset(LocalClient, "isHD", loadTOCFile(tocPath))
