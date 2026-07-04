@@ -28,15 +28,20 @@ export class UnorderedMap<K extends AnyNotNil, V> implements ReadonlyUnorderedMa
             return value
         }
         value = defaultValue()
-        this.v.set(key, value)
-        ++this.s
+        if (value != undefined) {
+            this.v.set(key, value)
+            ++this.s
+        }
         return value
     }
 
     public put(key: K, value: V): void {
-        if (!this.v.has(key)) {
-            this.v.set(key, value)
+        const has = this.v.has(key)
+        this.v.set(key, value)
+        if (value != undefined && !has) {
             ++this.s
+        } else if (value == undefined && has) {
+            --this.s
         }
     }
 
