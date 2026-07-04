@@ -238,6 +238,10 @@ export class LinkedSet<T extends AnyNotNil> implements ReadonlyLinkedSet<T> {
         this.l = array[s - 1]
     }
 
+    protected __len(): number {
+        return this.s
+    }
+
     protected __pairs(this: LinkedSet<T>): LuaIterator<T | undefined, IteratorState<T>> {
         return $multi(
             linkedSetNext,
@@ -257,6 +261,10 @@ const emptyIteratorState: IteratorState<never> = {
 class EmptyLinkedSet extends LinkedSet<never> {
     override add(): boolean {
         throw new UnsupportedOperationException()
+    }
+
+    protected __len(): number {
+        return 0
     }
 
     protected __pairs(this: LinkedSet<never>): LuaIterator<undefined, IteratorState<never>> {

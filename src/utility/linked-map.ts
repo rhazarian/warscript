@@ -27,7 +27,7 @@ export interface ReadonlyLinkedMap<K extends AnyNotNil, V> extends LuaPairsItera
 }
 
 export interface LinkedMap<K extends AnyNotNil, V> extends LuaPairsIterable<K, V> {
-    readonly __linkedSet: unique symbol
+    readonly __linkedMap: unique symbol
 }
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class LinkedMap<K extends AnyNotNil, V> implements ReadonlyLinkedMap<K, V> {
@@ -74,6 +74,10 @@ export class LinkedMap<K extends AnyNotNil, V> implements ReadonlyLinkedMap<K, V
         return this.keys.size
     }
 
+    protected __len(): number {
+        return this.keys.size
+    }
+
     protected __pairs(
         this: LinkedMap<K, V>,
     ): LuaIterator<LuaMultiReturn<[K | undefined, V | undefined]>, IteratorState<K, V>> {
@@ -105,6 +109,10 @@ class EmptyLinkedMap extends LinkedMap<never, never> {
 
     public override remove(): never {
         throw new UnsupportedOperationException()
+    }
+
+    protected __len(): number {
+        return 0
     }
 
     protected __pairs(
