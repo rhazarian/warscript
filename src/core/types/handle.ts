@@ -3,6 +3,7 @@ import { getClass, getSuperclass } from "../../utility/reflection"
 import { AbstractConstructor } from "../../utility/types"
 import { IllegalStateException } from "../../exception"
 import { AttributesHolder } from "../../attributes"
+import { checkNotNull } from "../../utility/preconditions"
 
 const getHandleId = GetHandleId
 
@@ -202,12 +203,17 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
      * Frees this handle, and runs any associated destruction hooks.
      */
     public destroy(...parameters: DestroyParameters): NoOverride {
+        if (
+            this[HandlePropertyKey.STATE] == HandleState.BEING_DESTROYED ||
+            this[HandlePropertyKey.STATE] == HandleState.DESTROYED
+        ) {
+            return undefined!
+        }
+
         const clazz = this.constructor as typeof Handle
 
         const id = getHandleId(this.handle)
-        if (!clazz.memoized[id]) {
-            throw new IllegalStateException(`Double-destroy run for handle ${id}`)
-        }
+        checkNotNull(clazz.memoized[id])
 
         this[HandlePropertyKey.STATE] = HandleState.BEING_DESTROYED
 
@@ -217,6 +223,7 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
         Handle.invokeOnDestroyEvent(clazz, this)
 
         this.onDestroy(...parameters)
+
         if ((this[HandlePropertyKey.STATE] as HandleState) != HandleState.DESTROYED) {
             throw new IllegalStateException(
                 `'onDestroy' is incorrectly overridden (class '${clazz.name}').`,
