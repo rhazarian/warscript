@@ -9,7 +9,6 @@ import {
     doAbilityActionForceDummy,
     startItemCooldown,
 } from "./item/ability"
-import { Timer } from "../../core/types/timer"
 
 const getUnitAbilityLevel = GetUnitAbilityLevel
 const setUnitAbilityLevel = SetUnitAbilityLevel
@@ -615,8 +614,7 @@ export class ItemAbility extends Ability {
             this.typeId,
         )
         if (cooldownRemaining == 0) {
-            startItemCooldown(itemHandle, itemOwnerHandle, 1)
-            Timer.run(startItemCooldown, itemHandle, itemOwnerHandle, 0)
+            startItemCooldown(itemHandle, itemOwnerHandle, 0.015625)
         }
     }
 
