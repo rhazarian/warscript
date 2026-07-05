@@ -4,7 +4,6 @@ import {
     COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD,
     MANA_COST_ABILITY_INTEGER_LEVEL_FIELD,
 } from "../../standard/fields/ability"
-import { max, MINIMUM_POSITIVE_NORMALIZED_FLOAT } from "../../../math"
 import { Sound3D, SoundSettings } from "../../../core/types/sound"
 import { UnitAbility } from "../../internal/ability"
 import { Event } from "../../../event"
@@ -27,7 +26,11 @@ export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
         }
 
         caster.mana -= manaCost
-        this.ability.cooldownRemaining = max(cooldown, MINIMUM_POSITIVE_NORMALIZED_FLOAT)
+        if (cooldown == 0) {
+            this.ability.interruptCast()
+        } else {
+            this.ability.cooldownRemaining = cooldown
+        }
 
         this.flashCasterEffect(caster)
 
