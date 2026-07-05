@@ -241,6 +241,7 @@ export abstract class Behavior<
         let behaviors = behaviorsByEvent.get(event)
         if (behaviors == undefined) {
             event.addListener((...args) => {
+                // TODO: behaviorByEventByObject?
                 const behaviors = behaviorsByEvent.get(event)
                 if (behaviors !== undefined) {
                     const object = extractObject(...args)
