@@ -1,5 +1,5 @@
 import { Handle, HandleDestructor } from "./handle"
-import { Event, InitializingEvent, TriggerEvent } from "../../event"
+import { Event, EventListenerPriority, InitializingEvent, TriggerEvent } from "../../event"
 import { Timer } from "./timer"
 import { PlayerCamera } from "./playerCamera"
 import { PlayerColor } from "./playerColor"
@@ -75,6 +75,8 @@ export class Player extends Handle<jplayer> {
 
     public readonly id: number
 
+    public readonly slotState: jplayerslotstate = GetPlayerSlotState(this.handle)
+
     public constructor(handle: jplayer) {
         super(handle)
         this.id = GetPlayerId(handle)
@@ -139,20 +141,18 @@ export class Player extends Handle<jplayer> {
         return camera
     }
 
-    get isUser(): boolean {
-        return GetPlayerController(this.handle) == MAP_CONTROL_USER
+    public get isUser(): boolean {
+        return this.controller == MAP_CONTROL_USER
     }
 
-    get isPlaying(): boolean {
-        return GetPlayerSlotState(this.handle) == PLAYER_SLOT_STATE_PLAYING
+    public get isPlaying(): boolean {
+        return this.slotState == PLAYER_SLOT_STATE_PLAYING
     }
 
     public get controller(): jmapcontrol {
-        return GetPlayerController(this.handle)
-    }
-
-    public get slotState(): jplayerslotstate {
-        return GetPlayerSlotState(this.handle)
+        const controller = GetPlayerController(this.handle)
+        rawset(this, "controller", controller)
+        return controller
     }
 
     public clearSelection(): void {
@@ -448,3 +448,7 @@ export class Player extends Handle<jplayer> {
         return Player.all[id]
     }
 }
+
+Player.onLeave.addListener(EventListenerPriority.HIGHEST_INTERNAL, (player) => {
+    rawset(player, "slotState", PLAYER_SLOT_STATE_LEFT)
+})
