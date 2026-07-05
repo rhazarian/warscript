@@ -9,6 +9,7 @@ import {
     doAbilityActionForceDummy,
     startItemCooldown,
 } from "./item/ability"
+import { Timer } from "../../core/types/timer"
 
 const getUnitAbilityLevel = GetUnitAbilityLevel
 const setUnitAbilityLevel = SetUnitAbilityLevel
@@ -31,8 +32,6 @@ const getAbilityStringLevelField = BlzGetAbilityStringLevelField
 const getUnitAbilityCooldownRemaining = BlzGetUnitAbilityCooldownRemaining
 const startUnitAbilityCooldown = BlzStartUnitAbilityCooldown
 const getHandleId = GetHandleId
-const getItemBooleanField = BlzGetItemBooleanField
-const setItemBooleanField = BlzSetItemBooleanField
 const unitHideAbility = BlzUnitHideAbility
 const unitDisableAbility = BlzUnitDisableAbility
 const match = string.match
@@ -607,7 +606,25 @@ export class ItemAbility extends Ability {
 
     public override interruptCast(): void {
         const item = this.owner
-        startItemCooldown(item.handle, item.owner?.handle, 0.015625)
+        const itemHandle = item.handle
+        const itemOwnerHandle = item.owner?.handle
+        const cooldownRemaining = doAbilityActionForceDummy(
+            itemHandle,
+            itemOwnerHandle,
+            getAbilityCooldown,
+            this.typeId,
+        )
+        if (cooldownRemaining == 0) {
+            const cooldown = doAbilityAction(
+                itemHandle,
+                getAbilityField,
+                this,
+                ABILITY_RLF_COOLDOWN,
+                0,
+            ) as number
+            startItemCooldown(itemHandle, itemOwnerHandle, 1)
+            Timer.run(startItemCooldown, itemHandle, itemOwnerHandle, cooldown)
+        }
     }
 
     protected override onDestroy(): HandleDestructor {
