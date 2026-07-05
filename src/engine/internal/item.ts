@@ -1,6 +1,6 @@
 import { Handle, HandleDestructor } from "../../core/types/handle"
 import { Color } from "../../core/types/color"
-import { Event } from "../../event"
+import { Event, EventListenerPriority } from "../../event"
 import { ReadonlyRect, Rect } from "../../core/types/rect"
 import { ItemAbility } from "./ability"
 import { AbilityTypeId } from "../object-data/entry/ability-type"
@@ -9,9 +9,13 @@ import { DUMMY_ITEM_ID } from "./object-data/dummy-item"
 import { SLOT_FILLER_ITEM_TYPE_ID } from "./unit/add-item-to-slot"
 import { distance } from "../../math/vec2"
 import type { ItemTypeId } from "../object-data/entry/item-type"
+import { Timer } from "../../core/types/timer"
 
-const itemChargesChangeEvent = new Event<[Item]>()
-
+const createTrigger = CreateTrigger
+const triggerAddCondition = TriggerAddCondition
+const triggerRegisterDeathEvent = TriggerRegisterDeathEvent
+const condition = Condition
+const destroyTrigger = DestroyTrigger
 const itemAddAbility = BlzItemAddAbility
 const itemRemoveAbility = BlzItemRemoveAbility
 const getItemAbility = BlzGetItemAbility
@@ -36,13 +40,18 @@ const unitUseItemPoint = UnitUseItemPoint
 const unitUseItemTarget = UnitUseItemTarget
 const setItemDropOnDeath = SetItemDropOnDeath
 const setItemDroppable = SetItemDroppable
-const setItemPawnable = SetItemPawnable
-const isItemPawnable = IsItemPawnable
 const getItemIntegerField = BlzGetItemIntegerField
 const setItemBooleanField = BlzSetItemBooleanField
 const getItemBooleanField = BlzGetItemBooleanField
+const getTriggerWidget = GetTriggerWidget
+const saveWidgetHandle = SaveWidgetHandle
+const loadItemHandle = LoadItemHandle
 
 const tableRemove = table.remove
+
+const itemChargesChangeEvent = new Event<[Item]>()
+
+const itemDeathEvent = new Event<[Item]>()
 
 _G.SetItemCharges = (whichItem, charges): void => {
     setItemCharges(whichItem, charges)
@@ -119,17 +128,38 @@ const collectIntoTargetRange = () => {
     }
 }
 
+const hashtable = InitHashtable()
+
+const deathTriggerCondition = condition(() => {
+    saveWidgetHandle(hashtable, 1, 1, getTriggerWidget())
+    const item = Item.of(loadItemHandle(hashtable, 1, 1))
+    if (item !== undefined) {
+        invoke(itemDeathEvent, item)
+    }
+})
+
+itemDeathEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (item) => {
+    Timer.run(item, "destroy")
+})
+
 const enum ItemPropertyKey {
     ABILITIES = 100,
+    DEATH_TRIGGER,
 }
 
 export class Item extends Handle<jitem> {
     private readonly [ItemPropertyKey.ABILITIES]: ItemAbility[]
+    private readonly [ItemPropertyKey.DEATH_TRIGGER]: jtrigger
 
     public constructor(handle: jitem) {
         super(handle)
 
         this[ItemPropertyKey.ABILITIES] = doAbilityAction(handle, getItemAbilities, this)
+
+        const deathTrigger = createTrigger()
+        triggerRegisterDeathEvent(deathTrigger, handle)
+        triggerAddCondition(deathTrigger, deathTriggerCondition)
+        this[ItemPropertyKey.DEATH_TRIGGER] = deathTrigger
     }
 
     protected override onDestroy(): HandleDestructor {
@@ -142,6 +172,7 @@ export class Item extends Handle<jitem> {
             abilities[i - 1].destroy()
         }
         removeItem(this.handle)
+        destroyTrigger(this[ItemPropertyKey.DEATH_TRIGGER])
         return super.onDestroy()
     }
 
@@ -472,6 +503,8 @@ export class Item extends Handle<jitem> {
     public static override get destroyEvent(): Event<[Item]> {
         return this.onDestroyEvent
     }
+
+    public static readonly deathEvent = itemDeathEvent
 
     public static readonly chargesChangedEvent = itemChargesChangeEvent
 }
