@@ -615,15 +615,8 @@ export class ItemAbility extends Ability {
             this.typeId,
         )
         if (cooldownRemaining == 0) {
-            const cooldown = doAbilityAction(
-                itemHandle,
-                getAbilityField,
-                this,
-                ABILITY_RLF_COOLDOWN,
-                0,
-            ) as number
             startItemCooldown(itemHandle, itemOwnerHandle, 1)
-            Timer.run(startItemCooldown, itemHandle, itemOwnerHandle, cooldown)
+            Timer.run(startItemCooldown, itemHandle, itemOwnerHandle, 0)
         }
     }
 
