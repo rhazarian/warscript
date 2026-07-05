@@ -606,12 +606,8 @@ export class ItemAbility extends Ability {
     }
 
     public override interruptCast(): void {
-        const handle = this.owner.handle
-        const activelyUsed = getItemBooleanField(handle, ITEM_BF_ACTIVELY_USED)
-        if (activelyUsed) {
-            setItemBooleanField(handle, ITEM_BF_ACTIVELY_USED, false)
-            setItemBooleanField(handle, ITEM_BF_ACTIVELY_USED, true)
-        }
+        const item = this.owner
+        startItemCooldown(item.handle, item.owner?.handle, 0.015625)
     }
 
     protected override onDestroy(): HandleDestructor {
