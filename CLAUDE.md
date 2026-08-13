@@ -43,3 +43,11 @@ So when the `.d.ts` declarations are not enough to understand what a dependency 
 
 - Runtime target is the Warcraft III Lua VM (Lua 5.3 dialect via tstl), so no Node/DOM APIs, and standard-library assumptions must match what WC3's Lua and this library's patches (`patch-lua`, `patch-lualib`, `patch-natives`) provide.
 - The repo is developed on Windows; shell examples above use PowerShell paths.
+
+## Quirks of the Warcraft III Lua runtime
+
+The WC3 Lua VM is not a complete Lua 5.3 environment — `lua-types` declares the full standard library, so the type checker will happily accept things that do not exist at runtime. Known gaps:
+
+- **`collectgarbage` is not available.** Do not call it — not for `"count"`, not for `"collect"`, not as an entropy source. It type-checks and then fails in game.
+
+Anything else discovered to be missing or to behave differently belongs in this list.
