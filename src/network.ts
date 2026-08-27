@@ -1,5 +1,8 @@
 import { Event, TriggerEvent } from "./event"
-import { IllegalArgumentException } from "./exception"
+import {
+    CancellationException,
+    IllegalArgumentException,
+} from "./exception"
 import { Player } from "./core/types/player"
 import { Operation, OperationContinue, OperationMonitor } from "./operation"
 import { decode, encode } from "./utility/base64"
@@ -93,6 +96,9 @@ export class SyncOperation extends Operation<string> {
     }
 
     protected override estimate(): Promise<number> {
+        if (this.isCanceled || !this.player.isPlaying) {
+            return Promise.reject(new CancellationException())
+        }
         if (this.player.isLocal) {
             sendSyncData("__oh", encode(pack(">i4I4", this.x, this.l)) + sub(this.d, 1, 243))
             this.i = 244
@@ -103,6 +109,7 @@ export class SyncOperation extends Operation<string> {
 
     protected override work(): string | Promise<OperationContinue | string> {
         if (this.progress >= this.maximum) {
+            syncOperationById.delete(this.x)
             return decode(concat(this.c))
         }
         this.s = packetsPerRound
@@ -119,7 +126,12 @@ export class SyncOperation extends Operation<string> {
     }
 
     protected override doCancel(): boolean {
-        return false
+        if (!syncOperationById.has(this.x)) {
+            return false
+        }
+        syncOperationById.delete(this.x)
+        this.r?.(new CancellationException())
+        return true
     }
 
     private static readonly _ = (() => {
@@ -161,10 +173,19 @@ export class SyncOperation extends Operation<string> {
                 const resolveWork = syncOperation.w
                 if (resolveWork) {
                     if (syncOperation.progress >= syncOperation.maximum) {
+                        syncOperationById.delete(id)
                         resolveWork(decode(concat(chunks)))
                     } else if (packetsLeft == 0) {
                         resolveWork(OperationContinue)
                     }
+                }
+            }
+        })
+
+        Player.onLeave.addListener((player) => {
+            for (const [, operation] of syncOperationById) {
+                if (operation.player == player) {
+                    operation.cancel()
                 }
             }
         })

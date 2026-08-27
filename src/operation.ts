@@ -33,10 +33,15 @@ export abstract class Operation<T> {
     }
 
     private started = false
+    private settled = false
+    private canceled = false
 
     protected progress = 0
     protected maximum = 0
-    isCanceled = false
+
+    public get isCanceled(): boolean {
+        return this.canceled
+    }
 
     public get isStarted(): boolean {
         return this.started
@@ -51,6 +56,9 @@ export abstract class Operation<T> {
             let result: T | OperationContinue
             let progress = this.progress
             try {
+                if (this.canceled) {
+                    throw new CancellationException()
+                }
                 let maximum = await this.estimate()
                 this.maximum = maximum
                 if (maximum != 0) {
@@ -60,20 +68,13 @@ export abstract class Operation<T> {
                     }
                 }
                 do {
-                    if (this.isCanceled) {
-                        const reason = new CancellationException()
-                        reject(reason)
-                        const onFailure = rawget(this, "onFailure")
-                        if (onFailure !== undefined) {
-                            Event.invoke(onFailure, this, reason)
-                        }
-                        const onComplete = rawget(this, "onComplete")
-                        if (onComplete !== undefined) {
-                            Event.invoke(onComplete, this, false, reason)
-                        }
-                        return
+                    if (this.canceled) {
+                        throw new CancellationException()
                     }
                     result = await this.work()
+                    if (this.canceled) {
+                        throw new CancellationException()
+                    }
                     if (this.progress != progress || this.maximum != maximum) {
                         progress = this.progress
                         maximum = this.maximum
@@ -84,6 +85,7 @@ export abstract class Operation<T> {
                     }
                 } while (result == OperationContinue)
             } catch (reason) {
+                this.settled = true
                 reject(reason)
                 const onFailure = rawget(this, "onFailure")
                 if (onFailure !== undefined) {
@@ -95,6 +97,7 @@ export abstract class Operation<T> {
                 }
                 return
             }
+            this.settled = true
             resolve(result)
             const onSuccess = rawget(this, "onSuccess")
             if (onSuccess !== undefined) {
@@ -140,17 +143,25 @@ export abstract class Operation<T> {
         return onProgress
     }
 
+    /**
+     * Invoked with `isCanceled` already set. Should unblock any pending `estimate`/`work` promise
+     * (e.g. by rejecting it) and return whether cancellation is possible; on `false` the canceled
+     * state is reverted.
+     */
     protected abstract doCancel(): boolean
 
     public cancel(): boolean {
-        if (this.doCancel()) {
-            this.isCanceled = true
-            /*const onCancel = rawget(this, "onCancel")
-            if (onCancel) {
-                Event.invoke(onCancel, this)
-            }*/
+        if (this.canceled) {
             return true
         }
+        if (this.settled) {
+            return false
+        }
+        this.canceled = true
+        if (this.doCancel()) {
+            return true
+        }
+        this.canceled = false
         return false
     }
 
