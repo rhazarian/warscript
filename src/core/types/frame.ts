@@ -96,6 +96,63 @@ export namespace FramePoint {
 
 const tooltipByFrame = setmetatable(new LuaMap<Frame, Frame>(), { __mode: "k" })
 
+const isMouseInsideLocallyByFrame = mutableLuaMap<Frame, boolean>()
+const mouseEnterLocalEventByFrame = mutableLuaMap<Frame, Event>()
+const mouseLeaveLocalEventByFrame = mutableLuaMap<Frame, Event>()
+
+let isLocalMouseTrackingStarted = false
+
+/**
+ * Reused across ticks to avoid per-tick allocations: only the first `leftFrameCount` /
+ * `enteredFrameCount` entries are meaningful, stale entries beyond them are never read and are
+ * kept collectable by the weak values mode.
+ */
+const leftFrames = setmetatable([] as Frame[], { __mode: "v" })
+const enteredFrames = setmetatable([] as Frame[], { __mode: "v" })
+
+/**
+ * All frames share a single poll which invokes every mouse leave event before any mouse enter
+ * event within the same tick. With a poll per event, the invocation order would depend on the
+ * event creation order instead, breaking listeners relying on the natural "leave the old frame,
+ * then enter the new frame" order.
+ */
+const startLocalMouseTracking = (): void => {
+    if (isLocalMouseTrackingStarted) {
+        return
+    }
+    isLocalMouseTrackingStarted = true
+    Timer.onPeriod[1 / 64].addListener(() => {
+        let leftFrameCount = 0
+        let enteredFrameCount = 0
+        for (const [frame, wasMouseInside] of isMouseInsideLocallyByFrame) {
+            const tooltip = tooltipByFrame.get(frame)
+            const isMouseInside = tooltip != undefined && tooltip.visible
+            if (isMouseInside != wasMouseInside) {
+                isMouseInsideLocallyByFrame.set(frame, isMouseInside)
+                if (isMouseInside) {
+                    enteredFrames[enteredFrameCount] = frame
+                    enteredFrameCount++
+                } else {
+                    leftFrames[leftFrameCount] = frame
+                    leftFrameCount++
+                }
+            }
+        }
+        for (const i of $range(1, leftFrameCount)) {
+            const event = mouseLeaveLocalEventByFrame.get(leftFrames[i - 1])
+            if (event != undefined) {
+                Event.invoke(event)
+            }
+        }
+        for (const i of $range(1, enteredFrameCount)) {
+            const event = mouseEnterLocalEventByFrame.get(enteredFrames[i - 1])
+            if (event != undefined) {
+                Event.invoke(event)
+            }
+        }
+    })
+}
+
 const keyByAsyncInitOriginFrameType = luaMapOf(
     ORIGIN_FRAME_PORTRAIT_HP_TEXT,
     "hp",
@@ -390,8 +447,7 @@ export class Frame extends Handle<jframehandle> {
         return this.getEvent(FRAMEEVENT_MOUSE_WHEEL, () => $multi(BlzGetTriggerFrameValue() / 120))
     }
 
-    public get mouseEnterLocalEvent(): Event {
-        const event = new Event()
+    private trackMouseLocally(): void {
         if (!tooltipByFrame.has(this)) {
             Frame.SIMPLE_FRAME_TEST_CHILD.parent = this
             const tooltip =
@@ -401,45 +457,24 @@ export class Frame extends Handle<jframehandle> {
             Frame.SIMPLE_FRAME_TEST_CHILD.parent = Frame.CONSOLE_UI
             this.setTooltip(tooltip)
         }
-        let isMouseInside = false
-        Timer.onPeriod[1 / 64].addListener(() => {
-            const tooltip = tooltipByFrame.get(this)
-            if (tooltip && tooltip.visible) {
-                if (!isMouseInside) {
-                    isMouseInside = true
-                    Event.invoke(event)
-                }
-            } else {
-                isMouseInside = false
-            }
-        })
+        if (!isMouseInsideLocallyByFrame.has(this)) {
+            isMouseInsideLocallyByFrame.set(this, false)
+            startLocalMouseTracking()
+        }
+    }
+
+    public get mouseEnterLocalEvent(): Event {
+        const event = new Event()
+        this.trackMouseLocally()
+        mouseEnterLocalEventByFrame.set(this, event)
         rawset(this, "mouseEnterLocalEvent", event)
         return event
     }
 
     public get mouseLeaveLocalEvent(): Event {
         const event = new Event()
-        if (!tooltipByFrame.has(this)) {
-            Frame.SIMPLE_FRAME_TEST_CHILD.parent = this
-            const tooltip =
-                Frame.SIMPLE_FRAME_TEST_CHILD.parent == this
-                    ? Frame.createByType("SIMPLEFRAME" as any, "", Frame.CONSOLE_UI)
-                    : Frame.createByType("FRAME", "", Frame.GAME_UI)
-            Frame.SIMPLE_FRAME_TEST_CHILD.parent = Frame.CONSOLE_UI
-            this.setTooltip(tooltip)
-        }
-        let isMouseInside = false
-        Timer.onPeriod[1 / 64].addListener(() => {
-            const tooltip = tooltipByFrame.get(this)
-            if (tooltip && tooltip.visible) {
-                isMouseInside = true
-            } else {
-                if (isMouseInside) {
-                    isMouseInside = false
-                    Event.invoke(event)
-                }
-            }
-        })
+        this.trackMouseLocally()
+        mouseLeaveLocalEventByFrame.set(this, event)
         rawset(this, "mouseLeaveLocalEvent", event)
         return event
     }
