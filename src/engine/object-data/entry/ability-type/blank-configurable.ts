@@ -268,7 +268,6 @@ const _: void = postcompile(() => {
     for (const abilityTypeId of compiletimePseudoPassiveAbilityTypeIds) {
         const abilityType = checkNotNull(BlankConfigurableAbilityType.of(abilityTypeId))
         abilityType.hotkey = ""
-        abilityType.baseOrderTypeStringId = ""
         abilityType.targetingType = ChannelAbilityTypeTargetingType.NONE
     }
 })
