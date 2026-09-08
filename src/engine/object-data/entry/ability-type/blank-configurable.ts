@@ -20,7 +20,10 @@ import {
 import { LinkedSet } from "../../../../utility/linked-set"
 import { Ability } from "../../../internal/ability"
 import { AnimationQualifier } from "../../auxiliary/animation-qualifier"
-import { compiletimePseudoPassiveAbilityTypeIds } from "../../../internal/unit/pseudo-passive-abilities"
+import {
+    compiletimePseudoPassiveAbilityTypeIds,
+    pseudoPassiveAbilityOrderTypeStringId,
+} from "../../../internal/unit/pseudo-passive-abilities"
 
 const isChannelingAbilityTypeIds = new LuaSet<AbilityTypeId>()
 const usesAttackAnimationByAbilityTypeId = new LuaMap<AbilityTypeId, boolean>()
@@ -268,6 +271,7 @@ const _: void = postcompile(() => {
     for (const abilityTypeId of compiletimePseudoPassiveAbilityTypeIds) {
         const abilityType = checkNotNull(BlankConfigurableAbilityType.of(abilityTypeId))
         abilityType.hotkey = ""
+        abilityType.baseOrderTypeStringId = pseudoPassiveAbilityOrderTypeStringId
         abilityType.targetingType = ChannelAbilityTypeTargetingType.NONE
     }
 })

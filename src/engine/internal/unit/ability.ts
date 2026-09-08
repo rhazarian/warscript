@@ -19,7 +19,10 @@ import { luaSetOf } from "../../../utility/lua-sets"
 import { CallbackId } from "../../../utility/callback-array"
 import { attribute } from "../../../attributes"
 import { SkipFirst } from "../../../utility/types"
-import { pseudoPassiveAbilityTypeIds } from "./pseudo-passive-abilities"
+import {
+    pseudoPassiveAbilityOrderTypeStringId,
+    pseudoPassiveAbilityTypeIds,
+} from "./pseudo-passive-abilities"
 
 const eventInvoke = Event.invoke
 
@@ -606,7 +609,11 @@ rawset(
                         if (unit !== undefined) {
                             const ability = unit.getAbility(abilityTypeId)
                             if (ability !== undefined) {
-                                eventInvoke(event, unit, ability, orderTypeStringId)
+                                if (pseudoPassiveAbilityTypeIds.has(ability.typeId)) {
+                                    ability.interruptCast()
+                                } else {
+                                    eventInvoke(event, unit, ability, orderTypeStringId)
+                                }
                             }
                         }
                     }),
@@ -755,11 +762,9 @@ internalAbilityChannelingStartEvent.addListener(
     },
 )
 
-internalAbilityCastingStartEvent.addListener(
-    EventListenerPriority.HIGHEST_INTERNAL,
-    (_, ability) => {
-        if (pseudoPassiveAbilityTypeIds.has(ability.typeId)) {
-            ability.interruptCast()
-        }
-    },
-)
+const doNothing = () => {}
+for (const pseudoPassiveAbilityTypeId of pseudoPassiveAbilityTypeIds) {
+    Unit.abilityCommandEvent[pseudoPassiveAbilityTypeId][
+        pseudoPassiveAbilityOrderTypeStringId
+    ].addListener(EventListenerPriority.HIGHEST_INTERNAL, doNothing)
+}
