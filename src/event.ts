@@ -237,10 +237,10 @@ const invokeEventIfNeeded: {
     <T extends any[]>(
         this: void,
         event: Event<T>,
-        ...[needed, ...args]: [false] | [boolean, ...T]
+        ...[needed, ...args]: [false, ...unknown[]] | [boolean, ...T]
     ): void
     // make TSTL emit better code
-} = <T extends any[]>(event: Event<T>, needed: boolean, ...args: T | []): void => {
+} = <T extends any[]>(event: Event<T>, needed: boolean, ...args: T | unknown[]): void => {
     if (needed) {
         Event.invoke(event, ...args)
     }
@@ -253,12 +253,15 @@ export class DependentInitializingEvent<T extends any[], R extends any[]> extend
     public constructor(
         underlyingEvent: Event<T>,
         priority: EventListenerPriority,
-        collector: (...args: T) => LuaMultiReturn<[false] | [true, ...R]>,
+        collector: (...args: T) => LuaMultiReturn<[false, ...unknown[]] | [boolean, ...R]>,
     ) {
         super(
             (event) => {
                 const listener: EventListener<T> = (...args) => {
-                    invokeEventIfNeeded(event, ...(collector(...args) as [false] | [true, ...R]))
+                    invokeEventIfNeeded(
+                        event,
+                        ...(collector(...args) as [false, ...unknown[]] | [boolean, ...R]),
+                    )
                 }
                 underlyingEvent.addListener(priority, listener)
                 return listener

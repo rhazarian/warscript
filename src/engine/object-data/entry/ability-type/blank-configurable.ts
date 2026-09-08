@@ -20,6 +20,7 @@ import {
 import { LinkedSet } from "../../../../utility/linked-set"
 import { Ability } from "../../../internal/ability"
 import { AnimationQualifier } from "../../auxiliary/animation-qualifier"
+import { compiletimePseudoPassiveAbilityTypeIds } from "../../../internal/unit/pseudo-passive-abilities"
 
 const isChannelingAbilityTypeIds = new LuaSet<AbilityTypeId>()
 const usesAttackAnimationByAbilityTypeId = new LuaMap<AbilityTypeId, boolean>()
@@ -36,6 +37,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
 
     private _usesAttackAnimation = false
     private _isChanneling = false
+    private _isPassive = false
 
     public constructor(object: WarObject) {
         super(object)
@@ -78,6 +80,19 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
             isChannelingAbilityTypeIds.delete(this.id)
         }
         this._isChanneling = isChanneling
+    }
+
+    public get isPassive(): boolean {
+        return this._isPassive
+    }
+
+    public set isPassive(isPassive: boolean) {
+        if (isPassive) {
+            compiletimePseudoPassiveAbilityTypeIds.add(this.id)
+        } else {
+            compiletimePseudoPassiveAbilityTypeIds.delete(this.id)
+        }
+        this._isPassive = isPassive
     }
 
     public override get targetingType(): ChannelAbilityTypeTargetingType[] {
@@ -248,6 +263,15 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
         }
     })
 }
+
+const _: void = postcompile(() => {
+    for (const abilityTypeId of compiletimePseudoPassiveAbilityTypeIds) {
+        const abilityType = checkNotNull(BlankConfigurableAbilityType.of(abilityTypeId))
+        abilityType.hotkey = ""
+        abilityType.baseOrderTypeStringId = ""
+        abilityType.targetingType = ChannelAbilityTypeTargetingType.NONE
+    }
+})
 
 for (const [abilityTypeId, usesAttackAnimation] of postcompile(() => {
     for (const [abilityTypeId, usesAttackAnimation] of usesAttackAnimationByAbilityTypeId) {

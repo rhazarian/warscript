@@ -19,6 +19,7 @@ import { luaSetOf } from "../../../utility/lua-sets"
 import { CallbackId } from "../../../utility/callback-array"
 import { attribute } from "../../../attributes"
 import { SkipFirst } from "../../../utility/types"
+import { pseudoPassiveAbilityTypeIds } from "./pseudo-passive-abilities"
 
 const eventInvoke = Event.invoke
 
@@ -91,7 +92,7 @@ const createCommonEvent = (
         underlyingEvent,
         EventListenerPriority.HIGH,
         (caster, ability) => {
-            return $multi(true as const, caster, ability)
+            return $multi(!pseudoPassiveAbilityTypeIds.has(ability.typeId), caster, ability)
         },
     )
 }
@@ -205,7 +206,8 @@ const createNoTargetEvent = (
                 y == 0 &&
                 targetUnit == undefined &&
                 targetItem == undefined &&
-                targetDestructible == undefined
+                targetDestructible == undefined &&
+                !pseudoPassiveAbilityTypeIds.has(ability.typeId)
             ) {
                 return $multi(true as const, caster, ability)
             } else {
@@ -749,6 +751,15 @@ internalAbilityChannelingStartEvent.addListener(
         if (spellEffectOnlyAbilityTypeIds.has(ability.parentTypeId)) {
             eventInvoke(internalAbilityChannelingFinishEvent, unit, ability)
             eventInvoke(internalAbilityStopEvent, unit, ability)
+        }
+    },
+)
+
+internalAbilityCastingStartEvent.addListener(
+    EventListenerPriority.HIGHEST_INTERNAL,
+    (_, ability) => {
+        if (pseudoPassiveAbilityTypeIds.has(ability.typeId)) {
+            ability.interruptCast()
         }
     },
 )
