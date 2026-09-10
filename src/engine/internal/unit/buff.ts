@@ -85,9 +85,9 @@ declare module "../unit" {
             includeExpirationTimers?: boolean,
             includeAuras?: boolean,
             autoDispel?: boolean
-        ): void
+        ): number
 
-        removeBuffs(buffTypeIds: number[]): void
+        removeBuffs(buffTypeIds: number[]): number
     }
 }
 Unit.prototype.removeBuffs = function (
@@ -96,23 +96,43 @@ Unit.prototype.removeBuffs = function (
     includeExpirationTimers?: boolean,
     includeAuras?: boolean,
     autoDispel?: boolean
-) {
+): number {
+    const handle = this.handle
+    let cnt: number
     if (typeof polarityOrBuffTypeIds == "object") {
-        const handle = this.handle
+        cnt = 0
         for (const i of $range(1, polarityOrBuffTypeIds.length)) {
-            unitRemoveAbility(handle, polarityOrBuffTypeIds[i - 1])
+            cnt += unitRemoveAbility(handle, polarityOrBuffTypeIds[i - 1]) ? 1 : 0
         }
     } else {
+        const positive = ((polarityOrBuffTypeIds ?? 0b11) & BuffPolarity.POSITIVE) != 0
+        const negative = ((polarityOrBuffTypeIds ?? 0b11) & BuffPolarity.NEGATIVE) != 0
+        const magic = ((resistanceType ?? 0b00) & BuffResistanceType.MAGIC) != 0
+        const physical = ((resistanceType ?? 0b00) & BuffResistanceType.PHYSICAL) != 0
+        includeExpirationTimers = includeExpirationTimers ?? true
+        includeAuras = includeAuras ?? true
+        autoDispel = autoDispel ?? false
+        cnt = unitCountBuffsEx(
+            handle,
+            positive,
+            negative,
+            magic,
+            physical,
+            includeExpirationTimers,
+            includeAuras,
+            autoDispel,
+        )
         unitRemoveBuffsEx(
-            this.handle,
-            ((polarityOrBuffTypeIds ?? 0b11) & BuffPolarity.POSITIVE) != 0,
-            ((polarityOrBuffTypeIds ?? 0b11) & BuffPolarity.NEGATIVE) != 0,
-            ((resistanceType ?? 0b00) & BuffResistanceType.MAGIC) != 0,
-            ((resistanceType ?? 0b00) & BuffResistanceType.PHYSICAL) != 0,
-            includeExpirationTimers ?? true,
-            includeAuras ?? true,
-            autoDispel ?? false
+            handle,
+            positive,
+            negative,
+            magic,
+            physical,
+            includeExpirationTimers,
+            includeAuras,
+            autoDispel,
         )
     }
     checkBuffs(this)
+    return cnt
 }
