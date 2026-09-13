@@ -17,9 +17,9 @@ const sortedKeysInternal: PropertyKey[] = []
 let lastSortedKeysLength = 0
 
 /** @internal For use by internal systems only. */
-export const sortedKeysUnnested = <T extends PropertyKey>(
-    record: Record<T, any>,
-): readonly T[] => {
+export const sortedKeysUnnested = <T extends Record<PropertyKey, any>>(
+    record: T,
+): readonly (keyof T)[] => {
     let length = 0
     for (const [key] of pairs(record)) {
         ++length
@@ -30,5 +30,5 @@ export const sortedKeysUnnested = <T extends PropertyKey>(
     }
     lastSortedKeysLength = length
     tableSort(sortedKeysInternal)
-    return sortedKeysInternal as T[]
+    return sortedKeysInternal as (keyof T)[]
 }

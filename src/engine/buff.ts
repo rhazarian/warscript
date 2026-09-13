@@ -89,6 +89,14 @@ export type BuffResistanceTypeParameterType = EnumParameterValueType<BuffResista
 
 export class BuffUniqueGroup {}
 
+export type BuffAbilityParameters = {
+    readonly fields?: [AbilityNumberField | AbilityNumberLevelField, NumberParameterValueType][]
+    /** Default `true`. */
+    readonly isButtonVisible?: boolean
+    /** Default is the level of the source ability or 0 if it is absent. */
+    readonly level?: number
+}
+
 export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
     ? {
           spellStealPriority?: number
@@ -98,19 +106,7 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           source?: Unit
 
           behaviorConstructors?: (new (unit: Unit) => UnitBehavior)[]
-          abilityTypeIds?: Record<
-              AbilityTypeId,
-              {
-                  readonly fields?: [
-                      AbilityNumberField | AbilityNumberLevelField,
-                      NumberParameterValueType,
-                  ][]
-                  /** Default `true`. */
-                  readonly isButtonVisible?: boolean
-                  /** Default is the level of the source ability or 0 if it is absent. */
-                  readonly level?: number
-              }
-          >
+          abilityTypeIds?: Partial<Record<AbilityTypeId, BuffAbilityParameters>>
 
           damageUponDeathAllowedTargetCombatClassifications?:
               | CombatClassifications
@@ -876,7 +872,7 @@ export class Buff<
                     this._abilityTypeIds = abilityTypeIds
                 }
                 for (const abilityTypeId of sortedKeysUnnested(parametersAbilityTypeIds)) {
-                    const abilityParameters = parametersAbilityTypeIds[abilityTypeId]
+                    const abilityParameters = checkNotNull(parametersAbilityTypeIds[abilityTypeId])
                     const addedAbility = _unit.addAbility(abilityTypeId)
                     if (addedAbility != undefined) {
                         _unit.makeAbilityPermanent(abilityTypeId, true)
