@@ -46,8 +46,11 @@ import { SoundPresetId } from "./sound-preset"
 import { isSoundLabelCustom, Sound3D, SoundSettings } from "../../../core/types/sound"
 import { luaSetOf } from "../../../utility/lua-sets"
 import { Widget } from "../../../core/types/widget"
+import { StandardAbilityTypeId } from "../../standard/entries/ability-type"
 
-export type AbilityTypeId = ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol }
+export type AbilityTypeId =
+    | (ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol })
+    | StandardAbilityTypeId
 
 const castAnimationFQNByAbilityTypeId = new LuaMap<AbilityTypeId, string>()
 

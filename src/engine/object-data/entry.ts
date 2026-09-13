@@ -11,8 +11,11 @@ import { map, zip } from "../../utility/arrays"
 import { MutableKeys } from "../../utility/types"
 import { check } from "../../utility/preconditions"
 import { max } from "../../math"
+import { StandardAbilityTypeId } from "../standard/entries/ability-type"
 
-export type ObjectDataEntryId = (number | string) & { readonly __objectDataEntryId: unique symbol }
+export type ObjectDataEntryId =
+    | ((number | string) & { readonly __objectDataEntryId: unique symbol })
+    | StandardAbilityTypeId
 
 export type ObjectDataEntryIdType<T extends ObjectDataEntry> =
     T extends ObjectDataEntry<infer Id> ? Id : never
