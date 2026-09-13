@@ -13,10 +13,41 @@
         "type": "git",
         "url": "git+https://github.com/rhazarian/warscript.git"
     },
+    "files": [
+        "dist"
+    ],
+    "main": "./dist/index.lua",
+    "types": "./dist/index.d.ts",
+    "typesVersions": {
+        "*": {
+            "dist/*": [
+                "dist/*"
+            ],
+            "*": [
+                "dist/*",
+                "dist/*/index.d.ts"
+            ]
+        }
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index"
+        },
+        "./*": {
+            "types": [
+                "./dist/*.d.ts",
+                "./dist/*/index.d.ts"
+            ],
+            "default": "./dist/*"
+        },
+        "./package.json": "./package.json"
+    },
     "scripts": {
         "clean": "rimraf dist",
         "prebuild": "npm run clean",
-        "build": "tstl && copyfiles -u 1 \"src/**/*.d.ts\" \"src/**/*.lua\" dist && copyfiles LICENSE package.json dist",
+        "build": "tstl && copyfiles -u 1 \"src/**/*.d.ts\" \"src/**/*.lua\" dist && copyfiles LICENSE dist && node scripts/write-package.cjs",
+        "prepare": "npm run build",
         "prepublishOnly": "echo You should run 'npm run publish' instead. && exit 1",
         "publish": "npm run build && npm publish ./dist --ignore-scripts"
     },
