@@ -21,7 +21,7 @@ import {
     unitClassificationsToStringArray,
 } from "../auxiliary/unit-classification"
 import { WeaponSoundType } from "../auxiliary/weapon-sound-type"
-import { ObjectDataEntry, ObjectDataEntryConstructor, ObjectDataEntryId } from "../entry"
+import { ObjectDataEntry, ObjectDataEntryConstructor, CustomObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 
 import type { AbilityTypeId } from "./ability-type"
@@ -31,7 +31,7 @@ import { AttackType, attackTypeToString, stringToAttackType } from "../auxiliary
 import { WarscriptConfig } from "../../../config"
 import { ArmorType, armorTypeToString, stringToArmorType } from "../auxiliary/armor-type"
 
-export type UnitTypeId = ObjectDataEntryId & number & { readonly __unitTypeId: unique symbol }
+export type UnitTypeId = CustomObjectDataEntryId & number & { readonly __unitTypeId: unique symbol }
 
 export type StandardUnitTypeId = UnitTypeId & { readonly __standardUnitTypeId: unique symbol }
 

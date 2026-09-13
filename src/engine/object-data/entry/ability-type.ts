@@ -33,7 +33,7 @@ import {
 import {
     extractObjectDataEntryLevelFieldValue,
     ObjectDataEntry,
-    ObjectDataEntryId,
+    CustomObjectDataEntryId,
     ObjectDataEntryLevelFieldValueSupplier,
 } from "../entry"
 import { abilityTypeIdGenerator } from "../utility/object-data-entry-id-generator"
@@ -49,7 +49,7 @@ import { Widget } from "../../../core/types/widget"
 import { StandardAbilityTypeId } from "../../standard/entries/ability-type"
 
 export type AbilityTypeId =
-    | (ObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol })
+    | (CustomObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol })
     | StandardAbilityTypeId
 
 const castAnimationFQNByAbilityTypeId = new LuaMap<AbilityTypeId, string>()

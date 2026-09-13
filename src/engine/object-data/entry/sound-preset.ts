@@ -1,7 +1,8 @@
-import { ObjectDataEntry, ObjectDataEntryId } from "../entry"
+import { ObjectDataEntry, CustomObjectDataEntryId } from "../entry"
 import { SoundEax } from "../auxiliary/sound-eax"
 
-export type SoundPresetId = ObjectDataEntryId & string & { readonly __soundPresetId: unique symbol }
+export type SoundPresetId = CustomObjectDataEntryId &
+    string & { readonly __soundPresetId: unique symbol }
 
 export type StandardSoundPresetId = SoundPresetId & {
     readonly __standardSoundPresetId: unique symbol

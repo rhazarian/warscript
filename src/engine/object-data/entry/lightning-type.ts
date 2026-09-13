@@ -1,9 +1,9 @@
-import { ObjectDataEntry, ObjectDataEntryConstructor, ObjectDataEntryId } from "../entry"
+import { ObjectDataEntry, ObjectDataEntryConstructor, CustomObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 import { Color } from "../../../core/types/color"
 import { implementReadonlyNumberIndexSupplier } from "../../../utility/reflection"
 
-export type LightningTypeId = ObjectDataEntryId &
+export type LightningTypeId = CustomObjectDataEntryId &
     number & { readonly __lightningTypeId: unique symbol }
 
 export type StandardLightningTypeId = LightningTypeId & {

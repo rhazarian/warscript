@@ -5,12 +5,12 @@ import { TupleOf } from "../../../utility/types"
 import { AttachmentPreset, AttachmentPresetInput } from "../auxiliary/attachment-preset"
 import { Race } from "../auxiliary/race"
 import { SoundPresetName } from "../auxiliary/sound-preset-name"
-import { ObjectDataEntry, ObjectDataEntryConstructor, ObjectDataEntryId } from "../entry"
+import { ObjectDataEntry, ObjectDataEntryConstructor, CustomObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 
 import { LightningTypeId } from "./lightning-type"
 
-export type BuffTypeId = ObjectDataEntryId & number & { readonly __buffTypeId: unique symbol }
+export type BuffTypeId = CustomObjectDataEntryId & number & { readonly __buffTypeId: unique symbol }
 
 export type StandardBuffTypeId = BuffTypeId & { readonly __standardBuffTypeId: unique symbol }
 

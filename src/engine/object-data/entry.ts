@@ -12,10 +12,13 @@ import { MutableKeys } from "../../utility/types"
 import { check } from "../../utility/preconditions"
 import { max } from "../../math"
 import { StandardAbilityTypeId } from "../standard/entries/ability-type"
+import { StandardItemTypeId } from "../standard/entries/item-type"
 
-export type ObjectDataEntryId =
-    | ((number | string) & { readonly __objectDataEntryId: unique symbol })
-    | StandardAbilityTypeId
+export type CustomObjectDataEntryId = (number | string) & {
+    readonly __objectDataEntryId: unique symbol
+}
+
+export type ObjectDataEntryId = CustomObjectDataEntryId | StandardAbilityTypeId | StandardItemTypeId
 
 export type ObjectDataEntryIdType<T extends ObjectDataEntry> =
     T extends ObjectDataEntry<infer Id> ? Id : never

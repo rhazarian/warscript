@@ -4,11 +4,11 @@ import {
     combatClassificationsToStringArray,
     stringArrayToCombatClassifications,
 } from "../auxiliary/combat-classification"
-import { ObjectDataEntry, ObjectDataEntryConstructor, ObjectDataEntryId } from "../entry"
+import { ObjectDataEntry, ObjectDataEntryConstructor, CustomObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 import { implementReadonlyNumberIndexSupplier } from "../../../utility/reflection"
 
-export type DestructibleTypeId = ObjectDataEntryId &
+export type DestructibleTypeId = CustomObjectDataEntryId &
     number & {
         readonly __destructibleTypeId: unique symbol
     }

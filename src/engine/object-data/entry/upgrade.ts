@@ -11,6 +11,7 @@ import {
     extractObjectDataEntryLevelArrayFieldValue,
     ObjectDataEntry,
     ObjectDataEntryId,
+    CustomObjectDataEntryId,
     ObjectDataEntryLevelFieldValueSupplier,
 } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
@@ -18,7 +19,7 @@ import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-gene
 import { AbilityTypeId } from "./ability-type"
 import type { UnitTypeId } from "./unit-type"
 
-export type UpgradeId = ObjectDataEntryId & number & { readonly __upgradeId: unique symbol }
+export type UpgradeId = CustomObjectDataEntryId & number & { readonly __upgradeId: unique symbol }
 
 export const enum UpgradeEffectType {
     ABILITY_LEVEL_BONUS = "rlev",

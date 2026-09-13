@@ -1,9 +1,12 @@
 import { ArmorSoundType } from "../auxiliary/armor-sound-type"
-import { ObjectDataEntry, ObjectDataEntryId } from "../entry"
+import { ObjectDataEntry, ObjectDataEntryId, CustomObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 import type { AbilityTypeId } from "./ability-type"
+import { StandardItemTypeId } from "../../standard/entries/item-type"
 
-export type ItemTypeId = ObjectDataEntryId & number & { readonly __itemTypeId: unique symbol }
+export type ItemTypeId =
+    | (CustomObjectDataEntryId & number & { readonly __itemTypeId: unique symbol })
+    | StandardItemTypeId
 
 export class ItemType extends ObjectDataEntry<ItemTypeId> {
     private static readonly idGenerator = new ObjectDataEntryIdGenerator(fourCC("I000"))
