@@ -42,14 +42,12 @@ compiletime(() => {
     }
 })
 
-let selectionButtons: Frame[] | undefined
-
-Timer.run(() => {
-    selectionButtons = Frame.byName("SimpleInfoPanelUnitDetail")
-        .parent.getChild(5)
-        .getChild(0)
-        .children.map((frame) => frame.getChild(1))
-})
+const getChildIfPresent = (frame: Frame | undefined, index: number): Frame | undefined => {
+    if (frame == undefined || index >= frame.getChildrenCount()) {
+        return undefined
+    }
+    return frame.getChild(index)
+}
 
 const localSelectedUnits: Unit[] = []
 const indexByLocalSelectedUnit = new LuaMap<Unit, number>()
@@ -222,13 +220,24 @@ export class LocalClient {
         tableSort(localSelectedUnits, compareUnitsSelectionPriority)
 
         let mainSelectedUnitIndex: number | undefined
-        if (selectionButtons && localSelectedUnits.length > 1) {
-            let maxButtonWidth = 0
-            for (const i of $range(0, selectionButtons.length - 1)) {
-                const width = selectionButtons[i].width
-                if (width > maxButtonWidth) {
-                    maxButtonWidth = width
-                    mainSelectedUnitIndex = i
+        if (localSelectedUnits.length > 1) {
+            // Warcraft III rebuilds these frames when switching between the
+            // 12- and 24-button layouts. Never retain their handles across calls.
+            const detail: Frame | undefined = Frame.byName("SimpleInfoPanelUnitDetail")
+            const groupPanel = getChildIfPresent(detail?.parent, 5)
+            const selectionButtons = getChildIfPresent(groupPanel, 0)
+            if (selectionButtons != undefined) {
+                let maxButtonWidth = 0
+                const buttonCount = selectionButtons.getChildrenCount()
+                for (const i of $range(0, buttonCount - 1)) {
+                    const icon = getChildIfPresent(selectionButtons.getChild(i), 1)
+                    if (icon != undefined) {
+                        const width = icon.width
+                        if (width > maxButtonWidth) {
+                            maxButtonWidth = width
+                            mainSelectedUnitIndex = i
+                        }
+                    }
                 }
             }
         }
