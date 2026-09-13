@@ -1,6 +1,7 @@
 import { Item } from "./item"
 
 import { Unit } from "./unit"
+import "./unit/equipment"
 import { EventListenerPriority } from "../../event"
 
 declare module "./item" {
@@ -12,6 +13,10 @@ declare module "./item" {
 const ownerByItem = setmetatable(new LuaMap<Item, Unit>(), { __mode: "kv" })
 
 Unit.itemPickedUpEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
+    ownerByItem.set(item, unit)
+})
+
+Unit.itemEquippedEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
     ownerByItem.set(item, unit)
 })
 

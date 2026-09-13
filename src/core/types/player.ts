@@ -15,12 +15,13 @@ const getPlayerName = GetPlayerName
 const getPlayerTechCount = GetPlayerTechCount
 const getPlayerTechMaxAllowed = GetPlayerTechMaxAllowed
 const getTriggerPlayer = GetTriggerPlayer
+const playerNative = _G.Player
+const setPlayerAbilityAvailable = SetPlayerAbilityAvailable
 const setPlayerAlliance = SetPlayerAlliance
+const setPlayerRaceSkin = SetPlayerRaceSkin
 const setPlayerTechMaxAllowed = SetPlayerTechMaxAllowed
 const setPlayerTechResearched = SetPlayerTechResearched
-const setPlayerAbilityAvailable = SetPlayerAbilityAvailable
 const triggerRegisterPlayerAllianceChange = TriggerRegisterPlayerAllianceChange
-const playerNative = _G.Player
 
 type Collector<T extends any[]> = () => LuaMultiReturn<T>
 
@@ -178,6 +179,10 @@ export class Player extends Handle<jplayer> {
         if (this.isLocal) {
             SelectUnit(unit.handle, false)
         }
+    }
+
+    public setRaceSkin(racePreference: jracepreference): void {
+        setPlayerRaceSkin(this.handle, racePreference)
     }
 
     public forceUIKey(key: string): void {

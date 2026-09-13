@@ -10,29 +10,34 @@ import {
     startItemCooldown,
 } from "./item/ability"
 
-const getUnitAbilityLevel = GetUnitAbilityLevel
-const setUnitAbilityLevel = SetUnitAbilityLevel
-const setAbilityIntegerField = BlzSetAbilityIntegerField
-const setAbilityRealField = BlzSetAbilityRealField
-const setAbilityBooleanField = BlzSetAbilityBooleanField
-const setAbilityStringField = BlzSetAbilityStringField
-const setAbilityIntegerLevelField = BlzSetAbilityIntegerLevelField
-const setAbilityRealLevelField = BlzSetAbilityRealLevelField
-const setAbilityBooleanLevelField = BlzSetAbilityBooleanLevelField
-const setAbilityStringLevelField = BlzSetAbilityStringLevelField
-const getAbilityIntegerField = BlzGetAbilityIntegerField
-const getAbilityRealField = BlzGetAbilityRealField
 const getAbilityBooleanField = BlzGetAbilityBooleanField
-const getAbilityStringField = BlzGetAbilityStringField
-const getAbilityIntegerLevelField = BlzGetAbilityIntegerLevelField
-const getAbilityRealLevelField = BlzGetAbilityRealLevelField
 const getAbilityBooleanLevelField = BlzGetAbilityBooleanLevelField
+const getAbilityIntegerField = BlzGetAbilityIntegerField
+const getAbilityIntegerLevelField = BlzGetAbilityIntegerLevelField
+const getAbilityRealField = BlzGetAbilityRealField
+const getAbilityRealLevelField = BlzGetAbilityRealLevelField
+const getAbilityStringField = BlzGetAbilityStringField
 const getAbilityStringLevelField = BlzGetAbilityStringLevelField
-const getUnitAbilityCooldownRemaining = BlzGetUnitAbilityCooldownRemaining
-const startUnitAbilityCooldown = BlzStartUnitAbilityCooldown
 const getHandleId = GetHandleId
-const unitHideAbility = BlzUnitHideAbility
+const getUnitAbilityCooldownPercent = BlzGetUnitAbilityCooldownPercent
+const getUnitAbilityCooldownRemaining = BlzGetUnitAbilityCooldownRemaining
+const getUnitAbilityLevel = GetUnitAbilityLevel
+const order2orderId = _G.OrderId
+const setAbilityBooleanField = BlzSetAbilityBooleanField
+const setAbilityBooleanLevelField = BlzSetAbilityBooleanLevelField
+const setAbilityIntegerField = BlzSetAbilityIntegerField
+const setAbilityIntegerLevelField = BlzSetAbilityIntegerLevelField
+const setAbilityRealField = BlzSetAbilityRealField
+const setAbilityRealLevelField = BlzSetAbilityRealLevelField
+const setAbilityStringField = BlzSetAbilityStringField
+const setAbilityStringLevelField = BlzSetAbilityStringLevelField
+const setUnitAbilityCooldownPercent = BlzSetUnitAbilityCooldownPercent
+const setUnitAbilityCooldownRemaining = BlzSetUnitAbilityCooldownRemaining
+const setUnitAbilityLevel = SetUnitAbilityLevel
+const startUnitAbilityCooldown = BlzStartUnitAbilityCooldown
 const unitDisableAbility = BlzUnitDisableAbility
+const unitHideAbility = BlzUnitHideAbility
+
 const match = string.match
 const type = _G.type
 const tostring = _G.tostring
@@ -263,8 +268,6 @@ const levelRefreshFields = {
 }
 const levelsField = ABILITY_IF_LEVELS
 
-const order2orderId = _G.OrderId
-
 const orderIdFieldByParentTypeId = {
     [fourCC("ANcl")]: ABILITY_SLF_BASE_ORDER_ID_NCL6,
     [fourCC("Aspb")]: ABILITY_SLF_BASE_ORDER_ID_SPB5,
@@ -487,12 +490,25 @@ export class UnitAbility extends Ability {
         setUnitAbilityLevel(this.u, this.typeId, v + 1)
     }
 
+    /** Uses the native percentage scale. */
+    public get cooldownRemainingPercent(): number {
+        return getUnitAbilityCooldownPercent(this.u, this.typeId)
+    }
+
+    public set cooldownRemainingPercent(percent: number) {
+        setUnitAbilityCooldownPercent(this.u, this.typeId, percent)
+    }
+
     public override get cooldownRemaining(): number {
         return getUnitAbilityCooldownRemaining(this.u, this.typeId)
     }
 
     public override set cooldownRemaining(cooldownRemaining: number) {
-        startUnitAbilityCooldown(this.u, this.typeId, cooldownRemaining)
+        setUnitAbilityCooldownRemaining(this.u, this.typeId, cooldownRemaining)
+    }
+
+    public startCooldown(cooldown: number) {
+        startUnitAbilityCooldown(this.u, this.typeId, cooldown)
     }
 
     public override interruptCast(): void {

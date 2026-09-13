@@ -12,18 +12,17 @@ const unitInventorySize = UnitInventorySize
 const unitItemInSlot = UnitItemInSlot
 const unitRemoveItemFromSlot = UnitRemoveItemFromSlot
 
-const handleByUnitItems = setmetatable(new LuaMap<UnitItems, junit>(), { __mode: "k" })
+const handleByUnitInventory = setmetatable(new LuaMap<UnitInventory, junit>(), { __mode: "k" })
 
-const unitItemsNext = (handle: junit, index: number) => {
-    const slot = index & 0b111
-    if (index >>> 3 == slot) {
+const unitInventoryNext = (handle: junit, slot: number) => {
+    if (slot >= unitInventorySize(handle)) {
         return $multi(undefined as unknown as number, undefined)
     }
-    return $multi(index + 1, Item.of(unitItemInSlot(handle, slot)))
+    return $multi(slot + 1, Item.of(unitItemInSlot(handle, slot)))
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
-export interface UnitItems extends ReadonlyArray<Item | undefined> {
+export interface UnitInventory extends ReadonlyArray<Item | undefined> {
     readonly length: 0 | 1 | 2 | 3 | 4 | 5 | 6
     [0]: Item | undefined
     [1]: Item | undefined
@@ -33,17 +32,17 @@ export interface UnitItems extends ReadonlyArray<Item | undefined> {
     [5]: Item | undefined
 }
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
-export class UnitItems {
+export class UnitInventory {
     constructor(handle: junit) {
-        handleByUnitItems.set(this, handle)
+        handleByUnitInventory.set(this, handle)
     }
 
     public findSlot(item: Item): 0 | 1 | 2 | 3 | 4 | 5 | undefined {
-        return findUnitItemSlot(handleByUnitItems.get(this)!, item.handle)
+        return findUnitItemSlot(handleByUnitInventory.get(this)!, item.handle)
     }
 
     protected __newindex(slot: number, item: Item | undefined): void {
-        const handle = handleByUnitItems.get(this)!
+        const handle = handleByUnitInventory.get(this)!
         if (slot < 1 || slot > unitInventorySize(handle)) {
             return
         }
@@ -63,31 +62,31 @@ export class UnitItems {
 
     protected __index(key: string | number): unknown {
         if (type(key) == "number") {
-            return Item.of(unitItemInSlot(handleByUnitItems.get(this)!, (key as number) - 1))
+            return Item.of(unitItemInSlot(handleByUnitInventory.get(this)!, (key as number) - 1))
         }
-        return rawget(UnitItems.prototype as any, key)
+        return rawget(UnitInventory.prototype as any, key)
     }
 
     protected __len(): number {
-        return unitInventorySize(handleByUnitItems.get(this)!)
+        return unitInventorySize(handleByUnitInventory.get(this)!)
     }
 
     protected __ipairs(): LuaIterator<LuaMultiReturn<[number, Item | undefined]>, junit> {
-        const handle = handleByUnitItems.get(this)!
-        return $multi(unitItemsNext, handle, unitInventorySize(handle) << 3)
+        const handle = handleByUnitInventory.get(this)!
+        return $multi(unitInventoryNext, handle, 0)
     }
 }
 
 declare module "../unit" {
     interface Unit {
-        readonly items: UnitItems
+        readonly inventory: UnitInventory
     }
 }
 
-Object.defineProperty(Unit.prototype, "items", {
-    get(this: Unit): UnitItems {
-        const items = new UnitItems(this.handle)
-        rawset(this, "items", items)
-        return items
+Object.defineProperty(Unit.prototype, "inventory", {
+    get(this: Unit): UnitInventory {
+        const inventory = new UnitInventory(this.handle)
+        rawset(this, "inventory", inventory)
+        return inventory
     },
 })

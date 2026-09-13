@@ -2639,16 +2639,6 @@ export class Unit extends Handle<junit> {
         return $multi(IgnoreEvent)
     })
 
-    public static itemStackedEvent = new UnitTriggerEvent<[target: Item, source: Item]>(
-        EVENT_PLAYER_UNIT_STACK_ITEM,
-        () =>
-            $multi(
-                Unit.of(getTriggerUnit()!),
-                Item.of(BlzGetStackingItemTarget()!),
-                Item.of(BlzGetStackingItemSource()!),
-            ),
-    )
-
     public static get itemChargesChangedEvent(): Event<[unit: Unit, item: Item]> {
         const event = new Event<[Unit, Item]>()
         Item.chargesChangedEvent.addListener((item) => {
@@ -2666,7 +2656,7 @@ export class Unit extends Handle<junit> {
         for (const order of $range(orderId("useslot0"), orderId("useslot5"))) {
             const slot = (order - orderId("useslot0")) as 0 | 1 | 2 | 3 | 4 | 5
             const listener = (unit: Unit) => {
-                const item = unit.items[slot]
+                const item = unit.inventory[slot]
                 if (item !== undefined) {
                     invoke(event, unit, item)
                 }
@@ -2686,7 +2676,7 @@ export class Unit extends Handle<junit> {
         for (const order of $range(orderId("moveslot0"), orderId("moveslot5"))) {
             const slotTo = (order - orderId("moveslot0")) as 0 | 1 | 2 | 3 | 4 | 5
             this.onTargetOrder[order].addListener((unit, item) => {
-                const slotFrom = unit.items.findSlot(item as Item)
+                const slotFrom = unit.inventory.findSlot(item as Item)
                 if (slotFrom !== undefined) {
                     invoke(event, unit, item, slotFrom, slotTo)
                 }

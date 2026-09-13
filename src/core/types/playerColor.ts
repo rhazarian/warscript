@@ -2,6 +2,8 @@ import { Handle, HandleDestructor } from "./handle"
 import { Color } from "./color"
 import { IllegalStateException } from "../../exception"
 
+const getHandleId = GetHandleId
+
 const byId: Record<number, PlayerColor | null> = {}
 const byName: Record<string, PlayerColor | null> = {}
 
@@ -62,7 +64,7 @@ export class PlayerColor extends Handle<jplayercolor> {
             PLAYER_COLOR_SNOW,
             PLAYER_COLOR_EMERALD,
             PLAYER_COLOR_PEANUT,
-            ConvertPlayerColor(PLAYER_NEUTRAL_AGGRESSIVE),
+            PLAYER_COLOR_BLACK,
         ]
 
         const rgbaColors = [
@@ -123,7 +125,7 @@ export class PlayerColor extends Handle<jplayercolor> {
 
         const data: Record<number, { rgba: Color; name: string }> = {}
         for (let i = 0; i < handles.length; ++i) {
-            data[GetHandleId(handles[i])] = {
+            data[getHandleId(handles[i])] = {
                 rgba: rgbaColors[i],
                 name: names[i],
             }
@@ -155,7 +157,7 @@ export class PlayerColor extends Handle<jplayercolor> {
     public static readonly snow = PlayerColor.of(PLAYER_COLOR_SNOW)
     public static readonly emerald = PlayerColor.of(PLAYER_COLOR_EMERALD)
     public static readonly peanut = PlayerColor.of(PLAYER_COLOR_PEANUT)
-    public static readonly black = PlayerColor.of(ConvertPlayerColor(PLAYER_NEUTRAL_AGGRESSIVE))
+    public static readonly black = PlayerColor.of(PLAYER_COLOR_BLACK)
 
     public static readonly all = [
         PlayerColor.red,

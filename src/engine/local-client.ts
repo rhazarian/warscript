@@ -8,18 +8,27 @@ import { Timer } from "../core/types/timer"
 import { Color } from "../core/types/color"
 import { array } from "../utility/arrays"
 
-const loadTOCFile = BlzLoadTOCFile
-const getLocalClientWidth = BlzGetLocalClientWidth
-const getLocalClientHeight = BlzGetLocalClientHeight
-const isLocalClientActive = BlzIsLocalClientActive
-const isHeroUnitId = IsHeroUnitId
+const frameToPixelX = BlzFrameToPixelX
+const frameToPixelY = BlzFrameToPixelY
 const getHandleId = GetHandleId
+const getLocalClientHeight = BlzGetLocalClientHeight
+const getLocalClientWidth = BlzGetLocalClientWidth
+const getLocale = BlzGetLocale
 const getMouseFocusUnit = BlzGetMouseFocusUnit
+const getMouseScreenPosX = BlzGetMouseScreenPosX
+const getMouseScreenPosY = BlzGetMouseScreenPosY
 const getUnitRealField = BlzGetUnitRealField
 const getUnitTypeId = GetUnitTypeId
-const getLocale = BlzGetLocale
+const isHeroUnitId = IsHeroUnitId
+const isKeyPressed = BlzIsKeyPressed
+const isLocalClientActive = BlzIsLocalClientActive
+const isMetaKeyPressed = BlzIsMetaKeyPressed
+const isMouseButtonPressed = BlzIsMouseButtonPressed
+const loadTOCFile = BlzLoadTOCFile
 const pingMinimap = PingMinimap
 const pingMinimapEx = PingMinimapEx
+const pixelToFrameX = BlzPixelToFrameX
+const pixelToFrameY = BlzPixelToFrameY
 
 const tableSort = table.sort
 
@@ -150,6 +159,53 @@ export class LocalClient {
                 flashy || false,
             )
         }
+    }
+
+    /** Local input state; do not use to branch synchronized game logic. */
+    public static isKeyPressed(key: joskeytype): boolean {
+        return isKeyPressed(key)
+    }
+
+    /** Local input state. Uses the same modifier mask as Player key events. */
+    public static isMetaKeyPressed(key: oskeymeta): boolean {
+        return isMetaKeyPressed(key)
+    }
+
+    /** Local input state. */
+    public static isMouseButtonPressed(button: jmousebuttontype): boolean {
+        return isMouseButtonPressed(button)
+    }
+
+    public static get mouseScreenX(): number {
+        return getMouseScreenPosX()
+    }
+
+    public static get mouseScreenY(): number {
+        return getMouseScreenPosY()
+    }
+
+    public static screenToFrameX(x: number): number {
+        return pixelToFrameX(x)
+    }
+
+    public static screenToFrameY(y: number): number {
+        return pixelToFrameY(y)
+    }
+
+    public static frameToScreenX(x: number): number {
+        return frameToPixelX(x)
+    }
+
+    public static frameToScreenY(y: number): number {
+        return frameToPixelY(y)
+    }
+
+    public static get mouseFrameX(): number {
+        return pixelToFrameX(getMouseScreenPosX())
+    }
+
+    public static get mouseFrameY(): number {
+        return pixelToFrameY(getMouseScreenPosY())
     }
 
     public static get mouseFocusUnit(): Async<Unit> | undefined {

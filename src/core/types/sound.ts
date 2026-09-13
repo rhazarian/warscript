@@ -4,19 +4,20 @@ import { SoundEax } from "../../engine/object-data/auxiliary/sound-eax"
 import { SoundPreset } from "../../engine/object-data/entry/sound-preset"
 import { randomInteger } from "../../engine/random"
 
+const attachSoundToUnit = AttachSoundToUnit
 const createSound = CreateSound
 const createSoundFromLabel = CreateSoundFromLabel
-const setSoundPitch = SetSoundPitch
+const killSoundWhenDone = KillSoundWhenDone
 const setSoundChannel = SetSoundChannel
+const setSoundDistanceCutoff = SetSoundDistanceCutoff
+const setSoundDistances = SetSoundDistances
+const setSoundPitch = SetSoundPitch
+const setSoundPlayPosition = SetSoundPlayPosition
 const setSoundPosition = SetSoundPosition
 const setSoundVolume = SetSoundVolume
-const setSoundDistances = SetSoundDistances
-const setSoundDistanceCutoff = SetSoundDistanceCutoff
 const startSound = StartSound
-const setSoundPlayPosition = SetSoundPlayPosition
+const startSoundEx = StartSoundEx
 const stopSound = StopSound
-const attachSoundToUnit = AttachSoundToUnit
-const killSoundWhenDone = KillSoundWhenDone
 
 export enum SoundChannel {
     General = 0,
@@ -239,8 +240,12 @@ export class Sound extends Handle<jsound, [fadeOut?: boolean]> {
         this._volume = v
     }
 
-    public start(milliseconds?: number): void {
-        startSound(this.handle)
+    public start(milliseconds?: number, fadeIn?: boolean): void {
+        if (fadeIn === undefined) {
+            startSound(this.handle)
+        } else {
+            startSoundEx(this.handle, fadeIn)
+        }
         if (milliseconds) {
             setSoundPlayPosition(this.handle, milliseconds)
         }

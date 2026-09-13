@@ -1,6 +1,9 @@
 import { Handle, HandleDestructor } from "../../core/types/handle"
 import { Color } from "../../core/types/color"
 import { Event, EventListenerPriority } from "../../event"
+import { PlayerColor } from "../../core/types/playerColor"
+import { EquipmentType } from "../object-data/auxiliary/equipment-type"
+import { ItemTag } from "../object-data/auxiliary/item-tag"
 import { ReadonlyRect, Rect } from "../../core/types/rect"
 import { ItemAbility } from "./ability"
 import { AbilityTypeId } from "../object-data/entry/ability-type"
@@ -11,41 +14,52 @@ import { distance } from "../../math/vec2"
 import type { ItemTypeId } from "../object-data/entry/item-type"
 import { Timer } from "../../core/types/timer"
 
-const createTrigger = CreateTrigger
-const triggerAddCondition = TriggerAddCondition
-const triggerRegisterDeathEvent = TriggerRegisterDeathEvent
+const chooseRandomItemExWithFilter = ChooseRandomItemExWithFilter
 const condition = Condition
+const convertEquipmentType = ConvertEquipmentType
+const convertItemTag = ConvertItemTag
+const createTrigger = CreateTrigger
 const destroyTrigger = DestroyTrigger
-const itemAddAbility = BlzItemAddAbility
-const itemRemoveAbility = BlzItemRemoveAbility
-const getItemAbility = BlzGetItemAbility
-const isItemPowerup = IsItemPowerup
-const getItemAbilityByIndex = BlzGetItemAbilityByIndex
-const getAbilityId = BlzGetAbilityId
-const getWidgetLife = GetWidgetLife
-const removeItem = RemoveItem
-const getHandleId = GetHandleId
-const setRect = SetRect
 const enumItemsInRect = EnumItemsInRect
+const getAbilityId = BlzGetAbilityId
 const getEnumItem = GetEnumItem
+const getHandleId = GetHandleId
+const getItemAbility = BlzGetItemAbility
+const getItemAbilityByIndex = BlzGetItemAbilityByIndex
+const getItemBooleanField = BlzGetItemBooleanField
+const getItemCharges = GetItemCharges
+const getItemEquipmentType = GetItemEquipmentType
+const getItemIntegerField = BlzGetItemIntegerField
+const getItemTag = GetItemTag
 const getItemTypeId = GetItemTypeId
 const getItemX = GetItemX
 const getItemY = GetItemY
-const getItemCharges = GetItemCharges
+const getManipulatedItem = GetManipulatedItem
+const getTriggerWidget = GetTriggerWidget
+const getWidgetLife = GetWidgetLife
+const isItemEquipped = IsItemEquipped
+const isItemInBag = IsItemInBag
+const isItemPawnable = IsItemPawnable
+const isItemPowerup = IsItemPowerup
+const itemAddAbility = BlzItemAddAbility
+const itemRemoveAbility = BlzItemRemoveAbility
+const loadItemHandle = LoadItemHandle
+const removeItem = RemoveItem
+const saveWidgetHandle = SaveWidgetHandle
+const setItemBooleanField = BlzSetItemBooleanField
 const setItemCharges = SetItemCharges
+const setItemColor = SetItemColor
+const setItemDropOnDeath = SetItemDropOnDeath
+const setItemDroppable = SetItemDroppable
+const setItemPawnable = SetItemPawnable
+const setRect = SetRect
+const triggerAddCondition = TriggerAddCondition
+const triggerRegisterDeathEvent = TriggerRegisterDeathEvent
 const unitRemoveAbility = UnitRemoveAbility
 const unitRemoveItem = UnitRemoveItem
 const unitUseItem = UnitUseItem
 const unitUseItemPoint = UnitUseItemPoint
 const unitUseItemTarget = UnitUseItemTarget
-const setItemDropOnDeath = SetItemDropOnDeath
-const setItemDroppable = SetItemDroppable
-const getItemIntegerField = BlzGetItemIntegerField
-const setItemBooleanField = BlzSetItemBooleanField
-const getItemBooleanField = BlzGetItemBooleanField
-const getTriggerWidget = GetTriggerWidget
-const saveWidgetHandle = SaveWidgetHandle
-const loadItemHandle = LoadItemHandle
 
 const tableRemove = table.remove
 
@@ -145,11 +159,13 @@ itemDeathEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (item) => {
 const enum ItemPropertyKey {
     ABILITIES = 100,
     DEATH_TRIGGER,
+    COLOR,
 }
 
 export class Item extends Handle<jitem> {
     private readonly [ItemPropertyKey.ABILITIES]: ItemAbility[]
     private readonly [ItemPropertyKey.DEATH_TRIGGER]: jtrigger
+    private [ItemPropertyKey.COLOR]?: PlayerColor
 
     public constructor(handle: jitem) {
         super(handle)
@@ -184,6 +200,46 @@ export class Item extends Handle<jitem> {
         skinId?: number,
     ): T {
         return this.of(BlzCreateItemWithSkin(id, x, y, skinId ?? id))
+    }
+
+    public get isEquipped(): boolean {
+        return isItemEquipped(this.handle)
+    }
+
+    public get isInBag(): boolean {
+        return isItemInBag(this.handle)
+    }
+
+    public get equipmentType(): EquipmentType {
+        return getHandleId(getItemEquipmentType(this.handle))
+    }
+
+    public get tag(): ItemTag {
+        return getHandleId(getItemTag(this.handle))
+    }
+
+    public get color(): PlayerColor {
+        return this[ItemPropertyKey.COLOR] ?? PlayerColor.red
+    }
+
+    public set color(color: PlayerColor) {
+        setItemColor(this.handle, color.handle)
+        this[ItemPropertyKey.COLOR] = color
+    }
+
+    public static getRandomTypeId(
+        level: number,
+        equipmentType = EquipmentType.ANY,
+        tag = ItemTag.ANY,
+        itemType: jitemtype = ITEM_TYPE_ANY,
+    ): ItemTypeId | undefined {
+        const id = chooseRandomItemExWithFilter(
+            itemType,
+            level,
+            convertEquipmentType(equipmentType),
+            convertItemTag(tag),
+        )
+        return id !== 0 ? (id as ItemTypeId) : undefined
     }
 
     public get typeId(): ItemTypeId {
@@ -508,8 +564,6 @@ export class Item extends Handle<jitem> {
 
     public static readonly chargesChangedEvent = itemChargesChangeEvent
 }
-
-const getManipulatedItem = GetManipulatedItem
 
 const trigger = CreateTrigger()
 TriggerRegisterAnyUnitEventBJ(trigger, EVENT_PLAYER_UNIT_PICKUP_ITEM)
