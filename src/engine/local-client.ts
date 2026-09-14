@@ -508,5 +508,6 @@ const initializeSelectionFrames = (): void => {
 
 warpack.afterMapInit(() => {
     rawset(LocalClient, "isHD", loadTOCFile(tocPath))
-    initializeSelectionFrames()
 })
+
+Timer.run(initializeSelectionFrames)
