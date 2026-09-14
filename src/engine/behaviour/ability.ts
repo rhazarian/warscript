@@ -1,5 +1,5 @@
 import { Behavior } from "../behavior"
-import { Unit } from "../internal/unit"
+import { Unit, UnitClassification } from "../internal/unit"
 import "../internal/unit/ability"
 import { Ability } from "../internal/ability"
 import { AbilityTypeId } from "../object-data/entry/ability-type"
@@ -12,6 +12,8 @@ import {
     AREA_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
     CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD,
     CASTER_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+    DURATION_HERO_ABILITY_FLOAT_LEVEL_FIELD,
+    DURATION_NORMAL_ABILITY_FLOAT_LEVEL_FIELD,
     EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
     MISSILE_ARC_ABILITY_FLOAT_FIELD,
     MISSILE_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
@@ -146,6 +148,21 @@ export abstract class AbilityBehavior<
         value?: AbilityDependentValue<T>,
     ): T | undefined {
         return resolveCurrentAbilityDependentValue(this.ability, value)
+    }
+
+    protected getDuration(widget: Widget): number {
+        if (widget instanceof Unit) {
+            if (
+                widget.isHero ||
+                widget.getField(UNIT_IF_LEVEL) >= 6 ||
+                widget.hasClassification(UnitClassification.RESISTANT)
+            ) {
+                return this.resolveCurrentAbilityDependentValue(
+                    DURATION_HERO_ABILITY_FLOAT_LEVEL_FIELD,
+                )
+            }
+        }
+        return this.resolveCurrentAbilityDependentValue(DURATION_NORMAL_ABILITY_FLOAT_LEVEL_FIELD)
     }
 
     public flashCasterEffect(
