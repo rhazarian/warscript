@@ -8,6 +8,7 @@ import { Timer } from "../core/types/timer"
 import { Color } from "../core/types/color"
 import { array } from "../utility/arrays"
 import { UnitDefinition } from "../objutil/unit"
+import { Socket } from "../net/socket"
 
 const frameToPixelX = BlzFrameToPixelX
 const frameToPixelY = BlzFrameToPixelY
@@ -356,124 +357,127 @@ const initializeSelectionFrames = (): void => {
         player: Player
         units: Unit[]
         previousSelection: Unit[]
-        acknowledged: LuaSet<Unit>
-        acknowledgedCount: number
+        hasSeen12: boolean
+        hasSeen24: boolean
     }
     const warmups: PlayerWarmup[] = []
-    const warmupByUnit = new LuaMap<Unit, PlayerWarmup>()
-    let stage: "select24" | "clear24" | "select12" | "finished" = "select24"
+    const warmupByPlayer = new LuaMap<Player, PlayerWarmup>()
+    const dummyUnits = new LuaSet<Unit>()
+    const socket = new Socket()
+    let finished = false
     let transitionPending = false
+    let sent12 = false
+    let sent24 = false
 
-    const finish = (): void => {
-        stage = "finished"
-        Unit.onSelect.removeListener(onSelect)
-        Unit.onDeselect.removeListener(onDeselect)
-        Player.onLeave.removeListener(onLeave)
+    const retrySelection = (): void => {
         for (const warmup of warmups) {
+            if (!warmup.player.isPlaying || (warmup.hasSeen12 && warmup.hasSeen24)) {
+                continue
+            }
+            const count = warmup.hasSeen24 ? 12 : 24
+            if (warmup.player == Player.local) {
+                const selection = Unit.getSelectionOf(Player.local)
+                const normalSelection = selection.filter((unit) => !dummyUnits.has(unit))
+                if (normalSelection.length > 0 || selection.length == 0) {
+                    warmup.previousSelection = normalSelection
+                }
+            }
             warmup.player.clearSelection()
-            for (const unit of warmup.units) {
-                warmupByUnit.delete(unit)
-                unit.destroy()
+            for (const i of $range(0, count - 1)) {
+                warmup.player.select(warmup.units[i])
             }
-            for (const unit of warmup.previousSelection) {
-                if (getUnitTypeId(unit.handle) != 0) {
-                    warmup.player.select(unit)
-                }
-            }
-        }
-        // Startup dummies must never be exposed through the public getter/event.
-        Timer.onPeriod[1 / 64].addListener(actualizeMainSelectedUnit)
-    }
-
-    const advance = (): void => {
-        transitionPending = false
-        let hasPlayingPlayer = false
-        for (const warmup of warmups) {
-            if (warmup.player.isPlaying) {
-                hasPlayingPlayer = true
-                break
-            }
-        }
-        if (!hasPlayingPlayer) {
-            finish()
-            return
-        }
-        if (stage == "select24" || stage == "select12") {
-            const expectedButtonCount = stage == "select24" ? 24 : 12
-            const selectionButtons = getSelectionButtons()
-            assert(
-                selectionButtons.getChildrenCount() == expectedButtonCount,
-                "selection warmup: unexpected button count",
-            )
-            // Register the parent, buttons and icons in identical phases on all
-            // clients, after all active players acknowledged their selection.
-            getMainSelectedUnitIndex(selectionButtons, expectedButtonCount)
-        }
-        if (stage == "select12") {
-            finish()
-            return
-        }
-        const previousStage = stage
-        stage = previousStage == "select24" ? "clear24" : "select12"
-        for (const warmup of warmups) {
-            warmup.acknowledged = new LuaSet()
-            warmup.acknowledgedCount = 0
-        }
-        for (const warmup of warmups) {
-            if (previousStage == "select24") {
-                warmup.player.clearSelection()
-            } else {
-                if (warmup.player.isPlaying) {
-                    for (const i of $range(0, 11)) {
-                        warmup.player.select(warmup.units[i])
-                    }
-                }
+            // Unit removal depends only on synchronized acknowledgements.
+            if (count == 12 && warmup.units.length == 24) {
                 for (const i of $range(23, 12, -1)) {
-                    const unit = warmup.units[i]
-                    warmupByUnit.delete(unit)
-                    unit.destroy()
+                    warmup.units[i].destroy()
                     warmup.units[i] = undefined!
                 }
             }
         }
     }
 
+    const finish = (): void => {
+        finished = true
+        retryTimer.destroy()
+        Timer.onPeriod[1 / 64].removeListener(observeSelection)
+        socket.onMessage.removeListener(onMessage)
+        Player.onLeave.removeListener(checkProgress)
+
+        // Preserve a manual selection. Restore the saved selection only when
+        // startup dummies still occupy the local selection.
+        let restoreSelection: Unit[] | undefined
+        const selection = Unit.getSelectionOf(Player.local)
+        for (const unit of selection) {
+            if (dummyUnits.has(unit)) {
+                restoreSelection = selection.filter((selected) => !dummyUnits.has(selected))
+                if (restoreSelection.length == 0) {
+                    restoreSelection = warmupByPlayer.get(Player.local)?.previousSelection
+                }
+                Player.local.clearSelection()
+                break
+            }
+        }
+        for (const warmup of warmups) {
+            for (const unit of warmup.units) {
+                unit.destroy()
+            }
+            warmup.units = []
+        }
+        if (restoreSelection != undefined) {
+            for (const unit of restoreSelection) {
+                if (getUnitTypeId(unit.handle) != 0) {
+                    Player.local.select(unit)
+                }
+            }
+        }
+        // Every remaining player has observed both layouts. Only now may the
+        // normal polling start accessing the current selection frames.
+        Timer.onPeriod[1 / 64].addListener(actualizeMainSelectedUnit)
+    }
+
     const checkProgress = (): void => {
-        if (stage == "finished" || transitionPending) {
+        if (finished || transitionPending) {
             return
         }
-        const expectedCount = stage == "select12" ? 12 : 24
         for (const warmup of warmups) {
-            if (warmup.player.isPlaying && warmup.acknowledgedCount != expectedCount) {
+            if (warmup.player.isPlaying && (!warmup.hasSeen12 || !warmup.hasSeen24)) {
                 return
             }
         }
         transitionPending = true
-        // Leave the selection event callback before accessing UI or changing
-        // selection again; use the same deferred transition on every client.
-        Timer.simple(1 / 64, advance)
+        Timer.simple(1 / 64, finish)
     }
 
-    const acknowledge = (unit: Unit, player: Player): void => {
-        const warmup = warmupByUnit.get(unit)
-        if (warmup != undefined && warmup.player == player && !warmup.acknowledged.has(unit)) {
-            warmup.acknowledged.add(unit)
-            warmup.acknowledgedCount++
-            checkProgress()
+    const onMessage = (player: Player, layout: string): void => {
+        const warmup = warmupByPlayer.get(player)
+        if (warmup == undefined || !player.isPlaying) {
+            return
         }
-    }
-    const onSelect = (unit: Unit, player: Player): void => {
-        if (stage == "select24" || stage == "select12") {
-            acknowledge(unit, player)
+        if (layout == "12") {
+            warmup.hasSeen12 = true
+        } else if (layout == "24") {
+            warmup.hasSeen24 = true
+        } else {
+            return
         }
-    }
-    const onDeselect = (unit: Unit, player: Player): void => {
-        if (stage == "clear24") {
-            acknowledge(unit, player)
-        }
-    }
-    const onLeave = (): void => {
         checkProgress()
+    }
+    const observeSelection = (): void => {
+        if (!warmupByPlayer.has(Player.local) || !Player.local.isPlaying) {
+            return
+        }
+        // Sample the local selection outside selection event callbacks. Those
+        // events can lag behind the UI and must not determine its current layout.
+        // A synchronized message records each layout once, in either order,
+        // independently of whether the selected units are startup dummies.
+        const localSelectionCount = Unit.getSelectionOf(Player.local).length
+        if (!sent12 && localSelectionCount >= 2 && localSelectionCount <= 12) {
+            socket.send("12")
+            sent12 = true
+        } else if (!sent24 && localSelectionCount >= 13 && localSelectionCount <= 24) {
+            socket.send("24")
+            sent24 = true
+        }
     }
 
     for (const player of Player.all) {
@@ -481,28 +485,28 @@ const initializeSelectionFrames = (): void => {
             const warmup: PlayerWarmup = {
                 player,
                 units: [],
-                previousSelection: Unit.getSelectionOf(player),
-                acknowledged: new LuaSet(),
-                acknowledgedCount: 0,
+                previousSelection: player == Player.local ? Unit.getSelectionOf(player) : [],
+                hasSeen12: false,
+                hasSeen24: false,
             }
             warmups[warmups.length] = warmup
+            warmupByPlayer.set(player, warmup)
             for (const i of $range(0, 23)) {
                 const unit = assert(Unit.create(player, selectionWarmupUnitTypeId, 0, 0, 0))
                 unit.isPaused = true
                 warmup.units[i] = unit
-                warmupByUnit.set(unit, warmup)
+                dummyUnits.add(unit)
             }
         }
     }
-    Unit.onSelect.addListener(onSelect)
-    Unit.onDeselect.addListener(onDeselect)
-    Player.onLeave.addListener(onLeave)
-    for (const warmup of warmups) {
-        warmup.player.clearSelection()
-        for (const unit of warmup.units) {
-            warmup.player.select(unit)
-        }
-    }
+    socket.onMessage.addListener(onMessage)
+    Player.onLeave.addListener(checkProgress)
+    Timer.onPeriod[1 / 64].addListener(observeSelection)
+    // Map initialization may override our selection; retry missing layouts until
+    // each active player has acknowledged both, without recreating dummy units.
+    const retryTimer = Timer.periodic(1, retrySelection)
+    observeSelection()
+    retrySelection()
     checkProgress()
 }
 
