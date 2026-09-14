@@ -7,6 +7,7 @@ import { Player } from "../core/types/player"
 import { Timer } from "../core/types/timer"
 import { Color } from "../core/types/color"
 import { array } from "../utility/arrays"
+import { Socket } from "../net/socket"
 
 const frameToPixelX = BlzFrameToPixelX
 const frameToPixelY = BlzFrameToPixelY
@@ -25,6 +26,7 @@ const isLocalClientActive = BlzIsLocalClientActive
 const isMetaKeyPressed = BlzIsMetaKeyPressed
 const isMouseButtonPressed = BlzIsMouseButtonPressed
 const loadTOCFile = BlzLoadTOCFile
+const location = Location
 const pingMinimap = PingMinimap
 const pingMinimapEx = PingMinimapEx
 const pixelToFrameX = BlzPixelToFrameX
@@ -42,11 +44,43 @@ compiletime(() => {
     }
 })
 
-const getChildIfPresent = (frame: Frame | undefined, index: number): Frame | undefined => {
-    if (frame == undefined || index >= frame.getChildrenCount()) {
-        return undefined
+const seenSmallSelectionLayoutSocket = new Socket()
+const playersThatHaveSeenSmallSelectionLayout = new LuaSet<Player>()
+let hasSeenSmallSelectionLayout = false
+let haveAllPlayersSeenSmallSelectionLayout = false
+
+seenSmallSelectionLayoutSocket.onMessage.addListener((player) => {
+    playersThatHaveSeenSmallSelectionLayout.add(player)
+})
+
+const compensateSmallSelectionLayout = (buttonCount: number): void => {
+    if (haveAllPlayersSeenSmallSelectionLayout) {
+        return
     }
-    return frame.getChild(index)
+    haveAllPlayersSeenSmallSelectionLayout = true
+    for (const player of Player.all) {
+        if (
+            player.isUser &&
+            player.isPlaying &&
+            !playersThatHaveSeenSmallSelectionLayout.has(player)
+        ) {
+            haveAllPlayersSeenSmallSelectionLayout = false
+            break
+        }
+    }
+    if (haveAllPlayersSeenSmallSelectionLayout) {
+        return
+    }
+    if (buttonCount == 12 && !hasSeenSmallSelectionLayout) {
+        hasSeenSmallSelectionLayout = true
+        seenSmallSelectionLayoutSocket.send("")
+    } else {
+        // Until every player has seen the 12-button layout, reserve the same
+        // 12 handles on every tick except the tick that first accesses it.
+        for (let i = 0; i < 12; i++) {
+            location(0, 0)
+        }
+    }
 }
 
 const localSelectedUnits: Unit[] = []
@@ -78,6 +112,7 @@ const compareUnitsSelectionPriority = (a: Unit, b: Unit): boolean => {
 
 let mainSelectedUnitChangeEvent: Event<[Unit | undefined, Unit | undefined]>
 let previousMainSelectedUnit: Unit | undefined
+let currentMainSelectedUnit: Unit | undefined
 
 let lastTargetingModeState = false
 const targetingModeEnterEvent = new Event()
@@ -210,59 +245,9 @@ export class LocalClient {
         return Unit.of(getMouseFocusUnit())
     }
 
+    /** Local selection sampled every 1/64 second; undefined before the first tick. */
     public static get mainSelectedUnit(): Async<Unit> | undefined {
-        Unit.getSelectionOf(Player.local, localSelectedUnits)
-
-        for (const i of $range(1, localSelectedUnits.length)) {
-            indexByLocalSelectedUnit.set(localSelectedUnits[i - 1], i)
-        }
-
-        tableSort(localSelectedUnits, compareUnitsSelectionPriority)
-
-        let mainSelectedUnitIndex: number | undefined
-        if (localSelectedUnits.length > 1) {
-            // Warcraft III rebuilds these frames when switching between the
-            // 12- and 24-button layouts. Never retain their handles across calls.
-            const detail: Frame | undefined = Frame.byName("SimpleInfoPanelUnitDetail")
-            const groupPanel = getChildIfPresent(detail?.parent, 5)
-            const selectionButtons = getChildIfPresent(groupPanel, 0)
-            if (selectionButtons != undefined) {
-                let maxButtonWidth = 0
-                const buttonCount = selectionButtons.getChildrenCount()
-                for (const i of $range(0, buttonCount - 1)) {
-                    const icon = getChildIfPresent(selectionButtons.getChild(i), 1)
-                    if (icon != undefined) {
-                        const width = icon.width
-                        if (width > maxButtonWidth) {
-                            maxButtonWidth = width
-                            mainSelectedUnitIndex = i
-                        }
-                    }
-                }
-            }
-        }
-
-        const mainSelectedUnit = localSelectedUnits[mainSelectedUnitIndex ?? 0]
-
-        for (const i of $range(1, localSelectedUnits.length)) {
-            indexByLocalSelectedUnit.delete(localSelectedUnits[i - 1])
-            localSelectedUnits[i - 1] = undefined!
-        }
-
-        if (
-            mainSelectedUnitChangeEvent != undefined &&
-            mainSelectedUnit != previousMainSelectedUnit
-        ) {
-            const previousPreviousMainSelectedUnit = previousMainSelectedUnit
-            previousMainSelectedUnit = mainSelectedUnit
-            Event.invoke(
-                mainSelectedUnitChangeEvent,
-                previousPreviousMainSelectedUnit,
-                previousMainSelectedUnit,
-            )
-        }
-
-        return mainSelectedUnit
+        return currentMainSelectedUnit
     }
 
     public static get mainSelectedUnitChangeEvent(): Event<
@@ -270,10 +255,6 @@ export class LocalClient {
     > {
         if (mainSelectedUnitChangeEvent == undefined) {
             mainSelectedUnitChangeEvent = new Event()
-            Timer.onPeriod[1 / 64].addListener(() => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const _ = LocalClient.mainSelectedUnit
-            })
         }
         return mainSelectedUnitChangeEvent
     }
@@ -294,6 +275,54 @@ export class LocalClient {
         },
         () => $multi(),
     )
+}
+
+const actualizeMainSelectedUnit = (): void => {
+    Unit.getSelectionOf(Player.local, localSelectedUnits)
+
+    for (const i of $range(1, localSelectedUnits.length)) {
+        indexByLocalSelectedUnit.set(localSelectedUnits[i - 1], i)
+    }
+
+    tableSort(localSelectedUnits, compareUnitsSelectionPriority)
+
+    // The default 24-button layout exists from initialization. The first
+    // access to the 12-button layout is compensated on all other clients.
+    // Re-resolve the current frames on every synchronized tick.
+    const selectionButtons = Frame.byName("SimpleInfoPanelUnitDetail")
+        .parent.getChild(5)
+        .getChild(0)
+    const buttonCount = selectionButtons.getChildrenCount()
+    let mainSelectedUnitIndex: number | undefined
+    let maxButtonWidth = 0
+    for (const i of $range(0, buttonCount - 1)) {
+        const width = selectionButtons.getChild(i).getChild(1).width
+        if (width > maxButtonWidth) {
+            maxButtonWidth = width
+            mainSelectedUnitIndex = i
+        }
+    }
+    compensateSmallSelectionLayout(buttonCount)
+
+    const mainSelectedUnit =
+        localSelectedUnits[localSelectedUnits.length > 1 ? (mainSelectedUnitIndex ?? 0) : 0]
+
+    for (const i of $range(1, localSelectedUnits.length)) {
+        indexByLocalSelectedUnit.delete(localSelectedUnits[i - 1])
+        localSelectedUnits[i - 1] = undefined!
+    }
+
+    currentMainSelectedUnit = mainSelectedUnit
+
+    if (mainSelectedUnitChangeEvent != undefined && mainSelectedUnit != previousMainSelectedUnit) {
+        const previousPreviousMainSelectedUnit = previousMainSelectedUnit
+        previousMainSelectedUnit = mainSelectedUnit
+        Event.invoke(
+            mainSelectedUnitChangeEvent,
+            previousPreviousMainSelectedUnit,
+            previousMainSelectedUnit,
+        )
+    }
 }
 
 const commandButtons = array(12, (i) => Frame.byOrigin(ORIGIN_FRAME_COMMAND_BUTTON, i))
@@ -325,6 +354,7 @@ const actualizeTargetingModeState = (): boolean => {
 }
 
 Timer.onPeriod[1 / 64].addListener(() => {
+    actualizeMainSelectedUnit()
     actualizeTargetingModeState()
 })
 
