@@ -127,30 +127,25 @@ abstract class DamageAreaAbilityBehavior extends DamageAbilityBehavior<DamageAre
     protected damageArea(caster: Unit, x: number, y: number): void {
         const parameters = this.parameters
 
-        const targets = Unit.getAllowedTargetsInCollisionRange(
-            caster,
-            this.resolveCurrentAbilityDependentValue(
-                parameters?.allowedTargetCombatClassifications ??
-                    ALLOWED_TARGETS_ABILITY_COMBAT_CLASSIFICATIONS_LEVEL_FIELD,
-            ),
+        caster.damageArea(
             x,
             y,
             this.resolveCurrentAbilityDependentValue(
                 parameters?.areaOfEffect ?? AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD,
             ),
+            this.resolveCurrentAbilityDependentValue(
+                parameters?.allowedTargetCombatClassifications ??
+                    ALLOWED_TARGETS_ABILITY_COMBAT_CLASSIFICATIONS_LEVEL_FIELD,
+            ),
+            this.precalculatedDamage ?? this.calculateDamage(caster),
+            this.resolveCurrentAbilityDependentValue(parameters?.maximumDamage ?? 0),
+            undefined,
+            undefined,
+            this.resolveCurrentAbilityDependentValue(parameters?.attackType),
+            parameters?.damageType,
+            parameters?.weaponType,
+            this.resolveCurrentAbilityDependentValue(parameters?.metadata),
         )
-
-        let damage = this.precalculatedDamage ?? this.calculateDamage(caster)
-        const maximumDamage = this.resolveCurrentAbilityDependentValue(
-            parameters?.maximumDamage ?? 0,
-        )
-        if (maximumDamage != 0 && damage > maximumDamage) {
-            damage = maximumDamage / targets.length
-        }
-
-        for (const target of targets) {
-            this.damageTarget(caster, target, damage)
-        }
     }
 }
 
