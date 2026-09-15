@@ -1,9 +1,12 @@
 import { Unit } from "./unit"
+import "./unit/allowed-targets"
 import { Widget } from "../../core/types/widget"
 import { Player } from "../../core/types/player"
 import { dummyUnitId } from "../../objutil/dummy"
 import { AttackType, attackTypeToNative } from "../object-data/auxiliary/attack-type"
 import { damageMetadataByTarget } from "./misc/damage-metadata-by-target"
+import { CombatClassifications } from "../object-data/auxiliary/combat-classification"
+import { min } from "../../math"
 
 const createUnit = CreateUnit
 const getOwningPlayer = GetOwningPlayer
@@ -77,18 +80,26 @@ declare module "./unit" {
             metadata?: unknown,
         ): boolean
 
-        /*damageArea(
+        /**
+         * Deals amount to each allowed unit in collision range of (x, y).
+         * A positive maximumDamage caps the total requested damage, shared equally
+         * between the targets. Zero or omitted means unlimited; damage mitigation
+         * and damage-event modifiers are applied afterward by damageTarget.
+         */
+        damageArea(
             x: number,
             y: number,
+            range: number,
             allowedTargetCombatClassifications: CombatClassifications,
             amount: number,
+            maximumDamage?: number,
             attack?: boolean,
             ranged?: boolean,
             attackType?: AttackType,
             damageType?: DamageType,
             weaponType?: WeaponType,
             metadata?: unknown,
-        ): LuaMultiReturn<[boolean, Unit[]]>*/
+        ): void
     }
 }
 
@@ -129,4 +140,45 @@ Unit.prototype.damageTarget = function (
         damageType,
         weaponType,
     )
+}
+
+Unit.prototype.damageArea = function (
+    x: number,
+    y: number,
+    range: number,
+    allowedTargetCombatClassifications: CombatClassifications,
+    amount: number,
+    maximumDamage = 0,
+    attack?: boolean,
+    ranged?: boolean,
+    attackType?: AttackType,
+    damageType?: DamageType,
+    weaponType?: WeaponType,
+    metadata?: unknown,
+): void {
+    const targets = Unit.getAllowedTargetsInCollisionRange(
+        this,
+        allowedTargetCombatClassifications,
+        x,
+        y,
+        range,
+    )
+    if (targets.length == 0) {
+        return
+    }
+    if (maximumDamage > 0) {
+        amount = min(amount, maximumDamage / targets.length)
+    }
+    for (const target of targets) {
+        this.damageTarget(
+            target,
+            amount,
+            attack,
+            ranged,
+            attackType,
+            damageType,
+            weaponType,
+            metadata,
+        )
+    }
 }
