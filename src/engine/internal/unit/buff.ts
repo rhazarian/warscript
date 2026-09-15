@@ -26,7 +26,7 @@ declare module "../unit" {
 }
 Unit.prototype.removeBuff = function (buffTypeId) {
     if (removeBuff(this.handle, buffTypeId)) {
-        checkBuff(this, buffTypeId)
+        checkBuff(this, buffTypeId, false)
         return true
     }
     return false
@@ -46,7 +46,7 @@ declare module "../unit" {
             resistanceType?: BuffResistanceType,
             includeExpirationTimers?: boolean,
             includeAuras?: boolean,
-            autoDispel?: boolean
+            autoDispel?: boolean,
         ): number
     }
 }
@@ -56,7 +56,7 @@ Unit.prototype.countBuffs = function (
     resistanceType = undefined,
     includeExpirationTimers = true,
     includeAuras = true,
-    autoDispel = false
+    autoDispel = false,
 ) {
     return unitCountBuffsEx(
         this.handle,
@@ -66,7 +66,7 @@ Unit.prototype.countBuffs = function (
         ((resistanceType ?? 0b00) & BuffResistanceType.PHYSICAL) != 0,
         includeExpirationTimers,
         includeAuras,
-        autoDispel
+        autoDispel,
     )
 }
 
@@ -84,7 +84,7 @@ declare module "../unit" {
             resistanceType?: BuffResistanceType,
             includeExpirationTimers?: boolean,
             includeAuras?: boolean,
-            autoDispel?: boolean
+            autoDispel?: boolean,
         ): number
 
         removeBuffs(buffTypeIds: number[]): number
@@ -95,7 +95,7 @@ Unit.prototype.removeBuffs = function (
     resistanceType?: BuffResistanceType,
     includeExpirationTimers?: boolean,
     includeAuras?: boolean,
-    autoDispel?: boolean
+    autoDispel?: boolean,
 ): number {
     const handle = this.handle
     let cnt: number
@@ -133,6 +133,6 @@ Unit.prototype.removeBuffs = function (
             autoDispel,
         )
     }
-    checkBuffs(this)
+    checkBuffs(this, false)
     return cnt
 }

@@ -424,10 +424,16 @@ const selectBuffTypeIdWithLeastDuration = (
 }
 
 /** @internal For use by internal systems only. */
-export let checkBuff: (this: void, unit: Unit, buffTypeId: number) => void
+export let checkBuff: (
+    this: void,
+    unit: Unit,
+    buffTypeId: number,
+    isDispel: boolean,
+    source?: Unit,
+) => void
 
 /** @internal For use by internal systems only. */
-export let checkBuffs: (this: void, unit: Unit) => void
+export let checkBuffs: (this: void, unit: Unit, isDispel: boolean, source?: Unit) => void
 
 const destroyBuffIfItHasSameUniqueGroup = (buff: Buff, uniqueGroup: BuffUniqueGroup) => {
     if (buff[BuffPropertyKey.UNIQUE_GROUP] == uniqueGroup) {
@@ -440,6 +446,10 @@ const destroyBuff = (buff: Buff) => {
 }
 
 const expireBuff = (buff: Buff) => {
+    if (buff.isDestroyed || buff[BuffPropertyKey.STATE] != HandleState.CREATED) {
+        return
+    }
+    buff[BuffPropertyKey.STATE] = HandleState.BEING_DESTROYED
     const remainingDamageOverDuration = buff[BuffPropertyKey.REMAINING_DAMAGE_OVER_DURATION] ?? 0
     const remainingHealingOverDuration = buff[BuffPropertyKey.REMAINING_DAMAGE_OVER_DURATION] ?? 0
     if (remainingDamageOverDuration != 0 || remainingHealingOverDuration != 0) {
@@ -1547,6 +1557,19 @@ export class Buff<
         expireBuff(this)
     }
 
+    /** Dispels this buff, invoking onDispel before removing it. */
+    public dispel(source?: Unit): void {
+        if (this.isDestroyed || this[BuffPropertyKey.STATE] != HandleState.CREATED) {
+            return
+        }
+        this[BuffPropertyKey.STATE] = HandleState.BEING_DESTROYED
+        try {
+            this.onDispel(source)
+        } finally {
+            this.destroy()
+        }
+    }
+
     protected onCreate(): void {
         // no-op
     }
@@ -1655,6 +1678,12 @@ export class Buff<
             return buff as T
         }
         return undefined
+    }
+
+    /** Called for dispelling, never for a direct destroy() or replacement. */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public onDispel(source: Unit | undefined): void {
+        // no-op
     }
 
     public onExpiration(): void {
@@ -1769,41 +1798,53 @@ export class Buff<
     public static readonly beingDestroyedEvent = buffBeingDestroyedEvent
 
     static {
-        const destroyBuffIfNeeded = (buff: Buff) => {
+        const destroyBuffIfNeeded = (buff: Buff, isDispel: boolean, source?: Unit) => {
+            const currentHandle = getUnitAbility(buff[BuffPropertyKey.UNIT].handle, buff.typeId)
             if (
-                getUnitAbility(buff[BuffPropertyKey.UNIT].handle, buff.typeId) != buff.handle &&
+                currentHandle != buff.handle &&
                 buff[BuffPropertyKey.STATE] == HandleState.CREATED
             ) {
-                buff.destroy()
-            }
-        }
-
-        checkBuff = (unit: Unit, buffTypeId: number): void => {
-            const buffByTypeId = buffByTypeIdByUnit.get(unit)
-            if (buffByTypeId != undefined) {
-                const buff = buffByTypeId.get(buffTypeId)
-                if (buff != undefined) {
-                    destroyBuffIfNeeded(buff)
+                // A different non-null handle means replacement, not dispelling.
+                if (
+                    isDispel &&
+                    currentHandle == undefined &&
+                    buff.unit.isAlive &&
+                    buff.resistanceType == BuffResistanceType.MAGIC &&
+                    (buff._timer == undefined || buff.remainingDuration > 0)
+                ) {
+                    buff.dispel(source)
+                } else {
+                    buff.destroy()
                 }
             }
         }
 
-        checkBuffs = (unit: Unit): void => {
-            Buff.forAll(unit, destroyBuffIfNeeded)
+        checkBuff = (unit: Unit, buffTypeId: number, isDispel: boolean, source?: Unit): void => {
+            const buffByTypeId = buffByTypeIdByUnit.get(unit)
+            if (buffByTypeId != undefined) {
+                const buff = buffByTypeId.get(buffTypeId)
+                if (buff != undefined) {
+                    destroyBuffIfNeeded(buff, isDispel, source)
+                }
+            }
+        }
+
+        checkBuffs = (unit: Unit, isDispel: boolean, source?: Unit): void => {
+            Buff.forAll(unit, destroyBuffIfNeeded, isDispel, source)
         }
 
         Unit.abilityChannelingStartEvent.addListener(
             EventListenerPriority.LOWEST,
             (caster: Unit) => {
-                checkBuffs(caster)
-                Timer.run(checkBuffs, caster)
+                checkBuffs(caster, true, caster)
+                Timer.run(checkBuffs, caster, true, caster)
             },
         )
         Unit.abilityUnitTargetChannelingStartEvent.addListener(
             EventListenerPriority.LOWEST,
             (caster, ability, target) => {
-                checkBuffs(target)
-                Timer.run(checkBuffs, target)
+                checkBuffs(target, true, caster)
+                Timer.run(checkBuffs, target, true, caster)
             },
         )
         Unit.abilityPointTargetChannelingStartEvent.addListener(
@@ -1814,16 +1855,28 @@ export class Buff<
                     y,
                     ability.getField(ABILITY_RLF_AREA_OF_EFFECT),
                 )
-                forEach(units, checkBuffs)
-                Timer.run(forEach, units, checkBuffs)
+                forEach(units, checkBuffs, true, caster)
+                Timer.run(forEach, units, checkBuffs, true, caster)
+            },
+        )
+        Unit.abilityNoTargetChannelingStartEvent.addListener(
+            EventListenerPriority.LOWEST,
+            (caster, ability) => {
+                const radius = ability.getField(ABILITY_RLF_AREA_OF_EFFECT)
+                if (radius > 0) {
+                    const units = Unit.getInCollisionRange(caster.x, caster.y, radius)
+                    forEach(units, checkBuffs, true, caster)
+                    Timer.run(forEach, units, checkBuffs, true, caster)
+                }
             },
         )
 
         Unit.onDamage.addListener(EventListenerPriority.LOWEST, (source, target) => {
             if (source != undefined) {
-                checkBuffs(source)
+                Timer.run(checkBuffs, source, false)
             }
-            checkBuffs(target)
+            // Run after the spell-effect checks queued by native dispels.
+            Timer.run(checkBuffs, target, false)
         })
 
         // It is here to avoid cyclic dependency between UnitBehavior and Buff.
