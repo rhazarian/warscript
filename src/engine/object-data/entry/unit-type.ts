@@ -37,6 +37,11 @@ export type StandardUnitTypeId = UnitTypeId & { readonly __standardUnitTypeId: u
 
 let getOrCreateUnitTypeWeapons: (unitType: UnitType) => TupleOf<UnitTypeWeapon, 2>
 
+/** Bit of the `udea` (death type) field: the corpse can be raised. */
+const DEATH_TYPE_RAISABLE = 1
+/** Bit of the `udea` (death type) field: the corpse decays. */
+const DEATH_TYPE_DECAYABLE = 2
+
 export class UnitTypeWeapon {
     private constructor(
         private readonly unitType: UnitType,
@@ -111,6 +116,14 @@ export class UnitTypeWeapon {
         this.unitType["setNumberField"](`udp${this.index}`, impactDelay)
     }
 
+    public get missileArc(): number {
+        return this.unitType["getNumberField"](`uma${this.index}`)
+    }
+
+    public set missileArc(missileArc: number) {
+        this.unitType["setNumberField"](`uma${this.index}`, missileArc)
+    }
+
     public get missileModelPath(): string {
         return this.unitType["getStringField"](`ua${this.index}m`)
     }
@@ -133,6 +146,14 @@ export class UnitTypeWeapon {
 
     public set missileModelPathHD(missileModelPathHD: string) {
         this.unitType["setStringField"](`ua${this.index}m:hd`, missileModelPathHD)
+    }
+
+    public get missileSpeed(): number {
+        return this.unitType["getNumberField"](`ua${this.index}z`)
+    }
+
+    public set missileSpeed(missileSpeed: number) {
+        this.unitType["setNumberField"](`ua${this.index}z`, missileSpeed)
     }
 
     public get range(): number {
@@ -270,6 +291,27 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set deathDuration(deathDuration: number) {
         this.setNumberField("udtm", deathDuration)
+    }
+
+    public get isDecayable(): boolean {
+        return (this.getNumberField("udea") & DEATH_TYPE_DECAYABLE) != 0
+    }
+
+    public set isDecayable(isDecayable: boolean) {
+        this.setDeathTypeFlag(DEATH_TYPE_DECAYABLE, isDecayable)
+    }
+
+    public get isRaisable(): boolean {
+        return (this.getNumberField("udea") & DEATH_TYPE_RAISABLE) != 0
+    }
+
+    public set isRaisable(isRaisable: boolean) {
+        this.setDeathTypeFlag(DEATH_TYPE_RAISABLE, isRaisable)
+    }
+
+    private setDeathTypeFlag(flag: number, value: boolean): void {
+        const deathType = this.getNumberField("udea")
+        this.setNumberField("udea", value ? deathType | flag : deathType & ~flag)
     }
 
     public get iconPath(): string {

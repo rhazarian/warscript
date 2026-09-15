@@ -42,6 +42,8 @@ export const ARCHER_HIGH_ELF_UNIT_TYPE_ID = fourCC("nhea") as StandardUnitTypeId
 
 export const CAPTAIN_UNIT_TYPE_ID = fourCC("hcth") as StandardUnitTypeId
 
+export const CHAPLAIN_UNIT_TYPE_ID = fourCC("nchp") as StandardUnitTypeId
+
 export const SWORDSMAN_UNIT_TYPE_ID = fourCC("hhes") as StandardUnitTypeId
 
 // ======== Heroes
@@ -114,6 +116,10 @@ export const WIND_RIDER_UNIT_TYPE_ID = fourCC("owyv") as StandardUnitTypeId
 
 export const WITCH_DOCTOR_UNIT_TYPE_ID = fourCC("odoc") as StandardUnitTypeId
 
+// ======== Heroes
+
+export const BLADEMASTER_HERO_UNIT_TYPE_ID = fourCC("Obla") as StandardHeroUnitTypeId
+
 // Night Elf
 
 // ==== Melee
@@ -172,6 +178,8 @@ export const GHOUL_UNIT_TYPE_ID = fourCC("ugho") as StandardUnitTypeId
 
 export const DEATH_KNIGHT_HERO_UNIT_TYPE_ID = fourCC("Udea") as StandardHeroUnitTypeId
 
+export const DREADLORD_HERO_UNIT_TYPE_ID = fourCC("Udre") as StandardHeroUnitTypeId
+
 // ==== Campaign
 
 // ======== Units
@@ -183,6 +191,8 @@ export const ZOMBIE_FEMALE_UNIT_TYPE_ID = fourCC("nzof") as StandardUnitTypeId
 // ======== Heroes
 
 export const ARTHAS_EVIL_HERO_UNIT_TYPE_ID = fourCC("Uear") as StandardHeroUnitTypeId
+
+export const MAL_GANIS_HERO_UNIT_TYPE_ID = fourCC("Umal") as StandardHeroUnitTypeId
 
 // Neutral Hostile
 
@@ -245,6 +255,10 @@ export const WENDIGO_SHAMAN_UNIT_TYPE_ID = fourCC("nwns") as StandardUnitTypeId
 export const WILDKIN_UNIT_TYPE_ID = fourCC("nowb") as StandardUnitTypeId
 
 export const WRAITH_UNIT_TYPE_ID = fourCC("ngh2") as StandardUnitTypeId
+
+// ======== Heroes
+
+export const PIT_LORD_HERO_UNIT_TYPE_ID = fourCC("Nplh") as StandardHeroUnitTypeId
 
 // ==== Campaign
 

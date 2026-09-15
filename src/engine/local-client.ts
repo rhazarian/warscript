@@ -34,13 +34,17 @@ const pixelToFrameY = BlzPixelToFrameY
 
 const tableSort = table.sort
 
-const tocPath = "_warscript\\IsHD.toc"
+const hdTocPath = "_warscript\\IsHD.toc"
+const deTocPath = "_warscript\\IsDE.toc"
 
 compiletime(() => {
     if (currentMap) {
-        const fdfPath = "_warscript\\IsHD.fdf"
-        currentMap.addFileString(`_HD.w3mod\\${fdfPath}`, "\r\n")
-        currentMap.addFileString(`_HD.w3mod\\${tocPath}`, `${fdfPath}\r\n`)
+        const hdFdfPath = "_warscript\\IsHD.fdf"
+        currentMap.addFileString(`_HD.w3mod\\${hdFdfPath}`, "\r\n")
+        currentMap.addFileString(`_HD.w3mod\\${hdTocPath}`, `${hdFdfPath}\r\n`)
+        const deFdfPath = "_warscript\\IsDE.fdf"
+        currentMap.addFileString(`_DE.w3mod\\${deFdfPath}`, "\r\n")
+        currentMap.addFileString(`_DE.w3mod\\${deTocPath}`, `${deFdfPath}\r\n`)
     }
 })
 
@@ -137,8 +141,12 @@ export class LocalClient {
         return false
     }
 
+    public static get isDE(): boolean {
+        return false
+    }
+
     public static get graphicsMode(): GraphicsMode {
-        return this.isHD ? GraphicsMode.HD : GraphicsMode.SD
+        return this.isDE ? GraphicsMode.DE : this.isHD ? GraphicsMode.HD : GraphicsMode.SD
     }
 
     public static get isActive(): boolean {
@@ -516,7 +524,9 @@ const initializeSelectionFrames = (): void => {
 }
 
 warpack.afterMapInit(() => {
-    rawset(LocalClient, "isHD", loadTOCFile(tocPath))
+    const isDE = loadTOCFile(deTocPath)
+    rawset(LocalClient, "isDE", isDE)
+    rawset(LocalClient, "isHD", !isDE && loadTOCFile(hdTocPath))
 })
 
 Timer.run(initializeSelectionFrames)
