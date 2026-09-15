@@ -377,14 +377,19 @@ const initializeSelectionFrames = (): void => {
             const count = warmup.hasSeen24 ? 12 : 24
             if (warmup.player == Player.local) {
                 const selection = Unit.getSelectionOf(Player.local)
-                const normalSelection = selection.filter((unit) => !dummyUnits.has(unit))
-                if (normalSelection.length > 0 || selection.length == 0) {
-                    warmup.previousSelection = normalSelection
+                const minimumCount = count == 12 ? 2 : 13
+                // A suitable manual selection may already be awaiting its sync
+                // acknowledgement. Do not replace it with dummies in that case.
+                if (selection.length < minimumCount || selection.length > count) {
+                    const normalSelection = selection.filter((unit) => !dummyUnits.has(unit))
+                    if (normalSelection.length > 0 || selection.length == 0) {
+                        warmup.previousSelection = normalSelection
+                    }
+                    warmup.player.clearSelection()
+                    for (const i of $range(0, count - 1)) {
+                        warmup.player.select(warmup.units[i])
+                    }
                 }
-            }
-            warmup.player.clearSelection()
-            for (const i of $range(0, count - 1)) {
-                warmup.player.select(warmup.units[i])
             }
             // Unit removal depends only on synchronized acknowledgements.
             if (count == 12 && warmup.units.length == 24) {
