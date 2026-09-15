@@ -137,6 +137,10 @@ export class LocalClient {
         return getLocalClientHeight()
     }
 
+    public static get isSD(): boolean {
+        return true
+    }
+
     public static get isHD(): boolean {
         return false
     }
@@ -146,7 +150,7 @@ export class LocalClient {
     }
 
     public static get graphicsMode(): GraphicsMode {
-        return this.isDE ? GraphicsMode.DE : this.isHD ? GraphicsMode.HD : GraphicsMode.SD
+        return GraphicsMode.SD
     }
 
     public static get isActive(): boolean {
@@ -525,8 +529,15 @@ const initializeSelectionFrames = (): void => {
 
 warpack.afterMapInit(() => {
     const isDE = loadTOCFile(deTocPath)
+    const isHD = !isDE && loadTOCFile(hdTocPath)
     rawset(LocalClient, "isDE", isDE)
-    rawset(LocalClient, "isHD", !isDE && loadTOCFile(hdTocPath))
+    rawset(LocalClient, "isHD", isHD)
+    rawset(LocalClient, "isSD", !isDE && !isHD)
+    rawset(
+        LocalClient,
+        "graphicsMode",
+        isDE ? GraphicsMode.DE : isHD ? GraphicsMode.HD : GraphicsMode.SD,
+    )
 })
 
 Timer.run(initializeSelectionFrames)
