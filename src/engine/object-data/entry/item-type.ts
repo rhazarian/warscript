@@ -55,6 +55,14 @@ export class ItemType extends ObjectDataEntry<ItemTypeId> {
         this.setStringField("iico:hd", iconPathHD)
     }
 
+    public get iconPathDE(): string {
+        return this.getStringField("iico:de")
+    }
+
+    public set iconPathDE(iconPathDE: string) {
+        this.setStringField("iico:de", iconPathDE)
+    }
+
     public get modelPath(): string {
         return this.getStringField("ifil")
     }
@@ -77,6 +85,14 @@ export class ItemType extends ObjectDataEntry<ItemTypeId> {
 
     public set modelPathHD(modelPathHD: string) {
         this.setStringField("ifil:hd", modelPathHD)
+    }
+
+    public get modelPathDE(): string {
+        return this.getStringField("ifil:de")
+    }
+
+    public set modelPathDE(modelPathDE: string) {
+        this.setStringField("ifil:de", modelPathDE)
     }
 
     public get scale(): number {
@@ -103,6 +119,14 @@ export class ItemType extends ObjectDataEntry<ItemTypeId> {
         this.setNumberField("isca:hd", scaleHD)
     }
 
+    public get scaleDE(): number {
+        return this.getNumberField("isca:de")
+    }
+
+    public set scaleDE(scaleDE: number) {
+        this.setNumberField("isca:de", scaleDE)
+    }
+
     // Combat
 
     public get armorSoundType(): ArmorSoundType {
@@ -127,6 +151,14 @@ export class ItemType extends ObjectDataEntry<ItemTypeId> {
 
     public set armorSoundTypeHD(armorSoundTypeHD: ArmorSoundType) {
         this.setStringField("iarm:hd", armorSoundTypeHD)
+    }
+
+    public get armorSoundTypeDE(): ArmorSoundType {
+        return this.getStringField("iarm:de") as ArmorSoundType
+    }
+
+    public set armorSoundTypeDE(armorSoundTypeDE: ArmorSoundType) {
+        this.setStringField("iarm:de", armorSoundTypeDE)
     }
 
     // Text

@@ -72,6 +72,14 @@ export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeI
         this.setStringField("bfil:hd", modelPathHD)
     }
 
+    public get modelPathDE(): string {
+        return this.getStringField("bfil:de")
+    }
+
+    public set modelPathDE(modelPathDE: string) {
+        this.setStringField("bfil:de", modelPathDE)
+    }
+
     public get occlusionHeight(): number {
         return this.getNumberField("boch")
     }
@@ -104,6 +112,14 @@ export abstract class DestructibleType extends ObjectDataEntry<DestructibleTypeI
 
     public set armorSoundTypeHD(armorSoundTypeHD: ArmorSoundType) {
         this.setStringField("barm:hd", armorSoundTypeHD)
+    }
+
+    public get armorSoundTypeDE(): ArmorSoundType {
+        return this.getStringField("barm:de") as ArmorSoundType
+    }
+
+    public set armorSoundTypeDE(armorSoundTypeDE: ArmorSoundType) {
+        this.setStringField("barm:de", armorSoundTypeDE)
     }
 
     public get combatClassifications(): CombatClassifications {

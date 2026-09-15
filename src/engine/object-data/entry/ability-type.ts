@@ -201,6 +201,14 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         this.setStringField("aart:hd", iconPathHD)
     }
 
+    public get iconPathDE(): string {
+        return this.getStringField("aart:de")
+    }
+
+    public set iconPathDE(iconPathDE: string) {
+        this.setStringField("aart:de", iconPathDE)
+    }
+
     public get isButtonVisible(): boolean {
         return this._isButtonVisible
     }
@@ -276,6 +284,14 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
 
     public set missileModelPathHD(missileModelPathHD: string) {
         this.setStringField("amat:hd", missileModelPathHD)
+    }
+
+    public get missileModelPathDE(): string {
+        return this.getStringField("amat:de")
+    }
+
+    public set missileModelPathDE(missileModelPathDE: string) {
+        this.setStringField("amat:de", missileModelPathDE)
     }
 
     public get missileMovementArc(): number {
@@ -386,6 +402,27 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
             array(6, (i) => `ata${i}:hd`),
             "atac:hd",
             targetEffectPresetsHD,
+        )
+    }
+
+    public get targetEffectPresetsDE(): TupleOf<
+        EffectPresetWithParameters,
+        0 | 1 | 2 | 3 | 4 | 5 | 6
+    > {
+        return this.getAttachmentPresetListField(
+            "atat:de",
+            array(6, (i) => `ata${i}:de`),
+        ) as TupleOf<EffectPresetWithParameters, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+    }
+
+    public set targetEffectPresetsDE(
+        targetEffectPresetsDE: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>,
+    ) {
+        this.setAttachmentPresetListField(
+            "atat:de",
+            array(6, (i) => `ata${i}:de`),
+            "atac:de",
+            targetEffectPresetsDE,
         )
     }
 

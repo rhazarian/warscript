@@ -61,6 +61,14 @@ export abstract class BuffType<Id extends BuffTypeId = BuffTypeId> extends Objec
         this.setStringField("fart:hd", iconPathHD)
     }
 
+    public get iconPathDE(): string {
+        return this.getStringField("fart:de")
+    }
+
+    public set iconPathDE(iconPathDE: string) {
+        this.setStringField("fart:de", iconPathDE)
+    }
+
     public get isMissileHoming(): boolean {
         return this.getBooleanField("fmho")
     }
@@ -99,6 +107,14 @@ export abstract class BuffType<Id extends BuffTypeId = BuffTypeId> extends Objec
 
     public set missileModelPathHD(missileModelPathHD: string) {
         this.setStringField("fmat:hd", missileModelPathHD)
+    }
+
+    public get missileModelPathDE(): string {
+        return this.getStringField("fmat:de")
+    }
+
+    public set missileModelPathDE(missileModelPathDE: string) {
+        this.setStringField("fmat:de", missileModelPathDE)
     }
 
     public get missileMovementArc(): number {

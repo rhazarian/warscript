@@ -37,14 +37,18 @@ const METATABLE = {
 const enum PropertyKey {
     IMPACT_OFFSET_Z,
     IMPACT_OFFSET_Z_HD,
+    IMPACT_OFFSET_Z_DE,
     LAUNCH_OFFSET_X,
     LAUNCH_OFFSET_Y,
     LAUNCH_OFFSET_Z,
     LAUNCH_OFFSET_Z_HD,
+    LAUNCH_OFFSET_Z_DE,
     LAUNCH_VISUAL_OFFSET_X,
     LAUNCH_VISUAL_OFFSET_X_HD,
+    LAUNCH_VISUAL_OFFSET_X_DE,
     LAUNCH_VISUAL_OFFSET_Y,
     LAUNCH_VISUAL_OFFSET_Y_HD,
+    LAUNCH_VISUAL_OFFSET_Y_DE,
 }
 
 /** @internal For use by internal systems only. */
@@ -56,8 +60,6 @@ export const MISSILE_DATA_BY_UNIT_TYPE_ID = (() => {
                     UnitType.getAll(),
                     (unitType) => unitType.id,
                     (unitType) => {
-                        unitType.missileImpactOffsetZSD
-                        unitType.missileImpactOffsetZHD
                         return {
                             [PropertyKey.IMPACT_OFFSET_Z]:
                                 unitType.missileImpactOffsetZSD != DEFAULT_MISSILE_IMPACT_OFFSET_Z
@@ -66,6 +68,10 @@ export const MISSILE_DATA_BY_UNIT_TYPE_ID = (() => {
                             [PropertyKey.IMPACT_OFFSET_Z_HD]:
                                 unitType.missileImpactOffsetZHD != unitType.missileImpactOffsetZSD
                                     ? unitType.missileImpactOffsetZHD
+                                    : undefined,
+                            [PropertyKey.IMPACT_OFFSET_Z_DE]:
+                                unitType.missileImpactOffsetZDE != unitType.missileImpactOffsetZSD
+                                    ? unitType.missileImpactOffsetZDE
                                     : undefined,
                             [PropertyKey.LAUNCH_OFFSET_X]:
                                 unitType.missileLaunchOffsetX != DEFAULT_MISSILE_LAUNCH_OFFSET_X
@@ -83,6 +89,10 @@ export const MISSILE_DATA_BY_UNIT_TYPE_ID = (() => {
                                 unitType.missileLaunchOffsetZHD != unitType.missileLaunchOffsetZSD
                                     ? unitType.missileLaunchOffsetZHD
                                     : undefined,
+                            [PropertyKey.LAUNCH_OFFSET_Z_DE]:
+                                unitType.missileLaunchOffsetZDE != unitType.missileLaunchOffsetZSD
+                                    ? unitType.missileLaunchOffsetZDE
+                                    : undefined,
                             [PropertyKey.LAUNCH_VISUAL_OFFSET_X]:
                                 unitType.missileLaunchVisualOffsetXSD !=
                                 DEFAULT_MISSILE_LAUNCH_VISUAL_OFFSET_X
@@ -92,6 +102,11 @@ export const MISSILE_DATA_BY_UNIT_TYPE_ID = (() => {
                                 unitType.missileLaunchVisualOffsetXHD !=
                                 unitType.missileLaunchVisualOffsetXSD
                                     ? unitType.missileLaunchVisualOffsetXHD
+                                    : undefined,
+                            [PropertyKey.LAUNCH_VISUAL_OFFSET_X_DE]:
+                                unitType.missileLaunchVisualOffsetXDE !=
+                                unitType.missileLaunchVisualOffsetXSD
+                                    ? unitType.missileLaunchVisualOffsetXDE
                                     : undefined,
                             [PropertyKey.LAUNCH_VISUAL_OFFSET_Y]:
                                 unitType.missileLaunchVisualOffsetYSD !=
@@ -103,40 +118,57 @@ export const MISSILE_DATA_BY_UNIT_TYPE_ID = (() => {
                                 unitType.missileLaunchVisualOffsetYSD
                                     ? unitType.missileLaunchVisualOffsetYHD
                                     : undefined,
+                            [PropertyKey.LAUNCH_VISUAL_OFFSET_Y_DE]:
+                                unitType.missileLaunchVisualOffsetYDE !=
+                                unitType.missileLaunchVisualOffsetYSD
+                                    ? unitType.missileLaunchVisualOffsetYDE
+                                    : undefined,
                         }
-                    }
+                    },
                 )
             }),
             (data) => {
                 return setmetatable(
                     {
                         impactOffsetZ: LocalClient.isHD
-                            ? data[PropertyKey.IMPACT_OFFSET_Z_HD] ??
-                              data[PropertyKey.IMPACT_OFFSET_Z]
-                            : data[PropertyKey.IMPACT_OFFSET_Z],
+                            ? (data[PropertyKey.IMPACT_OFFSET_Z_HD] ??
+                              data[PropertyKey.IMPACT_OFFSET_Z])
+                            : LocalClient.isDE
+                              ? (data[PropertyKey.IMPACT_OFFSET_Z_DE] ??
+                                data[PropertyKey.IMPACT_OFFSET_Z])
+                              : data[PropertyKey.IMPACT_OFFSET_Z],
                         launchOffsetX: data[PropertyKey.LAUNCH_OFFSET_X],
                         launchOffsetY: data[PropertyKey.LAUNCH_OFFSET_Y],
                         launchOffsetZ: LocalClient.isHD
-                            ? data[PropertyKey.LAUNCH_OFFSET_Z_HD] ??
-                              data[PropertyKey.LAUNCH_OFFSET_Z]
-                            : data[PropertyKey.LAUNCH_OFFSET_Z],
+                            ? (data[PropertyKey.LAUNCH_OFFSET_Z_HD] ??
+                              data[PropertyKey.LAUNCH_OFFSET_Z])
+                            : LocalClient.isDE
+                              ? (data[PropertyKey.LAUNCH_OFFSET_Z_DE] ??
+                                data[PropertyKey.LAUNCH_OFFSET_Z])
+                              : data[PropertyKey.LAUNCH_OFFSET_Z],
                         launchVisualOffsetX: LocalClient.isHD
-                            ? data[PropertyKey.LAUNCH_VISUAL_OFFSET_X_HD] ??
-                              data[PropertyKey.LAUNCH_VISUAL_OFFSET_X]
-                            : data[PropertyKey.LAUNCH_VISUAL_OFFSET_X],
+                            ? (data[PropertyKey.LAUNCH_VISUAL_OFFSET_X_HD] ??
+                              data[PropertyKey.LAUNCH_VISUAL_OFFSET_X])
+                            : LocalClient.isDE
+                              ? (data[PropertyKey.LAUNCH_VISUAL_OFFSET_X_DE] ??
+                                data[PropertyKey.LAUNCH_VISUAL_OFFSET_X])
+                              : data[PropertyKey.LAUNCH_VISUAL_OFFSET_X],
                         launchVisualOffsetY: LocalClient.isHD
-                            ? data[PropertyKey.LAUNCH_VISUAL_OFFSET_Y_HD] ??
-                              data[PropertyKey.LAUNCH_VISUAL_OFFSET_Y]
-                            : data[PropertyKey.LAUNCH_VISUAL_OFFSET_Y],
+                            ? (data[PropertyKey.LAUNCH_VISUAL_OFFSET_Y_HD] ??
+                              data[PropertyKey.LAUNCH_VISUAL_OFFSET_Y])
+                            : LocalClient.isDE
+                              ? (data[PropertyKey.LAUNCH_VISUAL_OFFSET_Y_DE] ??
+                                data[PropertyKey.LAUNCH_VISUAL_OFFSET_Y])
+                              : data[PropertyKey.LAUNCH_VISUAL_OFFSET_Y],
                     },
-                    METATABLE
+                    METATABLE,
                 )
-            }
+            },
         ),
         {
             __index() {
                 return DEFAULT_VALUES
             },
-        }
+        },
     )
 })()

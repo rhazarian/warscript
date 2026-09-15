@@ -148,6 +148,14 @@ export class UnitTypeWeapon {
         this.unitType["setStringField"](`ua${this.index}m:hd`, missileModelPathHD)
     }
 
+    public get missileModelPathDE(): string {
+        return this.unitType["getStringField"](`ua${this.index}m:de`)
+    }
+
+    public set missileModelPathDE(missileModelPathDE: string) {
+        this.unitType["setStringField"](`ua${this.index}m:de`, missileModelPathDE)
+    }
+
     public get missileSpeed(): number {
         return this.unitType["getNumberField"](`ua${this.index}z`)
     }
@@ -186,6 +194,14 @@ export class UnitTypeWeapon {
 
     public set soundTypeHD(soundTypeHD: WeaponSoundType) {
         this.unitType["setStringField"](`ucs${this.index}:hd`, soundTypeHD)
+    }
+
+    public get soundTypeDE(): WeaponSoundType {
+        return this.unitType["getStringField"](`ucs${this.index}:de`) as WeaponSoundType
+    }
+
+    public set soundTypeDE(soundTypeDE: WeaponSoundType) {
+        this.unitType["setStringField"](`ucs${this.index}:de`, soundTypeDE)
     }
 
     static {
@@ -338,6 +354,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setStringField("uico:hd", iconPathHD)
     }
 
+    public get iconPathDE(): string {
+        return this.getStringField("uico:de")
+    }
+
+    public set iconPathDE(iconPathDE: string) {
+        this.setStringField("uico:de", iconPathDE)
+    }
+
     public get isMissileScalingEnabled(): boolean {
         return this.getBooleanField("uscb")
     }
@@ -402,6 +426,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setNumberField("ulpz:hd", missileLaunchOffsetZHD)
     }
 
+    public get missileLaunchOffsetZDE(): number {
+        return this.getNumberField("ulpz:de")
+    }
+
+    public set missileLaunchOffsetZDE(missileLaunchOffsetZDE: number) {
+        this.setNumberField("ulpz:de", missileLaunchOffsetZDE)
+    }
+
     public get missileLaunchSwimmingOffsetZ(): number {
         return this.getNumberField("ulsz")
     }
@@ -424,6 +456,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set missileLaunchSwimmingOffsetZHD(missileLaunchSwimmingOffsetZHD: number) {
         this.setNumberField("ulsz:hd", missileLaunchSwimmingOffsetZHD)
+    }
+
+    public get missileLaunchSwimmingOffsetZDE(): number {
+        return this.getNumberField("ulsz:de")
+    }
+
+    public set missileLaunchSwimmingOffsetZDE(missileLaunchSwimmingOffsetZDE: number) {
+        this.setNumberField("ulsz:de", missileLaunchSwimmingOffsetZDE)
     }
 
     public get missileLaunchVisualOffsetX(): number {
@@ -450,6 +490,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setNumberField("projectileVisOffsetX:hd", missileLaunchVisualOffsetXHD)
     }
 
+    public get missileLaunchVisualOffsetXDE(): number {
+        return this.getNumberField("projectileVisOffsetX:de")
+    }
+
+    public set missileLaunchVisualOffsetXDE(missileLaunchVisualOffsetXDE: number) {
+        this.setNumberField("projectileVisOffsetX:de", missileLaunchVisualOffsetXDE)
+    }
+
     public get missileLaunchVisualOffsetY(): number {
         return this.getNumberField("projectileVisOffsetY")
     }
@@ -472,6 +520,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set missileLaunchVisualOffsetYHD(missileLaunchVisualOffsetYHD: number) {
         this.setNumberField("projectileVisOffsetY:hd", missileLaunchVisualOffsetYHD)
+    }
+
+    public get missileLaunchVisualOffsetYDE(): number {
+        return this.getNumberField("projectileVisOffsetY:de")
+    }
+
+    public set missileLaunchVisualOffsetYDE(missileLaunchVisualOffsetYDE: number) {
+        this.setNumberField("projectileVisOffsetY:de", missileLaunchVisualOffsetYDE)
     }
 
     public get missileImpactOffsetZ(): number {
@@ -498,6 +554,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setNumberField("uimz:hd", missileImpactOffsetZHD)
     }
 
+    public get missileImpactOffsetZDE(): number {
+        return this.getNumberField("uimz:de")
+    }
+
+    public set missileImpactOffsetZDE(missileImpactOffsetZDE: number) {
+        this.setNumberField("uimz:de", missileImpactOffsetZDE)
+    }
+
     public get missileImpactSwimmingOffsetZ(): number {
         return this.getNumberField("uisz")
     }
@@ -520,6 +584,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set missileImpactSwimmingOffsetZHD(missileImpactSwimmingOffsetZHD: number) {
         this.setNumberField("uisz:hd", missileImpactSwimmingOffsetZHD)
+    }
+
+    public get missileImpactSwimmingOffsetZDE(): number {
+        return this.getNumberField("uisz:de")
+    }
+
+    public set missileImpactSwimmingOffsetZDE(missileImpactSwimmingOffsetZDE: number) {
+        this.setNumberField("uisz:de", missileImpactSwimmingOffsetZDE)
     }
 
     public get modelPath(): string {
@@ -564,6 +636,20 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         }
     }
 
+    public get modelPathDE(): string {
+        return this.getStringField("umdl:de")
+    }
+
+    public set modelPathDE(modelPathDE: string) {
+        this.setStringField("umdl:de", modelPathDE)
+        if (
+            !this.isPortraitModelPathSet &&
+            WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
+        ) {
+            this.setStringField("upor:de", "")
+        }
+    }
+
     public get portraitModelPath(): string {
         return this.getStringField("upor")
     }
@@ -591,6 +677,15 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.isPortraitModelPathSet = true
     }
 
+    public get portraitModelPathDE(): string {
+        return this.getStringField("upor:de")
+    }
+
+    public set portraitModelPathDE(portraitModelPathDE: string) {
+        this.setStringField("upor:de", portraitModelPathDE)
+        this.isPortraitModelPathSet = true
+    }
+
     public get runSpeed(): number {
         return this.getNumberField("urun")
     }
@@ -613,6 +708,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set runSpeedHD(runSpeedHD: number) {
         this.setNumberField("urun:hd", runSpeedHD)
+    }
+
+    public get runSpeedDE(): number {
+        return this.getNumberField("urun:de")
+    }
+
+    public set runSpeedDE(runSpeedDE: number) {
+        this.setNumberField("urun:de", runSpeedDE)
     }
 
     public get selectionCircleHeight(): number {
@@ -647,6 +750,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setNumberField("ussc:hd", selectionCircleScaleHD)
     }
 
+    public get selectionCircleScaleDE(): number {
+        return this.getNumberField("ussc:de")
+    }
+
+    public set selectionCircleScaleDE(selectionCircleScaleDE: number) {
+        this.setNumberField("ussc:de", selectionCircleScaleDE)
+    }
+
     public get scale(): number {
         return this.getNumberField("usca")
     }
@@ -669,6 +780,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set scaleHD(scaleHD: number) {
         this.setNumberField("usca:hd", scaleHD)
+    }
+
+    public get scaleDE(): number {
+        return this.getNumberField("usca:de")
+    }
+
+    public set scaleDE(scaleDE: number) {
+        this.setNumberField("usca:de", scaleDE)
     }
 
     public get scoreScreenIconPath(): string {
@@ -695,6 +814,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setStringField("ussi:hd", scoreScreenIconPathHD)
     }
 
+    public get scoreScreenIconPathDE(): string {
+        return this.getStringField("ussi:de")
+    }
+
+    public set scoreScreenIconPathDE(scoreScreenIconPathDE: string) {
+        this.setStringField("ussi:de", scoreScreenIconPathDE)
+    }
+
     public get specialEffectModelPath(): string {
         return this.getStringField("uspa")
     }
@@ -717,6 +844,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set specialEffectModelPathHD(specialEffectModelPathHD: string) {
         this.setStringField("uspa:hd", specialEffectModelPathHD)
+    }
+
+    public get specialEffectModelPathDE(): string {
+        return this.getStringField("uspa:de")
+    }
+
+    public set specialEffectModelPathDE(specialEffectModelPathDE: string) {
+        this.setStringField("uspa:de", specialEffectModelPathDE)
     }
 
     public get shadowImageHeight(): number {
@@ -775,6 +910,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
         this.setNumberField("uwal:hd", walkSpeedHD)
     }
 
+    public get walkSpeedDE(): number {
+        return this.getNumberField("uwal:de")
+    }
+
+    public set walkSpeedDE(walkSpeedDE: number) {
+        this.setNumberField("uwal:de", walkSpeedDE)
+    }
+
     // Combat
 
     public get armor(): number {
@@ -807,6 +950,14 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set armorSoundTypeHD(armorSoundTypeHD: ArmorSoundType) {
         this.setStringField("uarm:hd", armorSoundTypeHD)
+    }
+
+    public get armorSoundTypeDE(): ArmorSoundType {
+        return this.getStringField("uarm:de") as ArmorSoundType
+    }
+
+    public set armorSoundTypeDE(armorSoundTypeDE: ArmorSoundType) {
+        this.setStringField("uarm:de", armorSoundTypeDE)
     }
 
     public get armorType(): ArmorType {
