@@ -174,6 +174,23 @@ export class Handle<H extends jhandle, DestroyParameters extends any[] = []>
         return this.onCreateEvent
     }
 
+    /**
+     * @internal For use by internal systems only.
+     *
+     * Whether this class has already created a wrapper for the handle. Game-owned objects
+     * (native frames, for example) receive a JASS handle id the first time a script retrieves
+     * them, so code that has to keep handle registration synchronous uses this to tell a
+     * first retrieval apart from a repeated one.
+     */
+    public static isWrapped(this: unknown, handle: jhandle): boolean {
+        // `this` is the concrete subclass, whose static side is not assignable to `typeof Handle`.
+        return (
+            (this as { memoized: { [id: number]: Handle<jhandle> | undefined } }).memoized[
+                getHandleId(handle)
+            ] != undefined
+        )
+    }
+
     public static get destroyEvent(): Event<[Handle<jhandle>]> {
         return this.onDestroyEvent
     }
