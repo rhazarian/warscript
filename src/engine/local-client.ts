@@ -7,7 +7,6 @@ import { Player } from "../core/types/player"
 import { Timer } from "../core/types/timer"
 import { Color } from "../core/types/color"
 import { array } from "../utility/arrays"
-import { UnitDefinition } from "../objutil/unit"
 import { Socket } from "../net/socket"
 
 const frameGetChild = BlzFrameGetChild
@@ -53,31 +52,17 @@ compiletime(() => {
     }
 })
 
-const selectionWarmupUnitTypeId = compiletime(() => {
-    const dummy = new UnitDefinition("hfoo", undefined, {
-        name: "[Warscript/Selection Warmup] Unit",
-        model: "",
-        modelHD: "",
-        foodCost: 0,
-        movementType: "none",
-        collisionSize: 0,
-        selectionScale: 0,
-        sightRadiusDay: 0,
-        sightRadiusNight: 0,
-        abilitiesNormal: ["Avul"],
-    })
-    dummy.weapons[0].enabled = false
-    dummy.weapons[1].enabled = false
-    return fourCC(dummy.id)
-})
-
 const SELECTION_DETAIL_FRAME_NAME = "SimpleInfoPanelUnitDetail"
 const SELECTION_GROUP_PANEL_INDEX = 5
 const SELECTION_BUTTON_ICON_INDEX = 1
 /** The detail panel, its parent, the group panel and the button grid. */
 const SELECTION_LAYOUT_ROOT_HANDLE_COUNT = 4
-/** The group selection layouts by button count, in the order the startup warmup goes through them. */
-const SELECTION_LAYOUT_BUTTON_COUNTS = [24, 12]
+const SELECTION_LAYOUT_MAX_BUTTON_COUNT = 24
+/** The root frames plus a button and its icon per slot of the largest layout. */
+const SELECTION_LAYOUT_MAX_HANDLE_COUNT =
+    SELECTION_LAYOUT_ROOT_HANDLE_COUNT + 2 * SELECTION_LAYOUT_MAX_BUTTON_COUNT
+/** Registration attempts for one local selection before giving up on its layout. */
+const SELECTION_LAYOUT_MAX_REQUEST_COUNT = 4
 
 const getSelectionButtons = (): Frame => {
     return Frame.byName(SELECTION_DETAIL_FRAME_NAME)
@@ -111,17 +96,24 @@ const getChildIfPresent = (
     return frameGetChild(parent, index)
 }
 
+const padSelectionLayoutFrames = (registeredCount: number): void => {
+    for (let i = registeredCount; i < SELECTION_LAYOUT_MAX_HANDLE_COUNT; i++) {
+        location(0, 0)
+    }
+}
+
 /**
  * Wraps every frame of the group selection layout currently shown on this client, in the
  * order `actualizeMainSelectedUnit` later walks them. Game-owned frames receive a JASS handle
- * id the first time a script retrieves them, so this must run on every client in the same
- * tick and register the same number of handles everywhere: every frame reached for the first
- * time counts, and the remainder up to the layout's total is padded with locations, the way
+ * id the first time a script retrieves them, and the game builds the layout's buttons anew
+ * whenever the selection changes, so this must run in a tick every client shares and register
+ * the same number of handles everywhere: every frame reached for the first time counts, and
+ * the remainder up to SELECTION_LAYOUT_MAX_HANDLE_COUNT is padded with locations, the way
  * `Frame.byOrigin` balances origin frames that appear asynchronously.
  *
- * Returns whether the local layout has `buttonCount` buttons and every frame was reached.
+ * Returns the number of buttons found, or undefined when the layout was not fully reachable.
  */
-const registerSelectionLayoutFrames = (buttonCount: number): boolean => {
+const registerShownSelectionLayoutFrames = (): number | undefined => {
     let registeredCount = 0
     const register = (handle: jframehandle | undefined): jframehandle | undefined => {
         if (handle == undefined || getHandleId(handle) == 0) {
@@ -137,20 +129,58 @@ const registerSelectionLayoutFrames = (buttonCount: number): boolean => {
     const container = register(detail != undefined ? frameGetParent(detail) : undefined)
     const groupPanel = register(getChildIfPresent(container, SELECTION_GROUP_PANEL_INDEX))
     const grid = register(getChildIfPresent(groupPanel, 0))
-    let complete = grid != undefined && frameGetChildrenCount(grid) == buttonCount
-    for (const i of $range(0, buttonCount - 1)) {
-        const button = register(getChildIfPresent(grid, i))
-        const icon = register(getChildIfPresent(button, SELECTION_BUTTON_ICON_INDEX))
-        if (icon == undefined) {
-            complete = false
+    let buttonCount: number | undefined
+    if (grid != undefined) {
+        const count = frameGetChildrenCount(grid)
+        if (count <= SELECTION_LAYOUT_MAX_BUTTON_COUNT) {
+            buttonCount = count
+            for (const i of $range(0, count - 1)) {
+                const button = register(getChildIfPresent(grid, i))
+                if (register(getChildIfPresent(button, SELECTION_BUTTON_ICON_INDEX)) == undefined) {
+                    buttonCount = undefined
+                }
+            }
         }
     }
-    const totalHandleCount = SELECTION_LAYOUT_ROOT_HANDLE_COUNT + 2 * buttonCount
-    for (let i = registeredCount; i < totalHandleCount; i++) {
-        location(0, 0)
-    }
-    return complete
+    padSelectionLayoutFrames(registeredCount)
+    return buttonCount
 }
+
+const getExpectedSelectionLayoutButtonCount = (selectionCount: number): number => {
+    return selectionCount <= 12 ? 12 : SELECTION_LAYOUT_MAX_BUTTON_COUNT
+}
+
+// Every change of the local selection may rebuild the group panel's buttons, so the
+// polling reads them only after they were registered for that very selection. A change
+// bumps the epoch; a request over the socket makes every client allocate in the same
+// tick, the requester by wrapping its frames, the others with locations only.
+const selectionLayoutSocket = new Socket()
+let localSelectionSignature = 0
+let localSelectionEpoch = 0
+let localSelectionCount = 0
+let registeredSelectionEpoch = 0
+let registeredSelectionButtonCount = 0
+let selectionLayoutRequestCount = 0
+let selectionLayoutRequestPending = false
+
+selectionLayoutSocket.onMessage.addListener((player) => {
+    if (player != Player.local) {
+        padSelectionLayoutFrames(0)
+        return
+    }
+    selectionLayoutRequestPending = false
+    const buttonCount = registerShownSelectionLayoutFrames()
+    // The layout shown now belongs to the current selection, which may be a later one
+    // than the request was made for; the polling needs exactly the current one.
+    if (
+        buttonCount != undefined &&
+        localSelectionCount > 1 &&
+        buttonCount == getExpectedSelectionLayoutButtonCount(localSelectionCount)
+    ) {
+        registeredSelectionEpoch = localSelectionEpoch
+        registeredSelectionButtonCount = buttonCount
+    }
+})
 
 const localSelectedUnits: Unit[] = []
 const indexByLocalSelectedUnit = new LuaMap<Unit, number>()
@@ -323,8 +353,8 @@ export class LocalClient {
     }
 
     /**
-     * Local selection sampled every 1/64 second. Undefined before the first tick
-     * or until startup selection-frame initialization has finished.
+     * Local selection sampled every 1/64 second. Undefined before the first tick and while
+     * a group selection's buttons are not registered yet (see `selectionLayoutSocket`).
      */
     public static get mainSelectedUnit(): Async<Unit> | undefined {
         return currentMainSelectedUnit
@@ -360,28 +390,61 @@ export class LocalClient {
 const actualizeMainSelectedUnit = (): void => {
     Unit.getSelectionOf(Player.local, localSelectedUnits)
 
-    for (const i of $range(1, localSelectedUnits.length)) {
+    const selectionCount = localSelectedUnits.length
+    let signature = selectionCount
+    for (const i of $range(1, selectionCount)) {
         indexByLocalSelectedUnit.set(localSelectedUnits[i - 1], i)
+        signature += getHandleId(localSelectedUnits[i - 1].handle)
     }
+    if (signature != localSelectionSignature) {
+        localSelectionSignature = signature
+        localSelectionEpoch++
+        selectionLayoutRequestCount = 0
+    }
+    localSelectionCount = selectionCount
 
     tableSort(localSelectedUnits, compareUnitsSelectionPriority)
 
     let mainSelectedUnitIndex: number | undefined
-    if (localSelectedUnits.length > 1) {
-        // Both layouts were registered on every client during startup, so these
-        // lookups return the wrappers created back then. Re-resolve them every
-        // time instead of retaining handles across layout changes.
-        const selectionButtons = getSelectionButtons()
-        mainSelectedUnitIndex = getMainSelectedUnitIndex(
-            selectionButtons,
-            selectionButtons.getChildrenCount(),
-        )
+    if (selectionCount > 1) {
+        let registered = registeredSelectionEpoch == localSelectionEpoch
+        if (registered) {
+            // These lookups return the wrappers registered for this selection and
+            // allocate nothing. Re-resolve them every time instead of retaining
+            // handles: the game may rebuild the buttons at any selection change.
+            const selectionButtons = getSelectionButtons()
+            if (selectionButtons.getChildrenCount() == registeredSelectionButtonCount) {
+                mainSelectedUnitIndex = getMainSelectedUnitIndex(
+                    selectionButtons,
+                    registeredSelectionButtonCount,
+                )
+            } else {
+                registered = false
+                registeredSelectionEpoch = 0
+                selectionLayoutRequestCount = 0
+            }
+        }
+        if (
+            !registered &&
+            !selectionLayoutRequestPending &&
+            selectionLayoutRequestCount < SELECTION_LAYOUT_MAX_REQUEST_COUNT
+        ) {
+            selectionLayoutRequestPending = true
+            selectionLayoutRequestCount++
+            selectionLayoutSocket.send("")
+        }
     }
 
-    const mainSelectedUnit =
-        localSelectedUnits[localSelectedUnits.length > 1 ? (mainSelectedUnitIndex ?? 0) : 0]
+    // A group whose buttons are not registered yet has no known main unit: guessing
+    // one would make the callers act on a unit the player may not have focused.
+    let mainSelectedUnit: Unit | undefined
+    if (selectionCount <= 1) {
+        mainSelectedUnit = localSelectedUnits[0]
+    } else if (registeredSelectionEpoch == localSelectionEpoch) {
+        mainSelectedUnit = localSelectedUnits[mainSelectedUnitIndex ?? 0]
+    }
 
-    for (const i of $range(1, localSelectedUnits.length)) {
+    for (const i of $range(1, selectionCount)) {
         indexByLocalSelectedUnit.delete(localSelectedUnits[i - 1])
         localSelectedUnits[i - 1] = undefined!
     }
@@ -428,251 +491,9 @@ const actualizeTargetingModeState = (): boolean => {
 }
 
 Timer.onPeriod[1 / 64].addListener(() => {
+    actualizeMainSelectedUnit()
     actualizeTargetingModeState()
 })
-
-const initializeSelectionFrames = (): void => {
-    type PlayerWarmup = {
-        player: Player
-        units: Unit[]
-        previousSelection: Unit[]
-        /** The round in which the player last reported the current stage's layout as shown. */
-        seenRound: number
-        /** The round whose registration result the player last reported. */
-        registrationRound: number
-        registrationSucceeded: boolean
-    }
-    const warmups: PlayerWarmup[] = []
-    const warmupByPlayer = new LuaMap<Player, PlayerWarmup>()
-    const dummyUnits = new LuaSet<Unit>()
-    const socket = new Socket()
-    // The warmup goes through the layouts of SELECTION_LAYOUT_BUTTON_COUNTS one stage at a
-    // time. A stage is one or more rounds: every active player reports the stage's layout
-    // as shown, then all clients register its frames in the same tick and report whether
-    // their layout was complete. A failed report starts another round; success moves on.
-    let stageIndex = 0
-    let round = 0
-    let registering = false
-    /** The round whose frames this client has registered. */
-    let registeredRound = 0
-    let finished = false
-    let sentSeenRound = 0
-    let seenMessage = ""
-    let registeredMessage = ""
-    let failedMessage = ""
-
-    const getStageButtonCount = (): number => {
-        return SELECTION_LAYOUT_BUTTON_COUNTS[stageIndex]
-    }
-
-    const retrySelection = (): void => {
-        const count = getStageButtonCount()
-        for (const warmup of warmups) {
-            if (!warmup.player.isPlaying) {
-                continue
-            }
-            if (warmup.player == Player.local) {
-                const selection = Unit.getSelectionOf(Player.local)
-                const normalSelection = selection.filter((unit) => !dummyUnits.has(unit))
-                if (normalSelection.length > 0 || selection.length == 0) {
-                    warmup.previousSelection = normalSelection
-                }
-            }
-            warmup.player.clearSelection()
-            for (const i of $range(0, count - 1)) {
-                warmup.player.select(warmup.units[i])
-            }
-        }
-    }
-
-    const startRound = (): void => {
-        round++
-        registering = false
-        const count = getStageButtonCount()
-        seenMessage = `seen${count}`
-        registeredMessage = `registered${count}`
-        failedMessage = `failed${count}`
-        retrySelection()
-        checkProgress()
-    }
-
-    const finish = (): void => {
-        finished = true
-        retryTimer.destroy()
-        Timer.onPeriod[1 / 64].removeListener(observeSelection)
-        socket.onMessage.removeListener(onMessage)
-        Player.onLeave.removeListener(onPlayerLeave)
-
-        // Preserve a manual selection. Restore the saved selection only when
-        // startup dummies still occupy the local selection.
-        let restoreSelection: Unit[] | undefined
-        const selection = Unit.getSelectionOf(Player.local)
-        for (const unit of selection) {
-            if (dummyUnits.has(unit)) {
-                restoreSelection = selection.filter((selected) => !dummyUnits.has(selected))
-                if (restoreSelection.length == 0) {
-                    restoreSelection = warmupByPlayer.get(Player.local)?.previousSelection
-                }
-                Player.local.clearSelection()
-                break
-            }
-        }
-        for (const warmup of warmups) {
-            for (const unit of warmup.units) {
-                unit.destroy()
-            }
-            warmup.units = []
-        }
-        if (restoreSelection != undefined) {
-            for (const unit of restoreSelection) {
-                if (getUnitTypeId(unit.handle) != 0) {
-                    Player.local.select(unit)
-                }
-            }
-        }
-        // Every layout's frames are registered on every remaining client. Only now
-        // may the normal polling start accessing the current selection frames.
-        Timer.onPeriod[1 / 64].addListener(actualizeMainSelectedUnit)
-    }
-
-    const checkProgress = (): void => {
-        if (finished || registering) {
-            return
-        }
-        for (const warmup of warmups) {
-            if (warmup.player.isPlaying && warmup.seenRound != round) {
-                return
-            }
-        }
-        registering = true
-        Timer.simple(1 / 64, registerStage)
-    }
-
-    const registerStage = (): void => {
-        if (finished) {
-            return
-        }
-        registeredRound = round
-        const succeeded = registerSelectionLayoutFrames(getStageButtonCount())
-        if (warmupByPlayer.has(Player.local) && Player.local.isPlaying) {
-            socket.send(succeeded ? registeredMessage : failedMessage)
-        }
-        checkRegistration()
-    }
-
-    const checkRegistration = (): void => {
-        if (finished || !registering) {
-            return
-        }
-        let succeeded = true
-        for (const warmup of warmups) {
-            if (!warmup.player.isPlaying) {
-                continue
-            }
-            if (warmup.registrationRound != round) {
-                return
-            }
-            if (!warmup.registrationSucceeded) {
-                succeeded = false
-            }
-        }
-        if (!succeeded) {
-            startRound()
-            return
-        }
-        if (stageIndex + 1 >= SELECTION_LAYOUT_BUTTON_COUNTS.length) {
-            finish()
-            return
-        }
-        stageIndex++
-        // Dummies beyond the next layout's size are no longer needed. Their removal
-        // depends only on synchronized reports, so it happens in the same tick everywhere.
-        const count = getStageButtonCount()
-        for (const warmup of warmups) {
-            for (const i of $range(warmup.units.length - 1, count, -1)) {
-                warmup.units[i].destroy()
-                warmup.units[i] = undefined!
-            }
-        }
-        startRound()
-    }
-
-    const onMessage = (player: Player, message: string): void => {
-        const warmup = warmupByPlayer.get(player)
-        if (warmup == undefined || !player.isPlaying) {
-            return
-        }
-        if (message == seenMessage) {
-            warmup.seenRound = round
-            checkProgress()
-        } else if (
-            (message == registeredMessage || message == failedMessage) &&
-            // Reports are sent in the registration tick, which every client runs
-            // before any report can arrive; anything earlier is not a report.
-            registeredRound == round
-        ) {
-            warmup.registrationRound = round
-            warmup.registrationSucceeded = message == registeredMessage
-            checkRegistration()
-        }
-    }
-
-    const onPlayerLeave = (): void => {
-        checkProgress()
-        checkRegistration()
-    }
-
-    const observeSelection = (): void => {
-        if (
-            sentSeenRound == round ||
-            !warmupByPlayer.has(Player.local) ||
-            !Player.local.isPlaying
-        ) {
-            return
-        }
-        // Sample the local selection outside selection event callbacks. Those
-        // events can lag behind the UI and must not determine its current layout.
-        // The layout follows the selection size alone, whether or not the selected
-        // units are startup dummies: 2 to 12 units use the 12-button layout, 13 to 24
-        // the 24-button one.
-        const localSelectionCount = Unit.getSelectionOf(Player.local).length
-        const maximumCount = getStageButtonCount()
-        const minimumCount = maximumCount == 12 ? 2 : 13
-        if (localSelectionCount >= minimumCount && localSelectionCount <= maximumCount) {
-            socket.send(seenMessage)
-            sentSeenRound = round
-        }
-    }
-
-    for (const player of Player.all) {
-        if (player.isUser && player.isPlaying) {
-            const warmup: PlayerWarmup = {
-                player,
-                units: [],
-                previousSelection: player == Player.local ? Unit.getSelectionOf(player) : [],
-                seenRound: 0,
-                registrationRound: 0,
-                registrationSucceeded: false,
-            }
-            warmups[warmups.length] = warmup
-            warmupByPlayer.set(player, warmup)
-            for (const i of $range(0, SELECTION_LAYOUT_BUTTON_COUNTS[0] - 1)) {
-                const unit = assert(Unit.create(player, selectionWarmupUnitTypeId, 0, 0, 0))
-                unit.isPaused = true
-                warmup.units[i] = unit
-                dummyUnits.add(unit)
-            }
-        }
-    }
-    socket.onMessage.addListener(onMessage)
-    Player.onLeave.addListener(onPlayerLeave)
-    Timer.onPeriod[1 / 64].addListener(observeSelection)
-    // Map initialization may override our selection; retry the stage's layout every
-    // second until its registration succeeded, without recreating dummy units.
-    const retryTimer = Timer.periodic(1, retrySelection)
-    startRound()
-    observeSelection()
-}
 
 warpack.afterMapInit(() => {
     const isDE = loadTOCFile(deTocPath)
@@ -686,5 +507,3 @@ warpack.afterMapInit(() => {
         isDE ? GraphicsMode.DE : isHD ? GraphicsMode.HD : GraphicsMode.SD,
     )
 })
-
-Timer.run(initializeSelectionFrames)
