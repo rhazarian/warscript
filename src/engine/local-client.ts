@@ -12,6 +12,7 @@ import { Socket } from "../net/socket"
 const frameGetChild = BlzFrameGetChild
 const frameGetChildrenCount = BlzFrameGetChildrenCount
 const frameGetParent = BlzFrameGetParent
+const frameGetWidth = BlzFrameGetWidth
 const frameToPixelX = BlzFrameToPixelX
 const frameToPixelY = BlzFrameToPixelY
 const getFrameByName = BlzGetFrameByName
@@ -61,31 +62,50 @@ const SELECTION_LAYOUT_MAX_BUTTON_COUNT = 24
 /** The root frames plus a button and its icon per slot of the largest layout. */
 const SELECTION_LAYOUT_MAX_HANDLE_COUNT =
     SELECTION_LAYOUT_ROOT_HANDLE_COUNT + 2 * SELECTION_LAYOUT_MAX_BUTTON_COUNT
-/** Registration attempts for one local selection before giving up on its layout. */
-const SELECTION_LAYOUT_MAX_REQUEST_COUNT = 4
+/** Registration requests for one local selection before giving up on its layout. */
+const SELECTION_LAYOUT_MAX_REQUEST_COUNT = 8
+/** Polling ticks between two registration requests for the same selection. */
+const SELECTION_LAYOUT_REQUEST_INTERVAL = 16
 
-const getSelectionButtons = (): Frame => {
-    return Frame.byName(SELECTION_DETAIL_FRAME_NAME)
-        .parent.getChild(SELECTION_GROUP_PANEL_INDEX)
-        .getChild(0)
-}
+// The frames registered for the current local selection. The polling reads these
+// handles only; it never asks the game for a child frame, since a child created since
+// the registration would receive a new handle id on this client alone.
+let registeredSelectionGrid: jframehandle | undefined
+let registeredSelectionButtonCount = 0
+const registeredSelectionButtons: jframehandle[] = []
+const registeredSelectionButtonChildCounts: number[] = []
+const registeredSelectionIcons: jframehandle[] = []
 
-const getMainSelectedUnitIndex = (
-    selectionButtons: Frame,
-    buttonCount: number,
-): number | undefined => {
-    let mainSelectedUnitIndex: number | undefined
+/**
+ * The index of the widest (highlighted) button among the registered ones. The first value
+ * is false when the layout no longer matches the registration: the grid or a button has a
+ * different number of children, or an icon reads as zero width, which a destroyed frame does.
+ */
+const getRegisteredMainSelectedUnitIndex = (): LuaMultiReturn<[boolean, number]> => {
+    const grid = registeredSelectionGrid
+    if (grid == undefined || frameGetChildrenCount(grid) != registeredSelectionButtonCount) {
+        return $multi(false, 0)
+    }
+    let mainSelectedUnitIndex = 0
     let maxButtonWidth = 0
-    for (const i of $range(0, buttonCount - 1)) {
-        const width = selectionButtons.getChild(i).getChild(SELECTION_BUTTON_ICON_INDEX).width
+    for (const i of $range(0, registeredSelectionButtonCount - 1)) {
+        if (
+            frameGetChildrenCount(registeredSelectionButtons[i]) !=
+            registeredSelectionButtonChildCounts[i]
+        ) {
+            return $multi(false, 0)
+        }
+        const width = frameGetWidth(registeredSelectionIcons[i])
+        if (width <= 0) {
+            return $multi(false, 0)
+        }
         if (width > maxButtonWidth) {
             maxButtonWidth = width
             mainSelectedUnitIndex = i
         }
     }
-    return mainSelectedUnitIndex
+    return $multi(true, mainSelectedUnitIndex)
 }
-
 const getChildIfPresent = (
     parent: jframehandle | undefined,
     index: number,
@@ -129,6 +149,7 @@ const registerShownSelectionLayoutFrames = (): number | undefined => {
     const container = register(detail != undefined ? frameGetParent(detail) : undefined)
     const groupPanel = register(getChildIfPresent(container, SELECTION_GROUP_PANEL_INDEX))
     const grid = register(getChildIfPresent(groupPanel, 0))
+    registeredSelectionGrid = grid
     let buttonCount: number | undefined
     if (grid != undefined) {
         const count = frameGetChildrenCount(grid)
@@ -136,8 +157,13 @@ const registerShownSelectionLayoutFrames = (): number | undefined => {
             buttonCount = count
             for (const i of $range(0, count - 1)) {
                 const button = register(getChildIfPresent(grid, i))
-                if (register(getChildIfPresent(button, SELECTION_BUTTON_ICON_INDEX)) == undefined) {
+                const icon = register(getChildIfPresent(button, SELECTION_BUTTON_ICON_INDEX))
+                if (button == undefined || icon == undefined) {
                     buttonCount = undefined
+                } else {
+                    registeredSelectionButtons[i] = button
+                    registeredSelectionButtonChildCounts[i] = frameGetChildrenCount(button)
+                    registeredSelectionIcons[i] = icon
                 }
             }
         }
@@ -159,9 +185,10 @@ let localSelectionSignature = 0
 let localSelectionEpoch = 0
 let localSelectionCount = 0
 let registeredSelectionEpoch = 0
-let registeredSelectionButtonCount = 0
 let selectionLayoutRequestCount = 0
 let selectionLayoutRequestPending = false
+let selectionLayoutPollTick = 0
+let selectionLayoutRequestTick = -SELECTION_LAYOUT_REQUEST_INTERVAL
 
 selectionLayoutSocket.onMessage.addListener((player) => {
     if (player != Player.local) {
@@ -396,10 +423,12 @@ const actualizeMainSelectedUnit = (): void => {
         indexByLocalSelectedUnit.set(localSelectedUnits[i - 1], i)
         signature += getHandleId(localSelectedUnits[i - 1].handle)
     }
+    selectionLayoutPollTick++
     if (signature != localSelectionSignature) {
         localSelectionSignature = signature
         localSelectionEpoch++
         selectionLayoutRequestCount = 0
+        selectionLayoutRequestTick = -SELECTION_LAYOUT_REQUEST_INTERVAL
     }
     localSelectionCount = selectionCount
 
@@ -409,28 +438,26 @@ const actualizeMainSelectedUnit = (): void => {
     if (selectionCount > 1) {
         let registered = registeredSelectionEpoch == localSelectionEpoch
         if (registered) {
-            // These lookups return the wrappers registered for this selection and
-            // allocate nothing. Re-resolve them every time instead of retaining
-            // handles: the game may rebuild the buttons at any selection change.
-            const selectionButtons = getSelectionButtons()
-            if (selectionButtons.getChildrenCount() == registeredSelectionButtonCount) {
-                mainSelectedUnitIndex = getMainSelectedUnitIndex(
-                    selectionButtons,
-                    registeredSelectionButtonCount,
-                )
+            const [intact, index] = getRegisteredMainSelectedUnitIndex()
+            if (intact) {
+                mainSelectedUnitIndex = index
             } else {
+                // The game changed the panel underneath (a rebuilt or inserted frame);
+                // register again rather than touch what it created.
                 registered = false
                 registeredSelectionEpoch = 0
-                selectionLayoutRequestCount = 0
             }
         }
         if (
             !registered &&
             !selectionLayoutRequestPending &&
-            selectionLayoutRequestCount < SELECTION_LAYOUT_MAX_REQUEST_COUNT
+            selectionLayoutRequestCount < SELECTION_LAYOUT_MAX_REQUEST_COUNT &&
+            selectionLayoutPollTick - selectionLayoutRequestTick >=
+                SELECTION_LAYOUT_REQUEST_INTERVAL
         ) {
             selectionLayoutRequestPending = true
             selectionLayoutRequestCount++
+            selectionLayoutRequestTick = selectionLayoutPollTick
             selectionLayoutSocket.send("")
         }
     }
@@ -440,8 +467,8 @@ const actualizeMainSelectedUnit = (): void => {
     let mainSelectedUnit: Unit | undefined
     if (selectionCount <= 1) {
         mainSelectedUnit = localSelectedUnits[0]
-    } else if (registeredSelectionEpoch == localSelectionEpoch) {
-        mainSelectedUnit = localSelectedUnits[mainSelectedUnitIndex ?? 0]
+    } else if (mainSelectedUnitIndex != undefined) {
+        mainSelectedUnit = localSelectedUnits[mainSelectedUnitIndex]
     }
 
     for (const i of $range(1, selectionCount)) {
