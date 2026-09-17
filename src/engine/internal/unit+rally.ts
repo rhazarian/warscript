@@ -2,6 +2,7 @@ import { Unit } from "./unit"
 import { Destructable } from "../../core/types/destructable"
 import { Timer } from "../../core/types/timer"
 import { Handle } from "../../core/types/handle"
+import { OrderType } from "../object-data/auxiliary/order-type"
 
 const getLocationX = GetLocationX
 const getLocationY = GetLocationY
@@ -26,17 +27,17 @@ declare module "./unit" {
 
 const rallyRouteByUnit = setmetatable(new LuaMap<Unit, RallyRoute>(), { __mode: "k" })
 
-Unit.onPointOrder[orderId("setrally")].addListener((unit, x, y) => {
+Unit.onPointOrder[OrderType.SET_RALLY].addListener((unit, x, y) => {
     processPoint(unit, x, y)
 })
 
-Unit.onPointOrder[orderId("smart")].addListener((unit, x, y) => {
+Unit.onPointOrder[OrderType.SMART].addListener((unit, x, y) => {
     if (unit.hasAbility(fourCC("ARal"))) {
         processPoint(unit, x, y)
     }
 })
 
-Unit.onTargetOrder[orderId("setrally")].addListener((unit, target) => {
+Unit.onTargetOrder[OrderType.SET_RALLY].addListener((unit, target) => {
     if (target instanceof Unit) {
         processUnit(unit, target)
     } else if (target instanceof Destructable) {
@@ -44,7 +45,7 @@ Unit.onTargetOrder[orderId("setrally")].addListener((unit, target) => {
     }
 })
 
-Unit.onTargetOrder[orderId("smart")].addListener((unit, target) => {
+Unit.onTargetOrder[OrderType.SMART].addListener((unit, target) => {
     if (unit.hasAbility(fourCC("ARal"))) {
         if (target instanceof Unit) {
             processUnit(unit, target)
@@ -128,19 +129,19 @@ Object.defineProperty(Unit.prototype, "rallyRoute", {
         {
             const rallyPoint = rallyRoute[0]
             if (rallyPoint instanceof Handle) {
-                issueTargetOrderById(handle, orderId("setrally"), rallyPoint.handle)
+                issueTargetOrderById(handle, OrderType.SET_RALLY, rallyPoint.handle)
             } else if (rallyPoint !== undefined) {
-                issuePointOrderById(handle, orderId("setrally"), rallyPoint[0], rallyPoint[1])
+                issuePointOrderById(handle, OrderType.SET_RALLY, rallyPoint[0], rallyPoint[1])
             } else {
-                issueTargetOrderById(handle, orderId("setrally"), handle)
+                issueTargetOrderById(handle, OrderType.SET_RALLY, handle)
             }
         }
         for (const i of $range(2, rallyRoute.length)) {
             const rallyPoint = rallyRoute[i - 1]
             if (rallyPoint instanceof Handle) {
-                queueTargetOrderById(handle, orderId("setrally"), rallyPoint.handle)
+                queueTargetOrderById(handle, OrderType.SET_RALLY, rallyPoint.handle)
             } else {
-                queuePointOrderById(handle, orderId("setrally"), rallyPoint[0], rallyPoint[1])
+                queuePointOrderById(handle, OrderType.SET_RALLY, rallyPoint[0], rallyPoint[1])
             }
         }
     },

@@ -29,69 +29,77 @@ const rawget = _G.rawget
 const rawset = _G.rawset
 const type = _G.type
 
-const EQUIPMENT_SLOT_COUNT = bj_MAX_EQUIPMENT_INVENTORY
-const handleByUnitEquipment = setmetatable(new LuaMap<UnitEquipment, junit>(), { __mode: "k" })
+const EQUIPMENT_INVENTORY_SLOT_COUNT = bj_MAX_EQUIPMENT_INVENTORY
+const handleByUnitEquipmentInventory = setmetatable(new LuaMap<UnitEquipmentInventory, junit>(), {
+    __mode: "k",
+})
 
-const unitEquipmentNext = (handle: junit, slot: number) => {
-    if (slot >= EQUIPMENT_SLOT_COUNT) {
+const unitEquipmentInventoryNext = (handle: junit, slot: number) => {
+    if (slot >= EQUIPMENT_INVENTORY_SLOT_COUNT) {
         return $multi(undefined as unknown as number, undefined)
     }
     return $multi(slot + 1, Item.of(unitItemInEquipmentSlot(handle, convertLoadoutSlot(slot))))
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging,@typescript-eslint/no-empty-object-type
-export interface UnitEquipment extends ReadonlyArray<Item | undefined> {}
+export interface UnitEquipmentInventory extends ReadonlyArray<Item | undefined> {}
 
 /** A live view indexed by EquipmentSlot. Equip operations let the engine choose the slot. */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
-export class UnitEquipment {
+export class UnitEquipmentInventory {
     public constructor(handle: junit) {
-        handleByUnitEquipment.set(this, handle)
+        handleByUnitEquipmentInventory.set(this, handle)
     }
 
     public equip(item: Item): boolean {
-        return unitEquipItem(handleByUnitEquipment.get(this)!, item.handle)
+        return unitEquipItem(handleByUnitEquipmentInventory.get(this)!, item.handle)
     }
 
     public unequip(item: Item): void {
-        unitUnequipItem(handleByUnitEquipment.get(this)!, item.handle)
+        unitUnequipItem(handleByUnitEquipmentInventory.get(this)!, item.handle)
     }
 
     public unequipSlot(slot: EquipmentSlot): Item | undefined {
         return Item.of(
-            unitUnequipItemFromSlot(handleByUnitEquipment.get(this)!, convertLoadoutSlot(slot)),
+            unitUnequipItemFromSlot(
+                handleByUnitEquipmentInventory.get(this)!,
+                convertLoadoutSlot(slot),
+            ),
         )
     }
 
     public has(item: Item): boolean {
-        return unitHasItemEquipped(handleByUnitEquipment.get(this)!, item.handle)
+        return unitHasItemEquipped(handleByUnitEquipmentInventory.get(this)!, item.handle)
     }
 
     public hasAny(): boolean {
-        return unitHasAnyItemEquiped(handleByUnitEquipment.get(this)!)
+        return unitHasAnyItemEquiped(handleByUnitEquipmentInventory.get(this)!)
     }
 
     public isSlotEmpty(slot: EquipmentSlot): boolean {
-        return unitHasLoadoutSlotEmpty(handleByUnitEquipment.get(this)!, convertLoadoutSlot(slot))
+        return unitHasLoadoutSlotEmpty(
+            handleByUnitEquipmentInventory.get(this)!,
+            convertLoadoutSlot(slot),
+        )
     }
 
     public hasType(type: EquipmentType): boolean {
         return unitHasItemEquipmentOfType(
-            handleByUnitEquipment.get(this)!,
+            handleByUnitEquipmentInventory.get(this)!,
             convertEquipmentType(type),
         )
     }
 
     public canEquipType(type: EquipmentType): boolean {
         return unitCanEquipItemOfEquipmentType(
-            handleByUnitEquipment.get(this)!,
+            handleByUnitEquipmentInventory.get(this)!,
             convertEquipmentType(type),
         )
     }
 
     public findSlot(item: Item): EquipmentSlot | undefined {
-        const handle = handleByUnitEquipment.get(this)!
-        for (const slot of $range(0, EQUIPMENT_SLOT_COUNT - 1)) {
+        const handle = handleByUnitEquipmentInventory.get(this)!
+        for (const slot of $range(0, EQUIPMENT_INVENTORY_SLOT_COUNT - 1)) {
             if (unitItemInEquipmentSlot(handle, convertLoadoutSlot(slot)) === item.handle) {
                 return slot as EquipmentSlot
             }
@@ -103,26 +111,26 @@ export class UnitEquipment {
         if (type(key) === "number") {
             return Item.of(
                 unitItemInEquipmentSlot(
-                    handleByUnitEquipment.get(this)!,
+                    handleByUnitEquipmentInventory.get(this)!,
                     convertLoadoutSlot((key as number) - 1),
                 ),
             )
         }
-        return rawget(UnitEquipment.prototype as any, key)
+        return rawget(UnitEquipmentInventory.prototype as any, key)
     }
 
     protected __len(): number {
-        return EQUIPMENT_SLOT_COUNT
+        return EQUIPMENT_INVENTORY_SLOT_COUNT
     }
 
     protected __ipairs(): LuaIterator<LuaMultiReturn<[number, Item | undefined]>, junit> {
-        return $multi(unitEquipmentNext, handleByUnitEquipment.get(this)!, 0)
+        return $multi(unitEquipmentInventoryNext, handleByUnitEquipmentInventory.get(this)!, 0)
     }
 }
 
 declare module "../unit" {
     interface Unit {
-        readonly equipment: UnitEquipment
+        readonly equipmentInventory: UnitEquipmentInventory
     }
     namespace Unit {
         const itemEquippedEvent: UnitTriggerEvent<[item: Item]>
@@ -133,11 +141,11 @@ declare module "../unit" {
     }
 }
 
-Object.defineProperty(Unit.prototype, "equipment", {
-    get(this: Unit): UnitEquipment {
-        const equipment = new UnitEquipment(this.handle)
-        rawset(this, "equipment", equipment)
-        return equipment
+Object.defineProperty(Unit.prototype, "equipmentInventory", {
+    get(this: Unit): UnitEquipmentInventory {
+        const equipmentInventory = new UnitEquipmentInventory(this.handle)
+        rawset(this, "equipmentInventory", equipmentInventory)
+        return equipmentInventory
     },
 })
 

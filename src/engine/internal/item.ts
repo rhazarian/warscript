@@ -39,6 +39,7 @@ const getTriggerWidget = GetTriggerWidget
 const getWidgetLife = GetWidgetLife
 const isItemEquipped = IsItemEquipped
 const isItemInBag = IsItemInBag
+const isItemOwned = IsItemOwned
 const isItemPawnable = IsItemPawnable
 const isItemPowerup = IsItemPowerup
 const itemAddAbility = BlzItemAddAbility
@@ -202,12 +203,24 @@ export class Item extends Handle<jitem> {
         return this.of(BlzCreateItemWithSkin(id, x, y, skinId ?? id))
     }
 
-    public get isEquipped(): boolean {
-        return isItemEquipped(this.handle)
+    /** Whether the item is owned by a unit, i.e. carried in any of its inventories (regular, extended or equipment). */
+    public get isOwned(): boolean {
+        const handle = this.handle
+        return isItemOwned(handle) || isItemInBag(handle) || isItemEquipped(handle)
     }
 
-    public get isInBag(): boolean {
+    /** Whether the item is carried in a unit's (regular) inventory, as opposed to its extended or equipment inventory. */
+    public get isInInventory(): boolean {
+        const handle = this.handle
+        return isItemOwned(handle) && !isItemInBag(handle) && !isItemEquipped(handle)
+    }
+
+    public get isInExtendedInventory(): boolean {
         return isItemInBag(this.handle)
+    }
+
+    public get isInEquipmentInventory(): boolean {
+        return isItemEquipped(this.handle)
     }
 
     public get equipmentType(): EquipmentType {

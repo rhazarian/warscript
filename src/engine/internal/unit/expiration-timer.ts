@@ -4,6 +4,7 @@ import { PhoenixMorphAbilityType } from "../../object-data/entry/ability-type/ph
 import { BuffTypeId } from "../../object-data/entry/buff-type"
 
 import { EventListenerPriority } from "../../../event"
+import { OrderType } from "../../object-data/auxiliary/order-type"
 
 const applyTimedLife = UnitApplyTimedLife
 const cancelTimedLife = BlzUnitCancelTimedLife
@@ -39,11 +40,11 @@ Unit.prototype.removeExpirationTimer = function () {
     cancelTimedLife(handle)
     setWidgetLife(handle, life)
 }
-Unit.onImmediateOrder[orderId("phoenixmorph")].addListener(
+Unit.onImmediateOrder[OrderType.PHOENIX_MORPH].addListener(
     EventListenerPriority.HIGHEST,
     (unit) => {
         unitRemoveAbility(unit.handle, dummyPhoenixMorphAbilityTypeId)
-    }
+    },
 )
 
 declare module "../unit" {

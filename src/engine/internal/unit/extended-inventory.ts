@@ -9,9 +9,11 @@ const rawget = _G.rawget
 const rawset = _G.rawset
 const type = _G.type
 
-const handleByUnitBag = setmetatable(new LuaMap<UnitBag, junit>(), { __mode: "k" })
+const handleByUnitExtendedInventory = setmetatable(new LuaMap<UnitExtendedInventory, junit>(), {
+    __mode: "k",
+})
 
-const unitBagNext = (handle: junit, slot: number) => {
+const unitExtendedInventoryNext = (handle: junit, slot: number) => {
     if (slot >= unitExtendedInventorySize(handle)) {
         return $multi(undefined as unknown as number, undefined)
     }
@@ -19,21 +21,21 @@ const unitBagNext = (handle: junit, slot: number) => {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging,@typescript-eslint/no-empty-object-type
-export interface UnitBag extends ReadonlyArray<Item | undefined> {}
+export interface UnitExtendedInventory extends ReadonlyArray<Item | undefined> {}
 
-/** A live, zero-based view of a unit's bag. The engine does not expose bag-slot assignment. */
+/** A live, zero-based view of a unit's extended inventory. The engine does not expose extended-inventory slot assignment. */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
-export class UnitBag {
+export class UnitExtendedInventory {
     public constructor(handle: junit) {
-        handleByUnitBag.set(this, handle)
+        handleByUnitExtendedInventory.set(this, handle)
     }
 
     public has(item: Item): boolean {
-        return unitHasItemBagged(handleByUnitBag.get(this)!, item.handle)
+        return unitHasItemBagged(handleByUnitExtendedInventory.get(this)!, item.handle)
     }
 
     public findSlot(item: Item): number | undefined {
-        const handle = handleByUnitBag.get(this)!
+        const handle = handleByUnitExtendedInventory.get(this)!
         for (const slot of $range(0, unitExtendedInventorySize(handle) - 1)) {
             if (unitItemInBagSlot(handle, slot) === item.handle) {
                 return slot
@@ -44,30 +46,32 @@ export class UnitBag {
 
     protected __index(key: string | number): unknown {
         if (type(key) === "number") {
-            return Item.of(unitItemInBagSlot(handleByUnitBag.get(this)!, (key as number) - 1))
+            return Item.of(
+                unitItemInBagSlot(handleByUnitExtendedInventory.get(this)!, (key as number) - 1),
+            )
         }
-        return rawget(UnitBag.prototype as any, key)
+        return rawget(UnitExtendedInventory.prototype as any, key)
     }
 
     protected __len(): number {
-        return unitExtendedInventorySize(handleByUnitBag.get(this)!)
+        return unitExtendedInventorySize(handleByUnitExtendedInventory.get(this)!)
     }
 
     protected __ipairs(): LuaIterator<LuaMultiReturn<[number, Item | undefined]>, junit> {
-        return $multi(unitBagNext, handleByUnitBag.get(this)!, 0)
+        return $multi(unitExtendedInventoryNext, handleByUnitExtendedInventory.get(this)!, 0)
     }
 }
 
 declare module "../unit" {
     interface Unit {
-        readonly bag: UnitBag
+        readonly extendedInventory: UnitExtendedInventory
     }
 }
 
-Object.defineProperty(Unit.prototype, "bag", {
-    get(this: Unit): UnitBag {
-        const bag = new UnitBag(this.handle)
-        rawset(this, "bag", bag)
-        return bag
+Object.defineProperty(Unit.prototype, "extendedInventory", {
+    get(this: Unit): UnitExtendedInventory {
+        const extendedInventory = new UnitExtendedInventory(this.handle)
+        rawset(this, "extendedInventory", extendedInventory)
+        return extendedInventory
     },
 })

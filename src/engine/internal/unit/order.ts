@@ -3,19 +3,20 @@ import { Widget } from "../../../core/types/widget"
 import { Unit } from "../unit"
 import { elapsedTime } from "../../../core/game"
 import { EventListenerPriority } from "../../../event"
+import { OrderType } from "../../object-data/auxiliary/order-type"
 
 const getUnitCurrentOrder = GetUnitCurrentOrder
 const issueImmediateOrderById = IssueImmediateOrderById
 const issuePointOrderById = IssuePointOrderById
 const issueTargetOrderById = IssueTargetOrderById
 
-export const enum OrderType {
+export const enum OrderKind {
     IMMEDIATE,
     POINT,
     TARGET,
 }
 
-const unitLastOrderTypeAttribute = attribute<OrderType>()
+const unitLastOrderKindAttribute = attribute<OrderKind>()
 const unitLastOrderIdAttribute = attribute<number>()
 const unitLastOrderStartTimeAttribute = attribute<number>()
 const unitLastOrderStartXAttribute = attribute<number>()
@@ -25,7 +26,7 @@ const unitLastOrderTargetYAttribute = attribute<number>()
 const unitLastOrderTargetAttribute = attribute<Widget>()
 
 Unit.onImmediateOrder.addListener(EventListenerPriority.HIGHEST, (unit, orderId) => {
-    unit.set(unitLastOrderTypeAttribute, OrderType.IMMEDIATE)
+    unit.set(unitLastOrderKindAttribute, OrderKind.IMMEDIATE)
     unit.set(unitLastOrderIdAttribute, orderId)
     unit.set(unitLastOrderStartTimeAttribute, elapsedTime())
     unit.set(unitLastOrderStartXAttribute, unit.x)
@@ -36,7 +37,7 @@ Unit.onImmediateOrder.addListener(EventListenerPriority.HIGHEST, (unit, orderId)
 })
 
 Unit.onPointOrder.addListener(EventListenerPriority.HIGHEST, (unit, orderId, x, y) => {
-    unit.set(unitLastOrderTypeAttribute, OrderType.POINT)
+    unit.set(unitLastOrderKindAttribute, OrderKind.POINT)
     unit.set(unitLastOrderIdAttribute, orderId)
     unit.set(unitLastOrderStartTimeAttribute, elapsedTime())
     unit.set(unitLastOrderStartXAttribute, unit.x)
@@ -47,7 +48,7 @@ Unit.onPointOrder.addListener(EventListenerPriority.HIGHEST, (unit, orderId, x, 
 })
 
 Unit.onTargetOrder.addListener(EventListenerPriority.HIGHEST, (unit, orderId, target) => {
-    unit.set(unitLastOrderTypeAttribute, OrderType.TARGET)
+    unit.set(unitLastOrderKindAttribute, OrderKind.TARGET)
     unit.set(unitLastOrderIdAttribute, orderId)
     unit.set(unitLastOrderStartTimeAttribute, elapsedTime())
     unit.set(unitLastOrderStartXAttribute, unit.x)
@@ -59,7 +60,7 @@ Unit.onTargetOrder.addListener(EventListenerPriority.HIGHEST, (unit, orderId, ta
 
 declare module "../unit" {
     interface Unit {
-        readonly currentOrderType: OrderType
+        readonly currentOrderKind: OrderKind
         readonly currentOrderId: number
         readonly currentOrderStartTime: number
         readonly currentOrderStartX: number
@@ -70,9 +71,9 @@ declare module "../unit" {
 
         issueOrder(
             ...order:
-                | [orderType: OrderType.IMMEDIATE, orderId: number]
-                | [orderType: OrderType.POINT, orderId: number, x: number, y: number]
-                | [orderType: OrderType.TARGET, orderId: number, target: Widget]
+                | [orderType: OrderKind.IMMEDIATE, orderId: number]
+                | [orderType: OrderKind.POINT, orderId: number, x: number, y: number]
+                | [orderType: OrderKind.TARGET, orderId: number, target: Widget]
         ): boolean
     }
 }
@@ -81,16 +82,16 @@ const toUndefinedIfCurrentOrderDoesNotMatchLast = <T>(unit: Unit, value: T): T |
     const currentOrderId = getUnitCurrentOrder(unit.handle)
     const lastOrderId = unit.get(unitLastOrderIdAttribute)
     return currentOrderId == lastOrderId ||
-        (currentOrderId == orderId("patrolAI") && lastOrderId == orderId("patrol"))
+        (currentOrderId == OrderType.AI_PATROL && lastOrderId == OrderType.PATROL)
         ? value
         : undefined
 }
 
-Object.defineProperty(Unit.prototype, "currentOrderType", {
+Object.defineProperty(Unit.prototype, "currentOrderKind", {
     get: function (this: Unit): number {
         return (
-            toUndefinedIfCurrentOrderDoesNotMatchLast(this, this.get(unitLastOrderTypeAttribute)) ??
-            OrderType.IMMEDIATE
+            toUndefinedIfCurrentOrderDoesNotMatchLast(this, this.get(unitLastOrderKindAttribute)) ??
+            OrderKind.IMMEDIATE
         )
     },
 })
@@ -167,21 +168,21 @@ Object.defineProperty(Unit.prototype, "currentOrderTarget", {
     },
 })
 
-const issueOrderByType = {
-    [OrderType.IMMEDIATE]: issueImmediateOrderById,
-    [OrderType.POINT]: issuePointOrderById,
-    [OrderType.TARGET]: (unitHandle: junit, orderId: number, widget: Widget): boolean =>
+const issueOrderByKind = {
+    [OrderKind.IMMEDIATE]: issueImmediateOrderById,
+    [OrderKind.POINT]: issuePointOrderById,
+    [OrderKind.TARGET]: (unitHandle: junit, orderId: number, widget: Widget): boolean =>
         issueTargetOrderById(unitHandle, orderId, widget.handle),
 }
 
 Unit.prototype.issueOrder = function (
     this: Unit,
-    orderType: OrderType,
+    orderKind: OrderKind,
     orderId: number,
     xOrTarget?: number | Widget,
     y?: number,
 ): boolean {
-    return issueOrderByType[orderType](
+    return issueOrderByKind[orderKind](
         this.handle,
         orderId,
         xOrTarget as number & Widget,

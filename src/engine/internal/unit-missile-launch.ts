@@ -6,6 +6,7 @@ import { luaSetOf } from "../../utility/lua-sets"
 import { attribute } from "../../attributes"
 import { LinkedSet } from "../../utility/linked-set"
 import { ceil } from "../../math"
+import { OrderType } from "../object-data/auxiliary/order-type"
 
 declare module "./unit" {
     namespace Unit {
@@ -22,19 +23,19 @@ const impactDelayAttribute = attribute<number>()
 const passedTimeAttribute = attribute<number>()
 
 const instantOrderIds = luaSetOf(
-    orderId("avatar"),
-    orderId("berserk"),
-    orderId("divineshield"),
-    orderId("immolation"),
-    orderId("moveslot0"),
-    orderId("moveslot1"),
-    orderId("moveslot2"),
-    orderId("moveslot3"),
-    orderId("moveslot4"),
-    orderId("moveslot5"),
-    orderId("unavatar"),
-    orderId("undivineshield"),
-    orderId("unimmolation"),
+    OrderType.AVATAR,
+    OrderType.BERSERK,
+    OrderType.DIVINE_SHIELD,
+    OrderType.IMMOLATION,
+    OrderType.MOVE_SLOT_0,
+    OrderType.MOVE_SLOT_1,
+    OrderType.MOVE_SLOT_2,
+    OrderType.MOVE_SLOT_3,
+    OrderType.MOVE_SLOT_4,
+    OrderType.MOVE_SLOT_5,
+    OrderType.UN_AVATAR,
+    OrderType.UN_DIVINE_SHIELD,
+    OrderType.UN_IMMOLATION,
 )
 
 /** @internal For use by internal systems only. */

@@ -1,7 +1,7 @@
 import { Behavior, BehaviorPriority } from "../behavior"
 import { Ability } from "../internal/ability"
 import { DamageEvent, DamagingEvent, Unit } from "../internal/unit"
-import "../internal/unit/equipment"
+import "../internal/unit/equipment-inventory"
 import "../internal/unit+ability"
 import "../internal/unit-missile-launch"
 import { Item } from "../internal/item"

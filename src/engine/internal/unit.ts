@@ -28,6 +28,7 @@ import {
 import { forEach } from "../../utility/arrays"
 import { min } from "../../math"
 import { ignoreEventsItems } from "./unit/ignore-events-items"
+import { ownerByItem } from "./item/owner-cache"
 import { MovementType } from "../object-data/auxiliary/movement-type"
 import { UnitAttribute } from "../object-data/auxiliary/unit-attribute"
 import {
@@ -41,6 +42,8 @@ import { doUnitAbilityAction } from "./item/ability"
 import type { AbilityTypeId } from "../object-data/entry/ability-type"
 import { synchronizer } from "../synchronization"
 import { LinkedMap } from "../../utility/linked-map"
+import { OrderType } from "../object-data/auxiliary/order-type"
+import { UnitItemContainerType, UnitItemSlot } from "./unit/item-slot"
 
 const match = string.match
 const tostring = _G.tostring
@@ -1021,7 +1024,7 @@ export class Unit extends Handle<junit> {
     }
 
     public get isStunned(): boolean {
-        return getUnitCurrentOrder(this.handle) == orderId("stunned")
+        return getUnitCurrentOrder(this.handle) == OrderType.STUNNED
     }
 
     public get combatClassifications(): CombatClassifications {
@@ -2067,7 +2070,7 @@ export class Unit extends Handle<junit> {
         Unit.deathEvent.addListener((unit) => {
             dead.set(unit, true)
         })
-        Unit.onImmediateOrder[orderId("undefend")].addListener((unit) => {
+        Unit.onImmediateOrder[OrderType.UN_DEFEND].addListener((unit) => {
             if (dead.get(unit) && !IsUnitType(unit.handle, UNIT_TYPE_DEAD)) {
                 dead.set(unit, false)
                 invoke(event, unit)
@@ -2085,7 +2088,7 @@ export class Unit extends Handle<junit> {
                 invoke(event, unit)
             }
         }
-        Unit.onImmediateOrder[orderId("undefend")].addListener((unit) => {
+        Unit.onImmediateOrder[OrderType.UN_DEFEND].addListener((unit) => {
             if (getUnitAbilityLevel(unit.handle, morphDetectAbilityId) == 0) {
                 Timer.run(ifNotLeft, unit)
             }
@@ -2623,7 +2626,7 @@ export class Unit extends Handle<junit> {
             // Stacking causes the engine to fire a PICKUP_ITEM event which doesn't make sense.
             const unit = Unit.of(unitHandle!)
             const item = Item.of(itemHandle)
-            if (item.owner != unit) {
+            if (ownerByItem.get(item) != unit) {
                 return $multi(unit, item)
             }
         }
@@ -2653,35 +2656,69 @@ export class Unit extends Handle<junit> {
 
     public static get itemUseOrderEvent(): Event<[unit: Unit, item: Item]> {
         const event = new Event<[Unit, Item]>()
-        for (const order of $range(orderId("useslot0"), orderId("useslot5"))) {
-            const slot = (order - orderId("useslot0")) as 0 | 1 | 2 | 3 | 4 | 5
-            const listener = (unit: Unit) => {
-                const item = unit.inventory[slot]
-                if (item !== undefined) {
-                    invoke(event, unit, item)
+        const addListeners = (
+            firstOrderType: OrderType,
+            lastOrderType: OrderType,
+            containerType: UnitItemContainerType,
+        ) => {
+            for (const orderType of $range(firstOrderType, lastOrderType)) {
+                const slot = UnitItemSlot.get(containerType, orderType - firstOrderType)
+                const listener = (unit: Unit) => {
+                    const item = slot.getItem(unit)
+                    if (item !== undefined) {
+                        invoke(event, unit, item)
+                    }
                 }
+                this.onImmediateOrder[orderType].addListener(listener)
+                this.onTargetOrder[orderType].addListener(listener)
+                this.onPointOrder[orderType].addListener(listener)
             }
-            this.onImmediateOrder[order].addListener(listener)
-            this.onTargetOrder[order].addListener(listener)
-            this.onPointOrder[order].addListener(listener)
         }
+        addListeners(OrderType.USE_SLOT_0, OrderType.USE_SLOT_5, UnitItemContainerType.INVENTORY)
+        addListeners(
+            OrderType.USE_SLOT_EXT_0,
+            OrderType.USE_SLOT_EXT_29,
+            UnitItemContainerType.EXTENDED_INVENTORY,
+        )
+        addListeners(
+            OrderType.USE_SLOT_EQUIP_0,
+            OrderType.USE_SLOT_EQUIP_8,
+            UnitItemContainerType.EQUIPMENT_INVENTORY,
+        )
         rawset(this, "itemUseOrderEvent", event)
         return event
     }
 
     public static get itemMoveOrderEvent(): Event<
-        [unit: Unit, item: Item, slotFrom: 0 | 1 | 2 | 3 | 4 | 5, slotTo: 0 | 1 | 2 | 3 | 4 | 5]
+        [unit: Unit, item: Item, slotFrom: UnitItemSlot, slotTo: UnitItemSlot]
     > {
-        const event = new Event<[Unit, Item, 0 | 1 | 2 | 3 | 4 | 5, 0 | 1 | 2 | 3 | 4 | 5]>()
-        for (const order of $range(orderId("moveslot0"), orderId("moveslot5"))) {
-            const slotTo = (order - orderId("moveslot0")) as 0 | 1 | 2 | 3 | 4 | 5
-            this.onTargetOrder[order].addListener((unit, item) => {
-                const slotFrom = unit.inventory.findSlot(item as Item)
-                if (slotFrom !== undefined) {
-                    invoke(event, unit, item, slotFrom, slotTo)
-                }
-            })
+        const event = new Event<[Unit, Item, UnitItemSlot, UnitItemSlot]>()
+        const addListeners = (
+            firstOrderType: OrderType,
+            lastOrderType: OrderType,
+            containerType: UnitItemContainerType,
+        ) => {
+            for (const orderType of $range(firstOrderType, lastOrderType)) {
+                const slotTo = UnitItemSlot.get(containerType, orderType - firstOrderType)
+                this.onTargetOrder[orderType].addListener((unit, item) => {
+                    const slotFrom = UnitItemSlot.find(unit, item as Item)
+                    if (slotFrom !== undefined) {
+                        invoke(event, unit, item, slotFrom, slotTo)
+                    }
+                })
+            }
         }
+        addListeners(OrderType.MOVE_SLOT_0, OrderType.MOVE_SLOT_5, UnitItemContainerType.INVENTORY)
+        addListeners(
+            OrderType.MOVE_SLOT_EXT_0,
+            OrderType.MOVE_SLOT_EXT_29,
+            UnitItemContainerType.EXTENDED_INVENTORY,
+        )
+        addListeners(
+            OrderType.MOVE_SLOT_EQUIP_0,
+            OrderType.MOVE_SLOT_EQUIP_8,
+            UnitItemContainerType.EQUIPMENT_INVENTORY,
+        )
         rawset(this, "itemMoveOrderEvent", event)
         return event
     }
@@ -2754,9 +2791,9 @@ export class Unit extends Handle<junit> {
         })
 
         for (const leaveOrderId of [
-            orderId("undefend"),
-            orderId("magicundefense"),
-            orderId("unimmolation"),
+            OrderType.UN_DEFEND,
+            OrderType.MAGIC_UN_DEFENSE,
+            OrderType.UN_IMMOLATION,
         ]) {
             Unit.onImmediateOrder[leaveOrderId].addListener((unit) => {
                 const handle = unit.handle
