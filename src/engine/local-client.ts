@@ -7,15 +7,9 @@ import { Player } from "../core/types/player"
 import { Timer } from "../core/types/timer"
 import { Color } from "../core/types/color"
 import { array } from "../utility/arrays"
-import { Socket } from "../net/socket"
 
-const frameGetChild = BlzFrameGetChild
-const frameGetChildrenCount = BlzFrameGetChildrenCount
-const frameGetParent = BlzFrameGetParent
-const frameGetWidth = BlzFrameGetWidth
 const frameToPixelX = BlzFrameToPixelX
 const frameToPixelY = BlzFrameToPixelY
-const getFrameByName = BlzGetFrameByName
 const getHandleId = GetHandleId
 const getLocalClientHeight = BlzGetLocalClientHeight
 const getLocalClientWidth = BlzGetLocalClientWidth
@@ -23,7 +17,9 @@ const getLocale = BlzGetLocale
 const getMouseFocusUnit = BlzGetMouseFocusUnit
 const getMouseScreenPosX = BlzGetMouseScreenPosX
 const getMouseScreenPosY = BlzGetMouseScreenPosY
+const frameGetText = BlzFrameGetText
 const getUnitRealField = BlzGetUnitRealField
+const getUnitState = GetUnitState
 const getUnitTypeId = GetUnitTypeId
 const isHeroUnitId = IsHeroUnitId
 const isKeyPressed = BlzIsKeyPressed
@@ -31,7 +27,6 @@ const isLocalClientActive = BlzIsLocalClientActive
 const isMetaKeyPressed = BlzIsMetaKeyPressed
 const isMouseButtonPressed = BlzIsMouseButtonPressed
 const loadTOCFile = BlzLoadTOCFile
-const location = Location
 const pingMinimap = PingMinimap
 const pingMinimapEx = PingMinimapEx
 const pixelToFrameX = BlzPixelToFrameX
@@ -53,161 +48,69 @@ compiletime(() => {
     }
 })
 
-const SELECTION_DETAIL_FRAME_NAME = "SimpleInfoPanelUnitDetail"
-const SELECTION_GROUP_PANEL_INDEX = 5
-const SELECTION_BUTTON_ICON_INDEX = 1
-/** The detail panel, its parent, the group panel and the button grid. */
-const SELECTION_LAYOUT_ROOT_HANDLE_COUNT = 4
-const SELECTION_LAYOUT_MAX_BUTTON_COUNT = 24
-/** The root frames plus a button and its icon per slot of the largest layout. */
-const SELECTION_LAYOUT_MAX_HANDLE_COUNT =
-    SELECTION_LAYOUT_ROOT_HANDLE_COUNT + 2 * SELECTION_LAYOUT_MAX_BUTTON_COUNT
-/** Registration requests for one local selection before giving up on its layout. */
-const SELECTION_LAYOUT_MAX_REQUEST_COUNT = 8
-/** Polling ticks between two registration requests for the same selection. */
-const SELECTION_LAYOUT_REQUEST_INTERVAL = 16
-
-// The frames registered for the current local selection. The polling reads these
-// handles only; it never asks the game for a child frame, since a child created since
-// the registration would receive a new handle id on this client alone.
-let registeredSelectionGrid: jframehandle | undefined
-let registeredSelectionButtonCount = 0
-const registeredSelectionButtons: jframehandle[] = []
-const registeredSelectionButtonChildCounts: number[] = []
-const registeredSelectionIcons: jframehandle[] = []
-
 /**
- * The index of the widest (highlighted) button among the registered ones. The first value
- * is false when the layout no longer matches the registration: the grid or a button has a
- * different number of children, or an icon reads as zero width, which a destroyed frame does.
+ * The portrait's health and mana texts show the focused unit's current and maximum values
+ * as "current / maximum". Once they exist, these origin frames live for the whole game, so
+ * the polling may read them every tick; the group panel's buttons, by contrast, are rebuilt
+ * at any selection change and a retained button handle crashes the game on the first native
+ * called with it. The frames are not there at map load, though, and appear at different
+ * times on different clients: `Frame.byOrigin` returns undefined until then and balances
+ * the handle allocation across clients, so it is asked again once a second.
  */
-const getRegisteredMainSelectedUnitIndex = (): LuaMultiReturn<[boolean, number]> => {
-    const grid = registeredSelectionGrid
-    if (grid == undefined || frameGetChildrenCount(grid) != registeredSelectionButtonCount) {
-        return $multi(false, 0)
-    }
-    let mainSelectedUnitIndex = 0
-    let maxButtonWidth = 0
-    for (const i of $range(0, registeredSelectionButtonCount - 1)) {
-        if (
-            frameGetChildrenCount(registeredSelectionButtons[i]) !=
-            registeredSelectionButtonChildCounts[i]
-        ) {
-            return $multi(false, 0)
-        }
-        const width = frameGetWidth(registeredSelectionIcons[i])
-        if (width <= 0) {
-            return $multi(false, 0)
-        }
-        if (width > maxButtonWidth) {
-            maxButtonWidth = width
-            mainSelectedUnitIndex = i
-        }
-    }
-    return $multi(true, mainSelectedUnitIndex)
-}
-const getChildIfPresent = (
-    parent: jframehandle | undefined,
-    index: number,
-): jframehandle | undefined => {
-    if (parent == undefined || index >= frameGetChildrenCount(parent)) {
-        return undefined
-    }
-    return frameGetChild(parent, index)
-}
+let portraitHpText: Frame | undefined
+let portraitManaText: Frame | undefined
 
-const padSelectionLayoutFrames = (registeredCount: number): void => {
-    for (let i = registeredCount; i < SELECTION_LAYOUT_MAX_HANDLE_COUNT; i++) {
-        location(0, 0)
-    }
+const actualizePortraitFrames = (): void => {
+    portraitHpText = Frame.byOrigin(ORIGIN_FRAME_PORTRAIT_HP_TEXT)
+    portraitManaText = Frame.byOrigin(ORIGIN_FRAME_PORTRAIT_MANA_TEXT)
 }
 
 /**
- * Wraps every frame of the group selection layout currently shown on this client, in the
- * order `actualizeMainSelectedUnit` later walks them. Game-owned frames receive a JASS handle
- * id the first time a script retrieves them, and the game builds the layout's buttons anew
- * whenever the selection changes, so this must run in a tick every client shares and register
- * the same number of handles everywhere: every frame reached for the first time counts, and
- * the remainder up to SELECTION_LAYOUT_MAX_HANDLE_COUNT is padded with locations, the way
- * `Frame.byOrigin` balances origin frames that appear asynchronously.
- *
- * Returns the number of buttons found, or undefined when the layout was not fully reachable.
+ * Finds "current / maximum" in the text, which may also carry color codes and other
+ * decoration; returns -1 for both when there is no such pair.
  */
-const registerShownSelectionLayoutFrames = (): number | undefined => {
-    let registeredCount = 0
-    const register = (handle: jframehandle | undefined): jframehandle | undefined => {
-        if (handle == undefined || getHandleId(handle) == 0) {
-            return undefined
-        }
-        if (!Frame.isWrapped(handle)) {
-            registeredCount++
-        }
-        Frame.of<jframehandle, Frame>(handle)
-        return handle
+const parsePortraitValues = (frame: Frame | undefined): LuaMultiReturn<[number, number]> => {
+    if (frame == undefined) {
+        return $multi(-1, -1)
     }
-    const detail = register(getFrameByName(SELECTION_DETAIL_FRAME_NAME, 0))
-    const container = register(detail != undefined ? frameGetParent(detail) : undefined)
-    const groupPanel = register(getChildIfPresent(container, SELECTION_GROUP_PANEL_INDEX))
-    const grid = register(getChildIfPresent(groupPanel, 0))
-    registeredSelectionGrid = grid
-    let buttonCount: number | undefined
-    if (grid != undefined) {
-        const count = frameGetChildrenCount(grid)
-        if (count <= SELECTION_LAYOUT_MAX_BUTTON_COUNT) {
-            buttonCount = count
-            for (const i of $range(0, count - 1)) {
-                const button = register(getChildIfPresent(grid, i))
-                const icon = register(getChildIfPresent(button, SELECTION_BUTTON_ICON_INDEX))
-                if (button == undefined || icon == undefined) {
-                    buttonCount = undefined
-                } else {
-                    registeredSelectionButtons[i] = button
-                    registeredSelectionButtonChildCounts[i] = frameGetChildrenCount(button)
-                    registeredSelectionIcons[i] = icon
-                }
-            }
-        }
+    const text = frameGetText(frame.handle)
+    const [current, maximum] = string.match(text, "(%d+)%s*/%s*(%d+)")
+    if (current == undefined || maximum == undefined) {
+        return $multi(-1, -1)
     }
-    padSelectionLayoutFrames(registeredCount)
-    return buttonCount
+    return $multi(tonumber(current) as number, tonumber(maximum) as number)
 }
 
-const getExpectedSelectionLayoutButtonCount = (selectionCount: number): number => {
-    return selectionCount <= 12 ? 12 : SELECTION_LAYOUT_MAX_BUTTON_COUNT
+/** Whether a unit value can be what the portrait shows as `shown`; the rounding rule is unknown. */
+const matchesPortraitValue = (value: number, shown: number): boolean => {
+    return math.abs(value - shown) < 1
 }
 
-// Every change of the local selection may rebuild the group panel's buttons, so the
-// polling reads them only after they were registered for that very selection. A change
-// bumps the epoch; a request over the socket makes every client allocate in the same
-// tick, the requester by wrapping its frames, the others with locations only.
-const selectionLayoutSocket = new Socket()
-let localSelectionSignature = 0
-let localSelectionEpoch = 0
-let localSelectionCount = 0
-let registeredSelectionEpoch = 0
-let selectionLayoutRequestCount = 0
-let selectionLayoutRequestPending = false
-let selectionLayoutPollTick = 0
-let selectionLayoutRequestTick = -SELECTION_LAYOUT_REQUEST_INTERVAL
+/** Whether the unit's health matches what the portrait shows; the health text is required. */
+const matchesPortraitHealth = (unit: Unit, hp: number, maxHp: number): boolean => {
+    const handle = unit.handle
+    return (
+        maxHp >= 0 &&
+        matchesPortraitValue(getUnitState(handle, UNIT_STATE_LIFE), hp) &&
+        matchesPortraitValue(getUnitState(handle, UNIT_STATE_MAX_LIFE), maxHp)
+    )
+}
 
-selectionLayoutSocket.onMessage.addListener((player) => {
-    if (player != Player.local) {
-        padSelectionLayoutFrames(0)
-        return
-    }
-    selectionLayoutRequestPending = false
-    const buttonCount = registerShownSelectionLayoutFrames()
-    // The layout shown now belongs to the current selection, which may be a later one
-    // than the request was made for; the polling needs exactly the current one.
-    if (
-        buttonCount != undefined &&
-        localSelectionCount > 1 &&
-        buttonCount == getExpectedSelectionLayoutButtonCount(localSelectionCount)
-    ) {
-        registeredSelectionEpoch = localSelectionEpoch
-        registeredSelectionButtonCount = buttonCount
-    }
-})
+/**
+ * Whether the unit has mana and it matches what the portrait shows. The mana text is not
+ * redrawn for a unit without mana (it keeps the previously focused unit's values), so a
+ * mana match is evidence for a unit, but a mismatch is no evidence against one without mana.
+ */
+const matchesPortraitMana = (unit: Unit, mana: number, maxMana: number): boolean => {
+    const handle = unit.handle
+    const unitMaxMana = getUnitState(handle, UNIT_STATE_MAX_MANA)
+    return (
+        maxMana >= 0 &&
+        unitMaxMana > 0 &&
+        matchesPortraitValue(getUnitState(handle, UNIT_STATE_MANA), mana) &&
+        matchesPortraitValue(unitMaxMana, maxMana)
+    )
+}
 
 const localSelectedUnits: Unit[] = []
 const indexByLocalSelectedUnit = new LuaMap<Unit, number>()
@@ -380,8 +283,9 @@ export class LocalClient {
     }
 
     /**
-     * Local selection sampled every 1/64 second. Undefined before the first tick and while
-     * a group selection's buttons are not registered yet (see `selectionLayoutSocket`).
+     * Local selection sampled every 1/64 second; undefined before the first tick. Among
+     * several selected units, the one the portrait shows, identified by its health and
+     * mana; units with identical values cannot be told apart.
      */
     public static get mainSelectedUnit(): Async<Unit> | undefined {
         return currentMainSelectedUnit
@@ -418,57 +322,53 @@ const actualizeMainSelectedUnit = (): void => {
     Unit.getSelectionOf(Player.local, localSelectedUnits)
 
     const selectionCount = localSelectedUnits.length
-    let signature = selectionCount
     for (const i of $range(1, selectionCount)) {
         indexByLocalSelectedUnit.set(localSelectedUnits[i - 1], i)
-        signature += getHandleId(localSelectedUnits[i - 1].handle)
     }
-    selectionLayoutPollTick++
-    if (signature != localSelectionSignature) {
-        localSelectionSignature = signature
-        localSelectionEpoch++
-        selectionLayoutRequestCount = 0
-        selectionLayoutRequestTick = -SELECTION_LAYOUT_REQUEST_INTERVAL
-    }
-    localSelectionCount = selectionCount
 
     tableSort(localSelectedUnits, compareUnitsSelectionPriority)
 
-    let mainSelectedUnitIndex: number | undefined
-    if (selectionCount > 1) {
-        let registered = registeredSelectionEpoch == localSelectionEpoch
-        if (registered) {
-            const [intact, index] = getRegisteredMainSelectedUnitIndex()
-            if (intact) {
-                mainSelectedUnitIndex = index
-            } else {
-                // The game changed the panel underneath (a rebuilt or inserted frame);
-                // register again rather than touch what it created.
-                registered = false
-                registeredSelectionEpoch = 0
-            }
-        }
-        if (
-            !registered &&
-            !selectionLayoutRequestPending &&
-            selectionLayoutRequestCount < SELECTION_LAYOUT_MAX_REQUEST_COUNT &&
-            selectionLayoutPollTick - selectionLayoutRequestTick >=
-                SELECTION_LAYOUT_REQUEST_INTERVAL
-        ) {
-            selectionLayoutRequestPending = true
-            selectionLayoutRequestCount++
-            selectionLayoutRequestTick = selectionLayoutPollTick
-            selectionLayoutSocket.send("")
-        }
-    }
-
-    // A group whose buttons are not registered yet has no known main unit: guessing
-    // one would make the callers act on a unit the player may not have focused.
+    // The portrait shows the focused unit. Among several selected units, the first one in
+    // selection priority order whose health and mana match the portrait is taken: units with
+    // identical values cannot be told apart, and then the highest-priority one wins. When the
+    // portrait shows no numbers (nothing focused yet, or the local UI still catching up), the
+    // previous answer is kept if it is still selected, so the unit does not flicker.
     let mainSelectedUnit: Unit | undefined
     if (selectionCount <= 1) {
         mainSelectedUnit = localSelectedUnits[0]
-    } else if (mainSelectedUnitIndex != undefined) {
-        mainSelectedUnit = localSelectedUnits[mainSelectedUnitIndex]
+    } else {
+        const [hp, maxHp] = parsePortraitValues(portraitHpText)
+        const [mana, maxMana] = parsePortraitValues(portraitManaText)
+        if (maxHp >= 0) {
+            // A unit matching both texts first; failing that, one matching the health text.
+            let healthMatch: Unit | undefined
+            for (const i of $range(1, selectionCount)) {
+                const unit = localSelectedUnits[i - 1]
+                if (matchesPortraitHealth(unit, hp, maxHp)) {
+                    if (matchesPortraitMana(unit, mana, maxMana)) {
+                        mainSelectedUnit = unit
+                        break
+                    }
+                    if (healthMatch == undefined) {
+                        healthMatch = unit
+                    }
+                }
+            }
+            if (mainSelectedUnit == undefined) {
+                mainSelectedUnit = healthMatch
+            }
+        }
+        if (mainSelectedUnit == undefined && previousMainSelectedUnit != undefined) {
+            for (const i of $range(1, selectionCount)) {
+                if (localSelectedUnits[i - 1] == previousMainSelectedUnit) {
+                    mainSelectedUnit = previousMainSelectedUnit
+                    break
+                }
+            }
+        }
+        if (mainSelectedUnit == undefined) {
+            mainSelectedUnit = localSelectedUnits[0]
+        }
     }
 
     for (const i of $range(1, selectionCount)) {
@@ -517,6 +417,7 @@ const actualizeTargetingModeState = (): boolean => {
     return false
 }
 
+Timer.onPeriod[1].addListener(actualizePortraitFrames)
 Timer.onPeriod[1 / 64].addListener(() => {
     actualizeMainSelectedUnit()
     actualizeTargetingModeState()
