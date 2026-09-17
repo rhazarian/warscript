@@ -4,10 +4,7 @@ import { Unit } from "./unit"
 import "./unit/equipment-inventory"
 import { EventListenerPriority } from "../../event"
 import { ownerByItem } from "./item/owner-cache"
-
-const unitHasItem = UnitHasItem
-const unitHasItemBagged = UnitHasItemBagged
-const unitHasItemEquipped = UnitHasItemEquipped
+import { unitOwnsItem } from "./unit/item-container"
 
 declare module "./item" {
     interface Item {
@@ -15,11 +12,6 @@ declare module "./item" {
         readonly owner?: Unit
     }
 }
-
-const unitOwnsItem = (unitHandle: junit, itemHandle: jitem): boolean =>
-    unitHasItem(unitHandle, itemHandle) ||
-    unitHasItemBagged(unitHandle, itemHandle) ||
-    unitHasItemEquipped(unitHandle, itemHandle)
 
 Unit.itemPickedUpEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
     ownerByItem.set(item, unit)

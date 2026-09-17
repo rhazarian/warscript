@@ -12,19 +12,31 @@ Lua module below the compiler's local-variable limit.
 
 ## Inventory and equipment
 
-Units expose three cached, live collections. Indices are zero-based, empty slots
+Units expose three cached, live collections sharing the `UnitItemContainer` API
+(`engine/internal/unit/item-container`). Indices are zero-based, empty slots
 return `undefined`, and iteration includes empty slots through the collection's
 full capacity. `.length` is the number of slots, not the number of occupied slots.
 
-| Collection                      | Slot access                                                | Operations                                                                                                                                                 |
-| ------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unit.inventory: UnitInventory` | `unit.inventory[0]`, up to six slots; assignment supported | `findSlot(item)`                                                                                                                                           |
-| `unit.extendedInventory: UnitExtendedInventory`             | `unit.extendedInventory[0]`, capacity from the engine; read-only slots   | `has(item)`, `findSlot(item)`                                                                                                                              |
-| `unit.equipmentInventory: UnitEquipmentInventory` | `unit.equipmentInventory[EquipmentSlot.HEAD]`; read-only slots      | `equip(item)`, `unequip(item)`, `unequipSlot(slot)`, `has(item)`, `hasAny()`, `isSlotEmpty(slot)`, `hasType(type)`, `canEquipType(type)`, `findSlot(item)` |
+| Collection                                        | Slot access                                       | Extra operations                                                                       |
+| ------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `unit.inventory: UnitInventory`                   | `unit.inventory[0]`, up to six slots              |                                                                                        |
+| `unit.extendedInventory: UnitExtendedInventory`   | `unit.extendedInventory[0]`, capacity from engine |                                                                                        |
+| `unit.equipmentInventory: UnitEquipmentInventory` | `unit.equipmentInventory[EquipmentSlot.HEAD]`     | `equip(item)`, `unequip(item)`, `unequipSlot(slot)`, `hasAny()`, `hasType(type)`, `canEquipType(type)` |
 
-`findSlot` returns the zero-based slot or `undefined`. Equipment operations let the
-engine choose the destination slot. No native is available for exact extended-inventory slot
-assignment, so the extended inventory view is read-only.
+Common operations: `has(item)`, `findSlot(item)` (zero-based slot or `undefined`),
+`isSlotEmpty(slot)`, and slot assignment `container[slot] = item`, which drops
+whatever the slot held and places the item there, picking it up from wherever it
+was first (`= undefined` only drops). For the regular and extended inventories
+this relies on the engine filling slots in order (regular first, then extended):
+every empty preceding slot is briefly occupied by a hidden filler item, so it
+works even while the unit is stunned or paused (see
+`engine/internal/unit/add-item-to-slot`). Equipment slots are typed, so there
+the engine picks the slot on `equip`; assignment frees the requested slot and
+equips. The ring is the only type with two slots: assigning to
+`EquipmentSlot.ALTERNATE_RING` briefly occupies `RING` with a hidden filler ring.
+
+`ItemType` gained the 3.0 object-data fields `itemClass` (`icla`, `ItemClass`) and
+`equipmentType` (`iequ`, `EquipmentType`).
 
 This is a breaking rename: replace `Unit.items` with `Unit.inventory`,
 `UnitItems` with `UnitInventory`, and imports of `engine/internal/unit/item` with

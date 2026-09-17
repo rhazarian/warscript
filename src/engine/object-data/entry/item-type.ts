@@ -1,4 +1,10 @@
 import { ArmorSoundType } from "../auxiliary/armor-sound-type"
+import {
+    EquipmentType,
+    equipmentTypeToString,
+    stringToEquipmentType,
+} from "../auxiliary/equipment-type"
+import { ItemClass } from "../auxiliary/item-class"
 import { ObjectDataEntry, ObjectDataEntryId, CustomObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 import type { AbilityTypeId } from "./ability-type"
@@ -227,6 +233,22 @@ export class ItemType extends ObjectDataEntry<ItemTypeId> {
 
     public set lumberCost(lumberCost: number) {
         this.setNumberField("ilum", lumberCost)
+    }
+
+    public get itemClass(): ItemClass {
+        return this.getStringField("icla") as ItemClass
+    }
+
+    public set itemClass(itemClass: ItemClass) {
+        this.setStringField("icla", itemClass)
+    }
+
+    public get equipmentType(): EquipmentType {
+        return stringToEquipmentType(this.getStringField("iequ"))
+    }
+
+    public set equipmentType(equipmentType: EquipmentType) {
+        this.setStringField("iequ", equipmentTypeToString(equipmentType))
     }
 
     public get activelyUsed(): boolean {

@@ -242,14 +242,14 @@ export class Item extends Handle<jitem> {
 
     public static getRandomTypeId(
         level: number,
-        equipmentType = EquipmentType.ANY,
+        equipmentType: EquipmentType | undefined = undefined,
         tag = ItemTag.ANY,
         itemType: jitemtype = ITEM_TYPE_ANY,
     ): ItemTypeId | undefined {
         const id = chooseRandomItemExWithFilter(
             itemType,
             level,
-            convertEquipmentType(equipmentType),
+            convertEquipmentType(equipmentType ?? 9),
             convertItemTag(tag),
         )
         return id !== 0 ? (id as ItemTypeId) : undefined

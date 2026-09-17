@@ -27,7 +27,7 @@ import {
 } from "../constants"
 import { forEach } from "../../utility/arrays"
 import { min } from "../../math"
-import { ignoreEventsItems } from "./unit/ignore-events-items"
+import { isItemIgnoredInEvents } from "./unit/ignore-events-items"
 import { ownerByItem } from "./item/owner-cache"
 import { MovementType } from "../object-data/auxiliary/movement-type"
 import { UnitAttribute } from "../object-data/auxiliary/unit-attribute"
@@ -2613,7 +2613,7 @@ export class Unit extends Handle<junit> {
     public static itemDroppedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_DROP_ITEM, () => {
         const unit = getTriggerUnit()
         const item = getManipulatedItem()
-        if (getUnitTypeId(unit!) != dummyUnitId && !ignoreEventsItems.has(item)) {
+        if (getUnitTypeId(unit!) != dummyUnitId && !isItemIgnoredInEvents(item)) {
             return $multi(Unit.of(unit!), Item.of(item!))
         }
         return $multi(IgnoreEvent)
@@ -2622,7 +2622,7 @@ export class Unit extends Handle<junit> {
     public static itemPickedUpEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_PICKUP_ITEM, () => {
         const unitHandle = getTriggerUnit()
         const itemHandle = getManipulatedItem()
-        if (getUnitTypeId(unitHandle!) != dummyUnitId && !ignoreEventsItems.has(itemHandle)) {
+        if (getUnitTypeId(unitHandle!) != dummyUnitId && !isItemIgnoredInEvents(itemHandle)) {
             // Stacking causes the engine to fire a PICKUP_ITEM event which doesn't make sense.
             const unit = Unit.of(unitHandle!)
             const item = Item.of(itemHandle)
@@ -2636,7 +2636,7 @@ export class Unit extends Handle<junit> {
     public static itemUsedEvent = new UnitTriggerEvent(EVENT_PLAYER_UNIT_USE_ITEM, () => {
         const unit = getTriggerUnit()
         const item = getManipulatedItem()
-        if (getUnitTypeId(unit!) != dummyUnitId && !ignoreEventsItems.has(item)) {
+        if (getUnitTypeId(unit!) != dummyUnitId && !isItemIgnoredInEvents(item)) {
             return $multi(Unit.of(unit!), Item.of(item!))
         }
         return $multi(IgnoreEvent)

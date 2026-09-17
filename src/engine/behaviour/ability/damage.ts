@@ -8,6 +8,7 @@ import {
     AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD,
 } from "../../standard/fields/ability"
 import { DamageType, WeaponType } from "../../internal/unit+damage"
+import "../../internal/unit+damage"
 import { CombatClassifications } from "../../object-data/auxiliary/combat-classification"
 import { AttackType } from "../../object-data/auxiliary/attack-type"
 

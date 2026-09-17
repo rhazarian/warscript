@@ -531,6 +531,8 @@ export const enum OrderType {
     INSTANT = 852200,
     /** `invisibility` */
     INVISIBILITY = 852069,
+    /** Base order of the Item Regeneration (`AIrg`) ability, e.g. potions of rejuvenation. Has no in-game order string. */
+    ITEM_REGENERATION = 852609,
     /** `lavamonster` */
     LAVA_MONSTER = 852667,
     /** `lightningshield` */

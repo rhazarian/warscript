@@ -16,6 +16,7 @@ import { IllegalStateException } from "../exception"
 import { AbilityTypeId } from "../engine/object-data/entry/ability-type"
 import { AttackType } from "../engine/object-data/auxiliary/attack-type"
 import { LinkedMap } from "../utility/linked-map"
+import { OrderType } from "../engine/object-data/auxiliary/order-type"
 
 const assert = _G.assert
 const pairs = _G.pairs
@@ -524,11 +525,11 @@ export abstract class Buff implements Destroyable {
                 },
                 preset.positive
                     ? preset.magic
-                        ? orderId("innerfire")
-                        : 852609
+                        ? OrderType.INNER_FIRE
+                        : OrderType.ITEM_REGENERATION
                     : preset.magic
-                      ? orderId("cripple")
-                      : orderId("flamingarrowstarg"),
+                      ? OrderType.CRIPPLE
+                      : OrderType.FLAMING_ARROWS_TARG,
                 unit,
             )
             if (slowPoisonMethod) {

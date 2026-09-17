@@ -1,9 +1,16 @@
 import { Item } from "../item"
 import { Unit } from "../unit"
+import { unitOwnsItem } from "./item-container"
+import type { UnitItemContainer } from "./item-container"
+import { unitAddItemToSlot } from "./add-item-to-slot"
+import { UnitItemContainerType } from "./item-slot"
 
 const unitExtendedInventorySize = UnitExtendedInventorySize
 const unitHasItemBagged = UnitHasItemBagged
 const unitItemInBagSlot = UnitItemInBagSlot
+const unitRemoveItem = UnitRemoveItem
+const isItemPowerup = IsItemPowerup
+const setItemBooleanField = BlzSetItemBooleanField
 
 const rawget = _G.rawget
 const rawset = _G.rawset
@@ -21,9 +28,13 @@ const unitExtendedInventoryNext = (handle: junit, slot: number) => {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging,@typescript-eslint/no-empty-object-type
-export interface UnitExtendedInventory extends ReadonlyArray<Item | undefined> {}
+export interface UnitExtendedInventory extends UnitItemContainer {}
 
-/** A live, zero-based view of a unit's extended inventory. The engine does not expose extended-inventory slot assignment. */
+/**
+ * A live, zero-based view of a unit's extended inventory.
+ *
+ * Slot assignment works like the regular inventory's, see {@link unitAddItemToSlot}.
+ */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class UnitExtendedInventory {
     public constructor(handle: junit) {
@@ -42,6 +53,40 @@ export class UnitExtendedInventory {
             }
         }
         return undefined
+    }
+
+    public isSlotEmpty(slot: number): boolean {
+        return unitItemInBagSlot(handleByUnitExtendedInventory.get(this)!, slot) === undefined
+    }
+
+    protected __newindex(slot: number, item: Item | undefined): void {
+        const handle = handleByUnitExtendedInventory.get(this)!
+        if (slot < 1 || slot > unitExtendedInventorySize(handle)) {
+            return
+        }
+        const previousItem = unitItemInBagSlot(handle, slot - 1)
+        if (previousItem !== undefined && previousItem !== item?.handle) {
+            unitRemoveItem(handle, previousItem)
+        }
+        if (item !== undefined) {
+            const itemHandle = item.handle
+            if (unitOwnsItem(handle, itemHandle)) {
+                unitRemoveItem(handle, itemHandle)
+            }
+            const isPowerup = isItemPowerup(itemHandle)
+            if (isPowerup) {
+                setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, false)
+            }
+            unitAddItemToSlot(
+                handle,
+                itemHandle,
+                slot - 1,
+                UnitItemContainerType.EXTENDED_INVENTORY,
+            )
+            if (isPowerup) {
+                setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, true)
+            }
+        }
     }
 
     protected __index(key: string | number): unknown {

@@ -2,14 +2,17 @@ import { Item } from "../item"
 import { Unit } from "../unit"
 import { findUnitItemSlot } from "../utility"
 import { unitAddItemToSlot } from "./add-item-to-slot"
+import type { UnitItemContainer } from "./item-container"
 
 const rawset = _G.rawset
 const type = _G.type
 
 const isItemPowerup = IsItemPowerup
 const setItemBooleanField = BlzSetItemBooleanField
+const unitHasItem = UnitHasItem
 const unitInventorySize = UnitInventorySize
 const unitItemInSlot = UnitItemInSlot
+const unitRemoveItem = UnitRemoveItem
 const unitRemoveItemFromSlot = UnitRemoveItemFromSlot
 
 const handleByUnitInventory = setmetatable(new LuaMap<UnitInventory, junit>(), { __mode: "k" })
@@ -22,7 +25,7 @@ const unitInventoryNext = (handle: junit, slot: number) => {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
-export interface UnitInventory extends ReadonlyArray<Item | undefined> {
+export interface UnitInventory extends UnitItemContainer {
     readonly length: 0 | 1 | 2 | 3 | 4 | 5 | 6
     [0]: Item | undefined
     [1]: Item | undefined
@@ -31,14 +34,23 @@ export interface UnitInventory extends ReadonlyArray<Item | undefined> {
     [4]: Item | undefined
     [5]: Item | undefined
 }
+/** A live, zero-based view of a unit's (regular) inventory. */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class UnitInventory {
-    constructor(handle: junit) {
+    public constructor(handle: junit) {
         handleByUnitInventory.set(this, handle)
+    }
+
+    public has(item: Item): boolean {
+        return unitHasItem(handleByUnitInventory.get(this)!, item.handle)
     }
 
     public findSlot(item: Item): 0 | 1 | 2 | 3 | 4 | 5 | undefined {
         return findUnitItemSlot(handleByUnitInventory.get(this)!, item.handle)
+    }
+
+    public isSlotEmpty(slot: 0 | 1 | 2 | 3 | 4 | 5): boolean {
+        return unitItemInSlot(handleByUnitInventory.get(this)!, slot) === undefined
     }
 
     protected __newindex(slot: number, item: Item | undefined): void {
@@ -49,6 +61,7 @@ export class UnitInventory {
         unitRemoveItemFromSlot(handle, slot - 1)
         if (item !== undefined) {
             const itemHandle = item.handle
+            unitRemoveItem(handle, itemHandle)
             const isPowerup = isItemPowerup(itemHandle)
             if (isPowerup) {
                 setItemBooleanField(itemHandle, ITEM_BF_USE_AUTOMATICALLY_WHEN_ACQUIRED, false)
