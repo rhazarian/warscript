@@ -25,8 +25,6 @@ import {
     HEALTH_REGENERATION_RATE_BONUS_PER_STRENGTH_POINT,
     MANA_REGENERATION_RATE_BONUS_PER_INTELLIGENCE_POINT,
 } from "../constants"
-import { forEach } from "../../utility/arrays"
-import { min } from "../../math"
 import { isItemIgnoredInEvents } from "./unit/ignore-events-items"
 import { ownerByItem } from "./item/owner-cache"
 import { MovementType } from "../object-data/auxiliary/movement-type"
@@ -43,7 +41,6 @@ import type { AbilityTypeId } from "../object-data/entry/ability-type"
 import { synchronizer } from "../synchronization"
 import { LinkedMap } from "../../utility/linked-map"
 import { OrderType } from "../object-data/auxiliary/order-type"
-import { UnitItemContainerType, UnitItemSlot } from "./unit/item-slot"
 
 const match = string.match
 const tostring = _G.tostring
@@ -713,8 +710,6 @@ export class UnitWeapon {
     }
 }
 
-const unitInventorySize = UnitInventorySize
-const unitItemInSlot = UnitItemInSlot
 const getItemAbility = BlzGetItemAbility
 const getUnitAbility = BlzGetUnitAbility
 const getUnitAbilityByIndex = BlzGetUnitAbilityByIndex
@@ -729,8 +724,8 @@ function retrieveAbility(unit: junit, ability: jability | undefined, abilityId: 
     if (ability == undefined) {
         return new UnrecognizedAbility(abilityId, Unit.of(unit))
     }
-    for (const i of $range(0, unitInventorySize(unit) - 1)) {
-        const item = unitItemInSlot(unit, i)
+    for (const i of $range(0, UnitInventorySize(unit) - 1)) {
+        const item = UnitItemInSlot(unit, i)
         if (getItemAbility(item, abilityId) == ability) {
             return ItemAbility.of(ability, abilityId, Item.of(item))
         }
@@ -922,7 +917,9 @@ export class Unit extends Handle<junit> {
 
         const eventsToDestroy = this._eventsToDestroy
         if (eventsToDestroy != undefined) {
-            forEach(eventsToDestroy, "destroy")
+            for (const event of eventsToDestroy) {
+                event.destroy()
+            }
         }
 
         if (getUnitAbilityLevel(handle, leaveDetectAbilityId) > 0) {
@@ -1483,7 +1480,7 @@ export class Unit extends Handle<junit> {
     }
 
     public get pathingCollisionRange(): number {
-        return 16 * (min(math.idiv(getUnitCollisionSize(this.handle), 16), 3) + 1)
+        return 16 * (math.min(math.idiv(getUnitCollisionSize(this.handle), 16), 3) + 1)
     }
 
     public get movementType(): MovementType {
@@ -1564,7 +1561,7 @@ export class Unit extends Handle<junit> {
     }
 
     public itemInSlot(slot: number): Item | null {
-        return Item.of(unitItemInSlot(this.handle, slot))
+        return Item.of(UnitItemInSlot(this.handle, slot))
     }
 
     public addAbility(abilityId: number): UnitAbility | undefined {
@@ -2651,75 +2648,6 @@ export class Unit extends Handle<junit> {
             }
         })
         rawset(this, "itemChargesChangedEvent", event)
-        return event
-    }
-
-    public static get itemUseOrderEvent(): Event<[unit: Unit, item: Item]> {
-        const event = new Event<[Unit, Item]>()
-        const addListeners = (
-            firstOrderType: OrderType,
-            lastOrderType: OrderType,
-            containerType: UnitItemContainerType,
-        ) => {
-            for (const orderType of $range(firstOrderType, lastOrderType)) {
-                const slot = UnitItemSlot.get(containerType, orderType - firstOrderType)
-                const listener = (unit: Unit) => {
-                    const item = slot.getItem(unit)
-                    if (item !== undefined) {
-                        invoke(event, unit, item)
-                    }
-                }
-                this.onImmediateOrder[orderType].addListener(listener)
-                this.onTargetOrder[orderType].addListener(listener)
-                this.onPointOrder[orderType].addListener(listener)
-            }
-        }
-        addListeners(OrderType.USE_SLOT_0, OrderType.USE_SLOT_5, UnitItemContainerType.INVENTORY)
-        addListeners(
-            OrderType.USE_SLOT_EXT_0,
-            OrderType.USE_SLOT_EXT_29,
-            UnitItemContainerType.EXTENDED_INVENTORY,
-        )
-        addListeners(
-            OrderType.USE_SLOT_EQUIP_0,
-            OrderType.USE_SLOT_EQUIP_8,
-            UnitItemContainerType.EQUIPMENT_INVENTORY,
-        )
-        rawset(this, "itemUseOrderEvent", event)
-        return event
-    }
-
-    public static get itemMoveOrderEvent(): Event<
-        [unit: Unit, item: Item, slotFrom: UnitItemSlot, slotTo: UnitItemSlot]
-    > {
-        const event = new Event<[Unit, Item, UnitItemSlot, UnitItemSlot]>()
-        const addListeners = (
-            firstOrderType: OrderType,
-            lastOrderType: OrderType,
-            containerType: UnitItemContainerType,
-        ) => {
-            for (const orderType of $range(firstOrderType, lastOrderType)) {
-                const slotTo = UnitItemSlot.get(containerType, orderType - firstOrderType)
-                this.onTargetOrder[orderType].addListener((unit, item) => {
-                    const slotFrom = UnitItemSlot.find(unit, item as Item)
-                    if (slotFrom !== undefined) {
-                        invoke(event, unit, item, slotFrom, slotTo)
-                    }
-                })
-            }
-        }
-        addListeners(OrderType.MOVE_SLOT_0, OrderType.MOVE_SLOT_5, UnitItemContainerType.INVENTORY)
-        addListeners(
-            OrderType.MOVE_SLOT_EXT_0,
-            OrderType.MOVE_SLOT_EXT_29,
-            UnitItemContainerType.EXTENDED_INVENTORY,
-        )
-        addListeners(
-            OrderType.MOVE_SLOT_EQUIP_0,
-            OrderType.MOVE_SLOT_EQUIP_8,
-            UnitItemContainerType.EQUIPMENT_INVENTORY,
-        )
-        rawset(this, "itemMoveOrderEvent", event)
         return event
     }
 

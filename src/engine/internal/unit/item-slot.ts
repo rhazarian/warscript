@@ -1,6 +1,19 @@
 import { Item } from "../item"
 import { Unit } from "../unit"
 import { EquipmentSlot } from "../../object-data/auxiliary/equipment-slot"
+import {
+    UNIT_EQUIPMENT_INVENTORY_SLOT_COUNT,
+    UNIT_EXTENDED_INVENTORY_SLOT_COUNT,
+    UNIT_INVENTORY_SLOT_COUNT,
+    UnitItemContainerType,
+} from "./item-container"
+
+export {
+    UNIT_EQUIPMENT_INVENTORY_SLOT_COUNT,
+    UNIT_EXTENDED_INVENTORY_SLOT_COUNT,
+    UNIT_INVENTORY_SLOT_COUNT,
+    UnitItemContainerType,
+}
 
 const convertLoadoutSlot = ConvertLoadoutSlot
 const unitExtendedInventorySize = UnitExtendedInventorySize
@@ -8,18 +21,6 @@ const unitInventorySize = UnitInventorySize
 const unitItemInBagSlot = UnitItemInBagSlot
 const unitItemInEquipmentSlot = UnitItemInEquipmentSlot
 const unitItemInSlot = UnitItemInSlot
-
-export const enum UnitItemContainerType {
-    INVENTORY,
-    EXTENDED_INVENTORY,
-    EQUIPMENT_INVENTORY,
-}
-
-export const UNIT_INVENTORY_SLOT_COUNT = 6
-
-export const UNIT_EXTENDED_INVENTORY_SLOT_COUNT = 30
-
-export const UNIT_EQUIPMENT_INVENTORY_SLOT_COUNT = bj_MAX_EQUIPMENT_INVENTORY
 
 /**
  * A slot of one of a unit's item containers (the inventory, the extended inventory or the equipment inventory).
@@ -53,7 +54,7 @@ export class UnitItemSlot {
     }
 
     /** Returns the slot the item currently occupies in the unit's inventory, extended inventory or equipment inventory, if any. */
-    public static find(unit: Unit, item: Item): UnitItemSlot | undefined {
+    public static find(unit: Readonly<Unit>, item: Item): UnitItemSlot | undefined {
         const unitHandle = unit.handle
         const itemHandle = item.handle
         for (const index of $range(0, unitInventorySize(unitHandle) - 1)) {
@@ -74,7 +75,7 @@ export class UnitItemSlot {
         return undefined
     }
 
-    public getItem(unit: Unit): Item | undefined {
+    public getItem(unit: Readonly<Unit>): Item | undefined {
         return Item.of(itemInSlotByContainerType[this.containerType](unit.handle, this.index))
     }
 

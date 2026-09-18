@@ -1,4 +1,5 @@
 import { Unit } from "../../internal/unit"
+import "../../internal/unit/item-order-events"
 import { EmulateImpactAbilityBehavior } from "./emulate-impact"
 import { Ability } from "../../internal/ability"
 

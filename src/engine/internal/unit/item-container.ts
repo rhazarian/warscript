@@ -4,6 +4,19 @@ const unitHasItem = UnitHasItem
 const unitHasItemBagged = UnitHasItemBagged
 const unitHasItemEquipped = UnitHasItemEquipped
 
+/** Which of a unit's item containers a slot belongs to. */
+export const enum UnitItemContainerType {
+    INVENTORY,
+    EXTENDED_INVENTORY,
+    EQUIPMENT_INVENTORY,
+}
+
+export const UNIT_INVENTORY_SLOT_COUNT = 6
+
+export const UNIT_EXTENDED_INVENTORY_SLOT_COUNT = 30
+
+export const UNIT_EQUIPMENT_INVENTORY_SLOT_COUNT = bj_MAX_EQUIPMENT_INVENTORY
+
 /**
  * The API shared by all live views of a unit's item containers: {@link UnitInventory},
  * {@link UnitExtendedInventory} and {@link UnitEquipmentInventory}.

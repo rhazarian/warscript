@@ -1,9 +1,8 @@
 import { Item } from "../item"
 import { Unit } from "../unit"
-import { unitOwnsItem } from "./item-container"
+import { UnitItemContainerType, unitOwnsItem } from "./item-container"
 import type { UnitItemContainer } from "./item-container"
 import { unitAddItemToSlot } from "./add-item-to-slot"
-import { UnitItemContainerType } from "./item-slot"
 
 const unitExtendedInventorySize = UnitExtendedInventorySize
 const unitHasItemBagged = UnitHasItemBagged

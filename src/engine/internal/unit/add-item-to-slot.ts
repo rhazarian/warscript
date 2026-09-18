@@ -5,7 +5,7 @@ import {
     UNIT_EXTENDED_INVENTORY_SLOT_COUNT,
     UNIT_INVENTORY_SLOT_COUNT,
     UnitItemContainerType,
-} from "./item-slot"
+} from "./item-container"
 
 const setItemVisible = SetItemVisible
 const unitAddItem = UnitAddItem
