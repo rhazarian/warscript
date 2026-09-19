@@ -3,19 +3,19 @@ import { AbilityTypeId } from "../ability-type"
 import { ObjectDataEntryLevelFieldValueSupplier } from "../../entry"
 
 /**
- * Hero equipment inventory (AInx). Inherits the regular inventory fields (Data A-E).
+ * Equipment Inventory (AEqu). Data A-E carry the regular inventory fields, Data F the level threshold per level.
  */
 export class EquipmentInventoryAbilityType extends InventoryAbilityType {
-    public static override readonly BASE_ID = fourCC("AInx") as AbilityTypeId
+    public static override readonly BASE_ID = fourCC("AEqu") as AbilityTypeId
 
-    /** Equipment Item Capacity */
-    public get equipmentItemCapacity(): number[] {
-        return this.getNumberLevelField("inv6")
+    /** Equipment Level Threshold */
+    public get equipmentLevelThreshold(): number[] {
+        return this.getNumberLevelField("equ1")
     }
 
-    public set equipmentItemCapacity(
-        equipmentItemCapacity: ObjectDataEntryLevelFieldValueSupplier<number>,
+    public set equipmentLevelThreshold(
+        equipmentLevelThreshold: ObjectDataEntryLevelFieldValueSupplier<number>,
     ) {
-        this.setNumberLevelField("inv6", equipmentItemCapacity)
+        this.setNumberLevelField("equ1", equipmentLevelThreshold)
     }
 }

@@ -799,6 +799,8 @@ export const enum OrderType {
     SOUL_LANTERN = 852708,
     /** `soulpreservation` */
     SOUL_PRESERVATION = 852242,
+    /** Base order of the Spec Interface (`ASpc`) ability. Has no in-game order string. */
+    SPEC_INTERFACE = 852682,
     /** `spellshield` */
     SPELL_SHIELD = 852571,
     /** `spellshieldaoe` */
