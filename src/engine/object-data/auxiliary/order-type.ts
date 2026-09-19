@@ -315,6 +315,42 @@ export const enum OrderType {
     MOVE_SLOT_EQUIP_7 = 852751,
     /** Equipment inventory `moveslot8` (`EquipmentSlot` 8); has no in-game order string. */
     MOVE_SLOT_EQUIP_8 = 852752,
+    /** `picktalent0` */
+    PICK_TALENT_0 = 852753,
+    /** `picktalent1` */
+    PICK_TALENT_1 = 852754,
+    /** `picktalent2` */
+    PICK_TALENT_2 = 852755,
+    /** `picktalent3` */
+    PICK_TALENT_3 = 852756,
+    /** `picktalent4` */
+    PICK_TALENT_4 = 852757,
+    /** `picktalent5` */
+    PICK_TALENT_5 = 852758,
+    /** `picktalent6` */
+    PICK_TALENT_6 = 852759,
+    /** `picktalent7` */
+    PICK_TALENT_7 = 852760,
+    /** `picktalent8` */
+    PICK_TALENT_8 = 852761,
+    /** `picktalent9` */
+    PICK_TALENT_9 = 852762,
+    /** `picktalent10` */
+    PICK_TALENT_10 = 852763,
+    /** `picktalent11` */
+    PICK_TALENT_11 = 852764,
+    /** `picktalent12` */
+    PICK_TALENT_12 = 852765,
+    /** `picktalent13` */
+    PICK_TALENT_13 = 852766,
+    /** `picktalent14` */
+    PICK_TALENT_14 = 852767,
+    /** `picktalent15` */
+    PICK_TALENT_15 = 852768,
+    /** `picktalent16` */
+    PICK_TALENT_16 = 852769,
+    /** `picktalent17` */
+    PICK_TALENT_17 = 852770,
     /** Extended inventory `useslot0`; has no in-game order string. */
     USE_SLOT_EXT_0 = 852771,
     /** Extended inventory `useslot1`; has no in-game order string. */
