@@ -24,7 +24,9 @@ npm run clean                           # rimraf dist
 .\node_modules\.bin\eslint.cmd src      # lint (eslint + prettier via .eslintrc.cjs)
 ```
 
-There are no tests.
+Targeting-mode regressions run the real detector against mocked native frames:
+`node --disable-warning=ExperimentalWarning --test test/local-client.test.mjs`.
+These do not replace in-game verification of native visibility and input.
 
 ## External TypeScript dependencies are shipped as Lua
 

@@ -32,6 +32,8 @@ const pingMinimapEx = PingMinimapEx
 const pixelToFrameX = BlzPixelToFrameX
 const pixelToFrameY = BlzPixelToFrameY
 
+const setFrameVisible = BlzFrameSetVisible
+
 const tableSort = table.sort
 
 const hdTocPath = "_warscript\\IsHD.toc"
@@ -391,13 +393,44 @@ const actualizeMainSelectedUnit = (): void => {
 
 const commandButtons = array(12, (i) => Frame.byOrigin(ORIGIN_FRAME_COMMAND_BUTTON, i))
 
+// Named slot containers are distinct from the engine-owned origin buttons.
+// Resolve wrappers synchronously, never during a local targeting query.
+const commandButtonContainers = array(12, (i) => Frame.byName(`CommandButton_${i}`))
+
 const getTargetingModeState = (): boolean => {
-    for (const i of $range(0, 10)) {
-        if (commandButtons[i].visible) {
-            return false
+    // Reveal script-hidden containers without touching the wrapper's hide counts.
+    // The engine still controls the visibility of the origin buttons inside them.
+    for (const container of commandButtonContainers) {
+        if (container["hideCounter"] > 0) {
+            setFrameVisible(container.handle, true)
         }
     }
-    return commandButtons[11].visible
+    let targeting = false
+    let failed = false
+    let failure: unknown
+    try {
+        targeting = commandButtons[11].visible
+        for (const i of $range(0, 10)) {
+            if (commandButtons[i].visible) {
+                targeting = false
+                break
+            }
+        }
+    } catch (error) {
+        failed = true
+        failure = error
+    }
+    // Restore before callbacks or rethrowing. Explicit cleanup also avoids
+    // tstl's catch/rethrow path bypassing a finally block in emitted Lua.
+    for (const container of commandButtonContainers) {
+        if (container["hideCounter"] > 0) {
+            setFrameVisible(container.handle, false)
+        }
+    }
+    if (failed) {
+        throw failure
+    }
+    return targeting
 }
 
 const actualizeTargetingModeState = (): boolean => {
