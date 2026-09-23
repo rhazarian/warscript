@@ -42,13 +42,15 @@ ItemAbility.destroyEvent.addListener(EventListenerPriority.HIGHEST, (ability) =>
     }
 })
 
-Unit.itemPickedUpEvent.addListener(EventListenerPriority.LOWEST, (unit, item) => {
+// TODO: check if inventory can use abilities
+
+Unit.itemPickedUpEvent.addListener(EventListenerPriority.LOWEST_INTERNAL, (unit, item) => {
     for (const ability of item.abilities) {
         Event.invoke(abilityGainedEvent, unit, ability)
     }
 })
 
-Unit.itemDroppedEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
+Unit.itemDroppedEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (unit, item) => {
     for (const ability of item.abilities) {
         Event.invoke(abilityLostEvent, unit, ability)
     }

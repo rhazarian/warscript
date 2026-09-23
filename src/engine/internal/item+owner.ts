@@ -13,22 +13,22 @@ declare module "./item" {
     }
 }
 
-Unit.itemPickedUpEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
+Unit.itemPickedUpEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (unit, item) => {
     ownerByItem.set(item, unit)
 })
 
-Unit.itemEquippedEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
+Unit.itemEquippedEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (unit, item) => {
     ownerByItem.set(item, unit)
 })
 
 // Unequipping may move the item into another inventory of the same unit or drop it on the ground.
-Unit.itemUnequippedEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
+Unit.itemUnequippedEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (unit, item) => {
     if (!unitOwnsItem(unit.handle, item.handle)) {
         ownerByItem.delete(item)
     }
 })
 
-Unit.itemDroppedEvent.addListener(EventListenerPriority.HIGHEST, (unit, item) => {
+Unit.itemDroppedEvent.addListener(EventListenerPriority.HIGHEST_INTERNAL, (unit, item) => {
     ownerByItem.delete(item)
 })
 
