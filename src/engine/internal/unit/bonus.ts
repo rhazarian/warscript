@@ -37,6 +37,10 @@ import {
     MANA_REGENERATION_RATE_INCREASE_FACTOR_ABILITY_FIELD,
     MANA_REGENERATION_RATE_INCREASE_FACTOR_DUMMY_ABILITY_TYPE_ID,
 } from "../object-data/mana-regeneration-rate-increase-factor"
+import {
+    HEALTH_REGENERATION_RATE_INCREASE_ABILITY_FIELD,
+    HEALTH_REGENERATION_RATE_INCREASE_DUMMY_ABILITY_TYPE_ID,
+} from "../object-data/health-regeneration-rate-increase"
 
 export type UnitBonusId<Brand extends string = any> = number & {
     readonly __unitBonusId: unique symbol
@@ -53,6 +57,7 @@ export type UnitDamageFactorBonusId = UnitBonusId<"damageFactor">
 export type UnitReceivedDamageFactorBonusId = UnitBonusId<"receivedDamageFactor">
 export type UnitEvasionProbabilityBonusId = UnitBonusId<"evasionProbability">
 export type UnitManaRegenerationRateFactorBonusId = UnitBonusId<"manaRegenerationRateFactor">
+export type UnitHealthRegenerationRateBonusId = UnitBonusId<"healthRegenerationRate">
 
 export type UnitBonusType<Id extends UnitBonusId = UnitBonusId> = (
     | {
@@ -154,6 +159,13 @@ export namespace UnitBonusType {
             reduce: sum,
             initialValue: 0,
         }
+    export const HEALTH_REGENERATION_RATE: UnitBonusType<UnitHealthRegenerationRateBonusId> = {
+        abilityTypeId: HEALTH_REGENERATION_RATE_INCREASE_DUMMY_ABILITY_TYPE_ID,
+        field: HEALTH_REGENERATION_RATE_INCREASE_ABILITY_FIELD,
+        integer: false,
+        reduce: sum,
+        initialValue: 0,
+    }
 }
 
 type UnitBonuses = {
