@@ -1,29 +1,42 @@
-import { StandardLightningTypeId } from "../../object-data/entry/lightning-type"
-
-export const AERIAL_SHACKLES_LIGHTNING_TYPE_ID = fourCC("LEAS") as StandardLightningTypeId
-
-export const CHAIN_LIGHTNING_PRIMARY_LIGHTNING_TYPE_ID = fourCC("CLPB") as StandardLightningTypeId
-
-export const CHAIN_LIGHTNING_SECONDARY_LIGHTNING_TYPE_ID = fourCC("CLSB") as StandardLightningTypeId
-
-export const DRAIN_LIFE_LIGHTNING_TYPE_ID = fourCC("DRAL") as StandardLightningTypeId
-
-export const DRAIN_LIFE_AND_MANA_LIGHTNING_TYPE_ID = fourCC("DRAB") as StandardLightningTypeId
-
-export const DRAIN_MANA_LIGHTNING_TYPE_ID = fourCC("DRAM") as StandardLightningTypeId
-
-export const FINGER_OF_DEATH_LIGHTNING_TYPE_ID = fourCC("AFOD") as StandardLightningTypeId
-
-export const FORKED_LIGHTNING_LIGHTNING_TYPE_ID = fourCC("FORK") as StandardLightningTypeId
-
-export const HEALING_WAVE_PRIMARY_LIGHTNING_TYPE_ID = fourCC("HWPB") as StandardLightningTypeId
-
-export const HEALING_WAVE_SECONDARY_LIGHTNING_TYPE_ID = fourCC("HWSB") as StandardLightningTypeId
-
-export const LIGHTNING_ATTACK_LIGHTNING_TYPE_ID = fourCC("CHIM") as StandardLightningTypeId
-
-export const MANA_BURN_LIGHTNING_TYPE_ID = fourCC("MBUR") as StandardLightningTypeId
-
-export const MANA_FLARE_LIGHTNING_TYPE_ID = fourCC("MFPB") as StandardLightningTypeId
-
-export const SPIRIT_LINK_LIGHTNING_TYPE_ID = fourCC("SPLK") as StandardLightningTypeId
+export const enum StandardLightningTypeId {
+    /** `LEAS` */
+    AERIAL_SHACKLES = 1279607123,
+    /** `VLCG` */
+    CHAIN_LIGHTNING_GOLD = 1447838535,
+    /** `CLPB` */
+    CHAIN_LIGHTNING_PRIMARY = 1129074754,
+    /** `CLSB` */
+    CHAIN_LIGHTNING_SECONDARY = 1129075522,
+    /** `DRAL` */
+    DRAIN_LIFE = 1146241356,
+    /** `DRAB` */
+    DRAIN_LIFE_AND_MANA = 1146241346,
+    /** `DRAM` */
+    DRAIN_MANA = 1146241357,
+    /** `AFOD` */
+    FINGER_OF_DEATH = 1095126852,
+    /** `FORK` */
+    FORKED_LIGHTNING = 1179603531,
+    /** `HWPB` */
+    HEALING_WAVE_PRIMARY = 1213681730,
+    /** `HWSB` */
+    HEALING_WAVE_SECONDARY = 1213682498,
+    /** `INIT` */
+    INIT = 1229867348,
+    /** `DRWL` */
+    LIFE_WAVE = 1146246988,
+    /** `CHIM` */
+    LIGHTNING_ATTACK = 1128810829,
+    /** `MBUR` */
+    MANA_BURN = 1296192850,
+    /** `MFPB` */
+    MANA_FLARE = 1296453698,
+    /** `DRWM` */
+    MANA_WAVE = 1146246989,
+    /** `POSS` */
+    POSSESSION = 1347375955,
+    /** `VLST` */
+    SOUL_TETHER = 1447842644,
+    /** `SPLK` */
+    SPIRIT_LINK = 1397771339,
+}

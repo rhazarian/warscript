@@ -13,12 +13,17 @@ import { check } from "../../utility/preconditions"
 import { max } from "../../math"
 import { StandardAbilityTypeId } from "../standard/entries/ability-type"
 import { StandardItemTypeId } from "../standard/entries/item-type"
+import { StandardLightningTypeId } from "../standard/entries/lightning-type"
 
 export type CustomObjectDataEntryId = (number | string) & {
     readonly __objectDataEntryId: unique symbol
 }
 
-export type ObjectDataEntryId = CustomObjectDataEntryId | StandardAbilityTypeId | StandardItemTypeId
+export type ObjectDataEntryId =
+    | CustomObjectDataEntryId
+    | StandardAbilityTypeId
+    | StandardItemTypeId
+    | StandardLightningTypeId
 
 export type ObjectDataEntryIdType<T extends ObjectDataEntry> =
     T extends ObjectDataEntry<infer Id> ? Id : never
@@ -301,6 +306,16 @@ export abstract class ObjectDataEntry<Id extends ObjectDataEntryId = ObjectDataE
         ...args: Args
     ): void {
         check(field.setValue(this, ...args))
+    }
+
+    public copyFrom(id: Id): void {
+        const that = this.type.of(id)
+        if (that === undefined) {
+            return
+        }
+        for (const field of this.object.all) {
+
+        }
     }
 
     protected getBooleanField(field: string): boolean {

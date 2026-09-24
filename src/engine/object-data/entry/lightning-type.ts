@@ -2,16 +2,14 @@ import { ObjectDataEntry, ObjectDataEntryConstructor, CustomObjectDataEntryId } 
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 import { Color } from "../../../core/types/color"
 import { implementReadonlyNumberIndexSupplier } from "../../../utility/reflection"
+import { StandardLightningTypeId } from "../../standard/entries/lightning-type"
 
-export type LightningTypeId = CustomObjectDataEntryId &
-    number & { readonly __lightningTypeId: unique symbol }
-
-export type StandardLightningTypeId = LightningTypeId & {
-    readonly __standardLightningTypeId: unique symbol
-}
+export type LightningTypeId =
+    | (CustomObjectDataEntryId & number & { readonly __lightningTypeId: unique symbol })
+    | StandardLightningTypeId
 
 export class LightningType extends ObjectDataEntry<LightningTypeId> {
-    static readonly [id: StandardLightningTypeId]: ObjectDataEntryConstructor<LightningType>
+    static readonly [id: number]: ObjectDataEntryConstructor<LightningType>
 
     static {
         implementReadonlyNumberIndexSupplier(LightningType, (id) => {
@@ -21,7 +19,7 @@ export class LightningType extends ObjectDataEntry<LightningTypeId> {
         })
     }
 
-    public static override readonly BASE_ID = fourCC("INIT") as LightningTypeId
+    public static override readonly BASE_ID = StandardLightningTypeId.INIT
 
     private static readonly idGenerator = new ObjectDataEntryIdGenerator(fourCC("L000"))
 
