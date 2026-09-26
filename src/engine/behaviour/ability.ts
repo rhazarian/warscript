@@ -1,6 +1,7 @@
 import { Behavior } from "../behavior"
 import { Unit, UnitClassification } from "../internal/unit"
 import "../internal/unit/ability"
+import "../internal/unit+ability"
 import { Ability } from "../internal/ability"
 import { AbilityTypeId } from "../object-data/entry/ability-type"
 import { EventListener } from "../../event"
@@ -521,6 +522,21 @@ AbilityField.valueChangeEvent.addListener((ability, field) => {
 
 AbilityLevelField.valueChangeEvent.addListener((ability, field) => {
     AbilityBehavior.forAll(ability, checkBehaviorOnValueChange, field)
+})
+
+const checkBehaviorOnLevelChange = (behavior: AbilityBehavior) => {
+    const subscribedValues = subscribedValuesByAbilityBehavior.get(behavior)
+    if (subscribedValues != undefined) {
+        for (const value of subscribedValues) {
+            if (value instanceof AbilityLevelField) {
+                behavior.onValueChange(value)
+            }
+        }
+    }
+}
+
+Unit.abilityLevelChangedEvent.addListener((_, ability) => {
+    AbilityBehavior.forAll(ability, checkBehaviorOnLevelChange)
 })
 
 Ability.onCreate.addListener((ability) => {

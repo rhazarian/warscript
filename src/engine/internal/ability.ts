@@ -9,6 +9,7 @@ import {
     doAbilityActionForceDummy,
     startItemCooldown,
 } from "./item/ability"
+import { rawSetUnitAbilityLevel } from "./misc/unit-ability-level-natives"
 
 const getAbilityBooleanField = BlzGetAbilityBooleanField
 const getAbilityBooleanLevelField = BlzGetAbilityBooleanLevelField
@@ -33,7 +34,6 @@ const setAbilityStringField = BlzSetAbilityStringField
 const setAbilityStringLevelField = BlzSetAbilityStringLevelField
 const setUnitAbilityCooldownPercent = BlzSetUnitAbilityCooldownPercent
 const setUnitAbilityCooldownRemaining = BlzSetUnitAbilityCooldownRemaining
-const setUnitAbilityLevel = SetUnitAbilityLevel
 const startUnitAbilityCooldown = BlzStartUnitAbilityCooldown
 const unitDisableAbility = BlzUnitDisableAbility
 const unitHideAbility = BlzUnitHideAbility
@@ -389,8 +389,8 @@ export abstract class Ability extends Handle<jability> {
             const levels = getAbilityIntegerField(ability, levelsField)
             setAbilityIntegerField(ability, levelsField, levels + 1)
             const level = getUnitAbilityLevel(unit, typeId)
-            setUnitAbilityLevel(unit, typeId, levels + 1)
-            setUnitAbilityLevel(unit, typeId, level)
+            rawSetUnitAbilityLevel(unit, typeId, levels + 1)
+            rawSetUnitAbilityLevel(unit, typeId, level)
             setAbilityIntegerField(ability, levelsField, levels)
         }
         return success
@@ -487,7 +487,8 @@ export class UnitAbility extends Ability {
     }
 
     public set level(v: number) {
-        setUnitAbilityLevel(this.u, this.typeId, v + 1)
+        // Not cached: the native is wrapped to report ability level changes.
+        SetUnitAbilityLevel(this.u, this.typeId, v + 1)
     }
 
     /** Uses the native percentage scale. */

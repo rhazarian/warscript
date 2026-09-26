@@ -12,7 +12,7 @@ export class Color {
         public readonly g: number,
         public readonly b: number,
         public readonly a: number,
-        key: string
+        key: string,
     ) {
         cache[key] = this
     }
@@ -37,7 +37,7 @@ export class Color {
             lhs.r * (1 - t) + rhs.r * t,
             lhs.g * (1 - t) + rhs.g * t,
             lhs.b * (1 - t) + rhs.b * t,
-            lhs.a * (1 - t) + rhs.a * t
+            lhs.a * (1 - t) + rhs.a * t,
         )
     }
 

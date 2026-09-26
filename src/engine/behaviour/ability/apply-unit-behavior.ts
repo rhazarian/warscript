@@ -65,3 +65,7 @@ AbilityField.valueChangeEvent.addListener((ability) => {
 AbilityLevelField.valueChangeEvent.addListener((ability) => {
     ApplyUnitBehaviorAbilityBehavior.forAll(ability, "update")
 })
+
+Unit.abilityLevelChangedEvent.addListener((_, ability) => {
+    ApplyUnitBehaviorAbilityBehavior.forAll(ability, "update")
+})

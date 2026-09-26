@@ -7,6 +7,7 @@ import { dummyUnitId } from "../objutil/dummy"
 import { checkNotNull } from "../utility/preconditions"
 import { AbilityTypeId } from "../engine/object-data/entry/ability-type"
 import { getOrderIdByAbilityTypeId } from "../engine/internal/ability"
+import { rawSetUnitAbilityLevel } from "../engine/internal/misc/unit-ability-level-natives"
 
 const neutralVictim = Player.neutralVictim.handle
 
@@ -40,7 +41,7 @@ export class InstantDummyCaster {
         if (typeof abilityId == "number") {
             UnitAddAbility(dummy, abilityId)
             if (typeof level == "number") {
-                SetUnitAbilityLevel(dummy, abilityId, level + 1)
+                rawSetUnitAbilityLevel(dummy, abilityId, level + 1)
             } else {
                 ;(level as (ability: UnitAbility) => void)(
                     UnitAbility.of(
@@ -56,7 +57,7 @@ export class InstantDummyCaster {
             }
             if (Array.isArray(level)) {
                 for (const i of $range(1, abilityId.length)) {
-                    SetUnitAbilityLevel(dummy, abilityId[i - 1], level[i - 1] + 1)
+                    rawSetUnitAbilityLevel(dummy, abilityId[i - 1], level[i - 1] + 1)
                 }
             } else {
                 const abilities: UnitAbility[] = []

@@ -5,6 +5,7 @@ import {
     ARMOR_BONUS_DUMMY_ABILITY_TYPE_ID,
 } from "../object-data/armor-bonus"
 import { addInternalAbility } from "../utility"
+import { rawSetUnitAbilityLevel } from "../misc/unit-ability-level-natives"
 
 import { product, sum } from "../../../utility/arrays"
 import {
@@ -38,8 +39,11 @@ import {
     MANA_REGENERATION_RATE_INCREASE_FACTOR_DUMMY_ABILITY_TYPE_ID,
 } from "../object-data/mana-regeneration-rate-increase-factor"
 import {
-    HEALTH_REGENERATION_RATE_INCREASE_ABILITY_FIELD,
-    HEALTH_REGENERATION_RATE_INCREASE_DUMMY_ABILITY_TYPE_ID,
+    FRACTIONAL_HEALTH_REGENERATION_RATE_INCREASE_ABILITY_FIELD,
+    FRACTIONAL_HEALTH_REGENERATION_RATE_INCREASE_DUMMY_ABILITY_TYPE_ID,
+    HEALTH_REGENERATION_RATE_DECREASE_DUMMY_ABILITY_TYPE_ID,
+    HEALTH_REGENERATION_RATE_DECREASE_DUMMY_VALUE,
+    HEALTH_REGENERATION_RATE_INCREASE_DUMMY_ABILITY_TYPE_IDS,
 } from "../object-data/health-regeneration-rate-increase"
 
 export type UnitBonusId<Brand extends string = any> = number & {
@@ -73,6 +77,12 @@ export type UnitBonusType<Id extends UnitBonusId = UnitBonusId> = (
     | {
           abilityTypeId?: undefined
           valueByUnit: LuaMap<Unit, number>
+          apply?: undefined
+      }
+    | {
+          abilityTypeId?: undefined
+          valueByUnit?: undefined
+          apply: (this: void, unitHandle: junit, value: number) => void
       }
 ) & {
     reduce: (this: void, array: number[]) => number
@@ -159,10 +169,9 @@ export namespace UnitBonusType {
             reduce: sum,
             initialValue: 0,
         }
+    /** Supported range: -1000 to 1000; the total is clamped to it. */
     export const HEALTH_REGENERATION_RATE: UnitBonusType<UnitHealthRegenerationRateBonusId> = {
-        abilityTypeId: HEALTH_REGENERATION_RATE_INCREASE_DUMMY_ABILITY_TYPE_ID,
-        field: HEALTH_REGENERATION_RATE_INCREASE_ABILITY_FIELD,
-        integer: false,
+        apply: (unitHandle, value) => applyHealthRegenerationRateBonus(unitHandle, value),
         reduce: sum,
         initialValue: 0,
     }
@@ -178,6 +187,11 @@ const bonusesByUnitByBonusType = new LuaMap<UnitBonusType, LuaMap<Unit, UnitBonu
 
 let nextId = 1
 
+const ceil = math.ceil
+const floor = math.floor
+const max = math.max
+const min = math.min
+
 const processUnitBonus = (unit: Unit, bonusType: UnitBonusType, bonusesArray: number[]): void => {
     const unitHandle = unit.handle
 
@@ -186,7 +200,9 @@ const processUnitBonus = (unit: Unit, bonusType: UnitBonusType, bonusesArray: nu
     const abilityTypeId = bonusType.abilityTypeId
     if (abilityTypeId == undefined) {
         const valueByUnit = bonusType.valueByUnit
-        if (totalValue == bonusType.initialValue) {
+        if (valueByUnit == undefined) {
+            bonusType.apply(unitHandle, totalValue)
+        } else if (totalValue == bonusType.initialValue) {
             valueByUnit.delete(unit)
         } else {
             valueByUnit.set(unit, totalValue)
@@ -194,24 +210,93 @@ const processUnitBonus = (unit: Unit, bonusType: UnitBonusType, bonusesArray: nu
         return
     }
 
-    if (totalValue == bonusType.initialValue) {
+    applyAbilityBonus(
+        unitHandle,
+        abilityTypeId,
+        bonusType.field,
+        bonusType.integer,
+        totalValue,
+        bonusType.initialValue,
+    )
+}
+
+const applyAbilityBonus = (
+    unitHandle: junit,
+    abilityTypeId: AbilityTypeId,
+    field: jabilityintegerlevelfield | jabilityreallevelfield,
+    integer: boolean,
+    value: number,
+    initialValue: number,
+): void => {
+    if (value == initialValue) {
         UnitRemoveAbility(unitHandle, abilityTypeId)
         return
     }
 
     const abilityHandle = checkNotNull(addInternalAbility(unitHandle, abilityTypeId))
     check(
-        (bonusType.integer ? BlzSetAbilityIntegerLevelField : BlzSetAbilityRealLevelField)(
+        (integer ? BlzSetAbilityIntegerLevelField : BlzSetAbilityRealLevelField)(
             abilityHandle,
-            bonusType.field as any,
+            field as any,
             0,
-            totalValue,
+            value,
         ),
     )
     BlzSetAbilityIntegerField(abilityHandle, ABILITY_IF_LEVELS, 2)
-    SetUnitAbilityLevel(unitHandle, abilityTypeId, 2)
-    SetUnitAbilityLevel(unitHandle, abilityTypeId, 1)
+    rawSetUnitAbilityLevel(unitHandle, abilityTypeId, 2)
+    rawSetUnitAbilityLevel(unitHandle, abilityTypeId, 1)
     BlzSetAbilityIntegerField(abilityHandle, ABILITY_IF_LEVELS, 1)
+}
+
+const setInternalAbilityPresence = (
+    unitHandle: junit,
+    abilityTypeId: AbilityTypeId,
+    present: boolean,
+): void => {
+    if (present) {
+        addInternalAbility(unitHandle, abilityTypeId)
+    } else {
+        UnitRemoveAbility(unitHandle, abilityTypeId)
+    }
+}
+
+const MINIMUM_HEALTH_REGENERATION_RATE_BONUS = -1000
+const MAXIMUM_HEALTH_REGENERATION_RATE_BONUS = 1000
+
+// The regeneration abilities ignore runtime field writes, so the integer part is
+// composed of preset abilities: powers of two (1, 2, 4, ...) plus a large negative
+// one that shifts negative totals into the positive range. The fractional remainder,
+// truncated towards zero so that both parts share the sign, goes to an aura, which
+// does accept field writes but applies with the usual aura delay.
+const applyHealthRegenerationRateBonus = (unitHandle: junit, value: number): void => {
+    value = max(
+        MINIMUM_HEALTH_REGENERATION_RATE_BONUS,
+        min(value, MAXIMUM_HEALTH_REGENERATION_RATE_BONUS),
+    )
+    const integerValue = value < 0 ? ceil(value) : floor(value)
+
+    let remainder = integerValue
+    setInternalAbilityPresence(
+        unitHandle,
+        HEALTH_REGENERATION_RATE_DECREASE_DUMMY_ABILITY_TYPE_ID,
+        remainder < 0,
+    )
+    if (remainder < 0) {
+        remainder -= HEALTH_REGENERATION_RATE_DECREASE_DUMMY_VALUE
+    }
+    for (const abilityTypeId of HEALTH_REGENERATION_RATE_INCREASE_DUMMY_ABILITY_TYPE_IDS) {
+        setInternalAbilityPresence(unitHandle, abilityTypeId, remainder % 2 == 1)
+        remainder = floor(remainder / 2)
+    }
+
+    applyAbilityBonus(
+        unitHandle,
+        FRACTIONAL_HEALTH_REGENERATION_RATE_INCREASE_DUMMY_ABILITY_TYPE_ID,
+        FRACTIONAL_HEALTH_REGENERATION_RATE_INCREASE_ABILITY_FIELD,
+        false,
+        value - integerValue,
+        0,
+    )
 }
 
 export const addUnitBonus = <Id extends UnitBonusId>(
