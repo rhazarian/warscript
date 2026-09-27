@@ -2,7 +2,7 @@ import { Unit } from "../../internal/unit"
 import "../../internal/unit/ability"
 import { EventListenerPriority } from "../../../event"
 import { Timer } from "../../../core/types/timer"
-import { Effect } from "../../../core/types/effect"
+import { Effect, EffectParameters } from "../../../core/types/effect"
 import { mapValues } from "../../../utility/lua-maps"
 import { Ability } from "../../internal/ability"
 import { array, map, mapIndexed } from "../../../utility/arrays"
@@ -47,6 +47,8 @@ import { isSoundLabelCustom, Sound3D, SoundSettings } from "../../../core/types/
 import { luaSetOf } from "../../../utility/lua-sets"
 import { Widget } from "../../../core/types/widget"
 import { StandardAbilityTypeId } from "../../standard/entries/ability-type"
+import { GraphicsMode } from "../../index"
+import { LocalClient } from "../../local-client"
 
 export type AbilityTypeId =
     | (CustomObjectDataEntryId & number & { readonly __abilityTypeId: unique symbol })
@@ -72,6 +74,21 @@ const targetCastingEffectPresetsByAbilityTypeId = new LuaMap<
 >()
 
 const targetChannelingEffectPresetsByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    EffectPresetWithParameters[]
+>()
+
+const targetChannelingEffectPresetsSDByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    EffectPresetWithParameters[]
+>()
+
+const targetChannelingEffectPresetsHDByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    EffectPresetWithParameters[]
+>()
+
+const targetChannelingEffectPresetsDEByAbilityTypeId = new LuaMap<
     AbilityTypeId,
     EffectPresetWithParameters[]
 >()
@@ -339,6 +356,54 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         targetChannelingEffectPresetsByAbilityTypeId.set(
             this.id,
             map(targetChannelingEffectPresets, toEffectPreset),
+        )
+    }
+
+    public get targetChannelingEffectPresetsSD(): EffectPresetWithParameters[] {
+        return (
+            targetChannelingEffectPresetsSDByAbilityTypeId.get(this.id) ??
+            this.targetChannelingEffectPresets
+        )
+    }
+
+    public set targetChannelingEffectPresetsSD(
+        targetChannelingEffectPresetsSD: EffectPresetWithParametersInput[],
+    ) {
+        targetChannelingEffectPresetsSDByAbilityTypeId.set(
+            this.id,
+            map(targetChannelingEffectPresetsSD, toEffectPreset),
+        )
+    }
+
+    public get targetChannelingEffectPresetsHD(): EffectPresetWithParameters[] {
+        return (
+            targetChannelingEffectPresetsHDByAbilityTypeId.get(this.id) ??
+            this.targetChannelingEffectPresets
+        )
+    }
+
+    public set targetChannelingEffectPresetsHD(
+        targetChannelingEffectPresetsHD: EffectPresetWithParametersInput[],
+    ) {
+        targetChannelingEffectPresetsHDByAbilityTypeId.set(
+            this.id,
+            map(targetChannelingEffectPresetsHD, toEffectPreset),
+        )
+    }
+
+    public get targetChannelingEffectPresetsDE(): EffectPresetWithParameters[] {
+        return (
+            targetChannelingEffectPresetsDEByAbilityTypeId.get(this.id) ??
+            this.targetChannelingEffectPresets
+        )
+    }
+
+    public set targetChannelingEffectPresetsDE(
+        targetChannelingEffectPresetsDE: EffectPresetWithParametersInput[],
+    ) {
+        targetChannelingEffectPresetsDEByAbilityTypeId.set(
+            this.id,
+            map(targetChannelingEffectPresetsDE, toEffectPreset),
         )
     }
 
@@ -777,7 +842,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 }
 
-const _: void = postcompile(() => {
+void postcompile(() => {
     for (const abilityType of isButtonVisibleFalseAbilityTypes) {
         abilityType.hotkey = ""
         abilityType.buttonPositionX = 0
@@ -949,58 +1014,131 @@ const handleAbilityChannelingStartEvent = (caster: Unit, ability: Ability): void
     casterChannelingEffectsByCaster.set(caster, effects)
 }
 
-const targetChannelingEffectModelPathsByAbilityTypeId = postcompile(() => {
-    return mapValues(
-        targetChannelingEffectPresetsByAbilityTypeId,
-        (targetChannelingEffectPresets) =>
-            map(targetChannelingEffectPresets, extractAttachmentPresetInputModelPath),
-    )
-})
+type TargetChannelingEffectData = {
+    readonly modelPaths: string[]
+    /** Absent when every preset uses the default attachment point. */
+    readonly attachmentPoints?: string[]
+    /** Absent when no preset has parameters. */
+    readonly parameters?: (EffectParameters | undefined)[]
+}
 
-const targetChannelingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
-    return mapValues(
-        targetChannelingEffectPresetsByAbilityTypeId,
-        (targetChannelingEffectPresets) =>
-            map(targetChannelingEffectPresets, extractAttachmentPresetInputNodeFQN),
-    )
-})
+/**
+ * Per-mode data is stored only where it was set explicitly, since the serialized postcompile
+ * values do not share tables: the fallback chain is resolved at runtime instead.
+ */
+type TargetChannelingEffectsData = {
+    /**
+     * The same on every client: effects are created synchronously, so a graphics mode with
+     * fewer presets creates the missing effects without a model.
+     */
+    readonly effectCount: number
+    readonly data?: TargetChannelingEffectData
+    readonly dataSD?: TargetChannelingEffectData
+    readonly dataHD?: TargetChannelingEffectData
+    readonly dataDE?: TargetChannelingEffectData
+}
 
-const targetChannelingEffectParametersByAbilityTypeId = postcompile(() => {
-    return mapValues(
+const targetChannelingEffectsDataByAbilityTypeId = postcompile(() => {
+    const toData = (
+        presets: EffectPresetWithParameters[] | undefined,
+    ): TargetChannelingEffectData | undefined => {
+        if (presets == undefined) {
+            return undefined
+        }
+        const attachmentPoints = map(presets, extractAttachmentPresetInputNodeFQN)
+        const parameters = map(presets, "parameters")
+        return {
+            modelPaths: map(presets, extractAttachmentPresetInputModelPath),
+            attachmentPoints: attachmentPoints.some((attachmentPoint) => attachmentPoint != "")
+                ? attachmentPoints
+                : undefined,
+            parameters: presets.some((preset) => preset.parameters != undefined)
+                ? parameters
+                : undefined,
+        }
+    }
+    const abilityTypeIds = new LuaSet<AbilityTypeId>()
+    for (const presetsByAbilityTypeId of [
         targetChannelingEffectPresetsByAbilityTypeId,
-        (targetChannelingEffectPresets) => map(targetChannelingEffectPresets, "parameters"),
-    )
+        targetChannelingEffectPresetsSDByAbilityTypeId,
+        targetChannelingEffectPresetsHDByAbilityTypeId,
+        targetChannelingEffectPresetsDEByAbilityTypeId,
+    ]) {
+        for (const [abilityTypeId] of presetsByAbilityTypeId) {
+            abilityTypeIds.add(abilityTypeId)
+        }
+    }
+    const result = new LuaMap<AbilityTypeId, TargetChannelingEffectsData>()
+    for (const abilityTypeId of abilityTypeIds) {
+        const presets = targetChannelingEffectPresetsByAbilityTypeId.get(abilityTypeId)
+        const presetsSD = targetChannelingEffectPresetsSDByAbilityTypeId.get(abilityTypeId)
+        const presetsHD = targetChannelingEffectPresetsHDByAbilityTypeId.get(abilityTypeId)
+        const presetsDE = targetChannelingEffectPresetsDEByAbilityTypeId.get(abilityTypeId)
+        result.set(abilityTypeId, {
+            effectCount: math.max(
+                (presetsSD ?? presets)?.length ?? 0,
+                (presetsHD ?? presets)?.length ?? 0,
+                (presetsDE ?? presets)?.length ?? 0,
+            ),
+            data: toData(presets),
+            dataSD: toData(presetsSD),
+            dataHD: toData(presetsHD),
+            dataDE: toData(presetsDE),
+        })
+    }
+    return result
 })
 
 const targetChannelingEffectsByCaster = new LuaMap<Unit, Effect[]>()
 
-const handleAbilityWidgetTargetChannelingStartEvent = (
+const createTargetChannelingEffects = (
     caster: Unit,
-    ability: Ability,
-    target: Widget,
+    abilityTypeId: AbilityTypeId,
+    xOrWidget: number | Widget,
+    y?: number,
 ): void => {
-    const effectModelPaths = targetChannelingEffectModelPathsByAbilityTypeId.get(ability.typeId)
-    const attachmentPoints = targetChannelingEffectAttachmentPointsByAbilityTypeId.get(
-        ability.typeId,
-    )
-    const parameters = targetChannelingEffectParametersByAbilityTypeId.get(ability.typeId)
+    const effectsData = targetChannelingEffectsDataByAbilityTypeId.get(abilityTypeId)
+    if (effectsData == undefined) {
+        return
+    }
+    const graphicsMode = LocalClient.graphicsMode
+    const data =
+        (graphicsMode == GraphicsMode.SD
+            ? effectsData.dataSD
+            : graphicsMode == GraphicsMode.HD
+              ? effectsData.dataHD
+              : effectsData.dataDE) ?? effectsData.data
+    const modelPaths = data?.modelPaths
+    const attachmentPoints = data?.attachmentPoints
+    const parameters = data?.parameters
     const effects: Effect[] = []
-    if (effectModelPaths != undefined) {
-        for (const i of $range(1, effectModelPaths.length)) {
-            const effectModelPath = effectModelPaths[i - 1]
+    for (const i of $range(1, effectsData.effectCount)) {
+        const effectModelPath = (modelPaths && modelPaths[i - 1]) ?? ""
+        const effectParameters = parameters && parameters[i - 1]
+        if (typeof xOrWidget == "number") {
+            effects[i - 1] = Effect.create(effectModelPath, xOrWidget, y, effectParameters)
+        } else {
             let attachmentPoint = attachmentPoints && attachmentPoints[i - 1]
             if (attachmentPoint == undefined || attachmentPoint == "") {
                 attachmentPoint = "origin"
             }
             effects[i - 1] = Effect.create(
                 effectModelPath,
-                target,
+                xOrWidget,
                 attachmentPoint,
-                parameters && parameters[i - 1],
+                effectParameters,
             )
         }
     }
     targetChannelingEffectsByCaster.set(caster, effects)
+}
+
+const handleAbilityWidgetTargetChannelingStartEvent = (
+    caster: Unit,
+    ability: Ability,
+    target: Widget,
+): void => {
+    createTargetChannelingEffects(caster, ability.typeId, target)
 }
 
 const handleAbilityPointTargetChannelingStartEvent = (
@@ -1009,23 +1147,7 @@ const handleAbilityPointTargetChannelingStartEvent = (
     x: number,
     y: number,
 ): void => {
-    const effectModelPaths = targetChannelingEffectModelPathsByAbilityTypeId.get(ability.typeId)
-    const attachmentPoints = targetChannelingEffectAttachmentPointsByAbilityTypeId.get(
-        ability.typeId,
-    )
-    const parameters = targetChannelingEffectParametersByAbilityTypeId.get(ability.typeId)
-    const effects: Effect[] = []
-    if (effectModelPaths != undefined) {
-        for (const i of $range(1, effectModelPaths.length)) {
-            const effectModelPath = effectModelPaths[i - 1]
-            let attachmentPoint = attachmentPoints && attachmentPoints[i - 1]
-            if (attachmentPoint == undefined || attachmentPoint == "") {
-                attachmentPoint = "origin"
-            }
-            effects[i - 1] = Effect.create(effectModelPath, x, y, parameters && parameters[i - 1])
-        }
-    }
-    targetChannelingEffectsByCaster.set(caster, effects)
+    createTargetChannelingEffects(caster, ability.typeId, x, y)
 }
 
 const handleAbilityStopChannelingEvent = (caster: Unit): void => {
@@ -1060,7 +1182,7 @@ for (const [abilityTypeId] of casterChannelingEffectModelPathsByAbilityTypeId) {
     )
 }
 
-for (const [abilityTypeId] of targetChannelingEffectModelPathsByAbilityTypeId) {
+for (const [abilityTypeId] of targetChannelingEffectsDataByAbilityTypeId) {
     Unit.abilityWidgetTargetChannelingStartEvent[abilityTypeId].addListener(
         EventListenerPriority.HIGHEST,
         handleAbilityWidgetTargetChannelingStartEvent,
