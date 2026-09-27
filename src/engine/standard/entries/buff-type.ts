@@ -23,3 +23,20 @@ export const DRAIN_LIFE_AND_MANA_BONUS_BUFF_TYPE_ID = fourCC("Bdbb") as Standard
 export const DRAIN_LIFE_BONUS_BUFF_TYPE_ID = fourCC("Bdbl") as StandardBuffTypeId
 /** `Bdbm`: Drain Mana bonus, on the caster. */
 export const DRAIN_MANA_BONUS_BUFF_TYPE_ID = fourCC("Bdbm") as StandardBuffTypeId
+
+/** `BHfs`: Flame Strike, on the units in the flames. */
+export const FLAME_STRIKE_BUFF_TYPE_ID = fourCC("BHfs") as StandardBuffTypeId
+/** `XHfs`: Flame Strike's area effect (the embers). */
+export const FLAME_STRIKE_EFFECT_BUFF_TYPE_ID = fourCC("XHfs") as StandardBuffTypeId
+/** `BNrd`: Rain of Fire's burning damage over time. */
+export const RAIN_OF_FIRE_DAMAGE_BUFF_TYPE_ID = fourCC("BNrd") as StandardBuffTypeId
+/** `BNrf`: Rain of Fire, on the units in the area. */
+export const RAIN_OF_FIRE_BUFF_TYPE_ID = fourCC("BNrf") as StandardBuffTypeId
+/** `XErf`: Rain of Fire's area effect (the falling fire). */
+export const RAIN_OF_FIRE_EFFECT_BUFF_TYPE_ID = fourCC("XErf") as StandardBuffTypeId
+/** `BNso`: Soul Burn. */
+export const SOUL_BURN_BUFF_TYPE_ID = fourCC("BNso") as StandardBuffTypeId
+/** `BNbf`: Breath of Fire's burning. */
+export const BREATH_OF_FIRE_BUFF_TYPE_ID = fourCC("BNbf") as StandardBuffTypeId
+/** `BNic`: Incinerate. */
+export const INCINERATE_BUFF_TYPE_ID = fourCC("BNic") as StandardBuffTypeId

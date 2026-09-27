@@ -11,11 +11,15 @@ import { TupleOf } from "../../../utility/types"
 import { AnimationName } from "../auxiliary/animation-name"
 import { AnimationQualifier } from "../auxiliary/animation-qualifier"
 import {
+    AttachmentPoint,
+    AttachmentPointInput,
+    attachmentPointToNodeFQN,
     AttachmentPresetInput,
     EffectPresetWithParameters,
     EffectPresetWithParametersInput,
     extractAttachmentPresetInputModelPath,
     extractAttachmentPresetInputNodeFQN,
+    splitAttachmentNodeFQN,
     toEffectPreset,
 } from "../auxiliary/attachment-preset"
 import {
@@ -327,12 +331,23 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         this.setNumberField("amsp", missileMovementSpeed)
     }
 
-    public get specialAttachmentPreset(): EffectPresetWithParameters | undefined {
-        return this.getAttachmentPresetField("asat", "aspt")
+    /** Model paths of the special art (`asat`); Flame Strike, for one, uses three. */
+    public get specialEffectModelPaths(): string[] {
+        return this.getStringsField("asat")
     }
 
-    public set specialAttachmentPreset(specialAttachmentPreset: AttachmentPresetInput | undefined) {
-        this.setAttachmentPresetField("asat", "aspt", specialAttachmentPreset)
+    public set specialEffectModelPaths(specialEffectModelPaths: string[]) {
+        this.setStringsField("asat", specialEffectModelPaths)
+    }
+
+    /** Where the special art attaches (`aspt`), shared by all its models. */
+    public get specialEffectAttachmentPoint(): AttachmentPoint {
+        const [nodeName, nodeQualifiers] = splitAttachmentNodeFQN(this.getStringField("aspt"))
+        return { nodeName, nodeQualifiers }
+    }
+
+    public set specialEffectAttachmentPoint(specialEffectAttachmentPoint: AttachmentPointInput) {
+        this.setStringField("aspt", attachmentPointToNodeFQN(specialEffectAttachmentPoint))
     }
 
     public get targetCastingEffectPresets(): EffectPresetWithParameters[] {

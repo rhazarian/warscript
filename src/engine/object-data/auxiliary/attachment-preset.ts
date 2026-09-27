@@ -10,6 +10,17 @@ export type AttachmentPreset = {
     nodeQualifiers: ModelNodeQualifier[]
 }
 
+/** Where an effect attaches: a model node, e.g. the chest or the left hand. */
+export type AttachmentPoint = {
+    nodeName: ModelNodeName
+    nodeQualifiers: ModelNodeQualifier[]
+}
+
+export type AttachmentPointInput = Optional<AttachmentPoint, "nodeQualifiers">
+
+export const attachmentPointToNodeFQN = (attachmentPoint: AttachmentPointInput): string =>
+    [attachmentPoint.nodeName, ...(attachmentPoint.nodeQualifiers ?? [])].join(",")
+
 export type EffectPresetWithParameters = AttachmentPreset & {
     parameters?: EffectParameters
 }
