@@ -842,7 +842,7 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 }
 
-void postcompile(() => {
+const _: void = postcompile(() => {
     for (const abilityType of isButtonVisibleFalseAbilityTypes) {
         abilityType.hotkey = ""
         abilityType.buttonPositionX = 0
