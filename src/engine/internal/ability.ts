@@ -406,6 +406,8 @@ export abstract class Ability extends Handle<jability> {
 
     public abstract set cooldownRemaining(cooldownRemaining: number)
 
+    public abstract startCooldown(cooldown: number): void
+
     public abstract interruptCast(): void
 
     public static get onCreate(): Event<[Ability]> {
@@ -437,6 +439,8 @@ export class UnrecognizedAbility extends Ability {
     }
 
     public override set cooldownRemaining(_: number) {}
+
+    public startCooldown(_: number) {}
 
     public override interruptCast(): void {}
 }
@@ -618,6 +622,11 @@ export class ItemAbility extends Ability {
     public override set cooldownRemaining(cooldownRemaining: number) {
         const item = this.owner
         startItemCooldown(item.handle, item.owner?.handle, cooldownRemaining)
+    }
+
+    public startCooldown(cooldown: number) {
+        const item = this.owner
+        startItemCooldown(item.handle, item.owner?.handle, cooldown)
     }
 
     public override interruptCast(): void {

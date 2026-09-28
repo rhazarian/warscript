@@ -29,7 +29,8 @@ export abstract class EmulateImpactAbilityBehavior extends AbilityBehavior {
         if (cooldown == 0) {
             this.ability.interruptCast()
         } else {
-            this.ability.cooldownRemaining = cooldown
+            // Starting the cooldown (unlike setting the remaining time) also aborts the cast.
+            this.ability.startCooldown(cooldown)
         }
 
         this.flashCasterEffect(caster)
