@@ -40,3 +40,11 @@ export const SOUL_BURN_BUFF_TYPE_ID = fourCC("BNso") as StandardBuffTypeId
 export const BREATH_OF_FIRE_BUFF_TYPE_ID = fourCC("BNbf") as StandardBuffTypeId
 /** `BNic`: Incinerate. */
 export const INCINERATE_BUFF_TYPE_ID = fourCC("BNic") as StandardBuffTypeId
+/** `BEim`: Immolation, on the caster (its flames and the damage effect on the enemies). */
+export const IMMOLATION_BUFF_TYPE_ID = fourCC("BEim") as StandardBuffTypeId
+/** `BEia`: Immolation's caster buff (no art). */
+export const IMMOLATION_CASTER_BUFF_TYPE_ID = fourCC("BEia") as StandardBuffTypeId
+/** `Bpig`: Permanent Immolation of `Apig` (red flames, the stock permanentimmolation2). */
+export const PERMANENT_IMMOLATION_GRAPHIC_BUFF_TYPE_ID = fourCC("Bpig") as StandardBuffTypeId
+/** `Bpxf`: Phoenix Fire's burning. */
+export const PHOENIX_FIRE_BUFF_TYPE_ID = fourCC("Bpxf") as StandardBuffTypeId
