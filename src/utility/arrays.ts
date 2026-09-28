@@ -331,6 +331,19 @@ export const filter = <T>(array: readonly T[], predicate: (value: T) => boolean)
     return result
 }
 
+export const filterNot = <T>(array: readonly T[], predicate: (value: T) => boolean): T[] => {
+    const result: T[] = []
+    let j = 1
+    for (const i of $range(1, array.length)) {
+        const value = array[i - 1]
+        if (!predicate(value)) {
+            result[j - 1] = value
+            ++j
+        }
+    }
+    return result
+}
+
 export const average = (array: readonly number[]): number => {
     let sum = 0
     const count = array.length
