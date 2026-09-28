@@ -1059,12 +1059,14 @@ export class Unit extends Handle<junit> {
     }
 
     public isInRangeOf(x: number, y: number, range: number): boolean
-    public isInRangeOf(unit: Unit, range: number): boolean
+    public isInRangeOf(widget: Widget, range: number): boolean
 
-    public isInRangeOf(x: number | Unit, y: number, range?: number): boolean {
+    public isInRangeOf(x: number | Widget, y: number, range?: number): boolean {
         return typeof x == "number"
             ? isUnitInRangeXY(this.handle, x, y, range!)
-            : isUnitInRange(this.handle, x.handle, y)
+            : x instanceof Unit
+              ? isUnitInRange(this.handle, x.handle, y)
+              : isUnitInRangeXY(this.handle, x.x, x.y, range!)
     }
 
     public isAllyOf(unit: Unit): boolean {
