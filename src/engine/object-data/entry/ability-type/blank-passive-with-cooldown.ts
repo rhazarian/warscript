@@ -32,7 +32,7 @@ const compiletimeAbilityTypeIds = new LuaSet<AbilityTypeId>()
  * tooltip is replaced locally with the one of the locally main selected unit's ability.
  * Read the type's tooltip with `getAbilityTypeExtendedTooltip`, not with the native.
  */
-export class PassiveAbilityWithCooldownAbilityType extends ExhumeCorpsesAbilityType {
+export class BlankPassiveAbilityWithCooldownAbilityType extends ExhumeCorpsesAbilityType {
     public static override readonly IS_SYNTHETIC = true
 
     public constructor(object: WarObject) {
