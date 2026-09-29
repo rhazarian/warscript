@@ -49,7 +49,7 @@ export const random: {
 }
 
 export const shuffle = (array: unknown[]): void => {
-    for (const i of $range(array.length - 1, 1)) {
+    for (const i of $range(array.length - 1, 1, -1)) {
         const j = getRandomInt(0, i)
         const value = array[i]
         array[i] = array[j]
