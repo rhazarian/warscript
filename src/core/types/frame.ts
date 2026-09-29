@@ -8,8 +8,7 @@ import {
     FRAME_MIN_Y,
     getFrameMinXMaxX,
 } from "../../engine/internal/misc/frame-coordinates"
-import { frameCoordinatesToWorld, worldCoordinatesToFrame } from "./playerCamera"
-import { getTerrainZ } from "../../engine/internal/misc/get-terrain-z"
+import { frameCoordinatesToWorld } from "./playerCamera"
 import { mutableLuaSet } from "../../utility/lua-sets"
 import { Socket } from "../../net/socket"
 import { getOrPut, luaMapInvert, luaMapOf, mutableLuaMap } from "../../utility/lua-maps"
@@ -20,8 +19,13 @@ const frameIsVisible = BlzFrameIsVisible
 const frameSetEnable = BlzFrameSetEnable
 const frameSetScale = BlzFrameSetScale
 const getHandleId = GetHandleId
+const getLocalClientHeight = BlzGetLocalClientHeight
+const getMouseScreenPosX = BlzGetMouseScreenPosX
+const getMouseScreenPosY = BlzGetMouseScreenPosY
 const getOriginFrame = BlzGetOriginFrame
 const location = Location
+const pixelToFrameX = BlzPixelToFrameX
+const pixelToFrameY = BlzPixelToFrameY
 
 const rawget = _G.rawget
 const rawset = _G.rawset
@@ -801,7 +805,13 @@ export class Frame extends Handle<jframehandle> {
         return this.onMouseDownEvent
     }
 
-    public static get onMouseMove(): Event<[player: Player, x: number, y: number]> {
+    /**
+     * Synchronized native mouse movement of every player. Each movement of every player's
+     * cursor is sent over the network, so with several players moving their mice this floods
+     * the network and raises the latency for everyone. Prefer {@link mouseMoveLocalEvent} and
+     * synchronize the needed coordinates explicitly, only when they matter (e.g. on a click).
+     */
+    public static get mouseMoveEvent(): Event<[player: Player, x: number, y: number]> {
         const event = new TriggerEvent(
             (trigger) =>
                 Timer.simple(0, () => {
@@ -816,35 +826,31 @@ export class Frame extends Handle<jframehandle> {
                     BlzGetTriggerPlayerMouseY(),
                 ),
         )
-        rawset(Frame, "onMouseMove", event)
+        rawset(Frame, "mouseMoveEvent", event)
         return event
     }
 
-    public static get onMouseMoveLocal(): Event<[x: number, y: number]> {
-        const invoke = Event.invoke
+    /**
+     * Fires on the local client when the world point under the cursor changes, whether the
+     * cursor or the camera moved. Polls the local cursor position every 1/64 second and sends
+     * nothing over the network. The point is the camera ray's intersection with the terrain,
+     * so it ignores units and doodads under the cursor. It is also computed while the cursor
+     * is over the UI; check {@link isMouseOnWorld} where that matters.
+     */
+    public static get mouseMoveLocalEvent(): Event<[x: number, y: number]> {
         const event = new Event<[x: number, y: number]>()
 
-        let syncX = 0
-        let syncY = 0
-        let syncFrameX = 0
-        let syncFrameY = 0
-        let lastX = syncX
-        let lastY = syncY
-        this.onMouseMove.addListener((player, x, y) => {
-            if (player.isLocal) {
-                syncX = x
-                syncY = y
-                ;[syncFrameX, syncFrameY] = worldCoordinatesToFrame(x, y, getTerrainZ(x, y))
-                lastX = x
-                lastY = y
-                invoke(event, x, y)
-            }
-        })
+        let lastX = 0
+        let lastY = 0
         Timer.onPeriod[1 / 64].addListener(() => {
-            if (syncX == 0 && syncY == 0) {
+            // The pixel to frame conversion divides by the client height, zero when minimized.
+            if (getLocalClientHeight() == 0) {
                 return
             }
-            const [x, y, , isDefinite] = frameCoordinatesToWorld(syncFrameX, syncFrameY)
+            const [x, y, , isDefinite] = frameCoordinatesToWorld(
+                pixelToFrameX(getMouseScreenPosX()),
+                pixelToFrameY(getMouseScreenPosY()),
+            )
             if (isDefinite && (x != lastX || y != lastY)) {
                 lastX = x
                 lastY = y
@@ -852,7 +858,7 @@ export class Frame extends Handle<jframehandle> {
             }
         })
 
-        rawset(Frame, "onMouseMoveLocal", event)
+        rawset(Frame, "mouseMoveLocalEvent", event)
         return event
     }
 
