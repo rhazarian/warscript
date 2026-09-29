@@ -12,7 +12,8 @@ const tileCellById: Record<number, TileCell | undefined> = {}
 
 export class TileCell extends AttributesHolder implements Readonly<Vec2> {
     protected constructor(
-        private readonly id: number,
+        /** Identifies the cell the same way on every client; see {@link TileCell.getById}. */
+        public readonly id: number,
         public readonly x: number,
         public readonly y: number,
         public readonly z: undefined,
@@ -132,6 +133,14 @@ export class TileCell extends AttributesHolder implements Readonly<Vec2> {
         const xId = math.idiv(x + 64, 128)
         const yId = math.idiv(y + 64, 128)
         const id = yId * 32768 + xId
+        return tileCellById[id] ?? new TileCell(id, xId * 128, yId * 128, undefined)
+    }
+
+    /** The cell with the given {@link id}, e.g. one received over the network. */
+    public static getById(this: void, id: number): TileCell {
+        // Inverts `yId * 32768 + xId` for xId in [-16384, 16383].
+        const yId = math.idiv(id + 16384, 32768)
+        const xId = id - yId * 32768
         return tileCellById[id] ?? new TileCell(id, xId * 128, yId * 128, undefined)
     }
 }
