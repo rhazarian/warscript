@@ -19,10 +19,6 @@ import { luaSetOf } from "../../../utility/lua-sets"
 import { CallbackId } from "../../../utility/callback-array"
 import { attribute } from "../../../attributes"
 import { SkipFirst } from "../../../utility/types"
-import {
-    pseudoPassiveAbilityOrderTypeStringId,
-    pseudoPassiveAbilityTypeIds,
-} from "./pseudo-passive-abilities"
 
 const eventInvoke = Event.invoke
 
@@ -95,7 +91,7 @@ const createCommonEvent = (
         underlyingEvent,
         EventListenerPriority.HIGH,
         (caster, ability) => {
-            return $multi(!pseudoPassiveAbilityTypeIds.has(ability.typeId), caster, ability)
+            return $multi(true as const, caster, ability)
         },
     )
 }
@@ -209,8 +205,7 @@ const createNoTargetEvent = (
                 y == 0 &&
                 targetUnit == undefined &&
                 targetItem == undefined &&
-                targetDestructible == undefined &&
-                !pseudoPassiveAbilityTypeIds.has(ability.typeId)
+                targetDestructible == undefined
             ) {
                 return $multi(true as const, caster, ability)
             } else {
@@ -609,11 +604,7 @@ rawset(
                         if (unit !== undefined) {
                             const ability = unit.getAbility(abilityTypeId)
                             if (ability !== undefined) {
-                                if (pseudoPassiveAbilityTypeIds.has(ability.typeId)) {
-                                    ability.interruptCast()
-                                } else {
-                                    eventInvoke(event, unit, ability, orderTypeStringId)
-                                }
+                                eventInvoke(event, unit, ability, orderTypeStringId)
                             }
                         }
                     }),
@@ -761,10 +752,3 @@ internalAbilityChannelingStartEvent.addListener(
         }
     },
 )
-
-const doNothing = () => {}
-for (const pseudoPassiveAbilityTypeId of pseudoPassiveAbilityTypeIds) {
-    Unit.abilityCommandEvent[pseudoPassiveAbilityTypeId][
-        pseudoPassiveAbilityOrderTypeStringId
-    ].addListener(EventListenerPriority.HIGHEST_INTERNAL, doNothing)
-}
