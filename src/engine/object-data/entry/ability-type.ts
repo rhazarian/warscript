@@ -198,6 +198,30 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         this.setStringsField("aeat", effectModelPaths)
     }
 
+    public get effectModelPathsSD(): string[] {
+        return this.getStringsField("aeat:sd")
+    }
+
+    public set effectModelPathsSD(effectModelPathsSD: string[]) {
+        this.setStringsField("aeat:sd", effectModelPathsSD)
+    }
+
+    public get effectModelPathsHD(): string[] {
+        return this.getStringsField("aeat:hd")
+    }
+
+    public set effectModelPathsHD(effectModelPathsHD: string[]) {
+        this.setStringsField("aeat:hd", effectModelPathsHD)
+    }
+
+    public get effectModelPathsDE(): string[] {
+        return this.getStringsField("aeat:de")
+    }
+
+    public set effectModelPathsDE(effectModelPathsDE: string[]) {
+        this.setStringsField("aeat:de", effectModelPathsDE)
+    }
+
     public get iconPath(): string {
         return this.getStringField("aart")
     }
