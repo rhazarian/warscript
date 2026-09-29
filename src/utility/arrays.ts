@@ -4,6 +4,7 @@ import { identity } from "./functions"
 
 const mathMax = math.max
 const mathMin = math.min
+const next = _G.next
 const select = _G.select
 const tableConcat = table.concat
 const tableSort = table.sort
@@ -14,8 +15,9 @@ export const emptyArray = <T>(): readonly T[] => {
     return EMPTY_ARRAY
 }
 
+/** Checks for any element with `next` instead of computing the length. */
 export const isNonEmptyArray = (<T>(array: readonly T[]): array is ReadonlyNonEmptyArray<T> => {
-    return array.length > 0
+    return next(array)[0] != undefined
 }) as {
     <T>(array: T[]): array is NonEmptyArray<T>
     <T>(array: readonly T[]): array is ReadonlyNonEmptyArray<T>
