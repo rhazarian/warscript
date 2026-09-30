@@ -233,6 +233,46 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     private isPortraitModelPathSet?: true
 
+    /** Portrait fields a model setter emptied because no portrait was set yet. */
+    private autoEmptiedPortraitFields?: LuaSet<string>
+
+    private emptyPortraitForModel(portraitField: string): void {
+        if (
+            !this.isPortraitModelPathSet &&
+            WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
+        ) {
+            this.setStringField(portraitField, "")
+            if (this.autoEmptiedPortraitFields == undefined) {
+                this.autoEmptiedPortraitFields = new LuaSet()
+            }
+            this.autoEmptiedPortraitFields.add(portraitField)
+        }
+    }
+
+    /**
+     * An explicit portrait wins over the automatic empty portraits of the model setters, so
+     * it may also be set after the models: the mode-less portrait (one portrait for every
+     * mode) returns the automatically emptied per-mode portraits to their defaults, a
+     * per-mode portrait replaces only its own mode's.
+     */
+    private setPortraitModelPathField(portraitField: string, portraitModelPath: string): void {
+        const autoEmptiedPortraitFields = this.autoEmptiedPortraitFields
+        if (autoEmptiedPortraitFields != undefined) {
+            if (portraitField == "upor") {
+                for (const field of autoEmptiedPortraitFields) {
+                    if (field != portraitField) {
+                        this.object.setField(field, undefined)
+                    }
+                }
+                this.autoEmptiedPortraitFields = undefined
+            } else {
+                autoEmptiedPortraitFields.delete(portraitField)
+            }
+        }
+        this.setStringField(portraitField, portraitModelPath)
+        this.isPortraitModelPathSet = true
+    }
+
     // Abilities
 
     public get abilityTypeIds(): AbilityTypeId[] {
@@ -600,12 +640,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set modelPath(modelPath: string) {
         this.setStringField("umdl", modelPath)
-        if (
-            !this.isPortraitModelPathSet &&
-            WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
-        ) {
-            this.setStringField("upor", "")
-        }
+        this.emptyPortraitForModel("upor")
     }
 
     public get modelPathSD(): string {
@@ -614,12 +649,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set modelPathSD(modelPathSD: string) {
         this.setStringField("umdl:sd", modelPathSD)
-        if (
-            !this.isPortraitModelPathSet &&
-            WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
-        ) {
-            this.setStringField("upor:sd", "")
-        }
+        this.emptyPortraitForModel("upor:sd")
     }
 
     public get modelPathHD(): string {
@@ -628,12 +658,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set modelPathHD(modelPathHD: string) {
         this.setStringField("umdl:hd", modelPathHD)
-        if (
-            !this.isPortraitModelPathSet &&
-            WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
-        ) {
-            this.setStringField("upor:hd", "")
-        }
+        this.emptyPortraitForModel("upor:hd")
     }
 
     public get modelPathDE(): string {
@@ -642,12 +667,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
 
     public set modelPathDE(modelPathDE: string) {
         this.setStringField("umdl:de", modelPathDE)
-        if (
-            !this.isPortraitModelPathSet &&
-            WarscriptConfig.AUTOMATICALLY_SET_UNIT_TYPE_PORTRAIT_MODEL_PATH
-        ) {
-            this.setStringField("upor:de", "")
-        }
+        this.emptyPortraitForModel("upor:de")
     }
 
     public get portraitModelPath(): string {
@@ -655,8 +675,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
     }
 
     public set portraitModelPath(portraitModelPath: string) {
-        this.setStringField("upor", portraitModelPath)
-        this.isPortraitModelPathSet = true
+        this.setPortraitModelPathField("upor", portraitModelPath)
     }
 
     public get portraitModelPathSD(): string {
@@ -664,8 +683,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
     }
 
     public set portraitModelPathSD(portraitModelPathSD: string) {
-        this.setStringField("upor:sd", portraitModelPathSD)
-        this.isPortraitModelPathSet = true
+        this.setPortraitModelPathField("upor:sd", portraitModelPathSD)
     }
 
     public get portraitModelPathHD(): string {
@@ -673,8 +691,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
     }
 
     public set portraitModelPathHD(portraitModelPathHD: string) {
-        this.setStringField("upor:hd", portraitModelPathHD)
-        this.isPortraitModelPathSet = true
+        this.setPortraitModelPathField("upor:hd", portraitModelPathHD)
     }
 
     public get portraitModelPathDE(): string {
@@ -682,8 +699,7 @@ export abstract class UnitType<Id extends UnitTypeId = UnitTypeId> extends Objec
     }
 
     public set portraitModelPathDE(portraitModelPathDE: string) {
-        this.setStringField("upor:de", portraitModelPathDE)
-        this.isPortraitModelPathSet = true
+        this.setPortraitModelPathField("upor:de", portraitModelPathDE)
     }
 
     public get runSpeed(): number {
