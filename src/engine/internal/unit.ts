@@ -1611,6 +1611,13 @@ export class Unit extends Handle<junit> {
             if (abilities[i - 1].typeId == abilityTypeId) {
                 const ability = abilities[i - 1]
                 tremove(abilities, i)
+                // Called from the ability's own `onDestroy`: `destroy` would be a no-op,
+                // so the native ability has to be removed here.
+                if (ability.state == HandleState.BEING_DESTROYED) {
+                    break
+                }
+                // `UnitAbility.onDestroy` re-enters this method, finds no wrapper and
+                // removes the native ability.
                 ability.destroy()
                 return true
             }
