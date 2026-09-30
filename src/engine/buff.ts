@@ -43,6 +43,8 @@ import { HandleState } from "../core/types/handle"
 import { COOLDOWN_ABILITY_FLOAT_LEVEL_FIELD } from "./standard/fields/ability"
 import { AbilityBehavior } from "./behaviour/ability"
 import { sortedKeysUnnested } from "../utility/records"
+import { Sound3D, SoundSettings } from "../core/types/sound"
+import { SoundPresetId } from "./object-data/entry/sound-preset"
 
 const getUnitAbility = BlzGetUnitAbility
 
@@ -136,6 +138,8 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           missProbability?: NumberParameterValueType
           damageFactor?: NumberParameterValueType
           receivedDamageFactor?: NumberParameterValueType
+          /** The factor of melee attack damage returned to the attacker, as Spiked Carapace. */
+          returnedMeleeDamageFactor?: NumberParameterValueType
           receivedMagicDamageFactor?: NumberParameterValueType
           durationIncreaseOnAutoAttack?: NumberParameterValueType
           maximumRemainingDuration?: NumberParameterValueType
@@ -163,6 +167,9 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           abilityCooldownFactor?: NumberParameterValueType
 
           uniqueGroup?: BuffUniqueGroup
+
+          /** Played on the unit whenever the buff is destroyed, whatever the reason. */
+          destructionSoundPresetId?: SoundPresetId
       }
     : BuffParameters & (T extends Buff<infer AdditionalParameters> ? AdditionalParameters : object)
 
@@ -199,6 +206,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     missProbability: true,
     damageFactor: true,
     receivedDamageFactor: true,
+    returnedMeleeDamageFactor: true,
     receivedMagicDamageFactor: true,
     durationIncreaseOnAutoAttack: true,
     maximumDuration: true,
@@ -218,6 +226,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     maximumDamageAbsorbed: true,
     destroysOnMaximumDamageAbsorbed: true,
     uniqueGroup: true,
+    destructionSoundPresetId: true,
     damageOnExpiration: true,
     healingOnExpiration: true,
     killsOnExpiration: true,
@@ -307,6 +316,7 @@ const buffNumberParameters = [
     "maxManaIncrease",
     "damageFactor",
     "receivedDamageFactor",
+    "returnedMeleeDamageFactor",
     "maximumAutoAttackCount",
     "maximumDamageDealtEventCount",
     "maximumDamageReceivedEventCount",
@@ -334,6 +344,8 @@ const enum BuffPropertyKey {
     DURATION,
 
     UNIQUE_GROUP,
+
+    DESTRUCTION_SOUND_PRESET_ID,
 
     EFFECT_MODEL_PATH,
     SPECIAL_EFFECT_MODEL_PATH,
@@ -576,6 +588,8 @@ export class Buff<
 
     private [BuffPropertyKey.UNIQUE_GROUP]?: BuffUniqueGroup
 
+    private [BuffPropertyKey.DESTRUCTION_SOUND_PRESET_ID]?: SoundPresetId
+
     private [BuffPropertyKey.EFFECT_MODEL_PATH]: string
     private [BuffPropertyKey.SPECIAL_EFFECT_MODEL_PATH]: string
 
@@ -817,6 +831,8 @@ export class Buff<
         this[BuffPropertyKey.SOURCE] = source
         this[BuffPropertyKey.DURATION] = duration ?? 0
         this[BuffPropertyKey.UNIQUE_GROUP] = uniqueGroup
+        this[BuffPropertyKey.DESTRUCTION_SOUND_PRESET_ID] =
+            parameters?.destructionSoundPresetId ?? defaultParameters?.destructionSoundPresetId
 
         this[BuffPropertyKey.EFFECT_MODEL_PATH] = BlzGetAbilityStringLevelField(
             this.handle,
@@ -1128,6 +1144,17 @@ export class Buff<
         this.addOrUpdateOrRemoveUnitBonus(
             UnitBonusType.RECEIVED_DAMAGE_FACTOR,
             receivedDamageFactor,
+        )
+    }
+
+    public get returnedMeleeDamageFactor(): number {
+        return this.getUnitBonus(UnitBonusType.RETURNED_MELEE_DAMAGE_FACTOR)
+    }
+
+    public set returnedMeleeDamageFactor(returnedMeleeDamageFactor: number) {
+        this.addOrUpdateOrRemoveUnitBonus(
+            UnitBonusType.RETURNED_MELEE_DAMAGE_FACTOR,
+            returnedMeleeDamageFactor,
         )
     }
 
@@ -1582,6 +1609,11 @@ export class Buff<
         this[BuffPropertyKey.STATE] = HandleState.BEING_DESTROYED
 
         const unit = this._unit
+
+        const destructionSoundPresetId = this[BuffPropertyKey.DESTRUCTION_SOUND_PRESET_ID]
+        if (destructionSoundPresetId != undefined) {
+            Sound3D.playFromLabel(destructionSoundPresetId, SoundSettings.Ability, unit)
+        }
 
         if (getUnitAbility(unit.handle, this.typeId) == this.handle) {
             removeBuff(unit.handle, this.typeId)

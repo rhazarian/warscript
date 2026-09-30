@@ -45,6 +45,10 @@ import {
     HEALTH_REGENERATION_RATE_DECREASE_DUMMY_VALUE,
     HEALTH_REGENERATION_RATE_INCREASE_DUMMY_ABILITY_TYPE_IDS,
 } from "../object-data/health-regeneration-rate-increase"
+import {
+    RETURNED_MELEE_DAMAGE_FACTOR_ABILITY_FIELD,
+    RETURNED_MELEE_DAMAGE_FACTOR_DUMMY_ABILITY_TYPE_ID,
+} from "../object-data/returned-melee-damage-factor"
 
 export type UnitBonusId<Brand extends string = any> = number & {
     readonly __unitBonusId: unique symbol
@@ -59,6 +63,7 @@ export type UnitMovementSpeedFactorBonusId = UnitBonusId<"movementSpeedFactor">
 export type UnitAutoAttackDamageBonusId = UnitBonusId<"autoAttackDamage">
 export type UnitDamageFactorBonusId = UnitBonusId<"damageFactor">
 export type UnitReceivedDamageFactorBonusId = UnitBonusId<"receivedDamageFactor">
+export type UnitReturnedMeleeDamageFactorBonusId = UnitBonusId<"returnedMeleeDamageFactor">
 export type UnitEvasionProbabilityBonusId = UnitBonusId<"evasionProbability">
 export type UnitManaRegenerationRateFactorBonusId = UnitBonusId<"manaRegenerationRateFactor">
 export type UnitHealthRegenerationRateBonusId = UnitBonusId<"healthRegenerationRate">
@@ -154,6 +159,15 @@ export namespace UnitBonusType {
         valueByUnit: receivedDamageFactorByUnit,
         initialValue: 1,
     }
+    /** The factor of melee attack damage returned to the attacker, as Spiked Carapace. */
+    export const RETURNED_MELEE_DAMAGE_FACTOR: UnitBonusType<UnitReturnedMeleeDamageFactorBonusId> =
+        {
+            abilityTypeId: RETURNED_MELEE_DAMAGE_FACTOR_DUMMY_ABILITY_TYPE_ID,
+            field: RETURNED_MELEE_DAMAGE_FACTOR_ABILITY_FIELD,
+            integer: false,
+            reduce: sum,
+            initialValue: 0,
+        }
     export const EVASION_PROBABILITY: UnitBonusType<UnitEvasionProbabilityBonusId> = {
         abilityTypeId: EVASION_PROBABILITY_DUMMY_ABILITY_TYPE_ID,
         field: EVASION_PROBABILITY_ABILITY_FIELD,
