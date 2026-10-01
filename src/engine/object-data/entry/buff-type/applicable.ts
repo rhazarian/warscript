@@ -415,13 +415,23 @@ const preparePhysicalPositiveApplicatorAbility = (
     setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_HERO, level, duration)
 }
 
-/** @internal For use by internal systems only. */
-export const removeBuff = (unit: junit, applicableBuffTypeId: number): boolean => {
+/**
+ * Removes the ability that keeps a hidden buff on the unit. A leftover applicator
+ * makes the next hidden application fail, since the unit already has the ability.
+ *
+ * @internal For use by internal systems only.
+ */
+export const removeBuffApplicator = (unit: junit, applicableBuffTypeId: number): void => {
     const applicatorAbilityTypeId = applicatorAbilityTypeIdByApplicatorTypeByApplicableBuffTypeId
         .get(applicableBuffTypeId as ApplicableBuffTypeId)
         ?.get(ApplicatorType.HIDDEN)
     if (applicatorAbilityTypeId != undefined) {
         unitRemoveAbility(unit, applicatorAbilityTypeId)
     }
+}
+
+/** @internal For use by internal systems only. */
+export const removeBuff = (unit: junit, applicableBuffTypeId: number): boolean => {
+    removeBuffApplicator(unit, applicableBuffTypeId)
     return unitRemoveAbility(unit, applicableBuffTypeId)
 }

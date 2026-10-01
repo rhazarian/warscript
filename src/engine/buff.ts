@@ -3,6 +3,7 @@ import {
     ApplicableBuffTypeId,
     internalApplyBuff,
     removeBuff,
+    removeBuffApplicator,
 } from "./object-data/entry/buff-type/applicable"
 import { Ability, UnitAbility } from "./internal/ability"
 import { AbilityTypeId } from "./object-data/entry/ability-type"
@@ -1617,6 +1618,10 @@ export class Buff<
 
         if (getUnitAbility(unit.handle, this.typeId) == this.handle) {
             removeBuff(unit.handle, this.typeId)
+        } else {
+            // The native buff was removed or replaced from outside, e.g. by UnitRemoveBuffs.
+            // A hidden buff's applicator survives that and would block the next application.
+            removeBuffApplicator(unit.handle, this.typeId)
         }
 
         buffByTypeIdByUnit.get(unit)!.delete(this.typeId)
