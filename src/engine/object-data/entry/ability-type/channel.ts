@@ -83,14 +83,14 @@ export class ChannelAbilityType extends AbilityType {
         this.setOption(16, isUniqueCast)
     }
 
-    public get casterAttachmentPresetsDuration(): number[] {
+    public get casterEffectPresetsDuration(): number[] {
         return this.getNumberLevelField("Ncl4")
     }
 
-    public set casterAttachmentPresetsDuration(
-        casterAttachmentsDuration: ObjectDataEntryLevelFieldValueSupplier<number>
+    public set casterEffectPresetsDuration(
+        casterEffectPresetsDuration: ObjectDataEntryLevelFieldValueSupplier<number>
     ) {
-        this.setNumberLevelField("Ncl4", casterAttachmentsDuration)
+        this.setNumberLevelField("Ncl4", casterEffectPresetsDuration)
     }
 
     /**

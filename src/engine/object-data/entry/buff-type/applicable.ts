@@ -78,7 +78,7 @@ const [
         abilityType.levelCount = applicableBuffType.levelCount
         abilityType.buttonPositionX = 0
         abilityType.buttonPositionY = -11
-        abilityType.casterAttachmentPresets = []
+        abilityType.casterEffectPresets = []
         abilityType.targetEffectPresets = []
         abilityType.casterEffectSoundPresetId = undefined
         abilityType.learnLevelMinimum = 6

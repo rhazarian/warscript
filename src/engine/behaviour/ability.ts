@@ -11,8 +11,10 @@ import { Destructable } from "../../core/types/destructable"
 import { Effect, EffectParameters } from "../../core/types/effect"
 import {
     AREA_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+    CASTER_EFFECT_COUNT_ABILITY_INTEGER_FIELD,
     CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD,
     CASTER_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+    CASTER_EFFECT_SECOND_ATTACHMENT_POINT_STRING_FIELD,
     DURATION_HERO_ABILITY_FLOAT_LEVEL_FIELD,
     DURATION_NORMAL_ABILITY_FLOAT_LEVEL_FIELD,
     EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
@@ -21,19 +23,75 @@ import {
     MISSILE_SPEED_ABILITY_INTEGER_FIELD,
     SPECIAL_EFFECT_ATTACHMENT_POINT_STRING_FIELD,
     SPECIAL_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+    TARGET_EFFECT_COUNT_ABILITY_INTEGER_FIELD,
+    TARGET_EFFECT_FIFTH_ATTACHMENT_POINT_STRING_FIELD,
     TARGET_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD,
+    TARGET_EFFECT_FOURTH_ATTACHMENT_POINT_STRING_FIELD,
     TARGET_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+    TARGET_EFFECT_SECOND_ATTACHMENT_POINT_STRING_FIELD,
+    TARGET_EFFECT_SIXTH_ATTACHMENT_POINT_STRING_FIELD,
+    TARGET_EFFECT_THIRD_ATTACHMENT_POINT_STRING_FIELD,
 } from "../standard/fields/ability"
 import {
     AbilityDependentValue,
     AbilityField,
+    AbilityIntegerField,
     AbilityLevelField,
+    AbilityStringArrayField,
+    AbilityStringField,
     ReadonlySubscribableAbilityDependentValue,
     resolveCurrentAbilityDependentValue,
     SubscribableAbilityDependentValue,
 } from "../object-field/ability"
 import { Destructor } from "../../destroyable"
 import { Missile } from "../../core/types/missile"
+
+const CASTER_EFFECT_ATTACHMENT_POINT_STRING_FIELDS: readonly AbilityStringField[] = [
+    CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD,
+    CASTER_EFFECT_SECOND_ATTACHMENT_POINT_STRING_FIELD,
+]
+
+const TARGET_EFFECT_ATTACHMENT_POINT_STRING_FIELDS: readonly AbilityStringField[] = [
+    TARGET_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD,
+    TARGET_EFFECT_SECOND_ATTACHMENT_POINT_STRING_FIELD,
+    TARGET_EFFECT_THIRD_ATTACHMENT_POINT_STRING_FIELD,
+    TARGET_EFFECT_FOURTH_ATTACHMENT_POINT_STRING_FIELD,
+    TARGET_EFFECT_FIFTH_ATTACHMENT_POINT_STRING_FIELD,
+    TARGET_EFFECT_SIXTH_ATTACHMENT_POINT_STRING_FIELD,
+]
+
+/**
+ * Flashes every preset of an effect preset list (caster/target effects): each model at
+ * its own attachment point. The effect count field limits the list; at least the first
+ * model is always flashed, as abilities without the count set expect.
+ */
+const flashEffectPresets = (
+    ability: Ability,
+    modelPathsField: AbilityStringArrayField,
+    attachmentPointFields: readonly AbilityStringField[],
+    effectCountField: AbilityIntegerField,
+    widget: Widget,
+    ...parametersOrDuration:
+        | [parameters?: EffectParameters]
+        | [duration?: number, parameters?: EffectParameters]
+): void => {
+    const count = math.min(
+        math.max(effectCountField.getValue(ability), 1),
+        attachmentPointFields.length,
+    )
+    for (const i of $range(0, count - 1)) {
+        const modelPath = modelPathsField.getValue(ability, i)
+        if (modelPath != "") {
+            const attachmentPoint = attachmentPointFields[i].getValue(ability)
+            Effect.flash(
+                modelPath,
+                widget,
+                attachmentPoint != "" ? attachmentPoint : "origin",
+                ...parametersOrDuration,
+            )
+        }
+    }
+}
 
 const createBehaviorFunctionsByAbilityTypeId = new LuaMap<
     AbilityTypeId,
@@ -172,13 +230,12 @@ export abstract class AbilityBehavior<
             | [parameters?: EffectParameters]
             | [duration?: number, parameters?: EffectParameters]
     ): void {
-        const attachmentPoint = CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD.getValue(
+        flashEffectPresets(
             this.ability,
-        )
-        Effect.flash(
-            CASTER_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
+            CASTER_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+            CASTER_EFFECT_ATTACHMENT_POINT_STRING_FIELDS,
+            CASTER_EFFECT_COUNT_ABILITY_INTEGER_FIELD,
             widget,
-            attachmentPoint != "" ? attachmentPoint : "origin",
             ...parametersOrDuration,
         )
     }
@@ -189,13 +246,12 @@ export abstract class AbilityBehavior<
             | [parameters?: EffectParameters]
             | [duration?: number, parameters?: EffectParameters]
     ): void {
-        const attachmentPoint = TARGET_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD.getValue(
+        flashEffectPresets(
             this.ability,
-        )
-        Effect.flash(
-            TARGET_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD.getValue(this.ability, 0),
+            TARGET_EFFECT_MODEL_PATHS_ABILITY_STRING_ARRAY_FIELD,
+            TARGET_EFFECT_ATTACHMENT_POINT_STRING_FIELDS,
+            TARGET_EFFECT_COUNT_ABILITY_INTEGER_FIELD,
             widget,
-            attachmentPoint != "" ? attachmentPoint : "origin",
             ...parametersOrDuration,
         )
     }

@@ -41,7 +41,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
         super(object)
         this.buttonPositionX = 0
         this.buttonPositionY = 0
-        this.casterAttachmentPresets = []
+        this.casterEffectPresets = []
         this.effectModelPaths = []
         this.targetEffectPresets = []
         this.levelCount = 1
@@ -50,7 +50,7 @@ export class BlankConfigurableAbilityType extends ChannelAbilityType {
         this.isPhysical = false
         this.isUniversal = false
         this.isUniqueCast = true
-        this.casterAttachmentPresetsDuration = 0
+        this.casterEffectPresetsDuration = 0
         this.disablesOtherAbilities = false
 
         this.setAutoOrderTypeStringIds()

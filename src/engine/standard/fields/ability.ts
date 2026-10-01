@@ -38,9 +38,9 @@ export const BUTTON_POSITION_RESEARCH_Y_ABILITY_INTEGER_FIELD = AbilityIntegerFi
 
 export const MISSILE_SPEED_ABILITY_INTEGER_FIELD = AbilityIntegerField.create(fourCC("amsp"))
 
-export const TARGET_ATTACHMENTS_ABILITY_INTEGER_FIELD = AbilityIntegerField.create(fourCC("atac"))
+export const TARGET_EFFECT_COUNT_ABILITY_INTEGER_FIELD = AbilityIntegerField.create(fourCC("atac"))
 
-export const CASTER_ATTACHMENTS_ABILITY_INTEGER_FIELD = AbilityIntegerField.create(fourCC("acac"))
+export const CASTER_EFFECT_COUNT_ABILITY_INTEGER_FIELD = AbilityIntegerField.create(fourCC("acac"))
 
 export const PRIORITY_ABILITY_INTEGER_FIELD = AbilityIntegerField.create(fourCC("apri"))
 

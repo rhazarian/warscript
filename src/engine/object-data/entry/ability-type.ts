@@ -177,17 +177,15 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         )
     }
 
-    public get casterAttachmentPresets(): TupleOf<EffectPresetWithParameters, 0 | 1 | 2> {
+    public get casterEffectPresets(): TupleOf<EffectPresetWithParameters, 0 | 1 | 2> {
         return this.getAttachmentPresetListField("acat", ["acap", "aca1"]) as TupleOf<
             EffectPresetWithParameters,
             0 | 1 | 2
         >
     }
 
-    public set casterAttachmentPresets(
-        casterAttachmentPresets: TupleOf<AttachmentPresetInput, 0 | 1 | 2>,
-    ) {
-        this.setAttachmentPresetListField("acat", ["acap", "aca1"], "acac", casterAttachmentPresets)
+    public set casterEffectPresets(casterEffectPresets: TupleOf<AttachmentPresetInput, 0 | 1 | 2>) {
+        this.setAttachmentPresetListField("acat", ["acap", "aca1"], "acac", casterEffectPresets)
     }
 
     public get effectModelPaths(): string[] {
