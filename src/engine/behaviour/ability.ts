@@ -421,6 +421,36 @@ export abstract class AbilityBehavior<
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public onWidgetTargetCastingStart(caster: Unit, target: Widget): void {
+        // no-op
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public onUnitTargetCastingStart(caster: Unit, target: Unit): void {
+        // no-op
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public onItemTargetCastingStart(caster: Unit, target: Item): void {
+        // no-op
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public onDestructibleTargetCastingStart(caster: Unit, target: Destructable): void {
+        // no-op
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public onPointTargetCastingStart(caster: Unit, x: number, y: number): void {
+        // no-op
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public onNoTargetCastingStart(caster: Unit): void {
+        // no-op
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public onCastingFinish(caster: Unit): void {
         // no-op
     }
@@ -524,6 +554,24 @@ export abstract class AbilityBehavior<
         Unit.abilityGainedEvent.addListener(createUnitEventListener("onUnitGainAbility"))
         Unit.abilityLostEvent.addListener(createUnitEventListener("onUnitLoseAbility"))
         Unit.abilityCastingStartEvent.addListener(createUnitEventListener("onCastingStart"))
+        Unit.abilityWidgetTargetCastingStartEvent.addListener(
+            createUnitEventListener("onWidgetTargetCastingStart"),
+        )
+        Unit.abilityUnitTargetCastingStartEvent.addListener(
+            createUnitEventListener("onUnitTargetCastingStart"),
+        )
+        Unit.abilityItemTargetCastingStartEvent.addListener(
+            createUnitEventListener("onItemTargetCastingStart"),
+        )
+        Unit.abilityDestructibleTargetCastingStartEvent.addListener(
+            createUnitEventListener("onDestructibleTargetCastingStart"),
+        )
+        Unit.abilityPointTargetCastingStartEvent.addListener(
+            createUnitEventListener("onPointTargetCastingStart"),
+        )
+        Unit.abilityNoTargetCastingStartEvent.addListener(
+            createUnitEventListener("onNoTargetCastingStart"),
+        )
         Unit.abilityCastingFinishEvent.addListener(createUnitEventListener("onCastingFinish"))
         Unit.abilityChannelingStartEvent.addListener(createUnitEventListener("onChannelingStart"))
         Unit.abilityWidgetTargetChannelingStartEvent.addListener(

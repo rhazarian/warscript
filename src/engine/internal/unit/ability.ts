@@ -629,6 +629,33 @@ const invokeImpactEvent = (
     eventInvoke(internalAbilityImpactEvent, unit, ability, ...parameters)
 }
 
+/**
+ * Invokes the impact events of a cast that never reaches its native impact, with the
+ * cast's target: the common event and the one matching the target kind, as a real impact.
+ *
+ * @internal For use by internal systems only.
+ */
+export const emulateAbilityImpactEvent = (
+    caster: Unit,
+    ability: Ability,
+    targetUnit: Unit | undefined,
+    targetItem: Item | undefined,
+    targetDestructible: Destructable | undefined,
+    x: number,
+    y: number,
+): void => {
+    eventInvoke(
+        internalAbilityImpactEvent,
+        caster,
+        ability,
+        targetUnit?.handle,
+        targetItem?.handle,
+        targetDestructible?.handle,
+        x,
+        y,
+    )
+}
+
 internalAbilityChannelingStartEvent.addListener(
     EventListenerPriority.HIGHEST_INTERNAL,
     (unit, ability, ...parameters) => {

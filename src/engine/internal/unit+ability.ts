@@ -1,6 +1,7 @@
 import { Ability, ItemAbility, UnitAbility } from "./ability"
 import { Unit } from "./unit"
 
+import { HandleState } from "../../core/types/handle"
 import { createDispatchingEvent, DispatchingEvent, Event, EventListenerPriority } from "../../event"
 import {
     rawDecUnitAbilityLevel,
@@ -32,6 +33,7 @@ const abilityLevelChangedEvent = createDispatchingEvent(
 rawset(Unit, "abilityLevelChangedEvent", abilityLevelChangedEvent)
 
 const getUnitAbilityLevel = GetUnitAbilityLevel
+const unitDisableAbility = BlzUnitDisableAbility
 
 const invokeAbilityLevelChangedEvent = (unitHandle: junit, abilityTypeId: number): void => {
     const unit = Unit.of(unitHandle)
@@ -95,6 +97,17 @@ TriggerAddCondition(
 
 UnitAbility.onCreate.addListener(EventListenerPriority.LOWEST, (ability) => {
     Event.invoke(abilityGainedEvent, ability.owner, ability)
+})
+
+// Destroying an ability destroys its behaviors (`Ability.destroyEvent`) before
+// `UnitAbility.onDestroy` removes the native ability, so the stop event of a cast cut
+// short by the removal would find no behaviors left. Interrupting the cast first lets
+// that event reach them. The ability is not re-enabled: it is removed right after.
+UnitAbility.onDestroy.addListener(EventListenerPriority.HIGHEST_INTERNAL, (ability) => {
+    const owner = ability.owner
+    if (owner.state != HandleState.BEING_DESTROYED) {
+        unitDisableAbility(owner.handle, ability.typeId, true, false)
+    }
 })
 
 UnitAbility.destroyEvent.addListener(EventListenerPriority.HIGHEST, (ability) => {
