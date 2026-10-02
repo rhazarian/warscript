@@ -828,6 +828,14 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         this.setNumberLevelField("ahdu", heroBuffDuration)
     }
 
+    public get isHeroAbility(): boolean {
+        return this.getBooleanField("aher")
+    }
+
+    public set isHeroAbility(isHeroAbility: boolean) {
+        this.setBooleanField("aher", isHeroAbility)
+    }
+
     public get learnLevelMinimum(): number {
         return this.getNumberField("arlv")
     }
