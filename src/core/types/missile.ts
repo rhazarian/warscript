@@ -58,16 +58,12 @@ export class Missile implements Destroyable {
     ): Missile {
         let offsetX = config.sourceOffset?.x ?? 0
         let offsetY = config.sourceOffset?.y ?? 0
-        let visualOffsetX = 0
-        let visualOffsetY = 0
         let visualOffsetZ = (source.z ?? terrainZ(source)) + (config.sourceOffset?.z ?? 0)
 
         if (source instanceof Unit) {
             const data = MISSILE_DATA_BY_UNIT_TYPE_ID.get(source.typeId)
             const launchX = data.launchOffsetX
             const launchY = data.launchOffsetY
-            const projectileVisOffsetX = data.launchVisualOffsetX
-            const projectileVisOffsetY = data.launchVisualOffsetY
             const angle = rad(source.facing - 90)
             const s = sin(angle)
             const c = cos(angle)
@@ -75,11 +71,10 @@ export class Missile implements Destroyable {
             offsetX += c * launchX - s * launchY
             offsetY += s * launchX + c * launchY
 
-            // The visual offset lies in the unit's vertical plane: X along the facing,
-            // Y upwards (stock HD data, e.g. Witch Doctor: launchZ 40, Y 160 - the staff top).
-            visualOffsetX += -s * projectileVisOffsetX
-            visualOffsetY += c * projectileVisOffsetX
-            visualOffsetZ += data.launchOffsetZ + projectileVisOffsetY
+            // The engine does not apply projectileVisOffsetX/Y to attack missiles: compared in
+            // game (HD Priest), both applying them sideways/forward and along facing/upwards
+            // moved the launch point away from the real attack missile's.
+            visualOffsetZ += data.launchOffsetZ
         }
 
         const targetOffsetX = config.targetOffset?.x ?? 0
@@ -95,8 +90,8 @@ export class Missile implements Destroyable {
 
         let positionX = source.x + offsetX
         let positionY = source.y + offsetY
-        let visualPositionX = positionX + visualOffsetX
-        let visualPositionY = positionY + visualOffsetY
+        let visualPositionX = positionX
+        let visualPositionY = positionY
         let visualPositionZ = visualOffsetZ
         let visualPositionArcX = visualPositionX
         let visualPositionArcY = visualPositionY
