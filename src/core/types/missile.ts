@@ -58,6 +58,8 @@ export class Missile implements Destroyable {
     ): Missile {
         let offsetX = config.sourceOffset?.x ?? 0
         let offsetY = config.sourceOffset?.y ?? 0
+        let visualOffsetX = 0
+        let visualOffsetY = 0
         let visualOffsetZ = (source.z ?? terrainZ(source)) + (config.sourceOffset?.z ?? 0)
 
         if (source instanceof Unit) {
@@ -71,9 +73,12 @@ export class Missile implements Destroyable {
             offsetX += c * launchX - s * launchY
             offsetY += s * launchX + c * launchY
 
-            // The engine does not apply projectileVisOffsetX/Y to attack missiles: compared in
-            // game (HD Priest), both applying them sideways/forward and along facing/upwards
-            // moved the launch point away from the real attack missile's.
+            // projectileVisOffsetX is along the facing and projectileVisOffsetY is to the unit's
+            // right, as inferred from in-game comparisons with the HD Priest's attack missile.
+            const projectileVisOffsetX = data.launchVisualOffsetX
+            const projectileVisOffsetY = data.launchVisualOffsetY
+            visualOffsetX += c * projectileVisOffsetY - s * projectileVisOffsetX
+            visualOffsetY += s * projectileVisOffsetY + c * projectileVisOffsetX
             visualOffsetZ += data.launchOffsetZ
         }
 
@@ -90,8 +95,8 @@ export class Missile implements Destroyable {
 
         let positionX = source.x + offsetX
         let positionY = source.y + offsetY
-        let visualPositionX = positionX
-        let visualPositionY = positionY
+        let visualPositionX = positionX + visualOffsetX
+        let visualPositionY = positionY + visualOffsetY
         let visualPositionZ = visualOffsetZ
         let visualPositionArcX = visualPositionX
         let visualPositionArcY = visualPositionY

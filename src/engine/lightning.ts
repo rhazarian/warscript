@@ -366,13 +366,14 @@ Timer.onPeriod[UPDATE_PERIOD].addListener(() => {
         const sourceUnitFacing = rad(getUnitFacing(sourceUnit) - 90)
         const sourceUnitFacingCos = cos(sourceUnitFacing)
         const sourceUnitFacingSin = sin(sourceUnitFacing)
+        // Rotated frame: X to the right, Y forward; the visual offset X is forward, Y to the right.
         const sourceUnitOffsetX =
             sourceUnitMissileData.launchOffsetX +
-            sourceUnitMissileData.launchVisualOffsetX +
+            sourceUnitMissileData.launchVisualOffsetY +
             lightning[LightningPropertyKey.SOURCE_X]!
         const sourceUnitOffsetY =
             sourceUnitMissileData.launchOffsetY +
-            sourceUnitMissileData.launchVisualOffsetY +
+            sourceUnitMissileData.launchVisualOffsetX +
             lightning[LightningPropertyKey.SOURCE_Y]!
         moveLightningEx(
             lightning.handle,
@@ -405,13 +406,14 @@ Timer.onPeriod[UPDATE_PERIOD].addListener(() => {
         const sourceUnitFacing = rad(getUnitFacing(sourceUnit) - 90)
         const sourceUnitFacingCos = cos(sourceUnitFacing)
         const sourceUnitFacingSin = sin(sourceUnitFacing)
+        // Rotated frame: X to the right, Y forward; the visual offset X is forward, Y to the right.
         const sourceUnitOffsetX =
             sourceUnitMissileData.launchOffsetX +
-            sourceUnitMissileData.launchVisualOffsetX +
+            sourceUnitMissileData.launchVisualOffsetY +
             lightning[LightningPropertyKey.SOURCE_X]!
         const sourceUnitOffsetY =
             sourceUnitMissileData.launchOffsetY +
-            sourceUnitMissileData.launchVisualOffsetY +
+            sourceUnitMissileData.launchVisualOffsetX +
             lightning[LightningPropertyKey.SOURCE_Y]!
         moveLightningEx(
             lightning.handle,
