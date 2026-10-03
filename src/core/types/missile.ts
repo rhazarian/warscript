@@ -20,6 +20,8 @@ const getUnitY = GetUnitY
 
 const safeCall = warpack.safeCall
 
+const UPDATE_PERIOD = 1 / 64
+
 let head: Missile | undefined
 const next = new LuaMap<Missile, Missile | undefined>()
 const previous = new LuaMap<Missile, Missile | undefined>()
@@ -28,7 +30,7 @@ export class Missile implements Destroyable {
     protected constructor(
         private readonly effect: jeffect,
         public readonly retarget: (this: void, target: Unit | Vec2) => void,
-        private readonly update: (this: Missile) => boolean
+        private readonly update: (this: Missile) => boolean,
     ) {
         if (head) {
             next.set(this, head)
@@ -73,9 +75,11 @@ export class Missile implements Destroyable {
             offsetX += c * launchX - s * launchY
             offsetY += s * launchX + c * launchY
 
-            visualOffsetX += c * projectileVisOffsetX - s * projectileVisOffsetY
-            visualOffsetY += s * projectileVisOffsetX + c * projectileVisOffsetY
-            visualOffsetZ += data.launchOffsetZ
+            // The visual offset lies in the unit's vertical plane: X along the facing,
+            // Y upwards (stock HD data, e.g. Witch Doctor: launchZ 40, Y 160 - the staff top).
+            visualOffsetX += -s * projectileVisOffsetX
+            visualOffsetY += c * projectileVisOffsetX
+            visualOffsetZ += data.launchOffsetZ + projectileVisOffsetY
         }
 
         const targetOffsetX = config.targetOffset?.x ?? 0
@@ -114,8 +118,9 @@ export class Missile implements Destroyable {
             setSpecialEffectScale(effect, config.scale)
         }
 
-        const acceleration = (config.acceleration ?? 0) / 128
-        let speed = config.speed / 128 + acceleration / 2
+        // Per-tick values: speed in units per second, acceleration in units per second squared.
+        const acceleration = (config.acceleration ?? 0) * UPDATE_PERIOD * UPDATE_PERIOD
+        let speed = config.speed * UPDATE_PERIOD + acceleration / 2
 
         let arcVAcceleration = 0
         let arcVSpeed = 0
@@ -158,7 +163,7 @@ export class Missile implements Destroyable {
                     effect,
                     currentVisualTargetX,
                     currentVisualTargetY,
-                    currentVisualTargetZ
+                    currentVisualTargetZ,
                 )
                 visualPositionX = currentVisualTargetX
                 visualPositionY = currentVisualTargetY
@@ -204,7 +209,7 @@ export class Missile implements Destroyable {
             const yaw = atan(visualArcDy, visualArcDx)
             const pitch = atan(
                 visualArcDz,
-                sqrt(visualArcDx * visualArcDx + visualArcDy * visualArcDy)
+                sqrt(visualArcDx * visualArcDx + visualArcDy * visualArcDy),
             )
             setSpecialEffectYaw(effect, yaw)
             setSpecialEffectPitch(effect, -pitch)
@@ -212,7 +217,7 @@ export class Missile implements Destroyable {
                 effect,
                 newVisualPositionArcX,
                 newVisualPositionArcY,
-                newVisualPositionArcZ
+                newVisualPositionArcZ,
             )
 
             positionX = newPositionX
@@ -238,13 +243,13 @@ export class Missile implements Destroyable {
                 targetVisualOffsetZ = (target.z ?? terrainZ(target)) + (config.targetOffset?.z ?? 0)
                 if (target instanceof Unit) {
                     targetVisualOffsetZ += MISSILE_DATA_BY_UNIT_TYPE_ID.get(
-                        target.typeId
+                        target.typeId,
                     ).impactOffsetZ
                 }
 
                 retarget = true
             },
-            update
+            update,
         )
     }
 
@@ -265,7 +270,7 @@ export class Missile implements Destroyable {
     }
 }
 
-Timer.onPeriod[1 / 64].addListener(() => {
+Timer.onPeriod[UPDATE_PERIOD].addListener(() => {
     let missile = head
     while (missile) {
         const nextMissile = next.get(missile)
