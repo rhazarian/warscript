@@ -3,7 +3,6 @@ import { Unit } from "./internal/unit"
 import { Timer } from "../core/types/timer"
 import { AbstractDestroyable, Destructor } from "../destroyable"
 import { worldCoordinatesToFrame } from "../core/types/playerCamera"
-import { getTerrainZ } from "./internal/misc/get-terrain-z"
 import { PLAYER_LOCAL_HANDLE } from "./internal/misc/player-local-handle"
 
 const createTextTag = CreateTextTag
@@ -25,9 +24,15 @@ const isUnitVisible = IsUnitVisible
 const getUnitFlyHeight = GetUnitFlyHeight
 const getUnitX = GetUnitX
 const getUnitY = GetUnitY
+const getUnitZ = BlzGetUnitZ
 const unitAlive = UnitAlive
 
 const DEFAULT_FONT_SIZE = 0.024
+
+// A shown unit text tag follows its unit every tick, but whether the unit is in the camera view
+// and visible (not hidden, loaded, fogged or dead) is checked only every this many ticks,
+// staggered across the text tags; a hidden text tag costs nothing between the checks.
+const VISIBILITY_CHECK_INTERVAL = 4
 
 export type TextTagPreset = {
     fadepoint: number
@@ -61,7 +66,15 @@ const enum TextTagPropertyKey {
     COLOR,
     X,
     Y,
+    UNIT_X,
+    UNIT_Y,
+    UNIT_Z,
+    UNIT_FLY_HEIGHT,
+    IS_VISIBILITY_CHECK_PENDING,
+    VISIBILITY_CHECK_PHASE,
 }
+
+let nextVisibilityCheckPhase = 0
 
 const ensureHandle = (textTag: TextTag): jtexttag => {
     let handle = textTag[TextTagPropertyKey.HANDLE]
@@ -107,6 +120,12 @@ export class TextTag extends AbstractDestroyable {
     private [TextTagPropertyKey.UNIT]?: Unit
     private [TextTagPropertyKey.X]?: number
     private [TextTagPropertyKey.Y]?: number
+    private [TextTagPropertyKey.UNIT_X]?: number
+    private [TextTagPropertyKey.UNIT_Y]?: number
+    private [TextTagPropertyKey.UNIT_Z]?: number
+    private [TextTagPropertyKey.UNIT_FLY_HEIGHT]?: number
+    private [TextTagPropertyKey.IS_VISIBILITY_CHECK_PENDING]?: true
+    private [TextTagPropertyKey.VISIBILITY_CHECK_PHASE]?: number
 
     private constructor(handle?: jtexttag) {
         super()
@@ -127,13 +146,18 @@ export class TextTag extends AbstractDestroyable {
         return this[TextTagPropertyKey.TEXT] ?? ""
     }
 
+    // A missing handle belongs to a unit text tag the update loop does not show (or to a
+    // destroyed text tag): the text, font size and color are only stored then, and
+    // `ensureHandle` applies them once the update loop shows the text tag.
     public set text(text: string) {
-        setTextTagText(
-            ensureHandle(this),
-            text,
-            this[TextTagPropertyKey.FONT_SIZE] ?? DEFAULT_FONT_SIZE,
-        )
+        if (text == this[TextTagPropertyKey.TEXT]) {
+            return
+        }
         this[TextTagPropertyKey.TEXT] = text
+        const handle = this[TextTagPropertyKey.HANDLE]
+        if (handle !== undefined) {
+            setTextTagText(handle, text, this[TextTagPropertyKey.FONT_SIZE] ?? DEFAULT_FONT_SIZE)
+        }
     }
 
     public get fontSize(): number {
@@ -141,8 +165,14 @@ export class TextTag extends AbstractDestroyable {
     }
 
     public set fontSize(fontSize: number) {
-        setTextTagText(ensureHandle(this), this[TextTagPropertyKey.TEXT] ?? "", fontSize)
+        if (fontSize == this[TextTagPropertyKey.FONT_SIZE]) {
+            return
+        }
         this[TextTagPropertyKey.FONT_SIZE] = fontSize
+        const handle = this[TextTagPropertyKey.HANDLE]
+        if (handle !== undefined) {
+            setTextTagText(handle, this[TextTagPropertyKey.TEXT] ?? "", fontSize)
+        }
     }
 
     public get color(): Color {
@@ -150,8 +180,14 @@ export class TextTag extends AbstractDestroyable {
     }
 
     public set color(color: Color) {
-        setTextTagColor(ensureHandle(this), color.r, color.g, color.b, color.a)
+        if (color == this[TextTagPropertyKey.COLOR]) {
+            return
+        }
         this[TextTagPropertyKey.COLOR] = color
+        const handle = this[TextTagPropertyKey.HANDLE]
+        if (handle !== undefined) {
+            setTextTagColor(handle, color.r, color.g, color.b, color.a)
+        }
     }
 
     public get unit(): Unit | undefined {
@@ -160,9 +196,21 @@ export class TextTag extends AbstractDestroyable {
 
     public set unit(unit: Unit | undefined) {
         if (unit !== undefined) {
-            setTextTagPosUnit(ensureHandle(this), unit.handle, 0)
             this[TextTagPropertyKey.X] = undefined
             this[TextTagPropertyKey.Y] = undefined
+            // Make the update loop place the text tag and check the new unit on the next tick.
+            this[TextTagPropertyKey.UNIT_X] = undefined
+            this[TextTagPropertyKey.UNIT_Y] = undefined
+            this[TextTagPropertyKey.UNIT_FLY_HEIGHT] = undefined
+            this[TextTagPropertyKey.IS_VISIBILITY_CHECK_PENDING] = true
+            const handle = this[TextTagPropertyKey.HANDLE]
+            if (handle !== undefined) {
+                setTextTagPosUnit(
+                    handle,
+                    unit.handle,
+                    this[TextTagPropertyKey.CONFIGURATION]!.offsetZ,
+                )
+            }
             unitTextTags.add(this)
         } else if (this[TextTagPropertyKey.UNIT] !== undefined) {
             const unit = this[TextTagPropertyKey.UNIT]
@@ -283,37 +331,73 @@ export class TextTag extends AbstractDestroyable {
         textTag[TextTagPropertyKey.TEXT] = text
         textTag[TextTagPropertyKey.UNIT] = unit
         textTag[TextTagPropertyKey.CONFIGURATION] = configuration
-        ensureHandle(textTag)
+        textTag[TextTagPropertyKey.VISIBILITY_CHECK_PHASE] = nextVisibilityCheckPhase
+        nextVisibilityCheckPhase = (nextVisibilityCheckPhase + 1) % VISIBILITY_CHECK_INTERVAL
+        // The update loop creates the handle on the next tick if the unit turns out to be in
+        // the camera view and visible to the local player.
+        textTag[TextTagPropertyKey.IS_VISIBILITY_CHECK_PENDING] = true
         unitTextTags.add(textTag)
         return textTag
     }
 }
 
+let visibilityCheckPhase = 0
+
 Timer.onPeriod[1 / 64].addListener(() => {
+    visibilityCheckPhase = (visibilityCheckPhase + 1) % VISIBILITY_CHECK_INTERVAL
     for (const textTag of unitTextTags) {
-        const unit = textTag[TextTagPropertyKey.UNIT]!.handle
-        const x = getUnitX(unit)
-        const y = getUnitY(unit)
-        const [, , isInView] = worldCoordinatesToFrame(
-            x,
-            y,
-            getUnitFlyHeight(unit) + getTerrainZ(x, y),
-        )
-        if (
-            isInView &&
-            !isUnitHidden(unit) &&
-            !isUnitLoaded(unit) &&
-            isUnitVisible(unit, PLAYER_LOCAL_HANDLE) &&
-            unitAlive(unit)
-        ) {
-            setTextTagPosUnit(
-                ensureHandle(textTag),
-                unit,
-                textTag[TextTagPropertyKey.CONFIGURATION]!.offsetZ,
-            )
-        } else if (textTag[TextTagPropertyKey.HANDLE] !== undefined) {
-            destroyTextTag(textTag[TextTagPropertyKey.HANDLE])
-            textTag[TextTagPropertyKey.HANDLE] = undefined
+        const handle = textTag[TextTagPropertyKey.HANDLE]
+        const isVisibilityCheckDue =
+            textTag[TextTagPropertyKey.IS_VISIBILITY_CHECK_PENDING] ||
+            textTag[TextTagPropertyKey.VISIBILITY_CHECK_PHASE] == visibilityCheckPhase
+        // The existence of the handle is the result of the last check.
+        if (handle !== undefined || isVisibilityCheckDue) {
+            const unit = textTag[TextTagPropertyKey.UNIT]!.handle
+            const x = getUnitX(unit)
+            const y = getUnitY(unit)
+            const flyHeight = getUnitFlyHeight(unit)
+            // The stored position is the one read last; an existing handle stands there.
+            let hasPositionChanged = flyHeight != textTag[TextTagPropertyKey.UNIT_FLY_HEIGHT]
+            if (
+                x != textTag[TextTagPropertyKey.UNIT_X] ||
+                y != textTag[TextTagPropertyKey.UNIT_Y]
+            ) {
+                textTag[TextTagPropertyKey.UNIT_X] = x
+                textTag[TextTagPropertyKey.UNIT_Y] = y
+                textTag[TextTagPropertyKey.UNIT_Z] = undefined
+                hasPositionChanged = true
+            }
+            textTag[TextTagPropertyKey.UNIT_FLY_HEIGHT] = flyHeight
+            let isShown = handle !== undefined
+            if (isVisibilityCheckDue) {
+                textTag[TextTagPropertyKey.IS_VISIBILITY_CHECK_PENDING] = undefined
+                // The camera is checked first: a shown text tag reads the position anyway, and
+                // the projection itself is plain arithmetic. The unit's z (without the fly
+                // height) is read again only after the unit has moved.
+                let z = textTag[TextTagPropertyKey.UNIT_Z]
+                if (z === undefined) {
+                    z = getUnitZ(unit)
+                    textTag[TextTagPropertyKey.UNIT_Z] = z
+                }
+                const [, , isInView] = worldCoordinatesToFrame(x, y, flyHeight + z)
+                isShown =
+                    isInView &&
+                    !isUnitHidden(unit) &&
+                    !isUnitLoaded(unit) &&
+                    isUnitVisible(unit, PLAYER_LOCAL_HANDLE) &&
+                    unitAlive(unit)
+            }
+            if (!isShown) {
+                if (handle !== undefined) {
+                    destroyTextTag(handle)
+                    textTag[TextTagPropertyKey.HANDLE] = undefined
+                }
+            } else if (handle === undefined) {
+                // Placed at the unit on creation.
+                ensureHandle(textTag)
+            } else if (hasPositionChanged) {
+                setTextTagPosUnit(handle, unit, textTag[TextTagPropertyKey.CONFIGURATION]!.offsetZ)
+            }
         }
     }
 })
