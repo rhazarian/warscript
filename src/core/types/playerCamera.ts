@@ -291,5 +291,7 @@ export const frameCoordinatesToWorld = (
         i++
     }
 
-    return $multi(xGuess, yGuess, zWorld, i < 50)
+    // A zero secant denominator turns the guess into inf and then NaN, which also ends the
+    // loop early; `v - v == 0` is false for both.
+    return $multi(xGuess, yGuess, zWorld, i < 50 && xGuess - xGuess == 0 && yGuess - yGuess == 0)
 }

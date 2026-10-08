@@ -1,6 +1,6 @@
 import { Handle, HandleDestructor } from "./handle"
 import { Player } from "./player"
-import { Event, TriggerEvent } from "../../event"
+import { Event, InitializingEvent, TriggerEvent } from "../../event"
 import { Timer } from "./timer"
 import { Color } from "./color"
 import {
@@ -82,6 +82,41 @@ Timer.onPeriod[1 / 64].addListener(() => {
     if (frameIsVisible(worldFrameTooltip) != isMouseOnWorld) {
         isMouseOnWorld = !isMouseOnWorld
         frameClick(isMouseOnWorld ? dummyButtonOn : dummyButtonOff)
+    }
+})
+
+/**
+ * The poll is registered synchronously at module load and runs only while the event has
+ * listeners. Initializing and deinitializing the event only toggle this flag — they create no
+ * handles and add no timer listeners — so subscribing and unsubscribing are async-safe.
+ */
+let isMouseMoveLocalPollActive = false
+let lastMouseMoveLocalX = 0
+let lastMouseMoveLocalY = 0
+const mouseMoveLocalEvent = new InitializingEvent<[x: number, y: number]>(
+    () => {
+        isMouseMoveLocalPollActive = true
+        // The first listener receives the current point on the next poll.
+        lastMouseMoveLocalX = NaN
+        lastMouseMoveLocalY = NaN
+    },
+    () => {
+        isMouseMoveLocalPollActive = false
+    },
+)
+Timer.onPeriod[1 / 64].addListener(() => {
+    // The pixel to frame conversion divides by the client height, zero when minimized.
+    if (!isMouseMoveLocalPollActive || getLocalClientHeight() == 0) {
+        return
+    }
+    const [x, y, , isDefinite] = frameCoordinatesToWorld(
+        pixelToFrameX(getMouseScreenPosX()),
+        pixelToFrameY(getMouseScreenPosY()),
+    )
+    if (isDefinite && (x != lastMouseMoveLocalX || y != lastMouseMoveLocalY)) {
+        lastMouseMoveLocalX = x
+        lastMouseMoveLocalY = y
+        invoke(mouseMoveLocalEvent, x, y)
     }
 })
 
@@ -836,30 +871,14 @@ export class Frame extends Handle<jframehandle> {
      * nothing over the network. The point is the camera ray's intersection with the terrain,
      * so it ignores units and doodads under the cursor. It is also computed while the cursor
      * is over the UI; check {@link isMouseOnWorld} where that matters.
+     *
+     * The poll runs only while the event has listeners, and the first listener receives the
+     * current point on the next poll. Adding and removing listeners is async-safe, so local
+     * code may subscribe only while it needs the cursor (e.g. while a tool is open for
+     * {@link Player.local}) and leave the poll idle otherwise.
      */
     public static get mouseMoveLocalEvent(): Event<[x: number, y: number]> {
-        const event = new Event<[x: number, y: number]>()
-
-        let lastX = 0
-        let lastY = 0
-        Timer.onPeriod[1 / 64].addListener(() => {
-            // The pixel to frame conversion divides by the client height, zero when minimized.
-            if (getLocalClientHeight() == 0) {
-                return
-            }
-            const [x, y, , isDefinite] = frameCoordinatesToWorld(
-                pixelToFrameX(getMouseScreenPosX()),
-                pixelToFrameY(getMouseScreenPosY()),
-            )
-            if (isDefinite && (x != lastX || y != lastY)) {
-                lastX = x
-                lastY = y
-                invoke(event, x, y)
-            }
-        })
-
-        rawset(Frame, "mouseMoveLocalEvent", event)
-        return event
+        return mouseMoveLocalEvent
     }
 
     public static createSimple<T extends Frame>(
