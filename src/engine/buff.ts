@@ -46,6 +46,7 @@ import { AbilityBehavior } from "./behaviour/ability"
 import { sortedKeysUnnested } from "../utility/records"
 import { Sound3D, SoundSettings } from "../core/types/sound"
 import { SoundPresetId } from "./object-data/entry/sound-preset"
+import { Player, PlayerAllianceType } from "../core/types/player"
 
 const getUnitAbility = BlzGetUnitAbility
 
@@ -167,6 +168,13 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
 
           abilityCooldownFactor?: NumberParameterValueType
 
+          /**
+           * Shares the vision of the unit with the owner of the source and with the players the
+           * owner shares vision with, as Faerie Fire: they see the unit and what it sees. The
+           * players are taken when the buff is applied. An invisible unit stays invisible.
+           */
+          sharesVisionWithSource?: BooleanParameterValueType
+
           uniqueGroup?: BuffUniqueGroup
 
           /** Played on the unit whenever the buff is destroyed, whatever the reason. */
@@ -233,6 +241,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     killsOnExpiration: true,
     explodesOnExpiration: true,
     abilityCooldownFactor: true,
+    sharesVisionWithSource: true,
 }
 
 const resolveEnumValue = <T extends number>(
@@ -304,6 +313,7 @@ const buffBooleanParameters = [
     "providesInvulnerability",
     "killsOnExpiration",
     "explodesOnExpiration",
+    "sharesVisionWithSource",
 ] as const
 
 const buffNumberParameters = [
@@ -404,6 +414,8 @@ const enum BuffPropertyKey {
 
     ABILITY_COOLDOWN_FACTOR,
     ABILITY_COOLDOWN_MODIFIER,
+
+    VISION_PLAYERS,
 }
 
 export const enum BuffTypeIdSelectionPolicy {
@@ -464,6 +476,33 @@ const destroyBuffOnDeath = (buff: Buff) => {
         Timer.run(destroyBuff, buff)
     } else {
         buff.destroy()
+    }
+}
+
+const shareVisionWithSource = (buff: Buff<any>): void => {
+    const players: Player[] = []
+    const source = buff[BuffPropertyKey.SOURCE]
+    if (source != undefined) {
+        const unit = buff[BuffPropertyKey.UNIT]
+        const owner = source.owner
+        for (const player of Player.all) {
+            if (player == owner || owner.getAlliance(player, PlayerAllianceType.SHARED_VISION)) {
+                unit.incrementSharedVisionCounter(player)
+                players[players.length] = player
+            }
+        }
+    }
+    buff[BuffPropertyKey.VISION_PLAYERS] = players
+}
+
+const unshareVisionWithSource = (buff: Buff<any>): void => {
+    const players = buff[BuffPropertyKey.VISION_PLAYERS]
+    if (players != undefined) {
+        const unit = buff[BuffPropertyKey.UNIT]
+        for (const player of players) {
+            unit.decrementSharedVisionCounter(player)
+        }
+        buff[BuffPropertyKey.VISION_PLAYERS] = undefined
     }
 }
 
@@ -654,6 +693,9 @@ export class Buff<
 
     private [BuffPropertyKey.ABILITY_COOLDOWN_FACTOR]?: number
     private [BuffPropertyKey.ABILITY_COOLDOWN_MODIFIER]?: ObjectLevelFieldModifier<Ability, number>
+
+    // Present while sharesVisionWithSource is on; empty when the buff has no source.
+    private [BuffPropertyKey.VISION_PLAYERS]?: Player[]
 
     protected static readonly defaultParameters: BuffParameters = {}
 
@@ -1296,6 +1338,18 @@ export class Buff<
         }
     }
 
+    public get sharesVisionWithSource(): boolean {
+        return this[BuffPropertyKey.VISION_PLAYERS] != undefined
+    }
+
+    public set sharesVisionWithSource(sharesVisionWithSource: boolean) {
+        if (!sharesVisionWithSource) {
+            unshareVisionWithSource(this)
+        } else if (this[BuffPropertyKey.VISION_PLAYERS] == undefined) {
+            shareVisionWithSource(this)
+        }
+    }
+
     public get maximumDamageDealtEventCount(): number {
         return this[BuffPropertyKey.MAXIMUM_DAMAGE_DEALT_EVENT_COUNT] ?? 0
     }
@@ -1685,6 +1739,8 @@ export class Buff<
         if (this[BuffPropertyKey.TURNS_INTO_GHOST]) {
             unit.decrementGhostCounter()
         }
+
+        unshareVisionWithSource(this)
 
         if (this._abilityTypeIds != undefined) {
             for (const abilityTypeId of this._abilityTypeIds) {
