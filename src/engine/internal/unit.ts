@@ -1126,7 +1126,7 @@ export class Unit extends Handle<junit> {
         const secondWeapon = this.secondWeapon
         if (
             secondWeapon.isEnabled &&
-            target.isAllowedTarget(target, secondWeapon.allowedTargetCombatClassifications)
+            target.isAllowedTarget(this, secondWeapon.allowedTargetCombatClassifications)
         ) {
             return secondWeapon
         }
