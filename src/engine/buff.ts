@@ -458,6 +458,15 @@ const destroyBuff = (buff: Buff) => {
     buff.destroy()
 }
 
+const destroyBuffOnDeath = (buff: Buff) => {
+    if (buff[BuffPropertyKey.STATE] == HandleState.BEING_CREATED) {
+        // The unit died inside the constructor, e.g. from damage dealt in onCreate.
+        Timer.run(destroyBuff, buff)
+    } else {
+        buff.destroy()
+    }
+}
+
 const expireBuff = (buff: Buff) => {
     if (buff.isDestroyed || buff[BuffPropertyKey.STATE] != HandleState.CREATED) {
         return
@@ -1914,6 +1923,13 @@ export class Buff<
             }
             // Run after the spell-effect checks queued by native dispels.
             Timer.run(checkBuffs, target, false)
+        })
+
+        // Death removes the native buffs but not hidden applicators, and leaves the buffs'
+        // counters (stuns, invulnerability, ...) to a revived hero. Destroy the buffs after
+        // every other death listener, so that onKill/onDeath still see them.
+        Unit.deathEvent.addListener(EventListenerPriority.LOWEST_INTERNAL, (unit) => {
+            Buff.forAll(unit, destroyBuffOnDeath)
         })
 
         // It is here to avoid cyclic dependency between UnitBehavior and Buff.
