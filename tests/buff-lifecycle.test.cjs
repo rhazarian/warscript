@@ -92,6 +92,7 @@ const harness = (options = {}) => {
         "abilityPointTargetChannelingStartEvent",
         "abilityNoTargetChannelingStartEvent",
         "onDamage",
+        "deathEvent",
     ]) {
         context.Unit[name] = {
             addListener(priority, listener) {
@@ -100,7 +101,7 @@ const harness = (options = {}) => {
         }
     }
     context.Unit.getInCollisionRange = () => [buff.unit]
-    context.EventListenerPriority = { LOWEST: 0 }
+    context.EventListenerPriority = { LOWEST: 0, LOWEST_INTERNAL: -1 }
     context.ABILITY_RLF_AREA_OF_EFFECT = 0
     context.forEach = (values, callback, ...args) =>
         values.forEach((value) => callback(value, ...args))
