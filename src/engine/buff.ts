@@ -46,7 +46,7 @@ import { AbilityBehavior } from "./behaviour/ability"
 import { sortedKeysUnnested } from "../utility/records"
 import { Sound3D, SoundSettings } from "../core/types/sound"
 import { SoundPresetId } from "./object-data/entry/sound-preset"
-import { Player, PlayerAllianceType } from "../core/types/player"
+import { Player } from "../core/types/player"
 
 const getUnitAbility = BlzGetUnitAbility
 
@@ -169,9 +169,9 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           abilityCooldownFactor?: NumberParameterValueType
 
           /**
-           * Shares the vision of the unit with the owner of the source and with the players the
-           * owner shares vision with, as Faerie Fire: they see the unit and what it sees. The
-           * players are taken when the buff is applied. An invisible unit stays invisible.
+           * Makes the unit visible to the owner of the source, and through the engine to the
+           * players that owner shares vision with (`UnitShareVision`). Only the unit itself
+           * becomes visible, not the area it sees. The owner is taken when the buff is applied.
            */
           sharesVisionWithSource?: BooleanParameterValueType
 
@@ -415,7 +415,8 @@ const enum BuffPropertyKey {
     ABILITY_COOLDOWN_FACTOR,
     ABILITY_COOLDOWN_MODIFIER,
 
-    VISION_PLAYERS,
+    SHARES_VISION_WITH_SOURCE,
+    VISION_PLAYER,
 }
 
 export const enum BuffTypeIdSelectionPolicy {
@@ -479,30 +480,22 @@ const destroyBuffOnDeath = (buff: Buff) => {
     }
 }
 
+// Only the owner: the engine itself passes the shared unit on to the players the owner
+// shares vision with (verified in game).
 const shareVisionWithSource = (buff: Buff<any>): void => {
-    const players: Player[] = []
     const source = buff[BuffPropertyKey.SOURCE]
     if (source != undefined) {
-        const unit = buff[BuffPropertyKey.UNIT]
-        const owner = source.owner
-        for (const player of Player.all) {
-            if (player == owner || owner.getAlliance(player, PlayerAllianceType.SHARED_VISION)) {
-                unit.incrementSharedVisionCounter(player)
-                players[players.length] = player
-            }
-        }
+        const player = source.owner
+        buff[BuffPropertyKey.UNIT].incrementSharedVisionCounter(player)
+        buff[BuffPropertyKey.VISION_PLAYER] = player
     }
-    buff[BuffPropertyKey.VISION_PLAYERS] = players
 }
 
 const unshareVisionWithSource = (buff: Buff<any>): void => {
-    const players = buff[BuffPropertyKey.VISION_PLAYERS]
-    if (players != undefined) {
-        const unit = buff[BuffPropertyKey.UNIT]
-        for (const player of players) {
-            unit.decrementSharedVisionCounter(player)
-        }
-        buff[BuffPropertyKey.VISION_PLAYERS] = undefined
+    const player = buff[BuffPropertyKey.VISION_PLAYER]
+    if (player != undefined) {
+        buff[BuffPropertyKey.UNIT].decrementSharedVisionCounter(player)
+        buff[BuffPropertyKey.VISION_PLAYER] = undefined
     }
 }
 
@@ -694,8 +687,9 @@ export class Buff<
     private [BuffPropertyKey.ABILITY_COOLDOWN_FACTOR]?: number
     private [BuffPropertyKey.ABILITY_COOLDOWN_MODIFIER]?: ObjectLevelFieldModifier<Ability, number>
 
-    // Present while sharesVisionWithSource is on; empty when the buff has no source.
-    private [BuffPropertyKey.VISION_PLAYERS]?: Player[]
+    private [BuffPropertyKey.SHARES_VISION_WITH_SOURCE]?: true
+    // The player the unit is shared with; absent when the buff has no source.
+    private [BuffPropertyKey.VISION_PLAYER]?: Player
 
     protected static readonly defaultParameters: BuffParameters = {}
 
@@ -1339,13 +1333,15 @@ export class Buff<
     }
 
     public get sharesVisionWithSource(): boolean {
-        return this[BuffPropertyKey.VISION_PLAYERS] != undefined
+        return this[BuffPropertyKey.SHARES_VISION_WITH_SOURCE] ?? false
     }
 
     public set sharesVisionWithSource(sharesVisionWithSource: boolean) {
-        if (!sharesVisionWithSource) {
+        if (!sharesVisionWithSource && this[BuffPropertyKey.SHARES_VISION_WITH_SOURCE]) {
             unshareVisionWithSource(this)
-        } else if (this[BuffPropertyKey.VISION_PLAYERS] == undefined) {
+            this[BuffPropertyKey.SHARES_VISION_WITH_SOURCE] = undefined
+        } else if (sharesVisionWithSource && !this[BuffPropertyKey.SHARES_VISION_WITH_SOURCE]) {
+            this[BuffPropertyKey.SHARES_VISION_WITH_SOURCE] = true
             shareVisionWithSource(this)
         }
     }

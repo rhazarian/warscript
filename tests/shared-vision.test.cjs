@@ -78,15 +78,11 @@ test("the native is called only for the first share and the last unshare of a pl
     assert.deepEqual(calls.slice(4), [["unit", "red", true]])
 })
 
-test("the buff shares with the source owner and the players the owner shares vision with", () => {
+test("the buff shares the unit with the source owner only, the engine does the rest", () => {
     const { calls, context, unit } = harness()
-    const players = [player("p0"), player("p1"), player("p2"), player("p3")]
-    const owner = players[1]
-    owner.getAlliance = (other, type) => type == "vision" && other == players[3]
+    const owner = player("p1")
     Object.assign(context, {
-        Player: { all: players },
-        PlayerAllianceType: { SHARED_VISION: "vision" },
-        BuffPropertyKey: { SOURCE: "source", UNIT: "unit", VISION_PLAYERS: "visionPlayers" },
+        BuffPropertyKey: { SOURCE: "source", UNIT: "unit", VISION_PLAYER: "visionPlayer" },
     })
     const { shareVisionWithSource, unshareVisionWithSource } = runInContext(
         buffVisionSource + "\n({ shareVisionWithSource, unshareVisionWithSource })",
@@ -95,28 +91,20 @@ test("the buff shares with the source owner and the players the owner shares vis
 
     const buff = { source: { owner }, unit }
     shareVisionWithSource(buff)
-    assert.deepEqual(calls, [
-        ["unit", "p1", true],
-        ["unit", "p3", true],
-    ])
+    assert.deepEqual(calls, [["unit", "p1", true]])
 
     // A second buff on the same unit keeps the vision when the first one ends.
     const otherBuff = { source: { owner }, unit }
     shareVisionWithSource(otherBuff)
     unshareVisionWithSource(buff)
-    assert.equal(calls.length, 2)
-    assert.equal(buff.visionPlayers, undefined)
+    assert.equal(calls.length, 1)
+    assert.equal(buff.visionPlayer, undefined)
     unshareVisionWithSource(buff)
     unshareVisionWithSource(otherBuff)
-    assert.deepEqual(calls.slice(2), [
-        ["unit", "p1", false],
-        ["unit", "p3", false],
-    ])
+    assert.deepEqual(calls.slice(1), [["unit", "p1", false]])
 
     const sourcelessBuff = { unit }
     shareVisionWithSource(sourcelessBuff)
-    // The array comes from the vm context, so compare its length rather than its prototype.
-    assert.equal(sourcelessBuff.visionPlayers.length, 0)
     unshareVisionWithSource(sourcelessBuff)
-    assert.equal(calls.length, 4)
+    assert.equal(calls.length, 2)
 })

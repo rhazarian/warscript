@@ -12,9 +12,10 @@ const sharedVisionCounterByPlayerByUnit = setmetatable(new LuaMap<Unit, LuaMap<P
 declare module "../unit" {
     interface Unit {
         /**
-         * Shares the vision of this unit with the player (`UnitShareVision`) until the matching
-         * `decrementSharedVisionCounter`. The player sees the unit and what it sees; an invisible
-         * unit stays invisible.
+         * Shares this unit with the player (`UnitShareVision`) until the matching
+         * `decrementSharedVisionCounter`. Verified in game with an enemy unit: the player, and
+         * the players the player shares vision with (one step, like alliance vision), see the
+         * unit itself but not the area it sees.
          */
         incrementSharedVisionCounter(player: Player): void
     }
