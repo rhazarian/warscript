@@ -18,9 +18,10 @@ declare global {
 
     // Patch 2.0.3 made the weapon field natives support the attack's weapon type ('ua1w'), but
     // common.j does not declare the constant: without this the global is nil, and the natives
-    // read 0 and write nothing.
+    // read 0 and write nothing. fourCC is not defined yet when this module loads, hence the
+    // literal: 1969303927 is 'ua1w'.
     if (g.UNIT_WEAPON_IF_ATTACK_WEAPON_TYPE == undefined) {
-        g.UNIT_WEAPON_IF_ATTACK_WEAPON_TYPE = ConvertUnitWeaponIntegerField(fourCC("ua1w"))
+        g.UNIT_WEAPON_IF_ATTACK_WEAPON_TYPE = ConvertUnitWeaponIntegerField(1969303927)
     }
 }
 
