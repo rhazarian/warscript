@@ -28,6 +28,7 @@ import {
 import { isItemIgnoredInEvents } from "./unit/ignore-events-items"
 import { ownerByItem } from "./item/owner-cache"
 import { MovementType } from "../object-data/auxiliary/movement-type"
+import { UnitWeaponType } from "../object-data/auxiliary/unit-weapon-type"
 import { UnitAttribute } from "../object-data/auxiliary/unit-attribute"
 import {
     AttackType,
@@ -598,6 +599,23 @@ export class UnitWeapon {
             UNIT_WEAPON_IF_ATTACK_TARGETS_ALLOWED,
             this.index,
             allowedTargetCombatClassifications,
+        )
+    }
+
+    public get type(): UnitWeaponType {
+        return BlzGetUnitWeaponIntegerField(
+            this.unit.handle,
+            UNIT_WEAPON_IF_ATTACK_WEAPON_TYPE,
+            this.index,
+        ) as UnitWeaponType
+    }
+
+    public set type(type: UnitWeaponType) {
+        BlzSetUnitWeaponIntegerField(
+            this.unit.handle,
+            UNIT_WEAPON_IF_ATTACK_WEAPON_TYPE,
+            this.index,
+            type,
         )
     }
 
