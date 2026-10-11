@@ -28,7 +28,12 @@ import {
 import { isItemIgnoredInEvents } from "./unit/ignore-events-items"
 import { ownerByItem } from "./item/owner-cache"
 import { MovementType } from "../object-data/auxiliary/movement-type"
-import { UnitWeaponType } from "../object-data/auxiliary/unit-weapon-type"
+import { WeaponType } from "../object-data/auxiliary/weapon-type"
+import {
+    nativeToWeaponSoundType,
+    WeaponSoundType,
+    weaponSoundTypeToNative,
+} from "../object-data/auxiliary/weapon-sound-type"
 import { UnitAttribute } from "../object-data/auxiliary/unit-attribute"
 import {
     AttackType,
@@ -378,7 +383,7 @@ export interface DamagingEvent extends AttributesHolder {
     amount: number
     attackType: AttackType
     damageType: jdamagetype
-    weaponType: jweapontype
+    weaponSoundType: WeaponSoundType
     metadata: unknown
     readonly isAttack: boolean
     readonly originalAmount: number
@@ -455,7 +460,9 @@ const damageSetters = {
         return BlzSetEventAttackType(attackTypeToNative(attackType))
     },
     damageType: BlzSetEventDamageType,
-    weaponType: BlzSetEventWeaponType,
+    weaponSoundType: (weaponSoundType: WeaponSoundType): boolean => {
+        return BlzSetEventWeaponType(weaponSoundTypeToNative(weaponSoundType))
+    },
 }
 
 export type AttackDamageEvent = DamagingEvent & {
@@ -602,20 +609,37 @@ export class UnitWeapon {
         )
     }
 
-    public get type(): UnitWeaponType {
+    public get type(): WeaponType {
         return BlzGetUnitWeaponIntegerField(
             this.unit.handle,
             UNIT_WEAPON_IF_ATTACK_WEAPON_TYPE,
             this.index,
-        ) as UnitWeaponType
+        ) as WeaponType
     }
 
-    public set type(type: UnitWeaponType) {
+    public set type(type: WeaponType) {
         BlzSetUnitWeaponIntegerField(
             this.unit.handle,
             UNIT_WEAPON_IF_ATTACK_WEAPON_TYPE,
             this.index,
             type,
+        )
+    }
+
+    public get soundType(): WeaponSoundType {
+        return BlzGetUnitWeaponIntegerField(
+            this.unit.handle,
+            UNIT_WEAPON_IF_ATTACK_WEAPON_SOUND,
+            this.index,
+        ) as WeaponSoundType
+    }
+
+    public set soundType(soundType: WeaponSoundType) {
+        BlzSetUnitWeaponIntegerField(
+            this.unit.handle,
+            UNIT_WEAPON_IF_ATTACK_WEAPON_SOUND,
+            this.index,
+            soundType,
         )
     }
 
@@ -2388,7 +2412,7 @@ export class Unit extends Handle<junit> {
                         amount: GetEventDamage(),
                         attackType: nativeToAttackType(BlzGetEventAttackType()),
                         damageType: BlzGetEventDamageType(),
-                        weaponType: BlzGetEventWeaponType(),
+                        weaponSoundType: nativeToWeaponSoundType(BlzGetEventWeaponType()),
                         metadata: metadata,
                         isAttack: BlzGetEventIsAttack(),
                         originalAmount: GetEventDamage(),
@@ -2478,7 +2502,7 @@ export class Unit extends Handle<junit> {
                                                 true,
                                                 attackTypeToNative(data.attackType),
                                                 data.damageType,
-                                                data.weaponType,
+                                                weaponSoundTypeToNative(data.weaponSoundType),
                                             )
                                         },
                                     },
@@ -2519,7 +2543,7 @@ export class Unit extends Handle<junit> {
                             amount: GetEventDamage(),
                             attackType: nativeToAttackType(BlzGetEventAttackType()),
                             damageType: BlzGetEventDamageType(),
-                            weaponType: BlzGetEventWeaponType(),
+                            weaponSoundType: nativeToWeaponSoundType(BlzGetEventWeaponType()),
                             metadata: damagingEvent?.metadata,
                             isAttack: BlzGetEventIsAttack(),
                             originalAmount: damagingEvent?.originalAmount ?? GetEventDamage(),

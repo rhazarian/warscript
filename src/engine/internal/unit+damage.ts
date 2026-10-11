@@ -4,6 +4,10 @@ import { Widget } from "../../core/types/widget"
 import { Player } from "../../core/types/player"
 import { dummyUnitId } from "../../objutil/dummy"
 import { AttackType, attackTypeToNative } from "../object-data/auxiliary/attack-type"
+import {
+    WeaponSoundType,
+    weaponSoundTypeToNative,
+} from "../object-data/auxiliary/weapon-sound-type"
 import { damageMetadataByTarget } from "./misc/damage-metadata-by-target"
 import { CombatClassifications } from "../object-data/auxiliary/combat-classification"
 import { min } from "../../math"
@@ -39,34 +43,6 @@ export namespace DamageType {
     export const UNIVERSAL = DAMAGE_TYPE_UNIVERSAL
 }
 
-export type WeaponType = jweapontype
-export namespace WeaponType {
-    export const UNKNOWN = WEAPON_TYPE_WHOKNOWS
-    export const METAL_LIGHT_CHOP = WEAPON_TYPE_METAL_LIGHT_CHOP
-    export const METAL_MEDIUM_CHOP = WEAPON_TYPE_METAL_MEDIUM_CHOP
-    export const METAL_HEAVY_CHOP = WEAPON_TYPE_METAL_HEAVY_CHOP
-    export const METAL_LIGHT_SLICE = WEAPON_TYPE_METAL_LIGHT_SLICE
-    export const METAL_MEDIUM_SLICE = WEAPON_TYPE_METAL_MEDIUM_SLICE
-    export const METAL_HEAVY_SLICE = WEAPON_TYPE_METAL_HEAVY_SLICE
-    export const METAL_MEDIUM_BASH = WEAPON_TYPE_METAL_MEDIUM_BASH
-    export const METAL_HEAVY_BASH = WEAPON_TYPE_METAL_HEAVY_BASH
-    export const METAL_MEDIUM_STAB = WEAPON_TYPE_METAL_MEDIUM_STAB
-    export const METAL_HEAVY_STAB = WEAPON_TYPE_METAL_HEAVY_STAB
-    export const WOOD_LIGHT_SLICE = WEAPON_TYPE_WOOD_LIGHT_SLICE
-    export const WOOD_MEDIUM_SLICE = WEAPON_TYPE_WOOD_MEDIUM_SLICE
-    export const WOOD_HEAVY_SLICE = WEAPON_TYPE_WOOD_HEAVY_SLICE
-    export const WOOD_LIGHT_BASH = WEAPON_TYPE_WOOD_LIGHT_BASH
-    export const WOOD_MEDIUM_BASH = WEAPON_TYPE_WOOD_MEDIUM_BASH
-    export const WOOD_HEAVY_BASH = WEAPON_TYPE_WOOD_HEAVY_BASH
-    export const WOOD_LIGHT_STAB = WEAPON_TYPE_WOOD_LIGHT_STAB
-    export const WOOD_MEDIUM_STAB = WEAPON_TYPE_WOOD_MEDIUM_STAB
-    export const CLAW_LIGHT_SLICE = WEAPON_TYPE_CLAW_LIGHT_SLICE
-    export const CLAW_MEDIUM_SLICE = WEAPON_TYPE_CLAW_MEDIUM_SLICE
-    export const CLAW_HEAVY_SLICE = WEAPON_TYPE_CLAW_HEAVY_SLICE
-    export const AXE_MEDIUM_CHOP = WEAPON_TYPE_AXE_MEDIUM_CHOP
-    export const ROCK_HEAVY_BASH = WEAPON_TYPE_ROCK_HEAVY_BASH
-}
-
 declare module "./unit" {
     interface Unit {
         damageTarget(
@@ -76,7 +52,7 @@ declare module "./unit" {
             ranged?: boolean,
             attackType?: AttackType,
             damageType?: DamageType,
-            weaponType?: WeaponType,
+            weaponSoundType?: WeaponSoundType,
             metadata?: unknown,
         ): boolean
 
@@ -97,7 +73,7 @@ declare module "./unit" {
             ranged?: boolean,
             attackType?: AttackType,
             damageType?: DamageType,
-            weaponType?: WeaponType,
+            weaponSoundType?: WeaponSoundType,
             metadata?: unknown,
         ): void
     }
@@ -117,7 +93,7 @@ Unit.prototype.damageTarget = function (
     ranged = false,
     attackType = AttackType.SPELL,
     damageType = DamageType.MAGIC,
-    weaponType = WeaponType.UNKNOWN,
+    weaponSoundType = WeaponSoundType.NONE,
     metadata?: unknown,
 ): boolean {
     let handle = this.handle
@@ -138,7 +114,7 @@ Unit.prototype.damageTarget = function (
         ranged,
         attackTypeToNative(attackType),
         damageType,
-        weaponType,
+        weaponSoundTypeToNative(weaponSoundType),
     )
 }
 
@@ -153,7 +129,7 @@ Unit.prototype.damageArea = function (
     ranged?: boolean,
     attackType?: AttackType,
     damageType?: DamageType,
-    weaponType?: WeaponType,
+    weaponSoundType?: WeaponSoundType,
     metadata?: unknown,
 ): void {
     const targets = Unit.getAllowedTargetsInCollisionRange(
@@ -177,7 +153,7 @@ Unit.prototype.damageArea = function (
             ranged,
             attackType,
             damageType,
-            weaponType,
+            weaponSoundType,
             metadata,
         )
     }

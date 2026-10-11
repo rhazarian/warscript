@@ -7,10 +7,11 @@ import {
     ALLOWED_TARGETS_ABILITY_COMBAT_CLASSIFICATIONS_LEVEL_FIELD,
     AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD,
 } from "../../standard/fields/ability"
-import { DamageType, WeaponType } from "../../internal/unit+damage"
+import { DamageType } from "../../internal/unit+damage"
 import "../../internal/unit+damage"
 import { CombatClassifications } from "../../object-data/auxiliary/combat-classification"
 import { AttackType } from "../../object-data/auxiliary/attack-type"
+import { WeaponSoundType } from "../../object-data/auxiliary/weapon-sound-type"
 
 export type DamageAbilityBehaviorParameters = {
     damagePerStrength?: AbilityDependentValue<number>
@@ -18,7 +19,7 @@ export type DamageAbilityBehaviorParameters = {
     damagePerIntelligence?: AbilityDependentValue<number>
     attackType?: AbilityDependentValue<AttackType>
     damageType?: DamageType
-    weaponType?: WeaponType
+    weaponSoundType?: WeaponSoundType
     metadata?: AbilityDependentValue<string | number | boolean>
 }
 
@@ -74,7 +75,7 @@ export abstract class DamageAbilityBehavior<
             undefined,
             this.resolveCurrentAbilityDependentValue(parameters?.attackType),
             parameters?.damageType,
-            parameters?.weaponType,
+            parameters?.weaponSoundType,
             this.resolveCurrentAbilityDependentValue(parameters?.metadata),
         )
     }
@@ -144,7 +145,7 @@ abstract class DamageAreaAbilityBehavior extends DamageAbilityBehavior<DamageAre
             undefined,
             this.resolveCurrentAbilityDependentValue(parameters?.attackType),
             parameters?.damageType,
-            parameters?.weaponType,
+            parameters?.weaponSoundType,
             this.resolveCurrentAbilityDependentValue(parameters?.metadata),
         )
     }

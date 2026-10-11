@@ -20,7 +20,11 @@ import {
     UnitClassifications,
     unitClassificationsToStringArray,
 } from "../auxiliary/unit-classification"
-import { WeaponSoundType } from "../auxiliary/weapon-sound-type"
+import {
+    stringToWeaponSoundType,
+    WeaponSoundType,
+    weaponSoundTypeToString,
+} from "../auxiliary/weapon-sound-type"
 import { ObjectDataEntry, ObjectDataEntryConstructor, CustomObjectDataEntryId } from "../entry"
 import { ObjectDataEntryIdGenerator } from "../utility/object-data-entry-id-generator"
 
@@ -173,35 +177,44 @@ export class UnitTypeWeapon {
     }
 
     public get soundType(): WeaponSoundType {
-        return this.unitType["getStringField"](`ucs${this.index}`) as WeaponSoundType
+        return stringToWeaponSoundType(this.unitType["getStringField"](`ucs${this.index}`))
     }
 
     public set soundType(soundType: WeaponSoundType) {
-        this.unitType["setStringField"](`ucs${this.index}`, soundType)
+        this.unitType["setStringField"](`ucs${this.index}`, weaponSoundTypeToString(soundType))
     }
 
     public get soundTypeSD(): WeaponSoundType {
-        return this.unitType["getStringField"](`ucs${this.index}:sd`) as WeaponSoundType
+        return stringToWeaponSoundType(this.unitType["getStringField"](`ucs${this.index}:sd`))
     }
 
     public set soundTypeSD(soundTypeSD: WeaponSoundType) {
-        this.unitType["setStringField"](`ucs${this.index}:sd`, soundTypeSD)
+        this.unitType["setStringField"](
+            `ucs${this.index}:sd`,
+            weaponSoundTypeToString(soundTypeSD),
+        )
     }
 
     public get soundTypeHD(): WeaponSoundType {
-        return this.unitType["getStringField"](`ucs${this.index}:hd`) as WeaponSoundType
+        return stringToWeaponSoundType(this.unitType["getStringField"](`ucs${this.index}:hd`))
     }
 
     public set soundTypeHD(soundTypeHD: WeaponSoundType) {
-        this.unitType["setStringField"](`ucs${this.index}:hd`, soundTypeHD)
+        this.unitType["setStringField"](
+            `ucs${this.index}:hd`,
+            weaponSoundTypeToString(soundTypeHD),
+        )
     }
 
     public get soundTypeDE(): WeaponSoundType {
-        return this.unitType["getStringField"](`ucs${this.index}:de`) as WeaponSoundType
+        return stringToWeaponSoundType(this.unitType["getStringField"](`ucs${this.index}:de`))
     }
 
     public set soundTypeDE(soundTypeDE: WeaponSoundType) {
-        this.unitType["setStringField"](`ucs${this.index}:de`, soundTypeDE)
+        this.unitType["setStringField"](
+            `ucs${this.index}:de`,
+            weaponSoundTypeToString(soundTypeDE),
+        )
     }
 
     static {
