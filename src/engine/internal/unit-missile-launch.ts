@@ -73,7 +73,14 @@ const invokeEvent = (unit: Unit) => {
 }
 
 const checkUnit = (unit: Unit) => {
-    const passedTime = unit.get(passedTimeAttribute)! + timerPeriod
+    // LinkedSet.forEach visits the next unit even if it was let go after the iteration had
+    // reached the previous one: the finish event's listeners can deal damage, and the orders
+    // the engine issues in response reset the timers of the other units on the same tick.
+    let passedTime = unit.get(passedTimeAttribute)
+    if (passedTime == undefined) {
+        return
+    }
+    passedTime += timerPeriod
     const impactDelay = unit.get(impactDelayAttribute)!
     if (passedTime >= impactDelay && ceil(passedTime / 0.02) >= ceil(impactDelay / 0.02)) {
         invokeEvent(unit)
