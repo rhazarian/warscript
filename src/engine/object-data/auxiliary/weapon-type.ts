@@ -4,7 +4,8 @@
  *
  * The native field does not follow the editor's list (where normal is 0 and missile 4). Read
  * in game: `NORMAL` 1 (Paladin), `MISSILE` 2 (Priest), `ARTILLERY` 3 (Mortar Team), `INSTANT` 4
- * (Rifleman). The values of the missile variants and of artillery (line) are not verified yet.
+ * (Rifleman), `MISSILE_SPLASH` 5 (Frigate), `MISSILE_BOUNCE` 6 (Huntress), `MISSILE_LINE` 7
+ * (Gryphon Rider); no standard unit has artillery (line), the remaining 8.
  *
  * Only the missile kinds launch the weapon's missile; a melee (`NORMAL`) or `INSTANT` weapon
  * may still have a missile art and speed set in its data.
