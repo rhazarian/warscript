@@ -29,6 +29,21 @@ export type DamageAreaAbilityBehaviorParameters = DamageAbilityBehaviorParameter
     allowedTargetCombatClassifications?: AbilityDependentValue<CombatClassifications>
 }
 
+/** The damage of a behavior with everything it depends on resolved, ready to be dealt. */
+export type ResolvedDamage = {
+    readonly amount: number
+    readonly attackType?: AttackType
+    readonly damageType?: DamageType
+    readonly weaponSoundType?: WeaponSoundType
+    readonly metadata?: unknown
+}
+
+export type ResolvedAreaDamage = ResolvedDamage & {
+    readonly range: number
+    readonly allowedTargetCombatClassifications: CombatClassifications
+    readonly maximumDamage: number
+}
+
 export abstract class DamageAbilityBehavior<
     T extends DamageAbilityBehaviorParameters = DamageAbilityBehaviorParameters,
 > extends AbilityBehavior {
@@ -66,17 +81,31 @@ export abstract class DamageAbilityBehavior<
         return damage
     }
 
-    protected damageTarget(caster: Unit, target: Widget, damage?: number): void {
+    /** Resolves the damage as it would be dealt right now. */
+    protected resolveDamage(caster: Unit, amount?: number): ResolvedDamage {
         const parameters = this.parameters
+        return {
+            amount: amount ?? this.precalculatedDamage ?? this.calculateDamage(caster),
+            attackType: this.resolveCurrentAbilityDependentValue(parameters?.attackType),
+            damageType: parameters?.damageType,
+            weaponSoundType: parameters?.weaponSoundType,
+            metadata: this.resolveCurrentAbilityDependentValue(parameters?.metadata),
+        }
+    }
+
+    protected damageTarget(caster: Unit, target: Widget, damage?: number | ResolvedDamage): void {
+        if (typeof damage != "object") {
+            damage = this.resolveDamage(caster, damage)
+        }
         caster.damageTarget(
             target,
-            damage ?? this.precalculatedDamage ?? this.calculateDamage(caster),
+            damage.amount,
             undefined,
             undefined,
-            this.resolveCurrentAbilityDependentValue(parameters?.attackType),
-            parameters?.damageType,
-            parameters?.weaponSoundType,
-            this.resolveCurrentAbilityDependentValue(parameters?.metadata),
+            damage.attackType,
+            damage.damageType,
+            damage.weaponSoundType,
+            damage.metadata,
         )
     }
 
@@ -126,27 +155,41 @@ abstract class DamageAreaAbilityBehavior extends DamageAbilityBehavior<DamageAre
         super(ability, damage, parameters)
     }
 
-    protected damageArea(caster: Unit, x: number, y: number): void {
+    /** Resolves the area damage as it would be dealt right now. */
+    protected resolveAreaDamage(caster: Unit): ResolvedAreaDamage {
         const parameters = this.parameters
-
-        caster.damageArea(
-            x,
-            y,
-            this.resolveCurrentAbilityDependentValue(
+        return {
+            ...this.resolveDamage(caster),
+            range: this.resolveCurrentAbilityDependentValue(
                 parameters?.areaOfEffect ?? AREA_OF_EFFECT_ABILITY_FLOAT_LEVEL_FIELD,
             ),
-            this.resolveCurrentAbilityDependentValue(
+            allowedTargetCombatClassifications: this.resolveCurrentAbilityDependentValue(
                 parameters?.allowedTargetCombatClassifications ??
                     ALLOWED_TARGETS_ABILITY_COMBAT_CLASSIFICATIONS_LEVEL_FIELD,
             ),
-            this.precalculatedDamage ?? this.calculateDamage(caster),
-            this.resolveCurrentAbilityDependentValue(parameters?.maximumDamage ?? 0),
+            maximumDamage: this.resolveCurrentAbilityDependentValue(parameters?.maximumDamage ?? 0),
+        }
+    }
+
+    protected damageArea(
+        caster: Unit,
+        x: number,
+        y: number,
+        damage: ResolvedAreaDamage = this.resolveAreaDamage(caster),
+    ): void {
+        caster.damageArea(
+            x,
+            y,
+            damage.range,
+            damage.allowedTargetCombatClassifications,
+            damage.amount,
+            damage.maximumDamage,
             undefined,
             undefined,
-            this.resolveCurrentAbilityDependentValue(parameters?.attackType),
-            parameters?.damageType,
-            parameters?.weaponSoundType,
-            this.resolveCurrentAbilityDependentValue(parameters?.metadata),
+            damage.attackType,
+            damage.damageType,
+            damage.weaponSoundType,
+            damage.metadata,
         )
     }
 }
@@ -184,5 +227,106 @@ export class DamageTargetAreaAbilityBehavior extends DamageAreaAbilityBehavior {
 
     public override onPointTargetImpact(caster: Unit, x: number, y: number): void {
         this.damageArea(caster, x, y)
+    }
+}
+
+// === On missile impact ===
+//
+// The same behaviors, except that an impact launches the missile of the ability at the target of
+// the cast and the damage is only dealt once the missile arrives. The damage is resolved when the
+// missile is launched, so neither the caster's stats nor the ability (its level, its fields, or
+// whether the caster still has it) matter by the time it lands. A cast without a target has
+// nothing to launch at and takes effect right away.
+
+export class OnMissileImpactDamageSelfAbilityBehavior extends DamageAbilityBehavior {
+    public constructor(
+        ability: Ability,
+        damage: AbilityDependentValue<number>,
+        parameters?: DamageAbilityBehaviorParameters,
+    ) {
+        super(ability, damage, parameters)
+    }
+
+    public override onWidgetTargetImpact(caster: Unit, target: Widget): void {
+        const damage = this.resolveDamage(caster)
+        this.onMissileImpact(caster, target, () => this.damageTarget(caster, caster, damage))
+    }
+
+    public override onPointTargetImpact(caster: Unit, x: number, y: number): void {
+        const damage = this.resolveDamage(caster)
+        this.onMissileImpact(caster, x, y, () => this.damageTarget(caster, caster, damage))
+    }
+
+    public override onNoTargetImpact(caster: Unit): void {
+        this.damageTarget(caster, caster)
+    }
+}
+
+export class OnMissileImpactDamageTargetAbilityBehavior extends DamageAbilityBehavior {
+    public constructor(
+        ability: Ability,
+        damage: AbilityDependentValue<number>,
+        parameters?: DamageAbilityBehaviorParameters,
+    ) {
+        super(ability, damage, parameters)
+    }
+
+    public override onWidgetTargetImpact(caster: Unit, target: Widget): void {
+        const damage = this.resolveDamage(caster)
+        this.onMissileImpact(caster, target, () => this.damageTarget(caster, target, damage))
+    }
+}
+
+export class OnMissileImpactDamageSelfAreaAbilityBehavior extends DamageAreaAbilityBehavior {
+    public constructor(
+        ability: Ability,
+        damage: AbilityDependentValue<number>,
+        parameters?: DamageAreaAbilityBehaviorParameters,
+    ) {
+        super(ability, damage, parameters)
+    }
+
+    public override onWidgetTargetImpact(caster: Unit, target: Widget): void {
+        const damage = this.resolveAreaDamage(caster)
+        this.onMissileImpact(caster, target, () =>
+            this.damageArea(caster, caster.x, caster.y, damage),
+        )
+    }
+
+    public override onPointTargetImpact(caster: Unit, x: number, y: number): void {
+        const damage = this.resolveAreaDamage(caster)
+        this.onMissileImpact(caster, x, y, () =>
+            this.damageArea(caster, caster.x, caster.y, damage),
+        )
+    }
+
+    public override onNoTargetImpact(caster: Unit): void {
+        this.damageArea(caster, caster.x, caster.y)
+    }
+}
+
+export class OnMissileImpactDamageTargetAreaAbilityBehavior extends DamageAreaAbilityBehavior {
+    public constructor(
+        ability: Ability,
+        damage: AbilityDependentValue<number>,
+        parameters?: DamageAreaAbilityBehaviorParameters,
+    ) {
+        super(ability, damage, parameters)
+    }
+
+    public override onWidgetTargetImpact(caster: Unit, target: Widget): void {
+        const damage = this.resolveAreaDamage(caster)
+        this.onMissileImpact(caster, target, () =>
+            this.damageArea(caster, target.x, target.y, damage),
+        )
+    }
+
+    public override onPointTargetImpact(caster: Unit, x: number, y: number): void {
+        const damage = this.resolveAreaDamage(caster)
+        this.onMissileImpact(caster, x, y, () => this.damageArea(caster, x, y, damage))
+    }
+
+    public override onNoTargetImpact(caster: Unit): void {
+        this.damageArea(caster, caster.x, caster.y)
     }
 }

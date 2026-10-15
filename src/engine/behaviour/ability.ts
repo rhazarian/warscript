@@ -45,6 +45,12 @@ import {
 } from "../object-field/ability"
 import { Destructor } from "../../destroyable"
 import { Missile } from "../../core/types/missile"
+import {
+    applyMissileImpact,
+    getMissileImpact,
+    MissileImpact,
+    MissileImpactEffect,
+} from "../internal/mechanics/missile-impact"
 
 const CASTER_EFFECT_ATTACHMENT_POINT_STRING_FIELDS: readonly AbilityStringField[] = [
     CASTER_EFFECT_FIRST_ATTACHMENT_POINT_STRING_FIELD,
@@ -90,6 +96,16 @@ const flashEffectPresets = (
                 ...parametersOrDuration,
             )
         }
+    }
+}
+
+const applyMissileImpactOnArrival = (
+    _missile: Missile,
+    success: boolean,
+    impact: MissileImpact,
+): void => {
+    if (success) {
+        applyMissileImpact(impact)
     }
 }
 
@@ -140,11 +156,14 @@ const subscribedValuesByAbilityBehavior = new LuaMap<
     LuaSet<SubscribableAbilityDependentValue<any>>
 >()
 
+/** The type parameters of an {@link AbilityBehavior}: what its periodic action and its missiles carry. */
+export type AbilityBehaviorTypeParameters = {
+    periodicActionParameters?: any[]
+    missileParameters?: any[]
+}
+
 export abstract class AbilityBehavior<
-    Parameters extends {
-        periodicActionParameters?: any[]
-        missileParameters?: any[]
-    } = {},
+    Parameters extends AbilityBehaviorTypeParameters = {},
 > extends Behavior<Ability, NonNullable<Parameters["periodicActionParameters"]>> {
     public constructor(ability: Ability, parameters?: AbilityBehaviorParameters) {
         super(ability)
@@ -388,6 +407,55 @@ export abstract class AbilityBehavior<
                 ...parameters,
             )
         }
+    }
+
+    /**
+     * Launches the missile of the ability at the target of the cast and has `effect` applied once
+     * it arrives, which is what an on-missile-impact behavior does instead of taking effect right
+     * away. The effect is not applied at all if the missile cannot arrive (its target was removed
+     * from the game); everything it depends on is to be resolved before it is handed over, as the
+     * ability may well be gone by the time the missile lands.
+     *
+     * All the on-missile-impact behaviors of one cast share a single missile: whichever of them
+     * is first launches it, and the rest add their effects to the same arrival.
+     */
+    protected onMissileImpact(
+        caster: Unit,
+        ...args: [
+            ...pointOrWidget: [x: number, y: number] | [widget: Widget],
+            effect: MissileImpactEffect,
+        ]
+    ): void
+
+    protected onMissileImpact(
+        caster: Unit,
+        xOrWidget: number | Widget,
+        yOrEffect: number | MissileImpactEffect,
+        effect?: MissileImpactEffect,
+    ): void {
+        const [impact, isLaunchRequired] = getMissileImpact(this.ability, caster)
+        if (isLaunchRequired) {
+            if (typeof xOrWidget != "number") {
+                Missile.launch(
+                    this.missileLaunchConfig,
+                    caster,
+                    xOrWidget,
+                    applyMissileImpactOnArrival,
+                    impact,
+                )
+            } else {
+                Missile.launch(
+                    this.missileLaunchConfig,
+                    caster,
+                    xOrWidget,
+                    yOrEffect as number,
+                    applyMissileImpactOnArrival,
+                    impact,
+                )
+            }
+        }
+        const effects = impact.effects
+        effects[effects.length] = effect ?? (yOrEffect as MissileImpactEffect)
     }
 
     protected onCreate(): void {

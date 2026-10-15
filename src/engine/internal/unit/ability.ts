@@ -616,7 +616,13 @@ rawset(
 
 // === IMPACT ===
 
-const internalAbilityImpactEvent = new Event<InternalUnitAbilityEventParameters>()
+/**
+ * The one impact event the public ones are derived from: one invocation is one impact, which is
+ * what systems that have to tell two impacts of the same ability apart hook into (a listener of
+ * `LOWEST_INTERNAL` priority runs once the public events of that impact are through).
+ * @internal For use by internal systems only.
+ */
+export const internalAbilityImpactEvent = new Event<InternalUnitAbilityEventParameters>()
 
 const impactCallbackIdAttribute = attribute<CallbackId>()
 
