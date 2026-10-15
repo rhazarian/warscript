@@ -28,6 +28,19 @@ const defaultValueByObjectDataEntryIdByObjectFieldId = postcompile(
 
 const objectFieldById = new LuaMap<number, ObjectFieldBase<any, any, any, any>>()
 
+/**
+ * Captures the current values of all fields of the instance into the snapshot, so that reading
+ * a field of the snapshot yields the value the instance had at this point.
+ * @internal For use by internal systems only.
+ */
+export const captureObjectFieldValues = (instance: AnyNotNil, snapshot: AnyNotNil): void => {
+    for (const [, objectField] of objectFieldById) {
+        if (objectField.supports(instance)) {
+            objectField.captureValue(instance, snapshot)
+        }
+    }
+}
+
 export type ObjectFieldConstructor<T extends ObjectFieldBase<any, any, any, any>> = OmitConstructor<
     typeof ObjectFieldBase
 > &
@@ -76,16 +89,32 @@ abstract class ObjectFieldBase<
     ): boolean
 
     public hasValue(objectDataEntryId: ObjectDataEntryIdType<ObjectDataEntryType>): boolean {
+        return this.hasCustomValue(objectDataEntryId) || this.hasNativeFieldValue(objectDataEntryId)
+    }
+
+    /**
+     * Whether the values of this field for the object data entry are kept by the field itself
+     * rather than by the game (the entry has a compile-time value, or the field is global).
+     */
+    protected hasCustomValue(
+        objectDataEntryId: ObjectDataEntryIdType<ObjectDataEntryType>,
+    ): boolean {
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
         return (
             this.isGlobal ||
             (defaultValueByObjectDataEntryId != undefined &&
-                defaultValueByObjectDataEntryId.has(objectDataEntryId)) ||
-            this.hasNativeFieldValue(objectDataEntryId)
+                defaultValueByObjectDataEntryId.has(objectDataEntryId))
         )
     }
+
+    /**
+     * Makes the snapshot report the current value of this field for the instance from now on,
+     * for values kept by the field itself; values kept by the game are up to the snapshot.
+     * @internal For use by internal systems only.
+     */
+    public abstract captureValue(instance: InstanceType, snapshot: InstanceType): void
 
     public constructor(
         id: number,
@@ -256,6 +285,12 @@ export abstract class ObjectField<
             this.invokeValueChangeEvent(entry, this, previousOriginalValue ?? previousValue, value)
         }
         return true
+    }
+
+    public override captureValue(instance: InstanceType, snapshot: InstanceType): void {
+        if (this.hasCustomValue(this.getObjectDataEntryId(instance))) {
+            this.valueByInstance.set(snapshot, this.getValue(instance, true))
+        }
     }
 
     public updateActualValue(instance: InstanceType): void {
@@ -559,6 +594,12 @@ export abstract class ObjectArrayField<
         // TODO
         return false
     }
+
+    public override captureValue(instance: InstanceType, snapshot: InstanceType): void {
+        if (this.hasCustomValue(this.getObjectDataEntryId(instance))) {
+            this.valueByInstance.set(snapshot, [...this.getValue(instance)])
+        }
+    }
 }
 
 export abstract class ObjectLevelField<
@@ -732,6 +773,16 @@ export abstract class ObjectLevelField<
             )
         }
         return true
+    }
+
+    public override captureValue(instance: InstanceType, snapshot: InstanceType): void {
+        if (this.hasCustomValue(this.getObjectDataEntryId(instance))) {
+            const valueByLevel: ValueType[] = []
+            for (const level of $range(0, this.getLevelCount(instance) - 1)) {
+                valueByLevel[level] = this.getValue(instance, level, true)
+            }
+            this.valueByInstance.set(snapshot, valueByLevel)
+        }
     }
 
     public updateActualValue(instance: InstanceType, level?: number): void {

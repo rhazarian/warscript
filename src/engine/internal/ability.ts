@@ -10,6 +10,8 @@ import {
     startItemCooldown,
 } from "./item/ability"
 import { rawSetUnitAbilityLevel } from "./misc/unit-ability-level-natives"
+import { captureObjectFieldValues } from "../object-field"
+import { lazyRecord } from "../../utility/lazy"
 
 const getAbilityBooleanField = BlzGetAbilityBooleanField
 const getAbilityBooleanLevelField = BlzGetAbilityBooleanLevelField
@@ -39,6 +41,7 @@ const unitDisableAbility = BlzUnitDisableAbility
 const unitHideAbility = BlzUnitHideAbility
 
 const match = string.match
+const sub = string.sub
 const type = _G.type
 const tostring = _G.tostring
 
@@ -274,9 +277,151 @@ const orderIdFieldByParentTypeId = {
     [fourCC("AAns")]: ABILITY_SLF_BASE_ORDER_ID_ANS5,
 } // fixme: fill programmatically
 
-export class AbilitySnapshot {
-    // TOOD: implement
+type NativeAbilityField = {
+    readonly field: jabilityfield
+    readonly id: number
+    readonly isLevelField: boolean
 }
+
+let nativeAbilityFields: NativeAbilityField[] | undefined
+
+/** Every native ability field the game declares, found by its `ABILITY_*` constant. */
+const getNativeAbilityFields = (): NativeAbilityField[] => {
+    if (nativeAbilityFields == undefined) {
+        nativeAbilityFields = []
+        for (const [name, value] of pairs(_G as Record<string, unknown>)) {
+            if (sub(name, 1, 8) == "ABILITY_") {
+                const [fieldType] = match(tostring(value), "^(ability%a+field):")
+                if (fieldType != undefined) {
+                    nativeAbilityFields[nativeAbilityFields.length] = {
+                        field: value as jabilityfield,
+                        id: getHandleId(value as jabilityfield),
+                        isLevelField: sub(fieldType, -10) == "levelfield",
+                    }
+                }
+            }
+        }
+    }
+    return nativeAbilityFields
+}
+
+const nativeAbilityFieldsByAbilityTypeId = lazyRecord((abilityTypeId: AbilityTypeId) => {
+    const fields: NativeAbilityField[] = []
+    for (const nativeAbilityField of getNativeAbilityFields()) {
+        if (abilityTypeHasField(abilityTypeId, nativeAbilityField.id)) {
+            fields[fields.length] = nativeAbilityField
+        }
+    }
+    return fields
+})
+
+const abilityBySnapshot = setmetatable(new LuaMap<AbilitySnapshot, Ability>(), { __mode: "k" })
+
+const enum AbilitySnapshotPropertyKey {
+    ABILITY = "ability",
+    LEVEL = "level",
+    NATIVE_VALUE_BY_FIELD_ID = "nativeValueByFieldId",
+}
+
+const levelBySnapshot = setmetatable(new LuaMap<AbilitySnapshot, number>(), { __mode: "k" })
+
+/**
+ * The state of an ability as it was at some point in time: its level and the values of all of
+ * its fields. Everything else (owner, cooldown, handle, ...) is that of the ability itself, so
+ * a snapshot can be used wherever the ability can, e.g. `snapshot instanceof UnitAbility`.
+ *
+ * A snapshot stays usable after the ability has been destroyed: what it holds is still there,
+ * and what it does not hold is read from the dead ability, which yields defaults.
+ */
+// The merge with the interface below is what makes a snapshot an `Ability` to the type checker,
+// which is what it is at runtime: a proxy in front of the ability.
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+export class AbilitySnapshot {
+    /** The ability the snapshot was taken from. */
+    public readonly ability!: Ability
+
+    private readonly nativeValueByFieldId!: Record<number, number | boolean | string | undefined>
+
+    /** Snapshots are only taken by {@link Ability.getSnapshot}. */
+    protected constructor() {}
+
+    public static [Symbol.hasInstance](value: unknown): boolean {
+        return type(value) == "table" && abilityBySnapshot.has(value as AbilitySnapshot)
+    }
+
+    /** @internal For use by internal systems only. */
+    public static take(ability: Ability): AbilitySnapshot {
+        const level = ability.level
+
+        const nativeValueByFieldId: Record<number, number | boolean | string | undefined> = {}
+        if (ability.handle != undefined) {
+            for (const { field, id, isLevelField } of nativeAbilityFieldsByAbilityTypeId[
+                ability.typeId
+            ]) {
+                // Not a ternary: a `false` value must not fall through to the other branch.
+                if (isLevelField) {
+                    nativeValueByFieldId[id] = ability.getField(
+                        field as jabilityintegerlevelfield,
+                        level,
+                    )
+                } else {
+                    nativeValueByFieldId[id] = ability.getField(field as jabilityintegerfield)
+                }
+            }
+        }
+
+        // Whatever the snapshot does not hold itself is looked up on, or written to, the ability.
+        // The level is not held as a plain field, so that assigning it reaches the ability too.
+        const snapshot = setmetatable(
+            {
+                [AbilitySnapshotPropertyKey.ABILITY]: ability,
+                [AbilitySnapshotPropertyKey.NATIVE_VALUE_BY_FIELD_ID]: nativeValueByFieldId,
+                getField: AbilitySnapshot.prototype.getField,
+            },
+            {
+                __index: (_: unknown, key: unknown) =>
+                    key == AbilitySnapshotPropertyKey.LEVEL
+                        ? level
+                        : (ability as unknown as Record<string, unknown>)[key as string],
+                __newindex: ability,
+                __tostring: () => `${tostring(ability)}#snapshot`,
+            },
+        ) as unknown as AbilitySnapshot
+        abilityBySnapshot.set(snapshot, ability)
+        levelBySnapshot.set(snapshot, level)
+
+        captureObjectFieldValues(ability, snapshot)
+
+        return snapshot
+    }
+
+    /**
+     * Returns the value the field had when the snapshot was taken. Level fields are only held
+     * for the level the ability had at that time; other levels are read from the ability.
+     */
+    public getField(field: jabilityintegerfield | jabilityrealfield): number
+    public getField(field: jabilitybooleanfield): boolean
+    public getField(field: jabilitystringfield): string
+    public getField(
+        field: jabilityintegerlevelfield | jabilityreallevelfield,
+        level?: number,
+    ): number
+    public getField(field: jabilitybooleanlevelfield, level?: number): boolean
+    public getField(field: jabilitystringlevelfield, level?: number): string
+
+    public getField(field: jabilityfield, level?: number): number | boolean | string {
+        if (level == undefined || level == levelBySnapshot.get(this)) {
+            const value = this.nativeValueByFieldId[getHandleId(field)]
+            if (value != undefined) {
+                return value
+            }
+        }
+        return this.ability.getField(field as jabilityintegerlevelfield, level)
+    }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging, @typescript-eslint/no-empty-object-type
+export interface AbilitySnapshot extends Ability {}
 
 /** @internal For use by internal systems only. */
 export const getOrderIdByAbilityTypeId = (abilityTypeId: AbilityTypeId): number => {
@@ -334,8 +479,12 @@ export abstract class Ability extends Handle<jability> {
 
     public abstract readonly owner: Unit | Item
 
+    /**
+     * Captures the level and the values of all fields of the ability as they are right now.
+     * See {@link AbilitySnapshot}.
+     */
     public getSnapshot(): AbilitySnapshot {
-        return null!
+        return AbilitySnapshot.take(this)
     }
 
     public hasField(field: jabilityfield | number): boolean {
