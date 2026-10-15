@@ -351,7 +351,7 @@ export abstract class AbilityBehavior<
     protected launchMissile(
         source: Unit,
         ...args: [
-            ...pointOrWidget: [x: number, y: number] | [widget: Unit /** TODO: support Widget */],
+            ...pointOrWidget: [x: number, y: number] | [widget: Widget],
             ...parameters: NonNullable<Parameters["missileParameters"]>,
         ]
     ): void
@@ -362,6 +362,11 @@ export abstract class AbilityBehavior<
         yOrParameter: any,
         ...parameters: any[]
     ): void {
+        // `parameters` is only ever forwarded as a trailing spread, which tstl compiles to the
+        // Lua vararg itself: the values reach `Missile.launch` exactly as they were passed, an
+        // `undefined` among them included. Reading anything off `parameters` (its length, an
+        // element) would make tstl collect it into a table instead, and a table cannot tell an
+        // `undefined` in the middle from the end of the arguments.
         if (typeof xOrWidget != "number") {
             Missile.launch(
                 this.missileLaunchConfig,
@@ -376,7 +381,8 @@ export abstract class AbilityBehavior<
             Missile.launch(
                 this.missileLaunchConfig,
                 source,
-                vec2(xOrWidget, yOrParameter),
+                xOrWidget,
+                yOrParameter,
                 invokeOnMissileArrival,
                 this,
                 ...parameters,
