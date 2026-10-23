@@ -319,6 +319,33 @@ export class Sound3D extends Sound {
         killSoundWhenDone(sound)
     }
 
+    /**
+     * Creates the sound of a sound preset (standard or custom) at the position or attached to
+     * the unit without starting it. Unlike {@link playFromLabel}, the sound is the caller's to
+     * start and destroy, which is what a looping one needs.
+     */
+    public static createFromLabel(
+        label: string,
+        preset: Sound3DSettings,
+        ...positionOrUnit: [Unit] | [number, number, number?]
+    ): Sound3D
+
+    public static createFromLabel(
+        label: string,
+        preset: Sound3DSettings,
+        unitOrX: Unit | number,
+        y?: number,
+        z?: number,
+    ): Sound3D {
+        const sound = createPreset3DSoundFromLabel(label, preset)
+        if (typeof unitOrX !== "number") {
+            attachSoundToUnit(sound, unitOrX.handle)
+        } else {
+            setSoundPosition(sound, unitOrX, y ?? 0, z ?? 0)
+        }
+        return Sound3D.of(sound)
+    }
+
     public static createAtPosition(
         fileName: string,
         preset: Sound3DSettings,

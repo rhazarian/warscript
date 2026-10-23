@@ -3,7 +3,7 @@ import { Unit, UnitClassification } from "../internal/unit"
 import "../internal/unit/ability"
 import "../internal/unit+ability"
 import { Ability } from "../internal/ability"
-import { AbilityTypeId } from "../object-data/entry/ability-type"
+import { AbilityTypeId, playMissileImpactSound } from "../object-data/entry/ability-type"
 import { EventListener } from "../../event"
 import { Widget } from "../../core/types/widget"
 import { Item } from "../internal/item"
@@ -103,8 +103,12 @@ const applyMissileImpactOnArrival = (
     _missile: Missile,
     success: boolean,
     impact: MissileImpact,
+    abilityTypeId: AbilityTypeId,
+    xOrWidget: number | Widget,
+    y: number | undefined,
 ): void => {
     if (success) {
+        playMissileImpactSound(abilityTypeId, xOrWidget, y)
         applyMissileImpact(impact)
     }
 }
@@ -123,9 +127,13 @@ const invokeOnMissileArrival = <T extends any[]>(
     _missile: Missile,
     success: boolean,
     abilityBehavior: AbilityBehavior<{ periodicActionParameters: T }>,
+    abilityTypeId: AbilityTypeId,
+    xOrWidget: number | Widget,
+    y: number | undefined,
     ...parameters: T
 ): void => {
     if (success) {
+        playMissileImpactSound(abilityTypeId, xOrWidget, y)
         abilityBehavior.onMissileArrival(...parameters)
     }
 }
@@ -389,6 +397,9 @@ export abstract class AbilityBehavior<
                 xOrWidget,
                 invokeOnMissileArrival,
                 this,
+                this.ability.typeId,
+                xOrWidget,
+                undefined,
                 yOrParameter,
                 ...parameters,
             )
@@ -400,6 +411,9 @@ export abstract class AbilityBehavior<
                 yOrParameter,
                 invokeOnMissileArrival,
                 this,
+                this.ability.typeId,
+                xOrWidget,
+                yOrParameter,
                 ...parameters,
             )
         }
@@ -438,6 +452,9 @@ export abstract class AbilityBehavior<
                     xOrWidget,
                     applyMissileImpactOnArrival,
                     impact,
+                    this.ability.typeId,
+                    xOrWidget,
+                    undefined,
                 )
             } else {
                 Missile.launch(
@@ -447,6 +464,9 @@ export abstract class AbilityBehavior<
                     yOrEffect as number,
                     applyMissileImpactOnArrival,
                     impact,
+                    this.ability.typeId,
+                    xOrWidget,
+                    yOrEffect as number,
                 )
             }
         }

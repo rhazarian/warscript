@@ -102,6 +102,16 @@ const targetEffectSoundPresetByAbilityTypeId = new LuaMap<
     SoundPresetId | undefined
 >()
 
+const casterCastingLoopingSoundPresetByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    SoundPresetId | undefined
+>()
+
+const missileImpactSoundPresetByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    SoundPresetId | undefined
+>()
+
 export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     private static readonly idGenerator = abilityTypeIdGenerator
 
@@ -742,6 +752,39 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         targetEffectSoundPresetByAbilityTypeId.set(this.id, targetEffectSoundPresetId)
     }
 
+    /**
+     * Loops on the caster for the casting time of the ability (from the casting start until
+     * the channeling start or the stop of the cast), like `casterCastingEffectPresets`.
+     */
+    public get casterCastingLoopingSoundPresetId(): SoundPresetId | undefined {
+        return casterCastingLoopingSoundPresetByAbilityTypeId.get(this.id)
+    }
+
+    public set casterCastingLoopingSoundPresetId(
+        casterCastingLoopingSoundPresetId: SoundPresetId | undefined,
+    ) {
+        casterCastingLoopingSoundPresetByAbilityTypeId.set(
+            this.id,
+            casterCastingLoopingSoundPresetId,
+        )
+    }
+
+    /**
+     * Plays at the target when the missile of an ability behavior arrives (`onMissileImpact`,
+     * `launchMissile`), unlike `targetEffectSoundPresetId`, which plays when the effect of the
+     * ability starts, that is when the missile is launched.
+     *
+     * Only the missiles that ability behaviors launch play it: an ability whose missile is the
+     * engine's own (a native missile ability such as Storm Bolt) does not.
+     */
+    public get missileImpactSoundPresetId(): SoundPresetId | undefined {
+        return missileImpactSoundPresetByAbilityTypeId.get(this.id)
+    }
+
+    public set missileImpactSoundPresetId(missileImpactSoundPresetId: SoundPresetId | undefined) {
+        missileImpactSoundPresetByAbilityTypeId.set(this.id, missileImpactSoundPresetId)
+    }
+
     // Stats
 
     public get allowedTargetCombatClassifications(): CombatClassifications[] {
@@ -1007,6 +1050,71 @@ for (const [abilityTypeId] of casterCastingEffectModelPathsByAbilityTypeId) {
         EventListenerPriority.HIGHEST,
         handleAbilityStopCastingEvent,
     )
+}
+
+const casterCastingLoopingSoundByCaster = new LuaMap<Unit, Sound3D>()
+
+const stopCasterCastingLoopingSound = (caster: Unit): void => {
+    const sound = casterCastingLoopingSoundByCaster.get(caster)
+    if (sound != undefined) {
+        sound.destroy()
+        casterCastingLoopingSoundByCaster.delete(caster)
+    }
+}
+
+for (const [abilityTypeId, soundPresetId] of postcompile(
+    () => casterCastingLoopingSoundPresetByAbilityTypeId,
+)) {
+    if (soundPresetId !== undefined) {
+        Unit.abilityCastingStartEvent[abilityTypeId].addListener(
+            EventListenerPriority.HIGHEST,
+            (caster) => {
+                stopCasterCastingLoopingSound(caster)
+                const sound = Sound3D.createFromLabel(
+                    soundPresetId,
+                    SoundSettings.AbilityLooping,
+                    caster,
+                )
+                sound.start()
+                casterCastingLoopingSoundByCaster.set(caster, sound)
+            },
+        )
+        Unit.abilityChannelingStartEvent[abilityTypeId].addListener(
+            EventListenerPriority.HIGHEST,
+            stopCasterCastingLoopingSound,
+        )
+        Unit.abilityStopEvent[abilityTypeId].addListener(
+            EventListenerPriority.HIGHEST,
+            stopCasterCastingLoopingSound,
+        )
+    }
+}
+
+const missileImpactSoundPresetIdByAbilityTypeId = postcompile(
+    () => missileImpactSoundPresetByAbilityTypeId,
+)
+
+/**
+ * Plays the missile impact sound of the ability type, if it has one, at the target of the
+ * missile.
+ *
+ * @internal For use by internal systems only.
+ */
+export const playMissileImpactSound = (
+    abilityTypeId: AbilityTypeId,
+    xOrWidget: number | Widget,
+    y?: number,
+): void => {
+    const soundPresetId = missileImpactSoundPresetIdByAbilityTypeId.get(abilityTypeId)
+    if (soundPresetId !== undefined) {
+        if (typeof xOrWidget == "number") {
+            Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, xOrWidget, y ?? 0)
+        } else if (xOrWidget instanceof Unit) {
+            Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, xOrWidget)
+        } else {
+            Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, xOrWidget.x, xOrWidget.y)
+        }
+    }
 }
 
 const casterChannelingEffectModelPathsByAbilityTypeId = postcompile(() => {
