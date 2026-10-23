@@ -1,8 +1,7 @@
 -- Run after tstl: node_modules/.bin/warpack exec tests/ability-snapshot.test.lua
--- Tests the emitted Lua of AbilitySnapshot: a snapshot is a proxy table that holds the level
--- and the native field values of the ability as captured, and falls back to the ability for
--- everything else (reads and writes alike), so that it passes for the ability wherever the
--- ability is used, `instanceof` included.
+-- Tests the emitted Lua of AbilitySnapshot: it holds the ability, the level it was at and the
+-- values of its fields at that level, and nothing else -- no values of other levels, and no
+-- state of the ability itself, and nothing of it can be set: it is what the ability was.
 package.path = "dist/?.lua;node_modules/typescript-to-lua/dist/lualib/universal/?.lua;" .. package.path
 
 local function fourCC(id)
@@ -58,8 +57,9 @@ BlzSetUnitAbilityCooldownRemaining = function(unit, typeId, value) setCooldownCa
 BlzGetUnitAbilityCooldownRemaining = function() return 0 end
 
 local capturedObjectFieldValues = {}
-package.loaded["engine.object-field"] = { captureObjectFieldValues = function(instance, snapshot)
-    capturedObjectFieldValues[#capturedObjectFieldValues + 1] = { instance = instance, snapshot = snapshot }
+package.loaded["engine.object-field"] = { captureObjectFieldValues = function(instance, snapshot, level)
+    capturedObjectFieldValues[#capturedObjectFieldValues + 1] =
+        { instance = instance, snapshot = snapshot, level = level }
 end }
 package.loaded["engine.internal.item.ability"] = {
     abilityActionDummy = {},
@@ -72,6 +72,7 @@ local lualib = require("lualib_bundle")
 local instanceOf = lualib.__TS__InstanceOf
 local module = require("engine.internal.ability")
 local Ability, UnitAbility, AbilitySnapshot = module.Ability, module.UnitAbility, module.AbilitySnapshot
+local ItemAbility = module.ItemAbility
 
 local unit = { id = 1, level = 1 }
 local owner = { handle = unit, state = 1, removeAbility = function() end }
@@ -85,62 +86,91 @@ assert(ability.level == 1)
 
 local snapshot = ability:getSnapshot()
 
--- The capture: level and fields of the type as they were, `false` included.
+-- The capture: the level, the fields of the type as they were, `false` included, and the fields
+-- kept by the fields themselves, which are captured for this level alone.
 assert(snapshot.level == 1)
+assert(snapshot.ability == ability)
+assert(snapshot.typeId == fourCC("Atst"))
+assert(snapshot.owner == owner and snapshot.unit == owner, "what and whose it was is captured too")
+assert(snapshot.levelCount == 3, "the number of levels is the captured one")
+assert(snapshot:hasField(ABILITY_RLF_TEST_DAMAGE) and not snapshot:hasField(ABILITY_ILF_OTHER_TYPE),
+    "the fields of a snapshot are those of the type of the ability")
 assert(snapshot:getField(ABILITY_RLF_TEST_DAMAGE) == 75)
 assert(snapshot:getField(ABILITY_BF_TEST_FLAG) == false)
 assert(snapshot:getField(ABILITY_SF_TEST_NAME) == "Bolt")
 assert(snapshot:getField(ABILITY_IF_LEVELS) == 3, "common fields are captured")
 assert(#capturedObjectFieldValues == 1 and capturedObjectFieldValues[1].instance == ability
-    and capturedObjectFieldValues[1].snapshot == snapshot, "object fields are captured into the snapshot")
+    and capturedObjectFieldValues[1].snapshot == snapshot
+    and capturedObjectFieldValues[1].level == 1, "object fields are captured at the level")
 
 unit.level = 2
+handle.values[fourCC("alev")] = 4
 handle.values[fourCC("Tst2")] = true
 handle.values[fourCC("Tst3")] = "Storm Bolt"
 handle.levelValues[fourCC("Tst1")][1] = 80
 handle.levelValues[fourCC("Tst1")][2] = 120
 assert(ability.level == 2 and ability:getField(ABILITY_RLF_TEST_DAMAGE) == 120, "the ability is live")
 assert(snapshot.level == 1, "the level is the captured one")
+assert(snapshot.levelCount == 3, "and so is the number of levels")
 assert(snapshot:getField(ABILITY_RLF_TEST_DAMAGE) == 75, "level fields are read at the captured level")
-assert(snapshot:getField(ABILITY_RLF_TEST_DAMAGE, 1) == 75, "... also when that level is passed")
-assert(snapshot:getField(ABILITY_RLF_TEST_DAMAGE, 2) == 120, "other levels are read from the ability")
+-- The captured level is the only level a snapshot has: `getField` of one takes no level at all,
+-- and whatever is passed to it from code that is not typed is ignored rather than read.
+assert(snapshot:getField(ABILITY_RLF_TEST_DAMAGE, 2) == 75, "a passed level is no level of its own")
 assert(snapshot:getField(ABILITY_BF_TEST_FLAG) == false, "a captured false does not fall through")
 assert(snapshot:getField(ABILITY_SF_TEST_NAME) == "Bolt")
-assert(snapshot:getField(ABILITY_ILF_OTHER_TYPE) == 3, "fields the type lacks are read from the ability")
+assert(snapshot:getField(ABILITY_ILF_OTHER_TYPE) == 2,
+    "a field the type lacks is read from the ability, at the captured level")
 
--- Everything else is the ability's.
-assert(snapshot.ability == ability)
-assert(snapshot.handle == handle)
-assert(snapshot.typeId == fourCC("Atst"))
-assert(snapshot.owner == owner, "plain fields fall through")
-assert(snapshot.levelCount == 3, "getters fall through with the ability as `this`")
-assert(snapshot:hasField(ABILITY_RLF_TEST_DAMAGE) and not snapshot:hasField(ABILITY_ILF_OTHER_TYPE))
+-- A snapshot holds nothing of the live state of the ability.
+assert(snapshot.handle == nil and snapshot.cooldownRemaining == nil)
 assert(tostring(snapshot):find("#snapshot", 1, true), tostring(snapshot))
 assert(tostring(snapshot):find(tostring(ability), 1, true))
 
--- Writes go to the ability: setters run there, and the captured level stays.
-snapshot.cooldownRemaining = 5
-assert(#setCooldownCalls == 1 and setCooldownCalls[1] == 5, "setters fall through")
-snapshot.level = 0
-assert(#setLevelCalls == 1 and setLevelCalls[1] == 0, "the level setter of the ability runs")
-assert(rawget(snapshot, "level") == nil and snapshot.level == 1, "the captured level is untouched")
+-- A snapshot is read-only: what the ability was is not something that can be set, and there is
+-- no setter of a field on it to reach at all, not even one that throws.
+assert(snapshot.setField == nil, "a snapshot has no setter of a field")
+assert(#setCooldownCalls == 0 and #setLevelCalls == 0, "nothing of the ability was ever set")
+assert(snapshot:getField(ABILITY_RLF_TEST_DAMAGE) == 75, "the capture is untouched")
 
--- The snapshot passes for the ability, and is recognizable as a snapshot.
-assert(instanceOf(snapshot, UnitAbility) and instanceOf(snapshot, Ability))
+-- A snapshot is a snapshot, not an ability.
 assert(instanceOf(snapshot, AbilitySnapshot))
+assert(not instanceOf(snapshot, UnitAbility) and not instanceOf(snapshot, Ability))
 assert(not instanceOf(ability, AbilitySnapshot))
-assert(not instanceOf({}, AbilitySnapshot) and not instanceOf(5, AbilitySnapshot))
 
 -- Snapshots are independent of one another.
 local later = ability:getSnapshot()
 assert(later.level == 2 and later:getField(ABILITY_RLF_TEST_DAMAGE) == 120)
+assert(later.levelCount == 4)
 assert(snapshot.level == 1 and snapshot:getField(ABILITY_RLF_TEST_DAMAGE) == 75)
 
 -- The snapshot outlives the ability.
 ability:destroy()
-assert(snapshot.level == 1 and snapshot:getField(ABILITY_RLF_TEST_DAMAGE) == 75)
+assert(snapshot.level == 1 and snapshot.levelCount == 3)
+assert(snapshot:getField(ABILITY_RLF_TEST_DAMAGE) == 75)
 assert(snapshot:getField(ABILITY_BF_TEST_FLAG) == false and snapshot:getField(ABILITY_IF_LEVELS) == 3)
-assert(snapshot.owner == owner and snapshot.typeId == fourCC("Atst") and snapshot.ability == ability)
-assert(instanceOf(snapshot, UnitAbility) and instanceOf(snapshot, AbilitySnapshot))
+assert(snapshot.typeId == fourCC("Atst") and snapshot.ability == ability)
+assert(snapshot.owner == owner and snapshot.unit == owner,
+    "what and whose it was is still known once the ability is gone")
+assert(snapshot:hasField(ABILITY_RLF_TEST_DAMAGE), "the fields of the type are known without it")
+
+-- An ability of an item is of whoever holds the item, and an item changes hands: the unit a
+-- snapshot is of is the one that held it when the snapshot was taken, not the one holding it by
+-- the time the missile of the cast arrives.
+local otherOwner = { handle = { id = 2, level = 1 }, state = 1, removeAbility = function() end }
+local item = { handle = { id = 200 }, owner = owner }
+local itemHandle = {
+    id = 101,
+    values = { [fourCC("alev")] = 1, [fourCC("Tst2")] = true, [fourCC("Tst3")] = "Charge" },
+    levelValues = { [fourCC("Tst1")] = { [0] = 10, 20, 30 }, [fourCC("Oth1")] = { [0] = 1, 2, 3 } },
+}
+local itemAbility = lualib.__TS__New(ItemAbility, itemHandle, fourCC("Atst"), item)
+assert(itemAbility.unit == owner, "an ability of an item is of the unit holding it")
+
+local itemSnapshot = itemAbility:getSnapshot()
+item.owner = otherOwner
+
+assert(itemAbility.unit == otherOwner, "the ability is of whoever holds the item now")
+assert(itemSnapshot.owner == item, "the snapshot is of the item it was of")
+assert(itemSnapshot.unit == owner, "... and of the unit that held that item then")
 
 print("ability-snapshot: ok")

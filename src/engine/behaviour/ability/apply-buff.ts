@@ -1,5 +1,5 @@
 import { AbilityBehavior } from "../ability"
-import { Ability } from "../../internal/ability"
+import { Ability, AbilityOrSnapshot } from "../../internal/ability"
 import {
     Buff,
     BuffConstructor,
@@ -34,7 +34,7 @@ export abstract class ApplyBuffAbilityBehavior<
     protected readonly applyBuff: (
         this: void,
         unit: Unit,
-        ability?: Ability,
+        ability?: AbilityOrSnapshot,
     ) => InstanceType<T> | undefined
 
     public constructor(
@@ -76,7 +76,11 @@ export abstract class ApplyBuffAbilityBehavior<
         parameters?: BuffParametersType<T>,
     ) {
         super(ability)
-        let apply: (this: void, unit: Unit, ability: Ability | AbilityBehavior) => Buff | undefined
+        let apply: (
+            this: void,
+            unit: Unit,
+            ability: AbilityOrSnapshot | AbilityBehavior,
+        ) => Buff | undefined
         if (typeof constructorOrTypeIdOrTypeIds == "number") {
             apply = (unit, ability) => {
                 return Buff.apply(
@@ -124,7 +128,7 @@ export abstract class ApplyBuffAbilityBehavior<
                 )
             }
         }
-        this.applyBuff = ((unit: Unit, ability?: Ability) => {
+        this.applyBuff = ((unit: Unit, ability?: AbilityOrSnapshot) => {
             if (ability == undefined) {
                 return apply(unit, this)
             }
@@ -136,14 +140,14 @@ export abstract class ApplyBuffAbilityBehavior<
                 ).sourceAbilityBehavior = this
             }
             return buff
-        }) as (unit: Unit, ability?: Ability) => InstanceType<T>
+        }) as (unit: Unit, ability?: AbilityOrSnapshot) => InstanceType<T>
     }
 
     /**
      * Applies the buff to every allowed target around the point, as per the area of effect and
      * the allowed targets of the ability (or of the given ability, such as a snapshot of it).
      */
-    protected applyBuffArea(caster: Unit, x: number, y: number, ability?: Ability): void {
+    protected applyBuffArea(caster: Unit, x: number, y: number, ability?: AbilityOrSnapshot): void {
         for (const unit of Unit.getAllowedTargetsInCollisionRange(
             caster,
             resolveCurrentAbilityDependentValue(

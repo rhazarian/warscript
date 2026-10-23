@@ -29,14 +29,18 @@ const defaultValueByObjectDataEntryIdByObjectFieldId = postcompile(
 const objectFieldById = new LuaMap<number, ObjectFieldBase<any, any, any, any>>()
 
 /**
- * Captures the current values of all fields of the instance into the snapshot, so that reading
- * a field of the snapshot yields the value the instance had at this point.
+ * Captures the current values of all fields of the instance, at the level, into the snapshot, so
+ * that reading a field of the snapshot yields the value the instance had at this point.
  * @internal For use by internal systems only.
  */
-export const captureObjectFieldValues = (instance: AnyNotNil, snapshot: AnyNotNil): void => {
+export const captureObjectFieldValues = (
+    instance: AnyNotNil,
+    snapshot: AnyNotNil,
+    level: number,
+): void => {
     for (const [, objectField] of objectFieldById) {
         if (objectField.supports(instance)) {
-            objectField.captureValue(instance, snapshot)
+            objectField.captureValue(instance, snapshot, level)
         }
     }
 }
@@ -56,11 +60,15 @@ abstract class ObjectFieldBase<
     InstanceType extends AnyNotNil,
     ValueType,
     NativeFieldType,
+    SourceType extends AnyNotNil = InstanceType,
 > {
     /** @internal */
-    protected readonly valueByInstance = setmetatable(new LuaMap<InstanceType, ValueType>(), {
-        __mode: "k",
-    })
+    protected readonly valueBySource = setmetatable(
+        new LuaMap<InstanceType | SourceType, ValueType>(),
+        {
+            __mode: "k",
+        },
+    )
 
     protected abstract readonly instanceClass: AbstractConstructor<InstanceType> | Function
 
@@ -81,7 +89,7 @@ abstract class ObjectFieldBase<
     protected abstract getNativeFieldById(id: number): NativeFieldType
 
     protected abstract getObjectDataEntryId(
-        instance: InstanceType,
+        source: InstanceType | SourceType,
     ): ObjectDataEntryIdType<ObjectDataEntryType>
 
     protected abstract hasNativeFieldValue(
@@ -110,11 +118,11 @@ abstract class ObjectFieldBase<
     }
 
     /**
-     * Makes the snapshot report the current value of this field for the instance from now on,
-     * for values kept by the field itself; values kept by the game are up to the snapshot.
+     * Makes the snapshot report the value this field has for the instance at the level from now
+     * on, for values kept by the field itself; values kept by the game are up to the snapshot.
      * @internal For use by internal systems only.
      */
-    public abstract captureValue(instance: InstanceType, snapshot: InstanceType): void
+    public abstract captureValue(instance: InstanceType, snapshot: SourceType, level: number): void
 
     public constructor(
         id: number,
@@ -146,22 +154,22 @@ abstract class ObjectFieldBase<
 
 export type ObjectFieldValueChangeEvent<
     T extends
-        | ObjectField<any, any, any, any>
-        | ReadonlyObjectFieldType<ObjectField<any, any, any, any>>,
+        | ObjectField<any, any, any, any, any>
+        | ReadonlyObjectFieldType<ObjectField<any, any, any, any, any>>,
 > =
-    T extends ObjectField<any, infer InstanceType, infer ValueType, any>
+    T extends ObjectField<any, infer InstanceType, infer ValueType, any, any>
         ? DispatchingEvent<
               [instance: InstanceType, field: T, previousValue: ValueType, newValue: ValueType]
           >
         : T extends ReadonlyObjectFieldType<
-                ObjectField<any, infer InstanceType, infer ValueType, any>
+                ObjectField<any, infer InstanceType, infer ValueType, any, any>
             >
           ? DispatchingEvent<
                 [instance: InstanceType, field: T, previousValue: ValueType, newValue: ValueType]
             >
           : never
 
-export type ReadonlyObjectFieldType<T extends ObjectField<any, any, any, any>> = Omit<
+export type ReadonlyObjectFieldType<T extends ObjectField<any, any, any, any, any>> = Omit<
     T,
     "setValue" | "removeValue" | "trySetValue"
 >
@@ -194,10 +202,17 @@ export abstract class ObjectField<
     InstanceType extends AnyNotNil = AnyNotNil,
     ValueType extends number | string | boolean = number | string | boolean,
     NativeFieldType = unknown,
-> extends ObjectFieldBase<ObjectDataEntryType, InstanceType, ValueType, NativeFieldType> {
+    SourceType extends AnyNotNil = InstanceType,
+> extends ObjectFieldBase<
+    ObjectDataEntryType,
+    InstanceType,
+    ValueType,
+    NativeFieldType,
+    SourceType
+> {
     protected abstract readonly defaultValue: ValueType
 
-    protected abstract getNativeFieldValue(instance: InstanceType): ValueType
+    protected abstract getNativeFieldValue(source: InstanceType | SourceType): ValueType
 
     protected abstract setNativeFieldValue(instance: InstanceType, value: ValueType): boolean
 
@@ -287,9 +302,9 @@ export abstract class ObjectField<
         return true
     }
 
-    public override captureValue(instance: InstanceType, snapshot: InstanceType): void {
+    public override captureValue(instance: InstanceType, snapshot: SourceType): void {
         if (this.hasCustomValue(this.getObjectDataEntryId(instance))) {
-            this.valueByInstance.set(snapshot, this.getValue(instance, true))
+            this.valueBySource.set(snapshot, this.getValue(instance, true))
         }
     }
 
@@ -361,19 +376,23 @@ export abstract class ObjectField<
         return this.setValue(entry, value as ValueType)
     }
 
-    private getActualValue(instance: InstanceType): ValueType {
+    /**
+     * The value this field has for the instance, or the value it had for a snapshot of one: the
+     * actual value, which is what the modifiers of this field make of the value that was set.
+     */
+    protected getActualValue(source: InstanceType | SourceType): ValueType {
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
         if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
             const defaultValue = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
-                this.getObjectDataEntryId(instance),
+                this.getObjectDataEntryId(source),
             ) as ValueType | undefined
             if (defaultValue != undefined || this.isGlobal) {
-                return this.valueByInstance.get(instance) ?? defaultValue ?? this.defaultValue
+                return this.valueBySource.get(source) ?? defaultValue ?? this.defaultValue
             }
         }
-        return this.getNativeFieldValue(instance) ?? this.defaultValue
+        return this.getNativeFieldValue(source) ?? this.defaultValue
     }
 
     private setActualValue(instance: InstanceType, value: ValueType): ValueType | undefined {
@@ -387,8 +406,8 @@ export abstract class ObjectField<
             ) as ValueType | undefined
             if (defaultValue != undefined || this.isGlobal) {
                 const previousValue =
-                    this.valueByInstance.get(instance) ?? defaultValue ?? this.defaultValue
-                this.valueByInstance.set(instance, value)
+                    this.valueBySource.get(instance) ?? defaultValue ?? this.defaultValue
+                this.valueBySource.set(instance, value)
                 return previousValue
             }
         }
@@ -472,17 +491,15 @@ export abstract class ObjectField<
     }
 }
 
-export type ReadonlyObjectLevelFieldType<T extends ObjectLevelField<any, any, any, any>> = Omit<
-    T,
-    "setValue" | "trySetValue"
->
+export type ReadonlyObjectLevelFieldType<T extends ObjectLevelField<any, any, any, any, any>> =
+    Omit<T, "setValue" | "trySetValue">
 
 export type ObjectLevelFieldValueChangeEvent<
     T extends
-        | ObjectLevelField<any, any, any, any>
-        | ReadonlyObjectLevelFieldType<ObjectLevelField<any, any, any, any>>,
+        | ObjectLevelField<any, any, any, any, any>
+        | ReadonlyObjectLevelFieldType<ObjectLevelField<any, any, any, any, any>>,
 > =
-    T extends ObjectLevelField<any, infer InstanceType, infer ValueType, any, any>
+    T extends ObjectLevelField<any, infer InstanceType, infer ValueType, any, any, any>
         ? DispatchingEvent<
               [
                   instance: InstanceType,
@@ -493,7 +510,7 @@ export type ObjectLevelFieldValueChangeEvent<
               ]
           >
         : T extends ReadonlyObjectLevelFieldType<
-                ObjectLevelField<any, infer InstanceType, infer ValueType, any, any>
+                ObjectLevelField<any, infer InstanceType, infer ValueType, any, any, any>
             >
           ? DispatchingEvent<
                 [
@@ -521,10 +538,20 @@ export abstract class ObjectArrayField<
     InstanceType extends AnyNotNil = AnyNotNil,
     ValueType extends number | string | boolean = number | string | boolean,
     NativeFieldType = unknown,
-> extends ObjectFieldBase<ObjectDataEntryType, InstanceType, ValueType[], NativeFieldType> {
+    SourceType extends AnyNotNil = InstanceType,
+> extends ObjectFieldBase<
+    ObjectDataEntryType,
+    InstanceType,
+    ValueType[],
+    NativeFieldType,
+    SourceType
+> {
     protected abstract readonly defaultValue: ValueType
 
-    protected abstract getNativeFieldValue(instance: InstanceType, index: number): ValueType
+    protected abstract getNativeFieldValue(
+        source: InstanceType | SourceType,
+        index: number,
+    ): ValueType
 
     protected abstract setNativeFieldValue(
         instance: InstanceType,
@@ -558,21 +585,42 @@ export abstract class ObjectArrayField<
             return index == undefined ? [] : this.defaultValue
         }
 
+        return index == undefined ? this.getActualValue(entry) : this.getActualValue(entry, index)
+    }
+
+    /**
+     * The values this field has for the instance, or the values it had for a snapshot of one.
+     */
+    protected getActualValue(source: InstanceType | SourceType): readonly ValueType[]
+    protected getActualValue(source: InstanceType | SourceType, index: number): ValueType
+
+    protected getActualValue(
+        source: InstanceType | SourceType,
+        index?: number,
+    ): readonly ValueType[] | ValueType {
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
         if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
             const defaultValue = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
-                this.getObjectDataEntryId(entry),
+                this.getObjectDataEntryId(source),
             ) as ValueType[] | undefined
             if (defaultValue != undefined || this.isGlobal) {
-                const value = this.valueByInstance.get(entry) ?? defaultValue ?? emptyArray()
+                const value = this.valueBySource.get(source) ?? defaultValue ?? emptyArray()
                 return index == undefined ? value : (value[index] ?? this.defaultValue)
             }
         }
 
+        // A snapshot has the values the game keeps itself captured for it as well: an array is
+        // of indices rather than of levels, so, unlike a level field, it is not something the
+        // snapshot can answer for itself.
+        const capturedValue = this.valueBySource.get(source)
+        if (capturedValue != undefined) {
+            return index == undefined ? capturedValue : (capturedValue[index] ?? this.defaultValue)
+        }
+
         if (index != undefined) {
-            return this.getNativeFieldValue(entry, index)
+            return this.getNativeFieldValue(source, index)
         }
 
         const result: ValueType[] = []
@@ -580,9 +628,9 @@ export abstract class ObjectArrayField<
         for (
             let index = 0,
                 previousValue: ValueType | undefined = undefined,
-                value: ValueType = this.getNativeFieldValue(entry, index);
+                value: ValueType = this.getNativeFieldValue(source, index);
             value != previousValue && value != this.defaultValue;
-            ++index, previousValue = value, value = this.getNativeFieldValue(entry, index)
+            ++index, previousValue = value, value = this.getNativeFieldValue(source, index)
         ) {
             result[index] = value
         }
@@ -595,9 +643,9 @@ export abstract class ObjectArrayField<
         return false
     }
 
-    public override captureValue(instance: InstanceType, snapshot: InstanceType): void {
-        if (this.hasCustomValue(this.getObjectDataEntryId(instance))) {
-            this.valueByInstance.set(snapshot, [...this.getValue(instance)])
+    public override captureValue(instance: InstanceType, snapshot: SourceType): void {
+        if (this.hasValue(this.getObjectDataEntryId(instance))) {
+            this.valueBySource.set(snapshot, [...this.getValue(instance)])
         }
     }
 }
@@ -608,7 +656,14 @@ export abstract class ObjectLevelField<
     ValueType extends number | string | boolean = number | string | boolean,
     InputValueType extends ValueType = never,
     NativeFieldType = unknown,
-> extends ObjectFieldBase<ObjectDataEntryType, InstanceType, ValueType[], NativeFieldType> {
+    SourceType extends AnyNotNil = InstanceType,
+> extends ObjectFieldBase<
+    ObjectDataEntryType,
+    InstanceType,
+    ValueType[],
+    NativeFieldType,
+    SourceType
+> {
     private originalValueByLevelByInstance?: LuaMap<InstanceType, LuaMap<number, ValueType>>
 
     private modifiersByInstance?: LuaMap<
@@ -618,7 +673,10 @@ export abstract class ObjectLevelField<
 
     protected abstract readonly defaultValue: ValueType
 
-    protected abstract getNativeFieldValue(instance: InstanceType, level: number): ValueType
+    protected abstract getNativeFieldValue(
+        source: InstanceType | SourceType,
+        level: number,
+    ): ValueType
 
     protected abstract setNativeFieldValue(
         instance: InstanceType,
@@ -775,13 +833,15 @@ export abstract class ObjectLevelField<
         return true
     }
 
-    public override captureValue(instance: InstanceType, snapshot: InstanceType): void {
+    public override captureValue(
+        instance: InstanceType,
+        snapshot: SourceType,
+        level: number,
+    ): void {
         if (this.hasCustomValue(this.getObjectDataEntryId(instance))) {
             const valueByLevel: ValueType[] = []
-            for (const level of $range(0, this.getLevelCount(instance) - 1)) {
-                valueByLevel[level] = this.getValue(instance, level, true)
-            }
-            this.valueByInstance.set(snapshot, valueByLevel)
+            valueByLevel[level] = this.getValue(instance, level, true)
+            this.valueBySource.set(snapshot, valueByLevel)
         }
     }
 
@@ -873,23 +933,28 @@ export abstract class ObjectLevelField<
         return this.setValue(entry, levelOrValue as InputValueType)
     }
 
-    private getActualValue(instance: InstanceType, level: number): ValueType {
+    /**
+     * The value this field has for the instance at the level, or the value it had for a snapshot
+     * of one, at the level that snapshot is of: the actual value, which is what the modifiers of
+     * this field make of the value that was set.
+     */
+    protected getActualValue(source: InstanceType | SourceType, level: number): ValueType {
         const defaultValueByObjectDataEntryId = defaultValueByObjectDataEntryIdByObjectFieldId.get(
             this.id,
         )
         if (defaultValueByObjectDataEntryId != undefined || this.isGlobal) {
             const defaultValueByLevel = (defaultValueByObjectDataEntryId ?? emptyLuaMap()).get(
-                this.getObjectDataEntryId(instance),
+                this.getObjectDataEntryId(source),
             ) as ValueType[] | undefined
             if (defaultValueByLevel != undefined || this.isGlobal) {
                 return (
-                    this.valueByInstance.get(instance)?.[level] ??
+                    this.valueBySource.get(source)?.[level] ??
                     (defaultValueByLevel ?? emptyArray())[level] ??
                     this.defaultValue
                 )
             }
         }
-        return this.getNativeFieldValue(instance, level) ?? this.defaultValue
+        return this.getNativeFieldValue(source, level) ?? this.defaultValue
     }
 
     private setActualValue(
@@ -906,10 +971,10 @@ export abstract class ObjectLevelField<
                 objectDataEntryId,
             ) as ValueType[] | undefined
             if (defaultValueByLevel != undefined || this.isGlobal) {
-                let valueByLevel = this.valueByInstance.get(instance)
+                let valueByLevel = this.valueBySource.get(instance)
                 if (valueByLevel == undefined) {
                     valueByLevel = []
-                    this.valueByInstance.set(instance, valueByLevel)
+                    this.valueBySource.set(instance, valueByLevel)
                 }
                 const previousValue =
                     valueByLevel[level] ??

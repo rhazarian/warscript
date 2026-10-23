@@ -315,113 +315,115 @@ const nativeAbilityFieldsByAbilityTypeId = lazyRecord((abilityTypeId: AbilityTyp
     return fields
 })
 
-const abilityBySnapshot = setmetatable(new LuaMap<AbilitySnapshot, Ability>(), { __mode: "k" })
-
-const enum AbilitySnapshotPropertyKey {
-    ABILITY = "ability",
-    LEVEL = "level",
-    NATIVE_VALUE_BY_FIELD_ID = "nativeValueByFieldId",
-}
-
-const levelBySnapshot = setmetatable(new LuaMap<AbilitySnapshot, number>(), { __mode: "k" })
+/** An ability, or a snapshot of one: either answers for the values of the fields of an ability. */
+export type AbilityOrSnapshot = Ability | AbilitySnapshot
 
 /**
- * The state of an ability as it was at some point in time: its level and the values of all of
- * its fields. Everything else (owner, cooldown, handle, ...) is that of the ability itself, so
- * a snapshot can be used wherever the ability can, e.g. `snapshot instanceof UnitAbility`.
+ * What a field of an ability reads a value from: the ability itself, or a snapshot of one, which
+ * has the values of the fields of the ability as they were at the one level it is of and so takes
+ * no level to read them at.
  *
- * A snapshot stays usable after the ability has been destroyed: what it holds is still there,
- * and what it does not hold is read from the dead ability, which yields defaults.
+ * A level is passed to it all the same -- that is how a level field reads an ability -- and a
+ * snapshot ignores it, holding no value of any other level to answer with. That no level other
+ * than the one a snapshot is of is ever asked of it is what the types of the fields see to: a
+ * snapshot is read through `getCurrentValue` alone, which reads it at that very level.
  */
-// The merge with the interface below is what makes a snapshot an `Ability` to the type checker,
-// which is what it is at runtime: a proxy in front of the ability.
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+export type AbilityFieldSource = Pick<Ability, "typeId" | "getField">
+
+/**
+ * The state of an ability as it was at some point in time: the ability itself, the level it was
+ * at, what and whose it was, and the values of its fields at that level. A snapshot holds
+ * nothing else, and nothing of any other level, and it has no setter of any kind, so that what
+ * it answers stays what the ability was however the ability changes afterwards, and so that it
+ * stays usable once the ability has been destroyed.
+ *
+ * A field of an ability reads a snapshot wherever it reads the ability, and so does a buff: the
+ * buff applied once the missile of an ability arrives is the buff the ability would have applied
+ * at the time of the cast. Neither takes a level: the one level a snapshot is of is the only
+ * level it has, so there is no other level that can be asked of it.
+ */
 export class AbilitySnapshot {
-    /** The ability the snapshot was taken from. */
-    public readonly ability!: Ability
+    /** The level the ability was at. */
+    public readonly level: number
 
-    private readonly nativeValueByFieldId!: Record<number, number | boolean | string | undefined>
+    public readonly typeId: AbilityTypeId
 
-    /** Snapshots are only taken by {@link Ability.getSnapshot}. */
-    protected constructor() {}
+    /** The number of levels the ability had. */
+    public readonly levelCount: number
 
-    public static [Symbol.hasInstance](value: unknown): boolean {
-        return type(value) == "table" && abilityBySnapshot.has(value as AbilitySnapshot)
+    /** What the ability was of: the unit that had it, or the item it was of. */
+    public readonly owner: Unit | Item
+
+    /**
+     * The unit the ability was of when the snapshot was taken. An item the ability was of is
+     * free to change hands afterwards, so this, and not whoever holds that item now, is the
+     * unit whatever the snapshot is used for is of.
+     */
+    public readonly unit: Unit | undefined
+
+    private readonly valueByFieldId: Record<number, number | boolean | string | undefined> = {}
+
+    /**
+     * Captures the level and the values of all fields of the ability as they are right now.
+     * @internal For use by internal systems only.
+     */
+    public static take(ability: Ability): AbilitySnapshot {
+        return new AbilitySnapshot(ability)
     }
 
-    /** @internal For use by internal systems only. */
-    public static take(ability: Ability): AbilitySnapshot {
+    /** Snapshots are only taken by {@link Ability.getSnapshot}. */
+    protected constructor(public readonly ability: Ability) {
         const level = ability.level
-
-        const nativeValueByFieldId: Record<number, number | boolean | string | undefined> = {}
+        const valueByFieldId = this.valueByFieldId
         if (ability.handle != undefined) {
             for (const { field, id, isLevelField } of nativeAbilityFieldsByAbilityTypeId[
                 ability.typeId
             ]) {
                 // Not a ternary: a `false` value must not fall through to the other branch.
                 if (isLevelField) {
-                    nativeValueByFieldId[id] = ability.getField(
-                        field as jabilityintegerlevelfield,
-                        level,
-                    )
+                    valueByFieldId[id] = ability.getField(field as jabilityintegerlevelfield, level)
                 } else {
-                    nativeValueByFieldId[id] = ability.getField(field as jabilityintegerfield)
+                    valueByFieldId[id] = ability.getField(field as jabilityintegerfield)
                 }
             }
         }
+        this.level = level
+        this.typeId = ability.typeId
+        this.owner = ability.owner
+        this.unit = ability.unit
+        this.levelCount = this.getField(levelsField)
+        // The values the game does not keep itself are kept by the fields, which capture them
+        // for the snapshot the same way, at this level alone.
+        captureObjectFieldValues(ability, this, level)
+    }
 
-        // Whatever the snapshot does not hold itself is looked up on, or written to, the ability.
-        // The level is not held as a plain field, so that assigning it reaches the ability too.
-        const snapshot = setmetatable(
-            {
-                [AbilitySnapshotPropertyKey.ABILITY]: ability,
-                [AbilitySnapshotPropertyKey.NATIVE_VALUE_BY_FIELD_ID]: nativeValueByFieldId,
-                getField: AbilitySnapshot.prototype.getField,
-            },
-            {
-                __index: (_: unknown, key: unknown) =>
-                    key == AbilitySnapshotPropertyKey.LEVEL
-                        ? level
-                        : (ability as unknown as Record<string, unknown>)[key as string],
-                __newindex: ability,
-                __tostring: () => `${tostring(ability)}#snapshot`,
-            },
-        ) as unknown as AbilitySnapshot
-        abilityBySnapshot.set(snapshot, ability)
-        levelBySnapshot.set(snapshot, level)
+    public toString(): string {
+        return `${tostring(this.ability)}#snapshot`
+    }
 
-        captureObjectFieldValues(ability, snapshot)
-
-        return snapshot
+    /** Whether the type of the ability has the field at all, as {@link Ability.hasField} does. */
+    public hasField(field: jabilityfield | number): boolean {
+        return abilityTypeHasField(this.typeId, field)
     }
 
     /**
-     * Returns the value the field had when the snapshot was taken. Level fields are only held
-     * for the level the ability had at that time; other levels are read from the ability.
+     * The value the field had: of a level field, at the level the ability was at, which is the
+     * only level a snapshot has -- there is no level to read it at.
      */
     public getField(field: jabilityintegerfield | jabilityrealfield): number
     public getField(field: jabilitybooleanfield): boolean
     public getField(field: jabilitystringfield): string
-    public getField(
-        field: jabilityintegerlevelfield | jabilityreallevelfield,
-        level?: number,
-    ): number
-    public getField(field: jabilitybooleanlevelfield, level?: number): boolean
-    public getField(field: jabilitystringlevelfield, level?: number): string
+    public getField(field: jabilityintegerlevelfield | jabilityreallevelfield): number
+    public getField(field: jabilitybooleanlevelfield): boolean
+    public getField(field: jabilitystringlevelfield): string
 
-    public getField(field: jabilityfield, level?: number): number | boolean | string {
-        if (level == undefined || level == levelBySnapshot.get(this)) {
-            const value = this.nativeValueByFieldId[getHandleId(field)]
-            if (value != undefined) {
-                return value
-            }
-        }
-        return this.ability.getField(field as jabilityintegerlevelfield, level)
+    public getField(field: jabilityfield): number | boolean | string {
+        const value = this.valueByFieldId[getHandleId(field)]
+        return value != undefined
+            ? value
+            : this.ability.getField(field as jabilityintegerlevelfield, this.level)
     }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging, @typescript-eslint/no-empty-object-type
-export interface AbilitySnapshot extends Ability {}
 
 /** @internal For use by internal systems only. */
 export const getOrderIdByAbilityTypeId = (abilityTypeId: AbilityTypeId): number => {
@@ -478,6 +480,12 @@ export abstract class Ability extends Handle<jability> {
     }
 
     public abstract readonly owner: Unit | Item
+
+    /**
+     * The unit the ability is of: the one that has it, or the one holding the item it is of,
+     * which is no one while the item lies on the ground.
+     */
+    public abstract get unit(): Unit | undefined
 
     /**
      * Captures the level and the values of all fields of the ability as they are right now.
@@ -579,6 +587,10 @@ export class UnrecognizedAbility extends Ability {
         super(null as unknown as jability, typeId)
     }
 
+    public override get unit(): Unit {
+        return this.owner
+    }
+
     public override get level(): number {
         return 0
     }
@@ -605,6 +617,10 @@ export class UnitAbility extends Ability {
     ) {
         super(handle, typeId)
         this.u = owner.handle
+    }
+
+    public override get unit(): Unit {
+        return this.owner
     }
 
     public incrementHideCounter(): void {
@@ -715,6 +731,10 @@ export class ItemAbility extends Ability {
         public readonly owner: Item,
     ) {
         super(handle, typeId)
+    }
+
+    public override get unit(): Unit | undefined {
+        return this.owner.owner
     }
 
     public getField(field: jabilityintegerfield | jabilityrealfield): number

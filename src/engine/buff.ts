@@ -5,7 +5,7 @@ import {
     removeBuff,
     removeBuffApplicator,
 } from "./object-data/entry/buff-type/applicable"
-import { Ability, UnitAbility } from "./internal/ability"
+import { Ability, AbilityOrSnapshot, AbilitySnapshot, UnitAbility } from "./internal/ability"
 import { AbilityTypeId } from "./object-data/entry/ability-type"
 import { BuffPolarity } from "./object-data/auxiliary/buff-polarity"
 import { BuffResistanceType } from "./object-data/auxiliary/buff-resistance-type"
@@ -17,6 +17,7 @@ import {
     AbilityEnumLevelField,
     AbilityIntegerField,
     AbilityIntegerLevelField,
+    AbilityLevelField,
     AbilityNumberField,
     AbilityNumberLevelField,
     resolveCurrentAbilityDependentValue,
@@ -244,8 +245,22 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     sharesVisionWithSource: true,
 }
 
+/**
+ * The value of the level field for the ability at the level of the buff, modifiers included: of
+ * a snapshot, the value it holds, whatever level the buff is of -- the level of a buff is the
+ * level it is shown at, and the one level a snapshot is of is the whole of what it holds.
+ */
+const resolveLevelFieldValue = <ValueType extends number | string | boolean>(
+    ability: AbilityOrSnapshot,
+    level: number | undefined,
+    value: AbilityLevelField<ValueType>,
+): ValueType =>
+    level == undefined || ability instanceof AbilitySnapshot
+        ? value.getCurrentValue(ability)
+        : value.getValue(ability, level, true)
+
 const resolveEnumValue = <T extends number>(
-    ability: Ability | undefined,
+    ability: AbilityOrSnapshot | undefined,
     level: number | undefined,
     value: T | AbilityEnumLevelField<T>,
 ): T | number => {
@@ -255,11 +270,11 @@ const resolveEnumValue = <T extends number>(
     if (ability == undefined) {
         throw new IllegalArgumentException()
     }
-    return value.getValue(ability, level ?? ability.level)
+    return resolveLevelFieldValue(ability, level, value)
 }
 
 const resolveNumberValue = <T extends number | undefined>(
-    ability: Ability | undefined,
+    ability: AbilityOrSnapshot | undefined,
     level: number | undefined,
     value: T | AbilityNumberField | AbilityNumberLevelField,
 ): T | number => {
@@ -270,12 +285,12 @@ const resolveNumberValue = <T extends number | undefined>(
         throw new IllegalArgumentException()
     }
     return value instanceof AbilityNumberField
-        ? value.getValue(ability)
-        : value.getValue(ability, level ?? ability.level)
+        ? value.getCurrentValue(ability)
+        : resolveLevelFieldValue(ability, level, value)
 }
 
 const resolveBooleanValue = <T extends boolean | undefined>(
-    ability: Ability | undefined,
+    ability: AbilityOrSnapshot | undefined,
     level: number | undefined,
     value: T | AbilityBooleanField | AbilityBooleanLevelField,
 ): T | boolean => {
@@ -286,14 +301,14 @@ const resolveBooleanValue = <T extends boolean | undefined>(
         throw new IllegalArgumentException()
     }
     return value instanceof AbilityBooleanField
-        ? value.getValue(ability)
-        : value.getValue(ability, level ?? ability.level)
+        ? value.getCurrentValue(ability)
+        : resolveLevelFieldValue(ability, level, value)
 }
 
 const resolveAndSetNumberValue = <T extends string>(
     buff: Record<T, number>,
     property: T,
-    ability: Ability | undefined,
+    ability: AbilityOrSnapshot | undefined,
     level: number | undefined,
     value: number | AbilityNumberField | AbilityNumberLevelField | undefined,
     defaultValue: number | AbilityNumberField | AbilityNumberLevelField | undefined,
@@ -542,7 +557,7 @@ export type BuffConstructorParameters<T extends Buff<BuffAdditionalParameters>> 
               resistanceType: BuffResistanceTypeParameterType,
               ...abilityOrParameters:
                   | [
-                        ability?: Ability | AbilityBehavior,
+                        ability?: AbilityOrSnapshot | AbilityBehavior,
                         parameters?: BuffParameters &
                             Omit<AdditionalParameters, keyof BuffParameters>,
                     ]
@@ -737,13 +752,13 @@ export class Buff<
         polarityOrTypeIdSelectionPolicy: BuffPolarityParameterType | BuffTypeIdSelectionPolicy,
         resistanceTypeOrPolarity: BuffResistanceTypeParameterType | BuffPolarityParameterType,
         abilityOrParametersOrResistanceType?:
-            | Ability
+            | AbilityOrSnapshot
             | AbilityBehavior
             | (BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>)
             | BuffResistanceTypeParameterType,
         parametersOrAbility?:
             | (BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>)
-            | Ability
+            | AbilityOrSnapshot
             | AbilityBehavior,
         parameters?: BuffParameters & Omit<AdditionalParameters, keyof BuffParameters>,
     ) {
@@ -754,7 +769,7 @@ export class Buff<
         let typeId: ApplicableBuffTypeId
         let polarity: BuffPolarityParameterType
         let resistanceType: BuffResistanceTypeParameterType
-        let ability: Ability | undefined
+        let ability: AbilityOrSnapshot | undefined
         let abilityBehavior: AbilityBehavior | undefined
         if (typeof typeIdOrTypeIds != "number") {
             typeId = selectBuffTypeIdWithLeastDuration(typeIdOrTypeIds, _unit)
@@ -764,7 +779,10 @@ export class Buff<
             if (parametersOrAbility instanceof AbilityBehavior) {
                 abilityBehavior = parametersOrAbility
                 ability = abilityBehavior.ability
-            } else if (parametersOrAbility instanceof Ability) {
+            } else if (
+                parametersOrAbility instanceof Ability ||
+                parametersOrAbility instanceof AbilitySnapshot
+            ) {
                 ability = parametersOrAbility
             } else if (parametersOrAbility != undefined) {
                 parameters = parametersOrAbility
@@ -778,7 +796,10 @@ export class Buff<
                 ability = abilityBehavior.ability
                 parameters = parametersOrAbility as BuffParameters &
                     Omit<AdditionalParameters, keyof BuffParameters>
-            } else if (abilityOrParametersOrResistanceType instanceof Ability) {
+            } else if (
+                abilityOrParametersOrResistanceType instanceof Ability ||
+                abilityOrParametersOrResistanceType instanceof AbilitySnapshot
+            ) {
                 ability = abilityOrParametersOrResistanceType
                 parameters = parametersOrAbility as BuffParameters &
                     Omit<AdditionalParameters, keyof BuffParameters>
@@ -804,16 +825,11 @@ export class Buff<
         let source = parameters?.source ?? defaultParameters.source
 
         if (ability != undefined) {
-            if (level == undefined && ability.getField(ABILITY_IF_LEVELS) > 1) {
+            if (level == undefined && ability.levelCount > 1) {
                 level = ability.level
             }
             if (source == undefined) {
-                const abilityOwner = ability.owner
-                if (abilityOwner instanceof Unit) {
-                    source = abilityOwner
-                } else {
-                    source = abilityOwner.owner
-                }
+                source = ability.unit
             }
             spellStealPriority = spellStealPriority ?? ability.getField(ABILITY_IF_PRIORITY)
             learnLevelMinimum = learnLevelMinimum ?? ability.getField(ABILITY_IF_REQUIRED_LEVEL)

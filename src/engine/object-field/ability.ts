@@ -1,4 +1,10 @@
-import { Ability, abilityTypeHasField, jabilityfield } from "../internal/ability"
+import {
+    Ability,
+    AbilityFieldSource,
+    AbilityOrSnapshot,
+    abilityTypeHasField,
+    jabilityfield,
+} from "../internal/ability"
 import {
     ObjectArrayField,
     ObjectField,
@@ -29,13 +35,24 @@ const convertAbilityStringLevelField = _G.ConvertAbilityStringLevelField
 export abstract class AbilityField<
     ValueType extends number | string | boolean = number | string | boolean,
     NativeFieldType extends jabilityfield = jabilityfield,
-> extends ObjectField<AbilityType, Ability, ValueType, NativeFieldType> {
+> extends ObjectField<AbilityType, Ability, ValueType, NativeFieldType, AbilityFieldSource> {
+    /**
+     * The value this field has for the ability, modifiers included, or the value it had for a
+     * snapshot of one at the moment that snapshot was taken.
+     *
+     * This is how a snapshot is read: it answers for the fields of the ability it is of, at the
+     * one level it is of, so there is no level to read it at.
+     */
+    public getCurrentValue(ability: AbilityOrSnapshot): ValueType {
+        return this.getActualValue(ability)
+    }
+
     protected override get instanceClass(): typeof Ability {
         return Ability
     }
 
-    protected override getObjectDataEntryId(instance: Ability): AbilityTypeId {
-        return instance.typeId
+    protected override getObjectDataEntryId(source: AbilityFieldSource): AbilityTypeId {
+        return source.typeId
     }
 
     protected override hasNativeFieldValue(abilityTypeId: AbilityTypeId): boolean {
@@ -58,8 +75,8 @@ export class AbilityBooleanField extends AbilityField<boolean, jabilitybooleanfi
         return convertAbilityBooleanField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability): boolean {
-        return instance.getField(this.nativeField)
+    protected override getNativeFieldValue(source: AbilityFieldSource): boolean {
+        return source.getField(this.nativeField)
     }
 
     protected override setNativeFieldValue(instance: Ability, value: boolean): boolean {
@@ -88,8 +105,8 @@ export class AbilityFloatField extends AbilityNumberField<jabilityrealfield> {
         return convertAbilityRealField(id)
     }
 
-    protected getNativeFieldValue(instance: Ability): number {
-        return instance.getField(this.nativeField)
+    protected getNativeFieldValue(source: AbilityFieldSource): number {
+        return source.getField(this.nativeField)
     }
 
     protected setNativeFieldValue(instance: Ability, value: number): boolean {
@@ -106,8 +123,8 @@ export class AbilityIntegerField extends AbilityNumberField<jabilityintegerfield
         return convertAbilityIntegerField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability): number {
-        return instance.getField(this.nativeField)
+    protected override getNativeFieldValue(source: AbilityFieldSource): number {
+        return source.getField(this.nativeField)
     }
 
     protected override setNativeFieldValue(instance: Ability, value: number): boolean {
@@ -161,14 +178,14 @@ export class AbilityStringField extends AbilityField<string, jabilitystringfield
         return convertAbilityStringField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability): string {
+    protected override getNativeFieldValue(source: AbilityFieldSource): string {
         if (stringValueByAbilityTypeIdByFieldId.has(this.id)) {
             return (
-                stringValueByAbilityTypeIdByFieldId.get(this.id)?.get(instance.typeId) ??
+                stringValueByAbilityTypeIdByFieldId.get(this.id)?.get(source.typeId) ??
                 this.defaultValue
             )
         }
-        return instance.getField(this.nativeField)
+        return source.getField(this.nativeField)
     }
 
     protected override setNativeFieldValue(instance: Ability, value: string): boolean {
@@ -183,13 +200,21 @@ export class AbilityStringField extends AbilityField<string, jabilitystringfield
 export abstract class AbilityArrayField<
     ValueType extends number | string | boolean = number | string | boolean,
     NativeFieldType extends jabilityfield = jabilityfield,
-> extends ObjectArrayField<AbilityType, Ability, ValueType, NativeFieldType> {
+> extends ObjectArrayField<AbilityType, Ability, ValueType, NativeFieldType, AbilityFieldSource> {
+    /**
+     * The values this field has for the ability, or the values it had for a snapshot of one at
+     * the moment that snapshot was taken.
+     */
+    public getCurrentValue(ability: AbilityOrSnapshot): readonly ValueType[] {
+        return this.getActualValue(ability)
+    }
+
     protected override get instanceClass(): typeof Ability {
         return Ability
     }
 
-    protected override getObjectDataEntryId(instance: Ability): AbilityTypeId {
-        return instance.typeId
+    protected override getObjectDataEntryId(source: AbilityFieldSource): AbilityTypeId {
+        return source.typeId
     }
 
     protected override hasNativeFieldValue(abilityTypeId: AbilityTypeId): boolean {
@@ -206,8 +231,8 @@ export class AbilityStringArrayField extends AbilityArrayField<string, jabilitys
         return convertAbilityStringLevelField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability, index: number): string {
-        return instance.getField(this.nativeField, index)
+    protected override getNativeFieldValue(source: AbilityFieldSource, index: number): string {
+        return source.getField(this.nativeField, index)
     }
 
     protected override setNativeFieldValue(
@@ -230,8 +255,8 @@ export abstract class AbilityObjectDataEntryIdArrayField<
         return convertAbilityStringLevelField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability, index: number): T {
-        const value = instance.getField(this.nativeField, index)
+    protected override getNativeFieldValue(source: AbilityFieldSource, index: number): T {
+        const value = source.getField(this.nativeField, index)
         return (value == "" ? 0 : util.s2id(value)) as T
     }
 
@@ -246,7 +271,25 @@ export abstract class AbilityLevelField<
     ValueType extends number | string | boolean = number | string | boolean,
     InputValueType extends ValueType = never,
     NativeFieldType extends jabilityfield = jabilityfield,
-> extends ObjectLevelField<AbilityType, Ability, ValueType, InputValueType, NativeFieldType> {
+> extends ObjectLevelField<
+    AbilityType,
+    Ability,
+    ValueType,
+    InputValueType,
+    NativeFieldType,
+    AbilityFieldSource
+> {
+    /**
+     * The value this field has for the ability at the level it is at, modifiers included, or the
+     * value it had for a snapshot of one, at the level that snapshot is of.
+     *
+     * This is how a snapshot is read: it answers for the fields of the ability it is of, at the
+     * one level it is of, so there is no other level to read it at.
+     */
+    public getCurrentValue(ability: AbilityOrSnapshot): ValueType {
+        return this.getActualValue(ability, ability.level)
+    }
+
     protected override get instanceClass(): typeof Ability {
         return Ability
     }
@@ -255,8 +298,8 @@ export abstract class AbilityLevelField<
         return entry.levelCount
     }
 
-    protected override getObjectDataEntryId(instance: Ability): AbilityTypeId {
-        return instance.typeId
+    protected override getObjectDataEntryId(source: AbilityFieldSource): AbilityTypeId {
+        return source.typeId
     }
 
     protected override hasNativeFieldValue(abilityTypeId: AbilityTypeId): boolean {
@@ -283,8 +326,8 @@ export class AbilityBooleanLevelField extends AbilityLevelField<
         return convertAbilityIntegerLevelField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability, level: number): boolean {
-        return instance.getField(this.nativeField, level) != 0
+    protected override getNativeFieldValue(source: AbilityFieldSource, level: number): boolean {
+        return source.getField(this.nativeField, level) != 0
     }
 
     protected override setNativeFieldValue(
@@ -317,8 +360,8 @@ export class AbilityFloatLevelField extends AbilityNumberLevelField<jabilityreal
         return convertAbilityRealLevelField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability, level: number): number {
-        return instance.getField(this.nativeField, level)
+    protected override getNativeFieldValue(source: AbilityFieldSource, level: number): number {
+        return source.getField(this.nativeField, level)
     }
 
     protected override setNativeFieldValue(
@@ -339,8 +382,8 @@ export class AbilityIntegerLevelField extends AbilityNumberLevelField<jabilityin
         return convertAbilityIntegerLevelField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability, level: number): number {
-        return instance.getField(this.nativeField, level)
+    protected override getNativeFieldValue(source: AbilityFieldSource, level: number): number {
+        return source.getField(this.nativeField, level)
     }
 
     protected override setNativeFieldValue(
@@ -369,8 +412,8 @@ export class AbilityStringLevelField extends AbilityLevelField<
         return convertAbilityStringLevelField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability, level: number): string {
-        return instance.getField(this.nativeField, level)
+    protected override getNativeFieldValue(source: AbilityFieldSource, level: number): string {
+        return source.getField(this.nativeField, level)
     }
 
     protected override setNativeFieldValue(
@@ -397,8 +440,8 @@ export abstract class AbilityObjectDataEntryIdLevelField<
         return convertAbilityStringLevelField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability, level: number): T {
-        const value = instance.getField(this.nativeField, level)
+    protected override getNativeFieldValue(source: AbilityFieldSource, level: number): T {
+        const value = source.getField(this.nativeField, level)
         return (value == "" ? 0 : util.s2id(value)) as T
     }
 
@@ -426,8 +469,8 @@ export abstract class AbilityEnumLevelField<T extends number> extends AbilityLev
         return convertAbilityIntegerLevelField(id)
     }
 
-    protected override getNativeFieldValue(instance: Ability, level: number): T {
-        const value = instance.getField(this.nativeField, level)
+    protected override getNativeFieldValue(source: AbilityFieldSource, level: number): T {
+        const value = source.getField(this.nativeField, level)
         if (this.values.contains(value)) {
             return value as T
         }
@@ -488,15 +531,18 @@ export class AbilityCombatClassificationsLevelField extends AbilityLevelField<
         return convertAbilityIntegerLevelField(id)
     }
 
-    protected getNativeFieldValue(instance: Ability, level: number): CombatClassifications {
+    protected getNativeFieldValue(
+        source: AbilityFieldSource,
+        level: number,
+    ): CombatClassifications {
         if (this.id == fourCC("atar")) {
             return (
-                allowedTargetCombatClassificationsByLevelByAbilityTypeId.get(instance.typeId)?.[
+                allowedTargetCombatClassificationsByLevelByAbilityTypeId.get(source.typeId)?.[
                     level
                 ] ?? this.defaultValue
             )
         }
-        return instance.getField(this.nativeField, level) as CombatClassifications
+        return source.getField(this.nativeField, level) as CombatClassifications
     }
 
     protected setNativeFieldValue(
@@ -521,26 +567,29 @@ export type SubscribableAbilityDependentValue<ValueType extends boolean | number
 
 export type AbilityDependentValue<ValueType extends boolean | number | string> =
     | SubscribableAbilityDependentValue<ValueType>
-    | ((ability: Ability) => ValueType)
+    | ((ability: AbilityOrSnapshot) => ValueType)
 
 export const resolveCurrentAbilityDependentValue: {
     <ValueType extends boolean | number | string>(
-        ability: Ability,
+        ability: AbilityOrSnapshot,
         value: AbilityDependentValue<ValueType>,
     ): ValueType
     <ValueType extends boolean | number | string>(
-        ability: Ability,
+        ability: AbilityOrSnapshot,
         value?: AbilityDependentValue<ValueType>,
     ): ValueType | undefined
 } = <ValueType extends boolean | number | string>(
-    ability: Ability,
+    ability: AbilityOrSnapshot,
     value?: AbilityDependentValue<ValueType>,
 ): ValueType | undefined => {
     if (value instanceof AbilityField) {
-        return value.getValue(ability, true)
+        return value.getCurrentValue(ability)
     } else if (value instanceof AbilityLevelField) {
-        return value.getValue(ability, ability.level, true)
+        return value.getCurrentValue(ability)
     } else if (typeof value == "function") {
+        // A supplier is given whatever the value is resolved from, a snapshot included: what it
+        // reads of one is what the ability was, as a field of one would be, and the ability
+        // itself is there to be read through `ability` for anything a snapshot does not hold.
         return value(ability)
     } else {
         return value
