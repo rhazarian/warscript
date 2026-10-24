@@ -1,8 +1,8 @@
 import type { Item } from "../item"
 
 const unitHasItem = UnitHasItem
-const unitHasItemBagged = UnitHasItemBagged
-const unitHasItemEquipped = UnitHasItemEquipped
+const unitHasItemBagged = BlzUnitHasItemBagged
+const unitHasItemEquipped = BlzUnitHasItemEquipped
 
 /** Which of a unit's item containers a slot belongs to. */
 export const enum UnitItemContainerType {

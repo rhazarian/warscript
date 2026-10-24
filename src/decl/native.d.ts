@@ -1553,6 +1553,24 @@ declare const ABILITY_ILF_FACTORY_UNIT_ID: jabilityintegerlevelfield
 declare const ABILITY_ILF_SPAWN_UNIT_ID_NFYU: jabilityintegerlevelfield
 declare const ABILITY_ILF_DESTRUCTIBLE_ID: jabilityintegerlevelfield
 declare const ABILITY_ILF_UPGRADE_TYPE: jabilityintegerlevelfield
+declare const ABILITY_ILF_MIND_CONTROLLED_UNIT_LIMIT: jabilityintegerlevelfield
+declare const ABILITY_ILF_DAMAGE_STRENGTH_MODIFIER_PERCENT: jabilityintegerlevelfield
+declare const ABILITY_ILF_MAX_TARGETS_HIT: jabilityintegerlevelfield
+declare const ABILITY_ILF_ATTACK_SPEED_REDUCTION_PERCENT_SWP9: jabilityintegerlevelfield
+declare const ABILITY_ILF_ALLY_PASSIVE_STAT_AMPLIFY_PERCENT: jabilityintegerlevelfield
+declare const ABILITY_ILF_ATTACK_SPEED_GAIN_PERCENT: jabilityintegerlevelfield
+declare const ABILITY_ILF_MOVEMENT_SPEED_GAIN_PERCENT: jabilityintegerlevelfield
+declare const ABILITY_ILF_HEALTH_COST_PERCENT: jabilityintegerlevelfield
+declare const ABILITY_ILF_BONUS_STRENGTH_UVG2: jabilityintegerlevelfield
+declare const ABILITY_ILF_BONUS_RESOLVE_PERCENT: jabilityintegerlevelfield
+declare const ABILITY_ILF_BONUS_LIFE_STEAL_PERCENT: jabilityintegerlevelfield
+declare const ABILITY_ILF_BONUS_SPELL_VAMP_PERCENT: jabilityintegerlevelfield
+declare const ABILITY_ILF_DOUBLE_BONUS_BELOW_HEALTH_PERCENT: jabilityintegerlevelfield
+declare const ABILITY_ILF_MAX_CHARGES_UBR3: jabilityintegerlevelfield
+declare const ABILITY_ILF_STACKS_REQUIRED: jabilityintegerlevelfield
+declare const ABILITY_ILF_MAX_ATTACK_SPEED_STACKS: jabilityintegerlevelfield
+declare const ABILITY_ILF_MAX_CHARGES_UWF1: jabilityintegerlevelfield
+declare const ABILITY_ILF_TARGET_ARMOR_REDUCTION: jabilityintegerlevelfield
 declare const ABILITY_RLF_CASTING_TIME: jabilityreallevelfield
 declare const ABILITY_RLF_DURATION_NORMAL: jabilityreallevelfield
 declare const ABILITY_RLF_DURATION_HERO: jabilityreallevelfield
@@ -1967,6 +1985,113 @@ declare const ABILITY_RLF_BUILDING_DAMAGE_FACTOR_NVC4: jabilityreallevelfield
 declare const ABILITY_RLF_FULL_DAMAGE_AMOUNT_NVC5: jabilityreallevelfield
 declare const ABILITY_RLF_HALF_DAMAGE_FACTOR: jabilityreallevelfield
 declare const ABILITY_RLF_INTERVAL_BETWEEN_PULSES: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_HEALING_PER_SECOND: jabilityreallevelfield
+declare const ABILITY_RLF_ENEMY_DAMAGE_PER_SECOND: jabilityreallevelfield
+declare const ABILITY_RLF_ENEMY_HEALING_REDUCTION_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_HEALING_BASE: jabilityreallevelfield
+declare const ABILITY_RLF_HEALING_PER_DEBUFF_REMOVED: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_BUFF_DURATION: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_DAMAGE_BONUS_PERCENT_BASE: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_DAMAGE_BONUS_PERCENT_PER_DEBUFF_REMOVED: jabilityreallevelfield
+declare const ABILITY_RLF_ENEMY_STUN_DURATION: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_TO_SUMMONS: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_PERCENT_MAGIC_RESIST_INCREASE: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_PERCENT_HEALING_INCREASE: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_PERCENT_COOLDOWN_DECREASE: jabilityreallevelfield
+declare const ABILITY_RLF_ENEMY_PERCENT_MAGIC_RESIST_DECREASE: jabilityreallevelfield
+declare const ABILITY_RLF_ENEMY_PERCENT_HEALING_DECREASE: jabilityreallevelfield
+declare const ABILITY_RLF_ENEMY_PERCENT_COOLDOWN_INCREASE: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_FLAT_MANA_REGEN: jabilityreallevelfield
+declare const ABILITY_RLF_DASH_SPEED: jabilityreallevelfield
+declare const ABILITY_RLF_DASH_DAMAGE: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_CRITICAL_STRIKE: jabilityreallevelfield
+declare const ABILITY_RLF_NORMAL_BONUS_CRITICAL_STRIKE_DURATION: jabilityreallevelfield
+declare const ABILITY_RLF_HERO_BONUS_CRITICAL_STRIKE_DURATION: jabilityreallevelfield
+declare const ABILITY_RLF_STUN_DURATION_ENS4: jabilityreallevelfield
+declare const ABILITY_RLF_ATTACK_SPEED_REDUCTION_PERCENT_ENS5: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_DAMAGE_TAKEN_PERCENT_ENS6: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_SWP1: jabilityreallevelfield
+declare const ABILITY_RLF_ATTACK_DISTANCE_SWP2: jabilityreallevelfield
+declare const ABILITY_RLF_ATTACK_ANGLE_SWP3: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_DELAY_SWP4: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_HSL1: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_DAMAGE_PERCENT_AGAINST_DEBUFFED: jabilityreallevelfield
+declare const ABILITY_RLF_HEAL_PERCENT_ON_DAMAGE_DEALT: jabilityreallevelfield
+declare const ABILITY_RLF_TARGET_INTERSECT_RADIUS: jabilityreallevelfield
+declare const ABILITY_RLF_BURN_DAMAGE: jabilityreallevelfield
+declare const ABILITY_RLF_BURN_DAMAGE_PULSE_FREQUENCY: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_DAMAGE_TO_SUMMONS: jabilityreallevelfield
+declare const ABILITY_RLF_HEAL_AMOUNT_TO_ALLY_UNITS: jabilityreallevelfield
+declare const ABILITY_RLF_DEFENSE_HIC1: jabilityreallevelfield
+declare const ABILITY_RLF_SPELL_DAMAGE_RESISTANCE: jabilityreallevelfield
+declare const ABILITY_RLF_HEALING_HIC4: jabilityreallevelfield
+declare const ABILITY_RLF_EXPLOSION_DAMAGE: jabilityreallevelfield
+declare const ABILITY_RLF_HEALING_PER_TARGET_HIT: jabilityreallevelfield
+declare const ABILITY_RLF_ARMOR_REDUCTION_SWP8: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_PERCENT_OF_TARGET_MAX_HEALTH: jabilityreallevelfield
+declare const ABILITY_RLF_COOLDOWN_REDUCTION_ON_HIT: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_BONUS_HHR1: jabilityreallevelfield
+declare const ABILITY_RLF_STUN_DURATION_NORMAL: jabilityreallevelfield
+declare const ABILITY_RLF_STUN_DURATION_HERO: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_DAMAGE_DEBUFF_DURATION_NORMAL: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_DAMAGE_DEBUFF_DURATION_HERO: jabilityreallevelfield
+declare const ABILITY_RLF_DEBUFF_BONUS_DAMAGE_RECEIVED_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_DEFENSE_INCREASE: jabilityreallevelfield
+declare const ABILITY_RLF_DEFENSE_CAP: jabilityreallevelfield
+declare const ABILITY_RLF_MAGIC_RESISTANCE_AT_CAP: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_ATTACK_DAMAGE_PERCENT_AT_CAP: jabilityreallevelfield
+declare const ABILITY_RLF_ARMOR_REDUCTION_DURATION_NORMAL: jabilityreallevelfield
+declare const ABILITY_RLF_ARMOR_REDUCTION_DURATION_HERO: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_INSTANT_HEAL: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_HEAL_PER_SECOND: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_MANA_RESTORE: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_PASSIVE_COOLDOWN: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_PASSIVE_DURATION: jabilityreallevelfield
+declare const ABILITY_RLF_PASSIVE_RADIUS: jabilityreallevelfield
+declare const ABILITY_RLF_MIND_CONTROL_DURATION_NORMAL: jabilityreallevelfield
+declare const ABILITY_RLF_EXPLOSION_RADIUS_MCRD: jabilityreallevelfield
+declare const ABILITY_RLF_EXPLOSION_RADIUS_SFRD: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_REDUCTION_PERCENT_BLD1: jabilityreallevelfield
+declare const ABILITY_RLF_MOVEMENT_SPEED_REDUCTION_PERCENT_BLD2: jabilityreallevelfield
+declare const ABILITY_RLF_ATTACK_SPEED_INCREASE_PERCENT_BLD3: jabilityreallevelfield
+declare const ABILITY_RLF_ON_DAMAGE_TAKEN_BONUS_DURATION: jabilityreallevelfield
+declare const ABILITY_RLF_SWEEP_COOLDOWN_REDUCTION_ON_HIT: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_REFLECTION_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_FLAT_DAMAGE_REFLECTION: jabilityreallevelfield
+declare const ABILITY_RLF_ABILITY_SPEED_INCREASE_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_SHIELD_HEALTH: jabilityreallevelfield
+declare const ABILITY_RLF_SHIELD_REFLECT_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_SHIELD_DURATION: jabilityreallevelfield
+declare const ABILITY_RLF_TAUNTED_DEFENSE_REDUCTION: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_ATTACK_SPEED_PERCENT_HGH1: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_MOVE_SPEED_PERCENT_HGH2: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_CRITICAL_HIT_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_CRITICAL_DAMAGE_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_MANA_PER_SECOND_HGH6: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_COOLDOWN_REDUCTION_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_DAMAGE_UBR1: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_DAMAGE_DURATION_UBR2: jabilityreallevelfield
+declare const ABILITY_RLF_CHARGE_REGEN_TIME_UBR4: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_MANA_PER_SECOND: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_HEALING_PER_SECOND_ULA2: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_SPELL_RESIST_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_SPELL_AMP_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_SPELL_CRIT_HIT_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_ALLY_MOVEMENT_SPEED_PERCENT: jabilityreallevelfield
+declare const ABILITY_RLF_ENEMY_MANA_PER_SECOND: jabilityreallevelfield
+declare const ABILITY_RLF_ENEMY_DAMAGE_PER_SECOND_ULA8: jabilityreallevelfield
+declare const ABILITY_RLF_FLAT_MANA_GAIN: jabilityreallevelfield
+declare const ABILITY_RLF_HEALING_RADIUS: jabilityreallevelfield
+declare const ABILITY_RLF_FLAT_DAMAGE_UDB1: jabilityreallevelfield
+declare const ABILITY_RLF_PERCENT_DAMAGE_UDB2: jabilityreallevelfield
+declare const ABILITY_RLF_BONUS_ATTACK_SPEED_PER_ATTACK: jabilityreallevelfield
+declare const ABILITY_RLF_CHARGE_REGEN_TIME_UWF2: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_UWF3: jabilityreallevelfield
+declare const ABILITY_RLF_COOLDOWN_REDUCTION_ON_AUTO_ATTACK: jabilityreallevelfield
+declare const ABILITY_RLF_ATTACK_SPEED_REDUCTION_DURATION_NORMAL: jabilityreallevelfield
+declare const ABILITY_RLF_ATTACK_SPEED_REDUCTION_DURATION_HERO: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_BY_TARGET_MAX_HEALTH_DURATION_NORMAL: jabilityreallevelfield
+declare const ABILITY_RLF_DAMAGE_BY_TARGET_MAX_HEALTH_DURATION_HERO: jabilityreallevelfield
 declare const ABILITY_BLF_PERCENT_BONUS_HAB2: jabilitybooleanlevelfield
 declare const ABILITY_BLF_USE_TELEPORT_CLUSTERING_HMT3: jabilitybooleanlevelfield
 declare const ABILITY_BLF_NEVER_MISS_OCR5: jabilitybooleanlevelfield
@@ -2031,6 +2156,14 @@ declare const ABILITY_BLF_SLEEP_ONCE: jabilitybooleanlevelfield
 declare const ABILITY_BLF_ALLOW_ON_ANY_PLAYER_SLOT: jabilitybooleanlevelfield
 declare const ABILITY_BLF_DISABLE_OTHER_ABILITIES: jabilitybooleanlevelfield
 declare const ABILITY_BLF_ALLOW_BOUNTY: jabilitybooleanlevelfield
+declare const ABILITY_BLF_REMOVE_BUFFS_ON_ABILITY_START: jabilitybooleanlevelfield
+declare const ABILITY_BLF_SILENCES_WHEN_ENSNARED: jabilitybooleanlevelfield
+declare const ABILITY_BLF_REFRESH_COOLDOWN_ON_KILL_HSL3: jabilitybooleanlevelfield
+declare const ABILITY_BLF_ENABLE_CHAIN_EXPLOSION: jabilitybooleanlevelfield
+declare const ABILITY_BLF_DISPEL_MAGIC_BONUS_DAMAGE_TO_SUMMONS: jabilitybooleanlevelfield
+declare const ABILITY_BLF_REMOVES_NEGATIVE_DEBUFFS: jabilitybooleanlevelfield
+declare const ABILITY_BLF_REFRESH_COOLDOWN_ON_KILL_HHR7: jabilitybooleanlevelfield
+declare const ABILITY_BLF_MAKES_UNITS_UNDYING: jabilitybooleanlevelfield
 declare const ABILITY_SLF_ICON_NORMAL: jabilitystringlevelfield
 declare const ABILITY_SLF_CASTER: jabilitystringlevelfield
 declare const ABILITY_SLF_TARGET: jabilitystringlevelfield
@@ -2660,8 +2793,8 @@ declare function GetChangingUnit(): junit
 declare function GetChangingUnitPrevOwner(): jplayer
 declare function GetManipulatingUnit(): junit
 declare function GetManipulatedItem(): jitem
-declare function GetEquippedItem(): jitem
-declare function GetUnequippedItem(): jitem
+declare function BlzGetEquippedItem(): jitem
+declare function BlzGetUnequippedItem(): jitem
 declare function BlzGetAbsorbingItem(): jitem
 declare function BlzGetManipulatedItemWasAbsorbed(): boolean
 declare function BlzGetStackingItemSource(): jitem
@@ -2830,15 +2963,15 @@ declare function GetItemTypeId(i: jitem): number
 declare function GetItemX(i: jitem): number
 declare function GetItemY(i: jitem): number
 declare function SetItemPosition(i: jitem, x: number, y: number): void
-declare function SetItemColor(whichItem: jitem, whichColor: jplayercolor): void
+declare function BlzSetItemColor(whichItem: jitem, whichColor: jplayercolor): void
 declare function SetItemDropOnDeath(whichItem: jitem, flag: boolean): void
 declare function SetItemDroppable(i: jitem, flag: boolean): void
 declare function SetItemPawnable(i: jitem, flag: boolean): void
 declare function SetItemPlayer(whichItem: jitem, whichPlayer: jplayer, changeColor: boolean): void
 declare function SetItemInvulnerable(whichItem: jitem, flag: boolean): void
 declare function IsItemInvulnerable(whichItem: jitem): boolean
-declare function IsItemEquipped(whichItem: jitem): boolean
-declare function IsItemInBag(whichItem: jitem): boolean
+declare function BlzIsItemEquipped(whichItem: jitem): boolean
+declare function BlzIsItemInBag(whichItem: jitem): boolean
 declare function SetItemVisible(whichItem: jitem, show: boolean): void
 declare function IsItemVisible(whichItem: jitem): boolean
 declare function IsItemOwned(whichItem: jitem): boolean
@@ -2857,8 +2990,8 @@ declare function GetItemCharges(whichItem: jitem): number
 declare function SetItemCharges(whichItem: jitem, charges: number): void
 declare function GetItemUserData(whichItem: jitem): number
 declare function SetItemUserData(whichItem: jitem, data: number): void
-declare function GetItemEquipmentType(whichItem: jitem): jequipmentType
-declare function GetItemTag(whichItem: jitem): jitemTag
+declare function BlzGetItemEquipmentType(whichItem: jitem): jequipmentType
+declare function BlzGetItemTag(whichItem: jitem): jitemTag
 declare function CreateUnit(
     id: jplayer,
     unitid: number,
@@ -2999,25 +3132,28 @@ declare function GetUnitWoodCost(unitId: number): number
 declare function GetUnitPointValue(whichUnit: junit): number
 declare function GetUnitPointValueByType(unitType: number): number
 declare function UnitAddItem(whichUnit: junit, whichItem: jitem): boolean
-declare function UnitEquipItem(whichUnit: junit, whichItem: jitem): boolean
+declare function BlzUnitEquipItem(whichUnit: junit, whichItem: jitem): boolean
 declare function UnitAddItemById(whichUnit: junit, itemId: number): jitem
 declare function UnitAddItemToSlotById(whichUnit: junit, itemId: number, itemSlot: number): boolean
 declare function UnitRemoveItem(whichUnit: junit, whichItem: jitem): void
 declare function UnitRemoveItemFromSlot(whichUnit: junit, itemSlot: number): jitem
-declare function UnitUnequipItem(whichUnit: junit, whichItem: jitem): void
-declare function UnitUnequipItemFromSlot(whichUnit: junit, slot: jloadoutslot): jitem
+declare function BlzUnitUnequipItem(whichUnit: junit, whichItem: jitem): void
+declare function BlzUnitUnequipItemFromSlot(whichUnit: junit, slot: jloadoutslot): jitem
 declare function UnitHasItem(whichUnit: junit, whichItem: jitem): boolean
-declare function UnitHasItemBagged(whichUnit: junit, whichItem: jitem): boolean
+declare function BlzUnitHasItemBagged(whichUnit: junit, whichItem: jitem): boolean
 declare function UnitItemInSlot(whichUnit: junit, itemSlot: number): jitem
 declare function UnitInventorySize(whichUnit: junit): number
-declare function UnitExtendedInventorySize(whichUnit: junit): number
-declare function UnitItemInBagSlot(whichUnit: junit, itemSlot: number): jitem
-declare function UnitItemInEquipmentSlot(whichUnit: junit, itemSlot: jloadoutslot): jitem
-declare function UnitHasItemEquipped(whichUnit: junit, whichItem: jitem): boolean
-declare function UnitHasLoadoutSlotEmpty(whichUnit: junit, itemSlot: jloadoutslot): boolean
-declare function UnitHasAnyItemEquiped(whichUnit: junit): boolean
-declare function UnitHasItemEquipmentOfType(whichUnit: junit, equipmentId: jequipmentType): boolean
-declare function UnitCanEquipItemOfEquipmentType(
+declare function BlzUnitExtendedInventorySize(whichUnit: junit): number
+declare function BlzUnitItemInBagSlot(whichUnit: junit, itemSlot: number): jitem
+declare function BlzUnitItemInEquipmentSlot(whichUnit: junit, itemSlot: jloadoutslot): jitem
+declare function BlzUnitHasItemEquipped(whichUnit: junit, whichItem: jitem): boolean
+declare function BlzUnitHasLoadoutSlotEmpty(whichUnit: junit, itemSlot: jloadoutslot): boolean
+declare function BlzUnitHasAnyItemEquipped(whichUnit: junit): boolean
+declare function BlzUnitHasItemEquipmentOfType(
+    whichUnit: junit,
+    equipmentId: jequipmentType,
+): boolean
+declare function BlzUnitCanEquipItemOfEquipmentType(
     whichUnit: junit,
     equipmentId: jequipmentType,
 ): boolean
@@ -3129,6 +3265,7 @@ declare function UnitCanSleep(whichUnit: junit): boolean
 declare function UnitAddSleepPerm(whichUnit: junit, add: boolean): void
 declare function UnitCanSleepPerm(whichUnit: junit): boolean
 declare function UnitIsSleeping(whichUnit: junit): boolean
+declare function BlzUnitIsAlive(whichUnit: junit): boolean
 declare function UnitWakeUp(whichUnit: junit): void
 declare function UnitApplyTimedLife(whichUnit: junit, buffId: number, duration: number): void
 declare function UnitIgnoreAlarm(whichUnit: junit, flag: boolean): boolean
@@ -3161,6 +3298,13 @@ declare function UnitDamageTarget(
     damageType: jdamagetype,
     weaponType: jweapontype,
 ): boolean
+declare function BlzUnitHeal(
+    whichUnit: junit,
+    source: junit,
+    life: number,
+    isItem: boolean,
+    applyStatBonuses: boolean,
+): number
 declare function IssueImmediateOrder(whichUnit: junit, order: string): boolean
 declare function IssueImmediateOrderById(whichUnit: junit, order: number): boolean
 declare function IssuePointOrder(whichUnit: junit, order: string, x: number, y: number): boolean
@@ -3614,6 +3758,7 @@ declare function SetItemTypeSlots(whichUnit: junit, slots: number): void
 declare function SetUnitTypeSlots(whichUnit: junit, slots: number): void
 declare function GetUnitUserData(whichUnit: junit): number
 declare function SetUnitUserData(whichUnit: junit, data: number): void
+declare function BlzResetUnitTalents(whichUnit: junit): void
 declare function Player(number: number): jplayer
 declare function GetLocalPlayer(): jplayer
 declare function IsPlayerAlly(whichPlayer: jplayer, otherPlayer: jplayer): boolean
@@ -4278,6 +4423,14 @@ declare function ChooseRandomItemExWithFilter(
     whichEquipmentType: jequipmentType,
     whichTag: jitemTag,
 ): number
+declare function ChooseRandomItemExWithFilterAndIncludes(
+    whichType: jitemtype,
+    level: number,
+    whichEquipmentType: jequipmentType,
+    whichTag: jitemTag,
+    includeInvalidMorphs: boolean,
+    includeNonPickRandom: boolean,
+): number
 declare function SetRandomSeed(seed: number): void
 declare function SetTerrainFog(a: number, b: number, c: number, d: number, e: number): void
 declare function ResetTerrainFog(): void
@@ -4450,6 +4603,10 @@ declare function EnableMinimapFilterButtons(enableAlly: boolean, enableCreep: bo
 declare function EnableDragSelect(state: boolean, ui: boolean): void
 declare function EnablePreSelect(state: boolean, ui: boolean): void
 declare function EnableSelect(state: boolean, ui: boolean): void
+declare function BlzGetHUDScale(): number
+declare function BlzSetHUDScale(percentage: number): void
+declare function BlzLockHUDScale(): void
+declare function BlzUnlockHUDScale(): void
 declare function CreateTrackable(
     trackableModelPath: string,
     x: number,
@@ -4674,6 +4831,8 @@ declare function SetCameraTargetController(
     inheritOrientation: boolean,
 ): void
 declare function SetCameraOrientController(whichUnit: junit, xoffset: number, yoffset: number): void
+declare function BlzGetCameraAllowsHotkeyTargetLock(): boolean
+declare function BlzSetCameraAllowsHotkeyTargetLock(allows: boolean): void
 declare function BlzCameraSetCameraType(cameraType: number): void
 declare function BlzCameraGetCameraType(): number
 declare function CreateCameraSetup(): jcamerasetup
@@ -4829,6 +4988,7 @@ declare function EndThematicMusic(): void
 declare function SetMusicVolume(volume: number): void
 declare function SetMusicPlayPosition(millisecs: number): void
 declare function SetThematicMusicVolume(volume: number): void
+declare function BlzSetThematicMusicAbsoluteVolume(volume: number): void
 declare function SetThematicMusicPlayPosition(millisecs: number): void
 declare function SetSoundDuration(soundHandle: jsound, duration: number): void
 declare function GetSoundDuration(soundHandle: jsound): number
@@ -4913,6 +5073,7 @@ declare function AddSpecialEffectTarget(
     attachPointName: string,
 ): jeffect
 declare function DestroyEffect(whichEffect: jeffect): void
+declare function BlzRemoveEffect(whichEffect: jeffect): void
 declare function AddSpellEffect(
     abilityString: string,
     t: jeffecttype,
@@ -6471,8 +6632,8 @@ declare let filterGetUnitsOfPlayerAndTypeId: jboolexpr
 declare let filterMeleeTrainedUnitIsHeroBJ: jboolexpr
 declare let filterLivingPlayerUnitsOfTypeId: jboolexpr
 declare let bj_wantDestroyGroup: boolean
-declare let bj_destroyEffectAsyncEffect: jeffect
-declare let bj_destroyEffectAsyncTime: number
+declare let bj_destroyOrRemoveEffectAsyncEffect: jeffect
+declare let bj_destroyOrRemoveEffectAsyncTime: number
 declare let bj_lastInstObjFuncSuccessful: boolean
 declare function BJDebugMsg(msg: string): void
 declare function SetWantDestroyGroupBJ(): void
@@ -6898,7 +7059,7 @@ declare function SetTerrainFogExVBJ(
     green: number,
     blue: number,
 ): void
-declare function BlzSetTerrainFogStyleBJ(style: jfogstyle): void
+declare function BlzSetTerrainFogStyleBJ(style: number): void
 declare function BlzSetTerrainFogZStartBJ(zStart: number): void
 declare function BlzSetTerrainFogZEndBJ(zEnd: number): void
 declare function BlzSetTerrainFogDensityBJ(density: number): void
@@ -7075,9 +7236,12 @@ declare function AddSpecialEffectTargetUnitBJ(
     modelName: string,
 ): jeffect
 declare function DestroyEffectBJ(whichEffect: jeffect): void
+declare function RemoveEffectBJ(whichEffect: jeffect): void
 declare function GetLastCreatedEffectBJ(): jeffect
 declare function DestroyEffectAsyncBJ(): void
 declare function DestroyEffectAfterTimeBJ(whichEffect: jeffect, time: number): void
+declare function RemoveEffectAsyncBJ(): void
+declare function RemoveEffectAfterTimeBJ(whichEffect: jeffect, time: number): void
 declare function CreateCommandButtonEffectBJ(abilityId: number, order: string): jcommandbuttoneffect
 declare function CreateTrainCommandButtonEffectBJ(unitId: number): jcommandbuttoneffect
 declare function CreateUpgradeCommandButtonEffectBJ(techId: number): jcommandbuttoneffect
@@ -7199,6 +7363,14 @@ declare function ChooseRandomItemExWithFilterBJ(
     whichEquipmentType: jequipmentType,
     whichTag: jitemTag,
 ): number
+declare function ChooseRandomItemExWithFilterAndIncludesBJ(
+    level: number,
+    whichType: jitemtype,
+    whichEquipmentType: jequipmentType,
+    whichTag: jitemTag,
+    includeInvalidMorphs: boolean,
+    includeNonPickRandom: boolean,
+): number
 declare function ChooseRandomNPBuildingBJ(): number
 declare function ChooseRandomCreepBJ(level: number): number
 declare function EnumItemsInRectBJ(r: jrect, actionFunc?: () => void): void
@@ -7276,6 +7448,8 @@ declare function SetUnitManaPercentBJ(whichUnit: junit, percent: number): void
 declare function IsUnitDeadBJ(whichUnit: junit): boolean
 declare function IsUnitAliveBJ(whichUnit: junit): boolean
 declare function UnitAlive(whichUnit: junit): boolean
+declare function UnitIsDeadBJ(whichUnit: junit): boolean
+declare function UnitIsAliveBJ(whichUnit: junit): boolean
 declare function IsUnitGroupDeadBJEnum(): void
 declare function IsUnitGroupDeadBJ(g: jgroup): boolean
 declare function IsUnitGroupEmptyBJEnum(): void
@@ -7387,6 +7561,8 @@ declare function UnitDamageTargetBJ(
     whichAttack: jattacktype,
     whichDamage: jdamagetype,
 ): boolean
+declare function UnitHealBJ(whichUnit: junit, life: number): number
+declare function UnitHealFromOtherBJ(whichUnit: junit, source: junit, life: number): number
 declare function CreateDestructableLoc(
     objectid: number,
     loc: jlocation,

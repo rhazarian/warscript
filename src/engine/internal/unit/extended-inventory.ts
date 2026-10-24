@@ -4,9 +4,9 @@ import { UnitItemContainerType, unitOwnsItem } from "./item-container"
 import type { UnitItemContainer } from "./item-container"
 import { unitAddItemToSlot } from "./add-item-to-slot"
 
-const unitExtendedInventorySize = UnitExtendedInventorySize
-const unitHasItemBagged = UnitHasItemBagged
-const unitItemInBagSlot = UnitItemInBagSlot
+const unitExtendedInventorySize = BlzUnitExtendedInventorySize
+const unitHasItemBagged = BlzUnitHasItemBagged
+const unitItemInBagSlot = BlzUnitItemInBagSlot
 const unitRemoveItem = UnitRemoveItem
 const isItemPowerup = IsItemPowerup
 const setItemBooleanField = BlzSetItemBooleanField

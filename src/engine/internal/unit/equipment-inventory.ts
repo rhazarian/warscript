@@ -11,25 +11,25 @@ import type { UnitItemContainer } from "./item-container"
 
 const convertEquipmentType = ConvertEquipmentType
 const convertLoadoutSlot = ConvertLoadoutSlot
-const getEquippedItem = GetEquippedItem
+const getEquippedItem = BlzGetEquippedItem
 const getStackingItemSource = BlzGetStackingItemSource
 const getStackingItemTarget = BlzGetStackingItemTarget
 const getStackingItemTargetPreviousCharges = BlzGetStackingItemTargetPreviousCharges
 const getTriggerUnit = GetTriggerUnit
-const getUnequippedItem = GetUnequippedItem
+const getUnequippedItem = BlzGetUnequippedItem
 const getUnitTypeId = GetUnitTypeId
-const unitCanEquipItemOfEquipmentType = UnitCanEquipItemOfEquipmentType
-const unitEquipItem = UnitEquipItem
-const unitHasAnyItemEquiped = UnitHasAnyItemEquiped
-const unitHasItemEquipmentOfType = UnitHasItemEquipmentOfType
-const unitHasItemEquipped = UnitHasItemEquipped
-const unitHasLoadoutSlotEmpty = UnitHasLoadoutSlotEmpty
-const unitItemInEquipmentSlot = UnitItemInEquipmentSlot
+const unitCanEquipItemOfEquipmentType = BlzUnitCanEquipItemOfEquipmentType
+const unitEquipItem = BlzUnitEquipItem
+const unitHasAnyItemEquipped = BlzUnitHasAnyItemEquipped
+const unitHasItemEquipmentOfType = BlzUnitHasItemEquipmentOfType
+const unitHasItemEquipped = BlzUnitHasItemEquipped
+const unitHasLoadoutSlotEmpty = BlzUnitHasLoadoutSlotEmpty
+const unitItemInEquipmentSlot = BlzUnitItemInEquipmentSlot
 const setItemVisible = SetItemVisible
 const unitAddItem = UnitAddItem
 const unitRemoveItem = UnitRemoveItem
-const unitUnequipItem = UnitUnequipItem
-const unitUnequipItemFromSlot = UnitUnequipItemFromSlot
+const unitUnequipItem = BlzUnitUnequipItem
+const unitUnequipItemFromSlot = BlzUnitUnequipItemFromSlot
 
 const rawget = _G.rawget
 const rawset = _G.rawset
@@ -110,7 +110,7 @@ export class UnitEquipmentInventory {
     }
 
     public hasAny(): boolean {
-        return unitHasAnyItemEquiped(handleByUnitEquipmentInventory.get(this)!)
+        return unitHasAnyItemEquipped(handleByUnitEquipmentInventory.get(this)!)
     }
 
     public isSlotEmpty(slot: EquipmentSlot): boolean {

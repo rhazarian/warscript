@@ -10,7 +10,7 @@ import {
 const setItemVisible = SetItemVisible
 const unitAddItem = UnitAddItem
 const unitInventorySize = UnitInventorySize
-const unitItemInBagSlot = UnitItemInBagSlot
+const unitItemInBagSlot = BlzUnitItemInBagSlot
 const unitItemInSlot = UnitItemInSlot
 const unitRemoveItem = UnitRemoveItem
 

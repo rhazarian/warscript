@@ -16,10 +16,10 @@ export {
 }
 
 const convertLoadoutSlot = ConvertLoadoutSlot
-const unitExtendedInventorySize = UnitExtendedInventorySize
+const unitExtendedInventorySize = BlzUnitExtendedInventorySize
 const unitInventorySize = UnitInventorySize
-const unitItemInBagSlot = UnitItemInBagSlot
-const unitItemInEquipmentSlot = UnitItemInEquipmentSlot
+const unitItemInBagSlot = BlzUnitItemInBagSlot
+const unitItemInEquipmentSlot = BlzUnitItemInEquipmentSlot
 const unitItemInSlot = UnitItemInSlot
 
 /**

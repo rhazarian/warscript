@@ -71,6 +71,7 @@ const getUnitCurrentOrder = GetUnitCurrentOrder
 const createUnit = CreateUnit
 const killUnit = KillUnit
 const removeUnit = RemoveUnit
+const unitHeal = BlzUnitHeal
 const getUnitTypeId = GetUnitTypeId
 const isHeroUnitId = IsHeroUnitId
 const getTriggerUnit = GetTriggerUnit
@@ -1557,8 +1558,8 @@ export class Unit extends Handle<junit> {
     }
 
     public healTarget(target: Widget, amount: number): void {
-        if (target instanceof Unit && target.hasAbility(fourCC("BIhm"))) {
-            target.health += 0.65 * amount // TODO
+        if (target instanceof Unit) {
+            unitHeal(target.handle, this.handle, amount, false, true)
         } else {
             target.health += amount
         }
