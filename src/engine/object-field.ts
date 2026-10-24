@@ -638,9 +638,36 @@ export abstract class ObjectArrayField<
         return result
     }
 
-    public setValue(entry: ObjectDataEntryType | InstanceType, value: ValueType[]): boolean {
-        // TODO
-        return false
+    public setValue(
+        entry: ObjectDataEntryType | InstanceType,
+        value: readonly ValueType[],
+    ): boolean {
+        if (entry instanceof ObjectDataEntry) {
+            // TODO
+            return false
+        }
+
+        const objectDataEntryId = this.getObjectDataEntryId(entry)
+        if (this.hasCustomValue(objectDataEntryId)) {
+            this.valueBySource.set(entry, [...value])
+            return true
+        }
+        if (!this.hasNativeFieldValue(objectDataEntryId)) {
+            return false
+        }
+
+        // The game reports past the last value the last value again or the default one, so the
+        // values past the new last one are reset to the default for the array to end there.
+        const previousValue = this.getActualValue(entry)
+        for (const i of $range(0, value.length - 1)) {
+            if (value[i] != previousValue[i] && !this.setNativeFieldValue(entry, i, value[i])) {
+                return false
+            }
+        }
+        for (const i of $range(value.length, previousValue.length - 1)) {
+            this.setNativeFieldValue(entry, i, this.defaultValue)
+        }
+        return true
     }
 
     public override captureValue(instance: InstanceType, snapshot: SourceType): void {
