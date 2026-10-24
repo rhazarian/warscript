@@ -4,8 +4,7 @@ import {
     AbilityDefinitionCripple,
     AbilityDefinitionHealingSalve,
     AbilityDefinitionInnerFire,
-    AbilityDefinitionSearingArrows,
-    AbilityDefinitionSlowPoison,
+    AbilityDefinitionShadowStrike,
 } from "./ability"
 import { DamageType, Unit } from "../core/types/unit"
 import { InstantDummyCaster } from "../core/dummy"
@@ -17,9 +16,9 @@ import { AbilityTypeId } from "../engine/object-data/entry/ability-type"
 import { AttackType } from "../engine/object-data/auxiliary/attack-type"
 import { LinkedMap } from "../utility/linked-map"
 import { OrderType } from "../engine/object-data/auxiliary/order-type"
+import { castAbility } from "../engine/internal/mechanics/cast-ability"
 
 const assert = _G.assert
-const pairs = _G.pairs
 
 type Art = {
     model: string
@@ -296,44 +295,6 @@ export type BuffPresetData = {
     readonly magic: boolean
 }
 
-const EVASION_ABILITY_IDS = postcompile(() => {
-    const evasionParentAbilityIds = new Set([
-        "AEev",
-        "ACes",
-        "ACev",
-        "AIes",
-        "ANdb",
-        "Acdb",
-        "AOcr",
-        "ACct",
-        "AIcs",
-    ])
-    const evasionAbilityIds = new Set<string>()
-    if (currentMap) {
-        for (const [, ability] of pairs(currentMap.objects.ability.all)) {
-            if (evasionParentAbilityIds.has(ability.parentId ?? ability.id)) {
-                evasionAbilityIds.add(ability.id)
-            }
-        }
-    }
-    return Array.from(evasionAbilityIds).map((id) => fourCC(id))
-})
-
-const SEARING_ARROWS_ABILITY_ID = compiletime(() => {
-    const ability = new AbilityDefinitionSearingArrows()
-    ability.name = "[Buff System] Searing Arrows"
-    ability.levels = 1
-    ability.damageBonus = 0
-    ability.manaCost = 0
-    ability.missileArt = ""
-    ability.casterArt = ""
-    ability.targetArt = ""
-    ability.castRange = 99999
-    ability.requiredLevel = 6
-    ability.targetsAllowed = ["ground", "air", "structure", "ward", "vulnerable", "invulnerable"]
-    return fourCC(ability.id)
-})
-
 export class BuffPreset extends BuffDefinition implements Compiletime<BuffPresetData> {
     private _positive = true
     private _magic = true
@@ -378,14 +339,15 @@ export class BuffPreset extends BuffDefinition implements Compiletime<BuffPreset
         return ability
     }
 
-    private createSlowPoisonAbility(): AbilityDefinition {
-        const ability = new AbilityDefinitionSlowPoison()
+    private createShadowStrikeAbility(): AbilityDefinition {
+        const ability = new AbilityDefinitionShadowStrike()
         ability.levels = this.levels
-        ability.damagePerSecond = 0
-        ability.movementSpeedFactor = 0
-        ability.attackSpeedFactor = 0
-        ability.stackingType = 0
-        ability.buffs = [this.id, this.id]
+        ability.heroAbility = false
+        ability.damage = 0
+        ability.damagePerInterval = 0
+        ability.movementSpeedDecreaseFactor = 0
+        ability.attackSpeedDecreaseFactor = 0
+        ability.buffs = [this.id]
         return ability
     }
 
@@ -396,7 +358,7 @@ export class BuffPreset extends BuffDefinition implements Compiletime<BuffPreset
                 : this.createHealingSaveAbility()
             : this.magic
               ? this.createCrippleAbility()
-              : this.createSlowPoisonAbility()
+              : this.createShadowStrikeAbility()
         ability.manaCost = 0
         ability.cooldown = 0
         ability.durationNormal = 0
@@ -410,6 +372,7 @@ export class BuffPreset extends BuffDefinition implements Compiletime<BuffPreset
         ability.requirements = []
         ability.requiredLevel = 6
         ability.targetsAllowed = [
+            ...(!this.positive && !this.magic ? (["self"] as AbilityDefinition.TargetType[]) : []),
             "ground",
             "air",
             "structure",
@@ -475,9 +438,16 @@ const buffs = setmetatable(new LuaTable<Unit, LinkedMap<typeof Buff, Buff>>(), {
 
 const IllegalBuffTargetException = {}
 
-Unit.abilityCastingStartEvent[SEARING_ARROWS_ABILITY_ID].addListener((unit) => {
-    unit.removeAbility(SEARING_ARROWS_ABILITY_ID)
-})
+/**
+ * Physical negative presets are applied by the unit using the Shadow Strike applicator from a
+ * dummy rune item on itself. The item ability is always at its first level, so the buff level
+ * does not select the applicator level.
+ */
+const preparePhysicalNegativeApplicatorAbility = (ability: jability, duration: number): void => {
+    const actualDuration = duration > 0 ? duration : 2147483647
+    BlzSetAbilityRealLevelField(ability, ABILITY_RLF_DURATION_NORMAL, 0, actualDuration)
+    BlzSetAbilityRealLevelField(ability, ABILITY_RLF_DURATION_HERO, 0, actualDuration)
+}
 
 export abstract class Buff implements Destroyable {
     private readonly handle?: jability
@@ -508,35 +478,30 @@ export abstract class Buff implements Destroyable {
         instances.put(constructor, this)
         if (preset) {
             const unitHandle = unit.handle
-            const slowPoisonMethod = !preset.positive && !preset.magic
-            if (slowPoisonMethod) {
-                for (const abilityId of EVASION_ABILITY_IDS) {
-                    BlzUnitDisableAbility(unitHandle, abilityId, true, false)
-                }
-            }
-            const success = InstantDummyCaster.getInstance().castTarget(
-                unit.owner,
-                [preset.abilityId, SEARING_ARROWS_ABILITY_ID],
-                (ability) => {
-                    ability.level = level
-                    const actualDuration = duration > 0 ? duration : 2147483647
-                    ability.setField(ABILITY_RLF_DURATION_NORMAL, level, actualDuration)
-                    ability.setField(ABILITY_RLF_DURATION_HERO, level, actualDuration)
-                },
-                preset.positive
-                    ? preset.magic
-                        ? OrderType.INNER_FIRE
-                        : OrderType.ITEM_REGENERATION
-                    : preset.magic
-                      ? OrderType.CRIPPLE
-                      : OrderType.FLAMING_ARROWS_TARG,
-                unit,
-            )
-            if (slowPoisonMethod) {
-                for (const abilityId of EVASION_ABILITY_IDS) {
-                    BlzUnitDisableAbility(unitHandle, abilityId, false, false)
-                }
-            }
+            const success =
+                !preset.positive && !preset.magic
+                    ? castAbility(
+                          unitHandle,
+                          preset.abilityId as AbilityTypeId,
+                          preparePhysicalNegativeApplicatorAbility,
+                          duration,
+                      )
+                    : InstantDummyCaster.getInstance().castTarget(
+                          unit.owner,
+                          preset.abilityId,
+                          (ability) => {
+                              ability.level = level
+                              const actualDuration = duration > 0 ? duration : 2147483647
+                              ability.setField(ABILITY_RLF_DURATION_NORMAL, level, actualDuration)
+                              ability.setField(ABILITY_RLF_DURATION_HERO, level, actualDuration)
+                          },
+                          preset.positive
+                              ? preset.magic
+                                  ? OrderType.INNER_FIRE
+                                  : OrderType.ITEM_REGENERATION
+                              : OrderType.CRIPPLE,
+                          unit,
+                      )
             const handle = BlzGetUnitAbility(unitHandle, preset.buffId)
             if (!success || handle == undefined) {
                 throw new IllegalStateException(

@@ -1998,6 +1998,52 @@ export class AbilityDefinitionSentinel extends AbilityDefinition {
     }
 }
 
+export class AbilityDefinitionShadowStrike extends AbilityDefinition {
+    public constructor(id?: string | number) {
+        super("AEsh", id)
+    }
+
+    public get damage(): number[] {
+        return this.getNumberLevelField("Esh5")
+    }
+
+    public set damage(v: LevelFieldValueProvider<number>) {
+        this.setNumberLevelField("Esh5", v)
+    }
+
+    public get damagePerInterval(): number[] {
+        return this.getNumberLevelField("Esh1")
+    }
+
+    public set damagePerInterval(v: LevelFieldValueProvider<number>) {
+        this.setNumberLevelField("Esh1", v)
+    }
+
+    public get damageInterval(): number[] {
+        return this.getNumberLevelField("Esh4")
+    }
+
+    public set damageInterval(v: LevelFieldValueProvider<number>) {
+        this.setNumberLevelField("Esh4", v)
+    }
+
+    public get movementSpeedDecreaseFactor(): number[] {
+        return this.getNumberLevelField("Esh2")
+    }
+
+    public set movementSpeedDecreaseFactor(v: LevelFieldValueProvider<number>) {
+        this.setNumberLevelField("Esh2", v)
+    }
+
+    public get attackSpeedDecreaseFactor(): number[] {
+        return this.getNumberLevelField("Esh3")
+    }
+
+    public set attackSpeedDecreaseFactor(v: LevelFieldValueProvider<number>) {
+        this.setNumberLevelField("Esh3", v)
+    }
+}
+
 export class AbilityDefinitionSleep extends AbilityDefinition {
     public constructor(id?: string | number) {
         super("AUsl", id)

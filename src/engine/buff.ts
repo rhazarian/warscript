@@ -107,7 +107,6 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           spellStealPriority?: number
           level?: number
           duration?: number
-          learnLevelMinimum?: number
           source?: Unit
 
           behaviorConstructors?: (new (unit: Unit) => UnitBehavior)[]
@@ -187,7 +186,6 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     spellStealPriority: true,
     level: true,
     duration: true,
-    learnLevelMinimum: true,
     source: true,
     behaviorConstructors: true,
     abilityTypeIds: true,
@@ -736,7 +734,6 @@ export class Buff<
     private _timer?: Timer
     private readonly _level?: number
     private readonly _spellStealPriority?: number
-    private readonly _learnLevelMinimum?: number
     private readonly [BuffPropertyKey.MISS_PROBABILITY]?: number
     private readonly _abilityTypeIds?: AbilityTypeId[]
     private _behaviors?: UnitBehavior[]
@@ -820,7 +817,6 @@ export class Buff<
         let level = parameters?.level ?? defaultParameters.level
         let spellStealPriority =
             parameters?.spellStealPriority ?? defaultParameters.spellStealPriority
-        let learnLevelMinimum = parameters?.learnLevelMinimum ?? defaultParameters.learnLevelMinimum
         let duration = parameters?.duration ?? defaultParameters.duration
         let source = parameters?.source ?? defaultParameters.source
 
@@ -832,7 +828,6 @@ export class Buff<
                 source = ability.unit
             }
             spellStealPriority = spellStealPriority ?? ability.getField(ABILITY_IF_PRIORITY)
-            learnLevelMinimum = learnLevelMinimum ?? ability.getField(ABILITY_IF_REQUIRED_LEVEL)
             duration = duration ?? getAbilityDuration(ability, _unit)
         }
 
@@ -868,7 +863,6 @@ export class Buff<
                 level,
                 duration,
                 spellStealPriority,
-                learnLevelMinimum,
                 missProbability,
             )
         ) {
@@ -889,7 +883,6 @@ export class Buff<
 
         this._level = level
         this._spellStealPriority = spellStealPriority
-        this._learnLevelMinimum = learnLevelMinimum
         this[BuffPropertyKey.SOURCE] = source
         this[BuffPropertyKey.DURATION] = duration ?? 0
         this[BuffPropertyKey.UNIQUE_GROUP] = uniqueGroup
@@ -1485,7 +1478,6 @@ export class Buff<
                         this._level,
                         remainingDuration,
                         this._spellStealPriority,
-                        this._learnLevelMinimum,
                         this[BuffPropertyKey.MISS_PROBABILITY],
                     )
                 ) {

@@ -1,7 +1,6 @@
 import { AbilityType, AbilityTypeId } from "../ability-type"
 import { CurseAbilityType } from "../ability-type/curse"
-import { SearingArrowsAbilityType } from "../ability-type/searing-arrows"
-import { SlowPoisonAbilityType } from "../ability-type/slow-poison"
+import { ShadowStrikeAbilityType } from "../ability-type/shadow-strike"
 import { BuffPolarity } from "../../auxiliary/buff-polarity"
 import { BuffResistanceType } from "../../auxiliary/buff-resistance-type"
 import {
@@ -22,7 +21,6 @@ import { BlankUpgrade } from "../upgrade/blank"
 import { UpgradeEffect, UpgradeEffectType, UpgradeId } from "../upgrade"
 import { UnitType } from "../unit-type"
 import { TupleOf } from "../../../../utility/types"
-import { EventListenerPriority } from "../../../../event"
 import { PermanentImmolationAbilityType } from "../ability-type/permanent-immolation"
 import { castAbility } from "../../../internal/mechanics/cast-ability"
 
@@ -30,7 +28,6 @@ const setAbilityIntegerField = BlzSetAbilityIntegerField
 const setAbilityRealLevelField = BlzSetAbilityRealLevelField
 const setPlayerTechResearched = SetPlayerTechResearched
 const unitAddAbility = UnitAddAbility
-const unitDisableAbility = BlzUnitDisableAbility
 const unitRemoveAbility = UnitRemoveAbility
 
 export type ApplicableBuffTypeId = BuffTypeId & { readonly __applicableBuffTypeId: unique symbol }
@@ -40,7 +37,7 @@ const compiletimeApplicableBuffTypes = new LuaSet<ApplicableBuffType>()
 const enum ApplicatorType {
     HIDDEN = 0,
     PHYSICAL_POSITIVE = 852100, // berserk
-    PHYSICAL_NEGATIVE = 852173, // flamingarrowstarg
+    PHYSICAL_NEGATIVE = 852527, // shadowstrike
     MAGIC_POSITIVE = 852101, // bloodlust
     MAGIC_NEGATIVE = 852190, // curse
 }
@@ -102,7 +99,7 @@ const [
         return abilityType
     }
 
-    const multilevelPhysicalPositiveApplicatorAbilityTypes: AbilityType[] = []
+    const multilevelItemApplicatorAbilityTypes: AbilityType[] = []
 
     const applicatorAbilityTypeIdByApplicatorTypeByApplicableBuffTypeId = new LuaMap<
         ApplicableBuffTypeId,
@@ -157,17 +154,30 @@ const [
                 applicableBuffType.polarity == undefined
             ) {
                 const applicatorAbilityType = prepareAbilityType(
-                    SlowPoisonAbilityType,
+                    ShadowStrikeAbilityType,
                     applicableBuffType,
                 )
-                applicatorAbilityType.damagePerSecond = 0
+                applicatorAbilityType.isHeroAbility = false
+                applicatorAbilityType.missileModelPath = ""
+                applicatorAbilityType.damage = 0
+                applicatorAbilityType.damagePerInterval = 0
                 applicatorAbilityType.movementSpeedDecreaseFactor = 0
                 applicatorAbilityType.attackSpeedDecreaseFactor = 0
-                applicatorAbilityType.isDamageStacking = false
-                applicatorAbilityType.isMovementSpeedFactorStacking = false
-                applicatorAbilityType.isAttackSpeedFactorStacking = false
-                applicatorAbilityType.isAbleToKill = false
-                applicatorAbilityType.buffTypeIds = [applicableBuffType.id, applicableBuffType.id]
+                applicatorAbilityType.allowedTargetCombatClassifications = combatClassificationsOf(
+                    CombatClassification.SELF,
+                    CombatClassification.GROUND,
+                    CombatClassification.AIR,
+                    CombatClassification.STRUCTURE,
+                    CombatClassification.WARD,
+                    CombatClassification.VULNERABLE,
+                    CombatClassification.INVULNERABLE,
+                )
+                applicatorAbilityType.buffTypeIds = [applicableBuffType.id]
+                if (applicatorAbilityType.levelCount > 1) {
+                    multilevelItemApplicatorAbilityTypes[
+                        multilevelItemApplicatorAbilityTypes.length
+                    ] = applicatorAbilityType
+                }
                 applicatorAbilityTypeIdByApplicatorType.set(
                     ApplicatorType.PHYSICAL_NEGATIVE,
                     applicatorAbilityType.id,
@@ -186,8 +196,8 @@ const [
                 applicatorAbilityType.receivedDamageIncreaseFactor = 0
                 applicatorAbilityType.buffTypeIds = [applicableBuffType.id]
                 if (applicatorAbilityType.levelCount > 1) {
-                    multilevelPhysicalPositiveApplicatorAbilityTypes[
-                        multilevelPhysicalPositiveApplicatorAbilityTypes.length
+                    multilevelItemApplicatorAbilityTypes[
+                        multilevelItemApplicatorAbilityTypes.length
                     ] = applicatorAbilityType
                 }
                 applicatorAbilityTypeIdByApplicatorType.set(
@@ -227,17 +237,12 @@ const [
     const applicatorUpgradeIds: UpgradeId[] = []
     const applicatorUpgradeIdByApplicatorAbilityTypeId = new LuaMap<AbilityTypeId, UpgradeId>()
 
-    for (const multilevelPhysicalPositiveApplicatorAbilityTypesChunk of chunked(
-        multilevelPhysicalPositiveApplicatorAbilityTypes,
+    for (const multilevelItemApplicatorAbilityTypesChunk of chunked(
+        multilevelItemApplicatorAbilityTypes,
         4,
     )) {
-        const maxLevelCount = max(
-            map(multilevelPhysicalPositiveApplicatorAbilityTypesChunk, "levelCount"),
-        )
-        const applicatorAbilityTypeIds = map(
-            multilevelPhysicalPositiveApplicatorAbilityTypesChunk,
-            "id",
-        )
+        const maxLevelCount = max(map(multilevelItemApplicatorAbilityTypesChunk, "levelCount"))
+        const applicatorAbilityTypeIds = map(multilevelItemApplicatorAbilityTypesChunk, "id")
 
         const applicatorUpgrade = BlankUpgrade.create()
         applicatorUpgrade.isInternal = true
@@ -270,42 +275,45 @@ const [
     ]
 })
 
-const EVASION_ABILITY_TYPE_IDS = postcompile(() => {
-    return AbilityType.getAllIdsByBaseIds(
-        map(["AEev", "ACes", "ACev", "AIes", "ANdb", "Acdb", "AOcr", "ACct", "AIcs"], fourCC),
+/**
+ * Makes the unit use the applicator ability from a dummy rune item on itself, which applies
+ * the buff instantly. The ability level comes from the applicator upgrade researched for the
+ * unit's owner for the duration of the cast.
+ */
+const castItemApplicatorAbility = (
+    unit: Unit,
+    applicatorAbilityTypeId: AbilityTypeId,
+    prepareAbility: (
+        ability: jability,
+        level: number | undefined,
+        duration: number,
+        spellStealPriority: number | undefined,
+    ) => void,
+    level: number | undefined,
+    duration: number,
+    spellStealPriority: number | undefined,
+): boolean => {
+    const nativePlayer = unit.owner.handle
+    let upgradeId: UpgradeId | undefined
+    if (level != undefined && level > 0) {
+        upgradeId = applicatorUpgradeIdByApplicatorAbilityTypeId.get(applicatorAbilityTypeId)
+        if (upgradeId != undefined) {
+            setPlayerTechResearched(nativePlayer, upgradeId, level)
+        }
+    }
+    const success = castAbility(
+        unit.handle,
+        applicatorAbilityTypeId,
+        prepareAbility,
+        level,
+        duration,
+        spellStealPriority,
     )
-})
-
-const SEARING_ARROWS_DUMMY_ABILITY_TYPE_ID = compiletime(() => {
-    const abilityType = SearingArrowsAbilityType.create()
-    abilityType.isInternal = true
-    abilityType.levelCount = 1
-    abilityType.missileModelPath = ""
-    abilityType.race = Race.OTHER
-    abilityType.learnLevelMinimum = 6
-    abilityType.shouldCheckTechTreeDependencies = false
-    abilityType.techTreeDependencies = []
-    abilityType.damageIncrease = 0
-    abilityType.castRange = 99999
-    abilityType.manaCost = 0
-    abilityType.cooldown = 0
-    abilityType.allowedTargetCombatClassifications = combatClassificationsOf(
-        CombatClassification.GROUND,
-        CombatClassification.AIR,
-        CombatClassification.STRUCTURE,
-        CombatClassification.WARD,
-        CombatClassification.VULNERABLE,
-        CombatClassification.INVULNERABLE,
-    )
-    return abilityType.id
-})
-
-Unit.abilityCastingStartEvent[SEARING_ARROWS_DUMMY_ABILITY_TYPE_ID].addListener(
-    EventListenerPriority.HIGHEST,
-    (unit) => {
-        unit.removeAbility(SEARING_ARROWS_DUMMY_ABILITY_TYPE_ID)
-    },
-)
+    if (upgradeId != undefined) {
+        setPlayerTechResearched(nativePlayer, upgradeId, 0)
+    }
+    return success
+}
 
 /** @internal For use by internal systems only. */
 export const internalApplyBuff = (
@@ -316,7 +324,6 @@ export const internalApplyBuff = (
     level?: number,
     duration?: number,
     spellStealPriority?: number,
-    learnLevelMinimum?: number,
     missProbability?: number,
 ): boolean => {
     const applicatorType =
@@ -341,39 +348,30 @@ export const internalApplyBuff = (
     }
 
     if (applicatorType == ApplicatorType.PHYSICAL_POSITIVE) {
-        const nativePlayer = unit.owner.handle
-        if (level != undefined && level > 0) {
-            const upgradeId =
-                applicatorUpgradeIdByApplicatorAbilityTypeId.get(applicatorAbilityTypeId)
-            if (upgradeId != undefined) {
-                setPlayerTechResearched(nativePlayer, upgradeId, level)
-            }
-        }
-        const success = castAbility(
-            unit.handle,
+        return castItemApplicatorAbility(
+            unit,
             applicatorAbilityTypeId,
             preparePhysicalPositiveApplicatorAbility,
             level,
             duration ?? 0,
+            spellStealPriority,
         )
-        if (level != undefined && level > 0) {
-            const upgradeId =
-                applicatorUpgradeIdByApplicatorAbilityTypeId.get(applicatorAbilityTypeId)
-            if (upgradeId != undefined) {
-                setPlayerTechResearched(nativePlayer, upgradeId, 0)
-            }
-        }
-        return success
     }
 
     if (applicatorType == ApplicatorType.PHYSICAL_NEGATIVE) {
-        for (const abilityId of EVASION_ABILITY_TYPE_IDS) {
-            unitDisableAbility(unit.handle, abilityId, true, false)
-        }
+        return castItemApplicatorAbility(
+            unit,
+            applicatorAbilityTypeId,
+            preparePhysicalNegativeApplicatorAbility,
+            level,
+            duration ?? 0,
+            spellStealPriority,
+        )
     }
-    const success = InstantDummyCaster.getInstance().castTarget(
+
+    return InstantDummyCaster.getInstance().castTarget(
         unit.owner,
-        [applicatorAbilityTypeId, SEARING_ARROWS_DUMMY_ABILITY_TYPE_ID],
+        applicatorAbilityTypeId,
         (ability) => {
             if (level == undefined) {
                 ability.setField(ABILITY_IF_LEVELS, 1)
@@ -385,7 +383,6 @@ export const internalApplyBuff = (
             ability.setField(ABILITY_RLF_DURATION_NORMAL, level, actualDuration)
             ability.setField(ABILITY_RLF_DURATION_HERO, level, actualDuration)
             ability.setField(ABILITY_IF_PRIORITY, spellStealPriority ?? 0)
-            ability.setField(ABILITY_IF_REQUIRED_LEVEL, learnLevelMinimum ?? 6)
             if (missProbability !== undefined && applicatorType == ApplicatorType.MAGIC_NEGATIVE) {
                 ability.setField(ABILITY_RLF_CHANCE_TO_MISS_CRS, missProbability)
             }
@@ -393,13 +390,6 @@ export const internalApplyBuff = (
         applicatorType,
         unit,
     )
-    if (applicatorType == ApplicatorType.PHYSICAL_NEGATIVE) {
-        for (const abilityId of EVASION_ABILITY_TYPE_IDS) {
-            unitDisableAbility(unit.handle, abilityId, false, false)
-        }
-    }
-
-    return success
 }
 
 const preparePhysicalPositiveApplicatorAbility = (
@@ -413,6 +403,22 @@ const preparePhysicalPositiveApplicatorAbility = (
     }
     setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_NORMAL, level, duration)
     setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_HERO, level, duration)
+}
+
+const preparePhysicalNegativeApplicatorAbility = (
+    ability: jability,
+    level: number | undefined,
+    duration: number,
+    spellStealPriority: number | undefined,
+): void => {
+    if (level == undefined) {
+        setAbilityIntegerField(ability, ABILITY_IF_LEVELS, 1)
+        level = 0
+    }
+    const actualDuration = duration > 0 ? duration : MAXIMUM_INTEGER
+    setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_NORMAL, level, actualDuration)
+    setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_HERO, level, actualDuration)
+    setAbilityIntegerField(ability, ABILITY_IF_PRIORITY, spellStealPriority ?? 0)
 }
 
 /**
