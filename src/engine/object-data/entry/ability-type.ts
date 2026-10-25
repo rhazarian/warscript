@@ -112,6 +112,11 @@ const missileImpactSoundPresetByAbilityTypeId = new LuaMap<
     SoundPresetId | undefined
 >()
 
+const casterAdditionalEffectSoundPresetByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    SoundPresetId | undefined
+>()
+
 const casterCastingSoundPresetByAbilityTypeId = new LuaMap<
     AbilityTypeId,
     SoundPresetId | undefined
@@ -767,6 +772,24 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
         this.setStringField("aefl", casterEffectLoopingSoundPresetId)
     }
 
+    /**
+     * Plays on the caster when the effect of the ability starts, together with
+     * `casterEffectSoundPresetId`, for effects that layer two sounds (a preset with several
+     * files plays only one of them).
+     */
+    public get casterAdditionalEffectSoundPresetId(): SoundPresetId | undefined {
+        return casterAdditionalEffectSoundPresetByAbilityTypeId.get(this.id)
+    }
+
+    public set casterAdditionalEffectSoundPresetId(
+        casterAdditionalEffectSoundPresetId: SoundPresetId | undefined,
+    ) {
+        casterAdditionalEffectSoundPresetByAbilityTypeId.set(
+            this.id,
+            casterAdditionalEffectSoundPresetId,
+        )
+    }
+
     public get targetEffectSoundPresetId(): SoundPresetId | undefined {
         return targetEffectSoundPresetByAbilityTypeId.get(this.id)
     }
@@ -982,6 +1005,19 @@ for (const [abilityTypeId, animationFQN] of postcompile(() => castAnimationFQNBy
             }
         },
     )
+}
+
+for (const [abilityTypeId, soundPresetId] of postcompile(
+    () => casterAdditionalEffectSoundPresetByAbilityTypeId,
+)) {
+    if (soundPresetId !== undefined) {
+        Unit.abilityChannelingStartEvent[abilityTypeId].addListener(
+            EventListenerPriority.HIGHEST,
+            (caster) => {
+                Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, caster)
+            },
+        )
+    }
 }
 
 for (const [abilityTypeId, soundPresetId] of postcompile(
