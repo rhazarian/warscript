@@ -67,6 +67,22 @@ export const extractAttachmentPresetInputNodeFQN = (
     )
 }
 
+/**
+ * The attachment point of the preset as the effect natives (`AddSpecialEffectTarget`) take it:
+ * the node name and its qualifiers separated by spaces (`"hand left"`). The comma separated FQN
+ * of the object data is not understood there: `"hand,left"` attaches to the first hand node.
+ */
+export const extractAttachmentPresetInputAttachmentPoint = (
+    attachmentPresetInput: AttachmentPresetInput | undefined,
+): string => {
+    if (typeof attachmentPresetInput == "string" || attachmentPresetInput == undefined) {
+        return ""
+    }
+    return [attachmentPresetInput.nodeName, ...(attachmentPresetInput.nodeQualifiers ?? [])].join(
+        " ",
+    )
+}
+
 export const splitAttachmentNodeFQN = (
     attachmentNodeFQN: string,
 ): LuaMultiReturn<

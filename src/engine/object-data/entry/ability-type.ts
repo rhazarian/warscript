@@ -18,7 +18,7 @@ import {
     EffectPresetWithParameters,
     EffectPresetWithParametersInput,
     extractAttachmentPresetInputModelPath,
-    extractAttachmentPresetInputNodeFQN,
+    extractAttachmentPresetInputAttachmentPoint,
     splitAttachmentNodeFQN,
     toEffectPreset,
 } from "../auxiliary/attachment-preset"
@@ -1063,7 +1063,7 @@ const casterCastingEffectModelPathsByAbilityTypeId = postcompile(() => {
 
 const casterCastingEffectAttachmentPointsByAbilityTypeId = postcompile(() => {
     return mapValues(casterCastingEffectPresetsByAbilityTypeId, (casterCastingEffectPresets) =>
-        map(casterCastingEffectPresets, extractAttachmentPresetInputNodeFQN),
+        map(casterCastingEffectPresets, extractAttachmentPresetInputAttachmentPoint),
     )
 })
 
@@ -1226,7 +1226,7 @@ const casterChannelingEffectAttachmentPointsByAbilityTypeId = postcompile(() => 
     return mapValues(
         casterChannelingEffectPresetsByAbilityTypeId,
         (casterChannelingEffectPresets) =>
-            map(casterChannelingEffectPresets, extractAttachmentPresetInputNodeFQN),
+            map(casterChannelingEffectPresets, extractAttachmentPresetInputAttachmentPoint),
     )
 })
 
@@ -1295,7 +1295,7 @@ const targetChannelingEffectsDataByAbilityTypeId = postcompile(() => {
         if (presets == undefined) {
             return undefined
         }
-        const attachmentPoints = map(presets, extractAttachmentPresetInputNodeFQN)
+        const attachmentPoints = map(presets, extractAttachmentPresetInputAttachmentPoint)
         const parameters = map(presets, "parameters")
         return {
             modelPaths: map(presets, extractAttachmentPresetInputModelPath),
