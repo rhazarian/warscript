@@ -24,6 +24,12 @@ export const DRAIN_LIFE_BONUS_BUFF_TYPE_ID = fourCC("Bdbl") as StandardBuffTypeI
 /** `Bdbm`: Drain Mana bonus, on the caster. */
 export const DRAIN_MANA_BONUS_BUFF_TYPE_ID = fourCC("Bdbm") as StandardBuffTypeId
 
+/** `BHbd`: Blizzard, on the units hit by a wave (the frost damage). */
+export const BLIZZARD_BUFF_TYPE_ID = fourCC("BHbd") as StandardBuffTypeId
+/** `XHbz`: Blizzard's area effect (the falling shards and their sounds). */
+export const BLIZZARD_EFFECT_BUFF_TYPE_ID = fourCC("XHbz") as StandardBuffTypeId
+/** `BCbf`: Breath of Frost, on the frozen units. */
+export const BREATH_OF_FROST_BUFF_TYPE_ID = fourCC("BCbf") as StandardBuffTypeId
 /** `BHfs`: Flame Strike, on the units in the flames. */
 export const FLAME_STRIKE_BUFF_TYPE_ID = fourCC("BHfs") as StandardBuffTypeId
 /** `XHfs`: Flame Strike's area effect (the embers). */
