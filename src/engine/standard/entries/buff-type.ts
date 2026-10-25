@@ -34,6 +34,10 @@ export const RAIN_OF_FIRE_DAMAGE_BUFF_TYPE_ID = fourCC("BNrd") as StandardBuffTy
 export const RAIN_OF_FIRE_BUFF_TYPE_ID = fourCC("BNrf") as StandardBuffTypeId
 /** `XErf`: Rain of Fire's area effect (the falling fire). */
 export const RAIN_OF_FIRE_EFFECT_BUFF_TYPE_ID = fourCC("XErf") as StandardBuffTypeId
+/** `AEsd`: Starfall, on the struck units (the falling star). */
+export const STARFALL_BUFF_TYPE_ID = fourCC("AEsd") as StandardBuffTypeId
+/** `XEsf`: Starfall's area effect (on the caster). */
+export const STARFALL_EFFECT_BUFF_TYPE_ID = fourCC("XEsf") as StandardBuffTypeId
 /** `BNso`: Soul Burn. */
 export const SOUL_BURN_BUFF_TYPE_ID = fourCC("BNso") as StandardBuffTypeId
 /** `BNbf`: Breath of Fire's burning. */
