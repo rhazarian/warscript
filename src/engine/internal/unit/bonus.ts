@@ -23,6 +23,10 @@ import {
     MOVEMENT_SPEED_INCREASE_FACTOR_DUMMY_ABILITY_TYPE_ID,
 } from "../object-data/movement-speed-increase-factor"
 import {
+    MOVEMENT_SPEED_INCREASE_ABILITY_FIELD,
+    MOVEMENT_SPEED_INCREASE_DUMMY_ABILITY_TYPE_ID,
+} from "../object-data/movement-speed-increase"
+import {
     EVASION_PROBABILITY_ABILITY_FIELD,
     EVASION_PROBABILITY_DUMMY_ABILITY_TYPE_ID,
 } from "../object-data/evasion-probability"
@@ -60,6 +64,7 @@ export type UnitMaxManaBonusId = UnitBonusId<"maxMana">
 export type UnitArmorBonusId = UnitBonusId<"armor">
 export type UnitAttackSpeedFactorBonusId = UnitBonusId<"attackSpeedFactor">
 export type UnitMovementSpeedFactorBonusId = UnitBonusId<"movementSpeedFactor">
+export type UnitMovementSpeedBonusId = UnitBonusId<"movementSpeed">
 export type UnitAutoAttackDamageBonusId = UnitBonusId<"autoAttackDamage">
 export type UnitDamageFactorBonusId = UnitBonusId<"damageFactor">
 export type UnitReceivedDamageFactorBonusId = UnitBonusId<"receivedDamageFactor">
@@ -139,6 +144,13 @@ export namespace UnitBonusType {
         abilityTypeId: MOVEMENT_SPEED_INCREASE_FACTOR_DUMMY_ABILITY_TYPE_ID,
         field: MOVEMENT_SPEED_INCREASE_FACTOR_ABILITY_FIELD,
         integer: false,
+        reduce: sum,
+        initialValue: 0,
+    }
+    export const MOVEMENT_SPEED: UnitBonusType<UnitMovementSpeedBonusId> = {
+        abilityTypeId: MOVEMENT_SPEED_INCREASE_DUMMY_ABILITY_TYPE_ID,
+        field: MOVEMENT_SPEED_INCREASE_ABILITY_FIELD,
+        integer: true,
         reduce: sum,
         initialValue: 0,
     }

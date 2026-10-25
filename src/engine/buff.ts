@@ -134,6 +134,7 @@ export type BuffParameters<T extends Buff<any> = Buff> = Buff extends T
           maxHealthIncrease?: NumberParameterValueType
           maxManaIncrease?: NumberParameterValueType
           attackSpeedIncreaseFactor?: NumberParameterValueType
+          movementSpeedIncrease?: NumberParameterValueType
           movementSpeedIncreaseFactor?: NumberParameterValueType
           manaRegenerationRateIncreaseFactor?: NumberParameterValueType
           evasionProbability?: NumberParameterValueType
@@ -208,6 +209,7 @@ const buffParametersKeys: Record<keyof BuffParameters, true> = {
     maxHealthIncrease: true,
     maxManaIncrease: true,
     attackSpeedIncreaseFactor: true,
+    movementSpeedIncrease: true,
     movementSpeedIncreaseFactor: true,
     manaRegenerationRateIncreaseFactor: true,
     evasionProbability: true,
@@ -331,7 +333,9 @@ const buffBooleanParameters = [
 
 const buffNumberParameters = [
     "durationIncreaseOnAutoAttack",
+    "damageIncrease",
     "attackSpeedIncreaseFactor",
+    "movementSpeedIncrease",
     "movementSpeedIncreaseFactor",
     "manaRegenerationRateIncreaseFactor",
     "evasionProbability",
@@ -1409,6 +1413,22 @@ export class Buff<
             UnitBonusType.ATTACK_SPEED_FACTOR,
             attackSpeedIncreaseFactor,
         )
+    }
+
+    public get damageIncrease(): number {
+        return this.getUnitBonus(UnitBonusType.AUTO_ATTACK_DAMAGE)
+    }
+
+    public set damageIncrease(damageIncrease: number) {
+        this.addOrUpdateOrRemoveUnitBonus(UnitBonusType.AUTO_ATTACK_DAMAGE, damageIncrease)
+    }
+
+    public get movementSpeedIncrease(): number {
+        return this.getUnitBonus(UnitBonusType.MOVEMENT_SPEED)
+    }
+
+    public set movementSpeedIncrease(movementSpeedIncrease: number) {
+        this.addOrUpdateOrRemoveUnitBonus(UnitBonusType.MOVEMENT_SPEED, movementSpeedIncrease)
     }
 
     public get movementSpeedIncreaseFactor(): number {
