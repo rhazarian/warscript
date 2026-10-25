@@ -38,6 +38,10 @@ export const RAIN_OF_FIRE_EFFECT_BUFF_TYPE_ID = fourCC("XErf") as StandardBuffTy
 export const STARFALL_BUFF_TYPE_ID = fourCC("AEsd") as StandardBuffTypeId
 /** `XEsf`: Starfall's area effect (on the caster). */
 export const STARFALL_EFFECT_BUFF_TYPE_ID = fourCC("XEsf") as StandardBuffTypeId
+/** `ANmd`: Monsoon, on the struck units (the lightning bolt). */
+export const MONSOON_BUFF_TYPE_ID = fourCC("ANmd") as StandardBuffTypeId
+/** `XNmo`: Monsoon's area effect (the rain and its looping sound). */
+export const MONSOON_EFFECT_BUFF_TYPE_ID = fourCC("XNmo") as StandardBuffTypeId
 /** `BNso`: Soul Burn. */
 export const SOUL_BURN_BUFF_TYPE_ID = fourCC("BNso") as StandardBuffTypeId
 /** `BNbf`: Breath of Fire's burning. */
