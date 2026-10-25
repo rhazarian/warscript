@@ -159,6 +159,60 @@ export abstract class BuffType<Id extends BuffTypeId = BuffTypeId> extends Objec
         )
     }
 
+    public get targetAttachmentPresetsSD(): TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6> {
+        return this.getAttachmentPresetListField(
+            "ftat:sd",
+            array(6, (i) => `fta${i}:sd`),
+        ) as TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+    }
+
+    public set targetAttachmentPresetsSD(
+        targetAttachmentPresetsSD: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>,
+    ) {
+        this.setAttachmentPresetListField(
+            "ftat:sd",
+            array(6, (i) => `fta${i}:sd`),
+            "ftac:sd",
+            targetAttachmentPresetsSD,
+        )
+    }
+
+    public get targetAttachmentPresetsHD(): TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6> {
+        return this.getAttachmentPresetListField(
+            "ftat:hd",
+            array(6, (i) => `fta${i}:hd`),
+        ) as TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+    }
+
+    public set targetAttachmentPresetsHD(
+        targetAttachmentPresetsHD: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>,
+    ) {
+        this.setAttachmentPresetListField(
+            "ftat:hd",
+            array(6, (i) => `fta${i}:hd`),
+            "ftac:hd",
+            targetAttachmentPresetsHD,
+        )
+    }
+
+    public get targetAttachmentPresetsDE(): TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6> {
+        return this.getAttachmentPresetListField(
+            "ftat:de",
+            array(6, (i) => `fta${i}:de`),
+        ) as TupleOf<AttachmentPreset, 0 | 1 | 2 | 3 | 4 | 5 | 6>
+    }
+
+    public set targetAttachmentPresetsDE(
+        targetAttachmentPresetsDE: TupleOf<AttachmentPresetInput, 0 | 1 | 2 | 3 | 4 | 5 | 6>,
+    ) {
+        this.setAttachmentPresetListField(
+            "ftat:de",
+            array(6, (i) => `fta${i}:de`),
+            "ftac:de",
+            targetAttachmentPresetsDE,
+        )
+    }
+
     // Sound
 
     public get soundPresetName(): SoundPresetName {
