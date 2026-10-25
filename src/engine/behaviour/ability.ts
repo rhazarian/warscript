@@ -3,7 +3,11 @@ import { Unit, UnitClassification } from "../internal/unit"
 import "../internal/unit/ability"
 import "../internal/unit+ability"
 import { Ability } from "../internal/ability"
-import { AbilityTypeId, playMissileImpactSound } from "../object-data/entry/ability-type"
+import {
+    AbilityTypeId,
+    getMissileModelScale,
+    playMissileImpactSound,
+} from "../object-data/entry/ability-type"
 import { EventListener } from "../../event"
 import { Widget } from "../../core/types/widget"
 import { Item } from "../internal/item"
@@ -362,6 +366,10 @@ export abstract class AbilityBehavior<
 
         public get speed(): number {
             return MISSILE_SPEED_ABILITY_INTEGER_FIELD.getValue(this.abilityBehavior.ability)
+        }
+
+        public get scale(): number | undefined {
+            return getMissileModelScale(this.abilityBehavior.ability.typeId)
         }
     }
 

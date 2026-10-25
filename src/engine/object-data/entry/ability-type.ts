@@ -112,6 +112,13 @@ const missileImpactSoundPresetByAbilityTypeId = new LuaMap<
     SoundPresetId | undefined
 >()
 
+const casterCastingSoundPresetByAbilityTypeId = new LuaMap<
+    AbilityTypeId,
+    SoundPresetId | undefined
+>()
+
+const missileModelScaleByAbilityTypeId = new LuaMap<AbilityTypeId, number | undefined>()
+
 export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     private static readonly idGenerator = abilityTypeIdGenerator
 
@@ -361,6 +368,22 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
 
     public set missileMovementSpeed(missileMovementSpeed: number) {
         this.setNumberField("amsp", missileMovementSpeed)
+    }
+
+    /**
+     * Scale of the missile model; 1 when unset. There is no object data field for it: only the
+     * missiles that ability behaviors launch (`onMissileImpact`, `launchMissile`) use it, the
+     * engine's own missile of a native missile ability such as Storm Bolt does not.
+     */
+    public get missileModelScale(): number {
+        return missileModelScaleByAbilityTypeId.get(this.id) ?? 1
+    }
+
+    public set missileModelScale(missileModelScale: number) {
+        missileModelScaleByAbilityTypeId.set(
+            this.id,
+            missileModelScale != 1 ? missileModelScale : undefined,
+        )
     }
 
     /** Model paths of the special art (`asat`); Flame Strike, for one, uses three. */
@@ -753,6 +776,18 @@ export abstract class AbilityType extends ObjectDataEntry<AbilityTypeId> {
     }
 
     /**
+     * Plays once on the caster at the casting start of the ability, unlike
+     * `casterCastingLoopingSoundPresetId`, which loops until the casting time is over.
+     */
+    public get casterCastingSoundPresetId(): SoundPresetId | undefined {
+        return casterCastingSoundPresetByAbilityTypeId.get(this.id)
+    }
+
+    public set casterCastingSoundPresetId(casterCastingSoundPresetId: SoundPresetId | undefined) {
+        casterCastingSoundPresetByAbilityTypeId.set(this.id, casterCastingSoundPresetId)
+    }
+
+    /**
      * Loops on the caster for the casting time of the ability (from the casting start until
      * the channeling start or the stop of the cast), like `casterCastingEffectPresets`.
      */
@@ -1088,6 +1123,32 @@ for (const [abilityTypeId, soundPresetId] of postcompile(
             stopCasterCastingLoopingSound,
         )
     }
+}
+
+for (const [abilityTypeId, soundPresetId] of postcompile(
+    () => casterCastingSoundPresetByAbilityTypeId,
+)) {
+    if (soundPresetId !== undefined) {
+        Unit.abilityCastingStartEvent[abilityTypeId].addListener(
+            EventListenerPriority.HIGHEST,
+            (caster) => {
+                Sound3D.playFromLabel(soundPresetId, SoundSettings.Ability, caster)
+            },
+        )
+    }
+}
+
+const missileModelScaleByAbilityTypeIdAtRuntime = postcompile(
+    () => missileModelScaleByAbilityTypeId,
+)
+
+/**
+ * The scale of the missile model of the ability type, or `undefined` when it is not scaled.
+ *
+ * @internal For use by internal systems only.
+ */
+export const getMissileModelScale = (abilityTypeId: AbilityTypeId): number | undefined => {
+    return missileModelScaleByAbilityTypeIdAtRuntime.get(abilityTypeId)
 }
 
 const missileImpactSoundPresetIdByAbilityTypeId = postcompile(
