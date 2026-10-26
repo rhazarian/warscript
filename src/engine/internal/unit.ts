@@ -830,6 +830,8 @@ const enum UnitPropertyKey {
     IS_TEAM_GLOW_HIDDEN,
     LAST_X,
     LAST_Y,
+    IS_PATHING_OFF,
+    DISABLE_PATHING_COUNTER,
 }
 
 const delayHealthChecksCallback = (unit: Unit): void => {
@@ -872,6 +874,8 @@ export class Unit extends Handle<junit> {
     private [UnitPropertyKey.IS_TEAM_GLOW_HIDDEN]?: true
     private [UnitPropertyKey.LAST_X]?: number
     private [UnitPropertyKey.LAST_Y]?: number
+    private [UnitPropertyKey.IS_PATHING_OFF]?: true
+    private [UnitPropertyKey.DISABLE_PATHING_COUNTER]?: number
 
     private _owner?: Player
 
@@ -1536,8 +1540,32 @@ export class Unit extends Handle<junit> {
         setUnitIntegerField(this.handle, UNIT_IF_MOVE_TYPE, movementType)
     }
 
-    set pathing(v: boolean) {
-        SetUnitPathing(this.handle, v)
+    public get pathing(): boolean {
+        return !this[UnitPropertyKey.IS_PATHING_OFF]
+    }
+
+    /** The unit's own pathing flag; the native stays off while the disable counter is positive. */
+    public set pathing(v: boolean) {
+        this[UnitPropertyKey.IS_PATHING_OFF] = v ? undefined : true
+        if ((this[UnitPropertyKey.DISABLE_PATHING_COUNTER] ?? 0) <= 0) {
+            SetUnitPathing(this.handle, v)
+        }
+    }
+
+    public incrementDisablePathingCounter(): void {
+        const disablePathingCounter = this[UnitPropertyKey.DISABLE_PATHING_COUNTER] ?? 0
+        if (disablePathingCounter == 0 && !this[UnitPropertyKey.IS_PATHING_OFF]) {
+            SetUnitPathing(this.handle, false)
+        }
+        this[UnitPropertyKey.DISABLE_PATHING_COUNTER] = disablePathingCounter + 1
+    }
+
+    public decrementDisablePathingCounter(): void {
+        const disablePathingCounter = this[UnitPropertyKey.DISABLE_PATHING_COUNTER] ?? 0
+        if (disablePathingCounter == 1 && !this[UnitPropertyKey.IS_PATHING_OFF]) {
+            SetUnitPathing(this.handle, true)
+        }
+        this[UnitPropertyKey.DISABLE_PATHING_COUNTER] = disablePathingCounter - 1
     }
 
     public isSelected(player: Player): boolean {
