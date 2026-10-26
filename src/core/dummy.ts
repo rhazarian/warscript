@@ -159,12 +159,23 @@ export class InstantDummyCaster {
         ]
     ): void
 
+    /** `orderId` replaces the order looked up from the ability type's base. */
+    public cast(
+        owner: Player,
+        abilityTypeId: AbilityTypeId,
+        levelOrAbilityConsumer: number | ((ability: UnitAbility) => void),
+        x: number,
+        y: number,
+        orderId: number
+    ): void
+
     public cast(
         owner: Player,
         abilityTypeId: AbilityTypeId,
         levelOrAbilityConsumerOrX: number | ((ability: UnitAbility) => void),
         xOrY: number,
-        y?: number
+        y?: number,
+        orderId?: number
     ): void {
         if (y == undefined) {
             y = xOrY
@@ -175,7 +186,7 @@ export class InstantDummyCaster {
         const dummy = this.dummy
         SetUnitX(dummy, xOrY)
         SetUnitY(dummy, y)
-        IssueImmediateOrderById(dummy, getOrderIdByAbilityTypeId(abilityTypeId))
+        IssueImmediateOrderById(dummy, orderId ?? getOrderIdByAbilityTypeId(abilityTypeId))
         this.finish(abilityTypeId)
     }
 }

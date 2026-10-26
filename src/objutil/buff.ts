@@ -4,9 +4,10 @@ import {
     AbilityDefinitionCripple,
     AbilityDefinitionHealingSalve,
     AbilityDefinitionInnerFire,
-    AbilityDefinitionShadowStrike,
+    AbilityDefinitionThunderClap,
 } from "./ability"
 import { DamageType, Unit } from "../core/types/unit"
+import { UnitAbility } from "../core/types/ability"
 import { InstantDummyCaster } from "../core/dummy"
 
 import * as idgen from "./idgen"
@@ -16,7 +17,7 @@ import { AbilityTypeId } from "../engine/object-data/entry/ability-type"
 import { AttackType } from "../engine/object-data/auxiliary/attack-type"
 import { LinkedMap } from "../utility/linked-map"
 import { OrderType } from "../engine/object-data/auxiliary/order-type"
-import { castAbility } from "../engine/internal/mechanics/cast-ability"
+import { castPhysicalNegativeApplicatorAbility } from "../engine/object-data/entry/buff-type/applicable"
 
 const assert = _G.assert
 
@@ -339,12 +340,13 @@ export class BuffPreset extends BuffDefinition implements Compiletime<BuffPreset
         return ability
     }
 
-    private createShadowStrikeAbility(): AbilityDefinition {
-        const ability = new AbilityDefinitionShadowStrike()
+    private createThunderClapAbility(): AbilityDefinition {
+        const ability = new AbilityDefinitionThunderClap()
         ability.levels = this.levels
         ability.heroAbility = false
         ability.damage = 0
-        ability.damagePerInterval = 0
+        ability.specificTargetDamage = 0
+        ability.maximumDamage = 0
         ability.movementSpeedDecreaseFactor = 0
         ability.attackSpeedDecreaseFactor = 0
         ability.buffs = [this.id]
@@ -358,7 +360,7 @@ export class BuffPreset extends BuffDefinition implements Compiletime<BuffPreset
                 : this.createHealingSaveAbility()
             : this.magic
               ? this.createCrippleAbility()
-              : this.createShadowStrikeAbility()
+              : this.createThunderClapAbility()
         ability.manaCost = 0
         ability.cooldown = 0
         ability.durationNormal = 0
@@ -367,12 +369,12 @@ export class BuffPreset extends BuffDefinition implements Compiletime<BuffPreset
         ability.casterArt = ""
         ability.targetArt = ""
         ability.castRange = 99999
-        ability.areaOfEffect = 0
+        ability.areaOfEffect = !this.positive && !this.magic ? 1 : 0
         ability.checkDependencies = false
         ability.requirements = []
         ability.requiredLevel = 6
         ability.targetsAllowed = [
-            ...(!this.positive && !this.magic ? (["self"] as AbilityDefinition.TargetType[]) : []),
+            ...(!this.positive && !this.magic ? (["ancient"] as AbilityDefinition.TargetType[]) : []),
             "ground",
             "air",
             "structure",
@@ -438,17 +440,6 @@ const buffs = setmetatable(new LuaTable<Unit, LinkedMap<typeof Buff, Buff>>(), {
 
 const IllegalBuffTargetException = {}
 
-/**
- * Physical negative presets are applied by the unit using the Shadow Strike applicator from a
- * dummy rune item on itself. The item ability is always at its first level, so the buff level
- * does not select the applicator level.
- */
-const preparePhysicalNegativeApplicatorAbility = (ability: jability, duration: number): void => {
-    const actualDuration = duration > 0 ? duration : 2147483647
-    BlzSetAbilityRealLevelField(ability, ABILITY_RLF_DURATION_NORMAL, 0, actualDuration)
-    BlzSetAbilityRealLevelField(ability, ABILITY_RLF_DURATION_HERO, 0, actualDuration)
-}
-
 export abstract class Buff implements Destroyable {
     private readonly handle?: jability
     private destroyed?: boolean
@@ -478,30 +469,28 @@ export abstract class Buff implements Destroyable {
         instances.put(constructor, this)
         if (preset) {
             const unitHandle = unit.handle
-            const success =
-                !preset.positive && !preset.magic
-                    ? castAbility(
-                          unitHandle,
-                          preset.abilityId as AbilityTypeId,
-                          preparePhysicalNegativeApplicatorAbility,
-                          duration,
-                      )
-                    : InstantDummyCaster.getInstance().castTarget(
-                          unit.owner,
-                          preset.abilityId,
-                          (ability) => {
-                              ability.level = level
-                              const actualDuration = duration > 0 ? duration : 2147483647
-                              ability.setField(ABILITY_RLF_DURATION_NORMAL, level, actualDuration)
-                              ability.setField(ABILITY_RLF_DURATION_HERO, level, actualDuration)
-                          },
-                          preset.positive
-                              ? preset.magic
-                                  ? OrderType.INNER_FIRE
-                                  : OrderType.ITEM_REGENERATION
-                              : OrderType.CRIPPLE,
-                          unit,
-                      )
+            const prepareAbility = (ability: UnitAbility): void => {
+                ability.level = level
+                const actualDuration = duration > 0 ? duration : 2147483647
+                ability.setField(ABILITY_RLF_DURATION_NORMAL, level, actualDuration)
+                ability.setField(ABILITY_RLF_DURATION_HERO, level, actualDuration)
+            }
+            let success = true
+            if (!preset.positive && !preset.magic) {
+                castPhysicalNegativeApplicatorAbility(unit, preset.abilityId, prepareAbility)
+            } else {
+                success = InstantDummyCaster.getInstance().castTarget(
+                    unit.owner,
+                    preset.abilityId,
+                    prepareAbility,
+                    preset.positive
+                        ? preset.magic
+                            ? OrderType.INNER_FIRE
+                            : OrderType.ITEM_REGENERATION
+                        : OrderType.CRIPPLE,
+                    unit,
+                )
+            }
             const handle = BlzGetUnitAbility(unitHandle, preset.buffId)
             if (!success || handle == undefined) {
                 throw new IllegalStateException(

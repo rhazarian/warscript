@@ -1998,6 +1998,52 @@ export class AbilityDefinitionSentinel extends AbilityDefinition {
     }
 }
 
+export class AbilityDefinitionThunderClap extends AbilityDefinition {
+    public constructor(id?: string | number) {
+        super("AHtc", id)
+    }
+
+    public get damage(): number[] {
+        return this.getNumberLevelField("Htc1")
+    }
+
+    public set damage(v: LevelFieldValueProvider<number>) {
+        this.setNumberLevelField("Htc1", v)
+    }
+
+    public get specificTargetDamage(): number[] {
+        return this.getNumberLevelField("Htc2")
+    }
+
+    public set specificTargetDamage(v: LevelFieldValueProvider<number>) {
+        this.setNumberLevelField("Htc2", v)
+    }
+
+    public get movementSpeedDecreaseFactor(): number[] {
+        return this.getNumberLevelField("Htc3")
+    }
+
+    public set movementSpeedDecreaseFactor(v: LevelFieldValueProvider<number>) {
+        this.setNumberLevelField("Htc3", v)
+    }
+
+    public get attackSpeedDecreaseFactor(): number[] {
+        return this.getNumberLevelField("Htc4")
+    }
+
+    public set attackSpeedDecreaseFactor(v: LevelFieldValueProvider<number>) {
+        this.setNumberLevelField("Htc4", v)
+    }
+
+    public get maximumDamage(): number[] {
+        return this.getNumberLevelField("Htc5")
+    }
+
+    public set maximumDamage(v: LevelFieldValueProvider<number>) {
+        this.setNumberLevelField("Htc5", v)
+    }
+}
+
 export class AbilityDefinitionShadowStrike extends AbilityDefinition {
     public constructor(id?: string | number) {
         super("AEsh", id)

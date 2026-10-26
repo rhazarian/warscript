@@ -1,6 +1,6 @@
 import { AbilityType, AbilityTypeId } from "../ability-type"
 import { CurseAbilityType } from "../ability-type/curse"
-import { ShadowStrikeAbilityType } from "../ability-type/shadow-strike"
+import { ThunderClapAbilityType } from "../ability-type/thunder-clap"
 import { BuffPolarity } from "../../auxiliary/buff-polarity"
 import { BuffResistanceType } from "../../auxiliary/buff-resistance-type"
 import {
@@ -12,7 +12,9 @@ import { BuffType, BuffTypeId } from "../buff-type"
 import { ObjectDataEntryConstructor } from "../../entry"
 
 import { InstantDummyCaster } from "../../../../core/dummy"
-import { Unit } from "../../../internal/unit"
+import { UnitAbility } from "../../../../core/types/ability"
+import { Player } from "../../../../core/types/player"
+import { Unit, UnitClassification } from "../../../internal/unit"
 import { MAXIMUM_INTEGER } from "../../../../math"
 import { chunked, map, max } from "../../../../utility/arrays"
 import { BloodLustAbilityType } from "../ability-type/blood-lust"
@@ -37,7 +39,7 @@ const compiletimeApplicableBuffTypes = new LuaSet<ApplicableBuffType>()
 const enum ApplicatorType {
     HIDDEN = 0,
     PHYSICAL_POSITIVE = 852100, // berserk
-    PHYSICAL_NEGATIVE = 852527, // shadowstrike
+    PHYSICAL_NEGATIVE = 852096, // thunderclap
     MAGIC_POSITIVE = 852101, // bloodlust
     MAGIC_NEGATIVE = 852190, // curse
 }
@@ -154,17 +156,20 @@ const [
                 applicableBuffType.polarity == undefined
             ) {
                 const applicatorAbilityType = prepareAbilityType(
-                    ShadowStrikeAbilityType,
+                    ThunderClapAbilityType,
                     applicableBuffType,
                 )
                 applicatorAbilityType.isHeroAbility = false
-                applicatorAbilityType.missileModelPath = ""
+                applicatorAbilityType.effectModelPaths = []
+                applicatorAbilityType.areaEffectModelPaths = []
                 applicatorAbilityType.damage = 0
-                applicatorAbilityType.damagePerInterval = 0
+                applicatorAbilityType.specificTargetDamage = 0
+                applicatorAbilityType.maximumDamage = 0
                 applicatorAbilityType.movementSpeedDecreaseFactor = 0
                 applicatorAbilityType.attackSpeedDecreaseFactor = 0
+                applicatorAbilityType.areaOfEffect = 1
                 applicatorAbilityType.allowedTargetCombatClassifications = combatClassificationsOf(
-                    CombatClassification.SELF,
+                    CombatClassification.ANCIENT,
                     CombatClassification.GROUND,
                     CombatClassification.AIR,
                     CombatClassification.STRUCTURE,
@@ -173,11 +178,6 @@ const [
                     CombatClassification.INVULNERABLE,
                 )
                 applicatorAbilityType.buffTypeIds = [applicableBuffType.id]
-                if (applicatorAbilityType.levelCount > 1) {
-                    multilevelItemApplicatorAbilityTypes[
-                        multilevelItemApplicatorAbilityTypes.length
-                    ] = applicatorAbilityType
-                }
                 applicatorAbilityTypeIdByApplicatorType.set(
                     ApplicatorType.PHYSICAL_NEGATIVE,
                     applicatorAbilityType.id,
@@ -315,6 +315,63 @@ const castItemApplicatorAbility = (
     return success
 }
 
+// Thunder Clap ignores the alliance part of its allowed targets: it only hits the caster's
+// enemies, and never the caster itself.
+const enemyOf = (player: Player): Player => {
+    if (Player.neutralAggressive.isEnemyOf(player)) {
+        return Player.neutralAggressive
+    }
+    for (const other of Player.all) {
+        if (other.isEnemyOf(player)) {
+            return other
+        }
+    }
+    return Player.neutralAggressive
+}
+
+const ANCIENT_NEIGHBOR_SEARCH_RANGE = 64
+
+/**
+ * Physical negative buffs are applied by a Thunder Clap that an enemy dummy casts at the unit's
+ * position: it is instant, unlike the missile and rune applicators, which land a frame later.
+ * The applicator only hits ancients, so the unit is made an ancient for the cast and any other
+ * ancient at that spot temporarily is not.
+ *
+ * @internal For use by internal systems only.
+ */
+export const castPhysicalNegativeApplicatorAbility = (
+    unit: Unit,
+    applicatorAbilityTypeId: number,
+    prepareAbility: (ability: UnitAbility) => void,
+): void => {
+    const x = unit.x
+    const y = unit.y
+    const neighbors: Unit[] = []
+    for (const neighbor of Unit.getInCollisionRange(x, y, ANCIENT_NEIGHBOR_SEARCH_RANGE)) {
+        if (neighbor != unit && neighbor.hasClassification(UnitClassification.ANCIENT)) {
+            neighbor.removeClassification(UnitClassification.ANCIENT)
+            neighbors[neighbors.length] = neighbor
+        }
+    }
+    const isAncientAdded =
+        !unit.hasClassification(UnitClassification.ANCIENT) &&
+        unit.addClassification(UnitClassification.ANCIENT)
+    InstantDummyCaster.getInstance().cast(
+        enemyOf(unit.owner),
+        applicatorAbilityTypeId as AbilityTypeId,
+        prepareAbility,
+        x,
+        y,
+        ApplicatorType.PHYSICAL_NEGATIVE,
+    )
+    if (isAncientAdded) {
+        unit.removeClassification(UnitClassification.ANCIENT)
+    }
+    for (const neighbor of neighbors) {
+        neighbor.addClassification(UnitClassification.ANCIENT)
+    }
+}
+
 /** @internal For use by internal systems only. */
 export const internalApplyBuff = (
     unit: Unit,
@@ -358,35 +415,31 @@ export const internalApplyBuff = (
         )
     }
 
+    const prepareAbility = (ability: UnitAbility): void => {
+        if (level == undefined) {
+            ability.setField(ABILITY_IF_LEVELS, 1)
+            level = 0
+        }
+        ability.level = level
+        duration = duration ?? 0
+        const actualDuration = duration > 0 ? duration : MAXIMUM_INTEGER
+        ability.setField(ABILITY_RLF_DURATION_NORMAL, level, actualDuration)
+        ability.setField(ABILITY_RLF_DURATION_HERO, level, actualDuration)
+        ability.setField(ABILITY_IF_PRIORITY, spellStealPriority ?? 0)
+        if (missProbability !== undefined && applicatorType == ApplicatorType.MAGIC_NEGATIVE) {
+            ability.setField(ABILITY_RLF_CHANCE_TO_MISS_CRS, missProbability)
+        }
+    }
+
     if (applicatorType == ApplicatorType.PHYSICAL_NEGATIVE) {
-        return castItemApplicatorAbility(
-            unit,
-            applicatorAbilityTypeId,
-            preparePhysicalNegativeApplicatorAbility,
-            level,
-            duration ?? 0,
-            spellStealPriority,
-        )
+        castPhysicalNegativeApplicatorAbility(unit, applicatorAbilityTypeId, prepareAbility)
+        return true
     }
 
     return InstantDummyCaster.getInstance().castTarget(
         unit.owner,
         applicatorAbilityTypeId,
-        (ability) => {
-            if (level == undefined) {
-                ability.setField(ABILITY_IF_LEVELS, 1)
-                level = 0
-            }
-            ability.level = level
-            duration = duration ?? 0
-            const actualDuration = duration > 0 ? duration : MAXIMUM_INTEGER
-            ability.setField(ABILITY_RLF_DURATION_NORMAL, level, actualDuration)
-            ability.setField(ABILITY_RLF_DURATION_HERO, level, actualDuration)
-            ability.setField(ABILITY_IF_PRIORITY, spellStealPriority ?? 0)
-            if (missProbability !== undefined && applicatorType == ApplicatorType.MAGIC_NEGATIVE) {
-                ability.setField(ABILITY_RLF_CHANCE_TO_MISS_CRS, missProbability)
-            }
-        },
+        prepareAbility,
         applicatorType,
         unit,
     )
@@ -403,22 +456,6 @@ const preparePhysicalPositiveApplicatorAbility = (
     }
     setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_NORMAL, level, duration)
     setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_HERO, level, duration)
-}
-
-const preparePhysicalNegativeApplicatorAbility = (
-    ability: jability,
-    level: number | undefined,
-    duration: number,
-    spellStealPriority: number | undefined,
-): void => {
-    if (level == undefined) {
-        setAbilityIntegerField(ability, ABILITY_IF_LEVELS, 1)
-        level = 0
-    }
-    const actualDuration = duration > 0 ? duration : MAXIMUM_INTEGER
-    setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_NORMAL, level, actualDuration)
-    setAbilityRealLevelField(ability, ABILITY_RLF_DURATION_HERO, level, actualDuration)
-    setAbilityIntegerField(ability, ABILITY_IF_PRIORITY, spellStealPriority ?? 0)
 }
 
 /**
