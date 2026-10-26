@@ -2019,11 +2019,11 @@ export class AbilityDefinitionShadowStrike extends AbilityDefinition {
         this.setNumberLevelField("Esh1", v)
     }
 
-    public get damageInterval(): number[] {
+    public get decayPower(): number[] {
         return this.getNumberLevelField("Esh4")
     }
 
-    public set damageInterval(v: LevelFieldValueProvider<number>) {
+    public set decayPower(v: LevelFieldValueProvider<number>) {
         this.setNumberLevelField("Esh4", v)
     }
 

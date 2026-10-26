@@ -22,12 +22,12 @@ export class ShadowStrikeAbilityType extends AbilityType {
         this.setNumberLevelField("Esh1", damagePerInterval)
     }
 
-    public get damageInterval(): number[] {
+    public get decayPower(): number[] {
         return this.getNumberLevelField("Esh4")
     }
 
-    public set damageInterval(damageInterval: ObjectDataEntryLevelFieldValueSupplier<number>) {
-        this.setNumberLevelField("Esh4", damageInterval)
+    public set decayPower(decayPower: ObjectDataEntryLevelFieldValueSupplier<number>) {
+        this.setNumberLevelField("Esh4", decayPower)
     }
 
     public get movementSpeedDecreaseFactor(): number[] {
