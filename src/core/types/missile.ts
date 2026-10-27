@@ -20,6 +20,8 @@ const setSpecialEffectPosition = BlzSetSpecialEffectPosition
 const setSpecialEffectYaw = BlzSetSpecialEffectYaw
 const setSpecialEffectPitch = BlzSetSpecialEffectPitch
 const destroyEffect = DestroyEffect
+const createDestructableZ = CreateDestructableZ
+const removeDestructable = RemoveDestructable
 const getLocationZ = GetLocationZ
 const moveLocation = MoveLocation
 const getOwningPlayer = GetOwningPlayer
@@ -37,6 +39,8 @@ const tableUnpack = table.unpack
 const safeCall = warpack.safeCall
 
 const location = Location(0, 0)
+
+const INVISIBLE_PLATFORM_DESTRUCTABLE_TYPE_ID = fourCC("OTip")
 
 const terrainZ = (x: number, y: number): number => {
     moveLocation(location, x, y)
@@ -443,7 +447,24 @@ export class Missile implements Destroyable {
         let shownY = positionY
         let shownZ = positionZ
 
+        // The emitters of a Popcorn (HD) model start at the point where the effect is created
+        // and spray their trail particles along every later move, so a model created on the
+        // ground and then raised trails up from the ground. AddSpecialEffect takes no height,
+        // but it places the effect on a walkable destructable: a temporary invisible platform
+        // makes the model start at the height where it is shown.
+        const platform = createDestructableZ(
+            INVISIBLE_PLATFORM_DESTRUCTABLE_TYPE_ID,
+            shownX,
+            shownY,
+            shownZ,
+            0,
+            1,
+            0,
+        )
         const effect = addSpecialEffect(config.art, shownX, shownY)
+        if (platform != undefined) {
+            removeDestructable(platform)
+        }
         setSpecialEffectPosition(effect, shownX, shownY, shownZ)
         if (config.scale) {
             setSpecialEffectScale(effect, config.scale)
